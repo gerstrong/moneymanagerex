@@ -81,7 +81,7 @@ public:
 
 private:
     std::vector<WebsiteNews> websiteNewsArray_;
-    std::vector<const ModelBase*> m_all_models;
+    std::vector<ModelBase*> m_all_models;
 
     /* handles to SQLite Database */
     wxSharedPtr<wxSQLite3Database> m_db;
@@ -138,6 +138,7 @@ private:
     void createReportsPage(mmPrintableBase* rb, bool cleanup);
     void createHelpPage(int index = mmex::HTML_INDEX);
     void refreshPanelData();
+    wxTreeItemId findItemByData(wxTreeItemId itemId, mmTreeItemData& searchData);
 
     void createHomePage();
     void createCheckingAccountPage(int accountID);

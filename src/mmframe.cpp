@@ -374,6 +374,8 @@ void mmGUIFrame::ShutdownDatabase()
         m_db->SetCommitHook(nullptr);
         m_db->Close();
         m_db.reset();
+        for (auto& model : m_all_models)
+            model->destroyCache();
     }
 }
 
@@ -791,6 +793,8 @@ void mmGUIFrame::DoRecreateNavTreeControl(bool home_page)
     m_nav_tree_ctrl->SetItemData(help, new mmTreeItemData(mmTreeItemData::HELP_PAGE_MAIN, "Help"));
     m_nav_tree_ctrl->SetItemBold(help, true);
 
+    bool hideShareAccounts = Option::instance().HideShareAccounts();
+
     if (m_db)
     {
         /* Start Populating the dynamic data */
@@ -810,17 +814,18 @@ void mmGUIFrame::DoRecreateNavTreeControl(bool home_page)
             int selectedImage = Option::instance().AccountImageId(account.ACCOUNTID, false);
 
             wxTreeItemId tacct;
-
+            Model_Account::TYPE account_type = Model_Account::type(account);
             if (Model_Account::FAVORITEACCT(account) && (Model_Account::status(account) == Model_Account::OPEN))
             {
-                if (Model_Account::type(account) != Model_Account::INVESTMENT)
+                if (Model_Account::type(account) != Model_Account::INVESTMENT &&
+                    (account_type != Model_Account::SHARES || !hideShareAccounts))
                 {
                     tacct = m_nav_tree_ctrl->AppendItem(favourites, account.ACCOUNTNAME, selectedImage, selectedImage);
                     m_nav_tree_ctrl->SetItemData(tacct, new mmTreeItemData(mmTreeItemData::ACCOUNT, account.ACCOUNTID));
                 }
             }
 
-            switch (Model_Account::type(account))
+            switch (account_type)
             {
             case Model_Account::INVESTMENT:
             {
@@ -848,8 +853,11 @@ void mmGUIFrame::DoRecreateNavTreeControl(bool home_page)
                 m_nav_tree_ctrl->SetItemData(tacct, new mmTreeItemData(mmTreeItemData::ACCOUNT, account.ACCOUNTID));
                 break;
             case Model_Account::SHARES:
-                tacct = m_nav_tree_ctrl->AppendItem(shareAccounts, account.ACCOUNTNAME, selectedImage, selectedImage);
-                m_nav_tree_ctrl->SetItemData(tacct, new mmTreeItemData(mmTreeItemData::ACCOUNT, account.ACCOUNTID));
+                if (!hideShareAccounts)
+                {
+                    tacct = m_nav_tree_ctrl->AppendItem(shareAccounts, account.ACCOUNTNAME, selectedImage, selectedImage);
+                    m_nav_tree_ctrl->SetItemData(tacct, new mmTreeItemData(mmTreeItemData::ACCOUNT, account.ACCOUNTID));
+                }
                 break;
             case Model_Account::ASSET:
                 tacct = m_nav_tree_ctrl->AppendItem(assets, account.ACCOUNTNAME, selectedImage, selectedImage);
@@ -901,7 +909,7 @@ void mmGUIFrame::DoRecreateNavTreeControl(bool home_page)
         if (!m_nav_tree_ctrl->ItemHasChildren(loanAccounts)) {
             m_nav_tree_ctrl->Delete(loanAccounts);
         }
-        if (!m_nav_tree_ctrl->ItemHasChildren(shareAccounts) || Option::instance().HideShareAccounts())
+        if (!m_nav_tree_ctrl->ItemHasChildren(shareAccounts) || hideShareAccounts)
         {
             m_nav_tree_ctrl->Delete(shareAccounts);
         }
@@ -914,8 +922,8 @@ void mmGUIFrame::DoRecreateNavTreeControl(bool home_page)
             }
         }
     }
-    //m_nav_tree_ctrl->SelectItem(root);
     m_nav_tree_ctrl->EnsureVisible(root);
+    if (home_page) m_nav_tree_ctrl->SelectItem(m_nav_tree_ctrl->GetRootItem());
     m_nav_tree_ctrl->Refresh();
     m_nav_tree_ctrl->Update();
 
@@ -1202,7 +1210,7 @@ void mmGUIFrame::OnPopupEditAccount(wxCommandEvent& /*event*/)
         {
             mmNewAcctDialog dlg(account, this);
             if (dlg.ShowModal() == wxID_OK) {
-                DoRecreateNavTreeControl(true);
+                RefreshNavigationTree();
             }
         }
     }
@@ -1241,7 +1249,7 @@ void mmGUIFrame::OnPopupDeleteFilter(wxCommandEvent& /*event*/)
     if (sel_json != wxNOT_FOUND)
     {
         Model_Infotable::instance().Erase("TRANSACTIONS_FILTER", sel_json);
-        DoRecreateNavTreeControl(true);
+        RefreshNavigationTree();
     }
 }
 //--------------------------------------------------------------------------
@@ -1506,7 +1514,7 @@ void mmGUIFrame::OnViewAccountsTemporaryChange(wxCommandEvent& e)
     case MENU_TREEPOPUP_ACCOUNT_VIEWCLOSED: m_temp_view = VIEW_ACCOUNTS_CLOSED_STR; break;
     }
     Model_Setting::instance().SetViewAccounts(m_temp_view);
-    DoRecreateNavTreeControl(true);
+    RefreshNavigationTree();
 
     //Restore settings
     Model_Setting::instance().SetViewAccounts(vAccts);
@@ -2243,11 +2251,14 @@ void mmGUIFrame::OnOpen(wxCommandEvent& /*event*/)
     {
         SetDatabaseFile(fileName);
         saveSettings();
-        autocleanDeletedTransactions();
-        if (!Model_Stock::instance().all().empty() && Model_Setting::instance().GetBoolSetting("REFRESH_STOCK_QUOTES_ON_OPEN", false))
+        if (m_db)
         {
-            wxCommandEvent evt(wxEVT_COMMAND_MENU_SELECTED, MENU_RATES);
-            this->GetEventHandler()->AddPendingEvent(evt);
+            autocleanDeletedTransactions();
+            if (!Model_Stock::instance().all().empty() && Model_Setting::instance().GetBoolSetting("REFRESH_STOCK_QUOTES_ON_OPEN", false))
+            {
+                wxCommandEvent evt(wxEVT_COMMAND_MENU_SELECTED, MENU_RATES);
+                this->GetEventHandler()->AddPendingEvent(evt);
+            }
         }
     }
 }
@@ -2301,22 +2312,30 @@ void mmGUIFrame::OnChangeEncryptPassword(wxCommandEvent& /*event*/)
     wxString password_change_heading = _("MMEX: Encryption Password Change");
     wxString password_message = wxString::Format(_("New password for database\n\n%s"), m_filename);
 
-    wxString new_password = wxGetPasswordFromUser(password_message, password_change_heading);
-    if (new_password.IsEmpty())
+    wxPasswordEntryDialog dlg(this, password_message, password_change_heading);
+    if (dlg.ShowModal() == wxID_OK)
     {
-        wxMessageBox(_("New password must not be empty."), password_change_heading, wxOK | wxICON_WARNING);
-    }
-    else
-    {
-        wxString confirm_password = wxGetPasswordFromUser(_("Please confirm new password"), password_change_heading);
-        if (!confirm_password.IsEmpty() && (new_password == confirm_password))
+        wxString new_password = dlg.GetValue();
+        if (new_password.IsEmpty())
         {
-            m_db->ReKey(confirm_password);
-            wxMessageBox(_("Password change completed."), password_change_heading);
+            wxMessageBox(_("New password must not be empty."), password_change_heading, wxOK | wxICON_WARNING);
         }
         else
         {
-            wxMessageBox(_("Confirm password failed."), password_change_heading);
+            wxPasswordEntryDialog confirm_dlg(this, _("Please confirm new password"), password_change_heading);
+            if (confirm_dlg.ShowModal() == wxID_OK)
+            {
+                wxString confirm_password = confirm_dlg.GetValue();
+                if (!confirm_password.IsEmpty() && (new_password == confirm_password))
+                {
+                    m_db->ReKey(confirm_password);
+                    wxMessageBox(_("Password change completed."), password_change_heading);
+                }
+                else
+                {
+                    wxMessageBox(_("Confirm password failed."), password_change_heading);
+                }
+            }
         }
     }
 }
@@ -2572,7 +2591,7 @@ void mmGUIFrame::OnNewAccount(wxCommandEvent& /*event*/)
             ).ToStdString()), _("Share Account Creation"));
         }
 
-        DoRecreateNavTreeControl();
+        RefreshNavigationTree();
     }
 
     createHomePage();
@@ -2637,6 +2656,7 @@ void mmGUIFrame::OnOrgCategories(wxCommandEvent& /*event*/)
     dlg.ShowModal();
     if (dlg.getRefreshRequested())
     {
+        activeReport_ = false;
         refreshPanelData();
         RefreshNavigationTree();
     }
@@ -2649,6 +2669,7 @@ void mmGUIFrame::OnOrgPayees(wxCommandEvent& /*event*/)
     dlg.ShowModal();
     if (dlg.getRefreshRequested())
     {
+        activeReport_ = false;
         refreshPanelData();
         RefreshNavigationTree();
     }
@@ -2720,7 +2741,7 @@ void mmGUIFrame::OnGeneralReportManager(wxCommandEvent& /*event*/)
 
     mmGeneralReportManager dlg(this, m_db.get());
     dlg.ShowModal();
-    DoRecreateNavTreeControl(true);
+    RefreshNavigationTree();
 }
 
 void mmGUIFrame::OnOptions(wxCommandEvent& /*event*/)
@@ -2739,8 +2760,8 @@ void mmGUIFrame::OnOptions(wxCommandEvent& /*event*/)
         menuBar_->FindItem(MENU_VIEW_SHOW_MONEYTIPS)->Check(Option::instance().getShowMoneyTips());
         menuBar_->Refresh();
         menuBar_->Update();
-
-        DoRecreateNavTreeControl(true);
+        refreshPanelData();
+        RefreshNavigationTree();
 
         const wxString& sysMsg = _("MMEX Options have been updated.") + "\n\n"
             + _("Some settings take effect only after an application restart.");
@@ -3405,7 +3426,7 @@ void mmGUIFrame::OnEditAccount(wxCommandEvent& /*event*/)
         Model_Account::Data* account = Model_Account::instance().get(scd.GetStringSelection());
         mmNewAcctDialog dlg(account, this);
         if (dlg.ShowModal() == wxID_OK) {
-            DoRecreateNavTreeControl(true);
+            RefreshNavigationTree();
         }
     }
 }
@@ -3504,18 +3525,73 @@ void mmGUIFrame::OnViewLinksUpdateUI(wxUpdateUIEvent &event)
 void mmGUIFrame::OnHideShareAccounts(wxCommandEvent &WXUNUSED(event))
 {
     Option::instance().HideShareAccounts(!Option::instance().HideShareAccounts());
-    DoRecreateNavTreeControl();
+    RefreshNavigationTree();
 }
 
 void mmGUIFrame::OnHideDeletedTransactions(wxCommandEvent& WXUNUSED(event))
 {
     Option::instance().HideDeletedTransactions(!Option::instance().HideDeletedTransactions());
-    DoRecreateNavTreeControl();
+    RefreshNavigationTree();
 }
 
 void mmGUIFrame::RefreshNavigationTree()
 {
+    // Save currently selected item data
+    mmTreeItemData* iData = nullptr;
+    wxString sectionName;
+    wxTreeItemId selection = m_nav_tree_ctrl->GetSelection();
+    if (selection.IsOk() && selectedItemData_ && selection != m_nav_tree_ctrl->GetRootItem())
+    {
+        iData = new mmTreeItemData(*selectedItemData_);
+        // also save current section
+        wxTreeItemId parentID = m_nav_tree_ctrl->GetItemParent(selection);
+        if (parentID.IsOk())
+            sectionName = m_nav_tree_ctrl->GetItemText(parentID);
+    }
     DoRecreateNavTreeControl();
+    // Find and reselect the previously selected item
+    if (iData)
+    {
+        // search for the item first under the selected section
+        wxTreeItemId navTreeID = getTreeItemfor(m_nav_tree_ctrl->GetRootItem(), sectionName);
+        if (navTreeID.IsOk())
+            navTreeID = findItemByData(navTreeID, *iData);
+        // if we didn't find it search all nodes from root
+        if (!navTreeID.IsOk())
+            navTreeID = findItemByData(m_nav_tree_ctrl->GetRootItem(), *iData);
+        if (navTreeID.IsOk())
+        {
+            m_nav_tree_ctrl->EnsureVisible(navTreeID);
+            m_nav_tree_ctrl->SelectItem(navTreeID);
+        }
+    }
+    delete(iData);
+}
+
+wxTreeItemId mmGUIFrame::findItemByData(wxTreeItemId itemId, mmTreeItemData& searchData)
+{
+    // Check if the current item's data matches the search data
+    if (*dynamic_cast<mmTreeItemData*>(m_nav_tree_ctrl->GetItemData(itemId)) == searchData)
+        return itemId;
+
+    wxTreeItemIdValue searchCookie;
+    wxTreeItemId childId = m_nav_tree_ctrl->GetFirstChild(itemId, searchCookie);
+    while (childId.IsOk())
+    {
+        // Recursively search for the item in the child subtree
+        wxTreeItemId foundId = findItemByData(childId, searchData);
+        if (foundId.IsOk())
+        {
+            // Item found in the child subtree, return it
+            return foundId;
+        }
+
+        // Not found yet, so move to the next child
+        childId = m_nav_tree_ctrl->GetNextChild(itemId, searchCookie);
+    }
+
+    // Item not found
+    return wxTreeItemId();
 }
 
 void mmGUIFrame::OnViewBudgetFinancialYears(wxCommandEvent& WXUNUSED(event))
@@ -3539,19 +3615,19 @@ void mmGUIFrame::OnViewBudgetCategorySummary(wxCommandEvent& WXUNUSED(event))
 void mmGUIFrame::OnViewIgnoreFutureTransactions(wxCommandEvent& WXUNUSED(event))
 {
     Option::instance().IgnoreFutureTransactions(!Option::instance().getIgnoreFutureTransactions());
-    DoRecreateNavTreeControl(true);
+    RefreshNavigationTree();
 }
 
 void mmGUIFrame::OnViewShowToolTips(wxCommandEvent& WXUNUSED(event))
 {
     Option::instance().ShowToolTips(!Option::instance().getShowToolTips());
-    DoRecreateNavTreeControl(true);
+    RefreshNavigationTree();
 }
 
 void mmGUIFrame::OnViewShowMoneyTips(wxCommandEvent& WXUNUSED(event))
 {
     Option::instance().ShowMoneyTips(!Option::instance().getShowMoneyTips());
-    DoRecreateNavTreeControl(true);
+    RefreshNavigationTree();
 }
 //----------------------------------------------------------------------------
 

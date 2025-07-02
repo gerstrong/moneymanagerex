@@ -647,7 +647,7 @@ void mmStocksPanel::enableEditDeleteButtons(bool en)
 void mmStocksPanel::call_dialog(int selectedIndex)
 {
     Model_Stock::Data* stock = &m_lc->m_stocks[selectedIndex];
-    mmStockDialog dlg(this, m_frame, stock, m_account_id);
+    mmStockDialog dlg(this, stock, m_account_id);
     dlg.ShowModal();
     m_lc->doRefreshItems(dlg.m_stock_id);
 }

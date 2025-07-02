@@ -792,7 +792,6 @@ const wxString htmlWidgetCurrency::getHtmlText()
 
 
     const wxString today = wxDate::Today().FormatISODate();
-    const wxString baseCurrencySymbol = Model_Currency::GetBaseCurrency()->CURRENCY_SYMBOL;
     std::map<wxString, double> usedRates;
     const auto currencies = Model_Currency::instance().all();
 

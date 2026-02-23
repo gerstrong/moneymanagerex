@@ -185,7 +185,7 @@ inline AssetData& AssetData::from_select_result(wxSQLite3ResultSet& q)
 
 inline wxString AssetData::to_json() const
 {
-    to_row().to_json();
+    return to_row().to_json();
 }
 
 inline void AssetData::as_json(PrettyWriter<StringBuffer>& json_writer) const

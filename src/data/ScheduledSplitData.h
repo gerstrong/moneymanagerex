@@ -131,7 +131,7 @@ inline ScheduledSplitData& ScheduledSplitData::from_select_result(wxSQLite3Resul
 
 inline wxString ScheduledSplitData::to_json() const
 {
-    to_row().to_json();
+    return to_row().to_json();
 }
 
 inline void ScheduledSplitData::as_json(PrettyWriter<StringBuffer>& json_writer) const

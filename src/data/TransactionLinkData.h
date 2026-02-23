@@ -122,7 +122,7 @@ inline TransactionLinkData& TransactionLinkData::from_select_result(wxSQLite3Res
 
 inline wxString TransactionLinkData::to_json() const
 {
-    to_row().to_json();
+    return to_row().to_json();
 }
 
 inline void TransactionLinkData::as_json(PrettyWriter<StringBuffer>& json_writer) const

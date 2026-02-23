@@ -131,7 +131,7 @@ inline CurrencyHistoryData& CurrencyHistoryData::from_select_result(wxSQLite3Res
 
 inline wxString CurrencyHistoryData::to_json() const
 {
-    to_row().to_json();
+    return to_row().to_json();
 }
 
 inline void CurrencyHistoryData::as_json(PrettyWriter<StringBuffer>& json_writer) const

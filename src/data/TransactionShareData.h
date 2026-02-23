@@ -140,7 +140,7 @@ inline TransactionShareData& TransactionShareData::from_select_result(wxSQLite3R
 
 inline wxString TransactionShareData::to_json() const
 {
-    to_row().to_json();
+    return to_row().to_json();
 }
 
 inline void TransactionShareData::as_json(PrettyWriter<StringBuffer>& json_writer) const

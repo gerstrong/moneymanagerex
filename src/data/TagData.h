@@ -113,7 +113,7 @@ inline TagData& TagData::from_select_result(wxSQLite3ResultSet& q)
 
 inline wxString TagData::to_json() const
 {
-    to_row().to_json();
+    return to_row().to_json();
 }
 
 inline void TagData::as_json(PrettyWriter<StringBuffer>& json_writer) const

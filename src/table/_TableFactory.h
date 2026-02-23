@@ -58,7 +58,7 @@ public:
     auto stat_json() const -> const wxString;
     void debug_stat() const;
 
-    virtual bool remove_depen(int64 id) { remove_data(id); }
+    virtual bool remove_depen(int64 id) { return remove_data(id); }
 
     template<typename... Args>
     auto unsafe_search_cache_n(const Args& ... args) -> Data*

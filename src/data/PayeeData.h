@@ -159,7 +159,7 @@ inline PayeeData& PayeeData::from_select_result(wxSQLite3ResultSet& q)
 
 inline wxString PayeeData::to_json() const
 {
-    to_row().to_json();
+    return to_row().to_json();
 }
 
 inline void PayeeData::as_json(PrettyWriter<StringBuffer>& json_writer) const

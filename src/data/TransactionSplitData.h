@@ -131,7 +131,7 @@ inline TransactionSplitData& TransactionSplitData::from_select_result(wxSQLite3R
 
 inline wxString TransactionSplitData::to_json() const
 {
-    to_row().to_json();
+    return to_row().to_json();
 }
 
 inline void TransactionSplitData::as_json(PrettyWriter<StringBuffer>& json_writer) const

@@ -979,7 +979,7 @@ inline %s& %s::from_select_result(wxSQLite3ResultSet& q)
 
 inline wxString %s::to_json() const
 {
-    to_row().to_json();
+    return to_row().to_json();
 }
 
 inline void %s::as_json(PrettyWriter<StringBuffer>& json_writer) const

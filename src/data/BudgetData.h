@@ -149,7 +149,7 @@ inline BudgetData& BudgetData::from_select_result(wxSQLite3ResultSet& q)
 
 inline wxString BudgetData::to_json() const
 {
-    to_row().to_json();
+    return to_row().to_json();
 }
 
 inline void BudgetData::as_json(PrettyWriter<StringBuffer>& json_writer) const

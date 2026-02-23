@@ -21,8 +21,8 @@
 #include "AttachmentModel.h"
 #include "TransactionModel.h"
 
-TagModel::TagModel()
-: Model<TagTable>()
+TagModel::TagModel() :
+    Model<TagTable, TagData>()
 {
 }
 
@@ -36,8 +36,8 @@ TagModel::~TagModel()
 TagModel& TagModel::instance(wxSQLite3Database* db)
 {
     TagModel& ins = Singleton<TagModel>::instance();
+    ins.reset_cache();
     ins.m_db = db;
-    ins.destroy_cache();
     ins.ensure_table();
 
     return ins;
@@ -49,21 +49,21 @@ TagModel& TagModel::instance()
     return Singleton<TagModel>::instance();
 }
 
-TagModel::Data* TagModel::get_key(const wxString& name)
+const TagData* TagModel::get_key(const wxString& name)
 {
-    Data* tag = this->search_cache(TAGNAME(name));
-    if (tag)
-        return tag;
+    const Data* tag_n = search_cache_n(TagCol::TAGNAME(name));
+    if (tag_n)
+        return tag_n;
 
-    Data_Set items = this->find(TAGNAME(name));
+    DataA items = this->find(TagCol::TAGNAME(name));
     if (!items.empty())
-        tag = this->get_id(items[0].TAGID);
-    return tag;
+        tag_n = get_data_n(items[0].TAGID);
+    return tag_n;
 }
 
 int TagModel::is_used(int64 id)
 {
-    TagLinkModel::Data_Set taglink = TagLinkModel::instance().find(TagLinkModel::TAGID(id));
+    TagLinkModel::DataA taglink = TagLinkModel::instance().find(TagLinkCol::TAGID(id));
 
     if (taglink.empty())
         return 0;
@@ -72,16 +72,15 @@ int TagModel::is_used(int64 id)
     {
         if (link.REFTYPE == TransactionModel::refTypeName)
         {
-            TransactionModel::Data* t = TransactionModel::instance().get_id(link.REFID);
+            const TransactionData* t = TransactionModel::instance().get_data_n(link.REFID);
             if (t && t->DELETEDTIME.IsEmpty())
                 return 1;
         }
         else if (link.REFTYPE == TransactionSplitModel::refTypeName)
         {
-            TransactionSplitModel::Data* s = TransactionSplitModel::instance().get_id(link.REFID);
-            if (s)
-            {
-                TransactionModel::Data* t = TransactionModel::instance().get_id(s->TRANSID);
+            const TransactionSplitData* s = TransactionSplitModel::instance().get_data_n(link.REFID);
+            if (s) {
+                const TransactionData* t = TransactionModel::instance().get_data_n(s->TRANSID);
                 if (t && t->DELETEDTIME.IsEmpty())
                     return 1;
             }

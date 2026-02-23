@@ -13,15 +13,17 @@
  *      @author [sqlite2cpp.py]
  *
  *      Revision History:
- *          AUTO GENERATED at 2026-02-16 15:07:22.405413.
+ *          AUTO GENERATED at 2026-02-23 02:03:14.067947.
  *          DO NOT EDIT!
  */
 //=============================================================================
 
 #include "_TableFactory.tpp"
 #include "ScheduledSplitTable.h"
+#include "data/ScheduledSplitData.h"
 
-template class TableFactory<ScheduledSplitRow>;
+template class TableFactory<ScheduledSplitTable, ScheduledSplitData>;
+template class mmCache<int64, ScheduledSplitData>;
 
 // List of column names in database table BUDGETSPLITTRANSACTIONS_V1,
 // in the order of ScheduledSplitCol::COL_ID.
@@ -44,24 +46,7 @@ ScheduledSplitRow::ScheduledSplitRow()
     SPLITTRANSAMOUNT = 0.0;
 }
 
-ScheduledSplitRow::ScheduledSplitRow(wxSQLite3ResultSet& q)
-{
-    from_select_result(q);
-}
-
-bool ScheduledSplitRow::equals(const ScheduledSplitRow* r) const
-{
-    if ( SPLITTRANSID != r->SPLITTRANSID) return false;
-    if ( TRANSID != r->TRANSID) return false;
-    if ( CATEGID != r->CATEGID) return false;
-    if ( SPLITTRANSAMOUNT != r->SPLITTRANSAMOUNT) return false;
-    if (!NOTES.IsSameAs(r->NOTES)) return false;
-
-    return true;
-}
-
-// Bind a Row record to database statement.
-// Use the id argument instead of the row id.
+// Bind a Row record to database insert statement.
 void ScheduledSplitRow::to_insert_stmt(wxSQLite3Statement& stmt, int64 id) const
 {
     stmt.Bind(1, TRANSID);
@@ -71,13 +56,15 @@ void ScheduledSplitRow::to_insert_stmt(wxSQLite3Statement& stmt, int64 id) const
     stmt.Bind(5, id);
 }
 
-void ScheduledSplitRow::from_select_result(wxSQLite3ResultSet& q)
+ScheduledSplitRow& ScheduledSplitRow::from_select_result(wxSQLite3ResultSet& q)
 {
     SPLITTRANSID = q.GetInt64(0);
     TRANSID = q.GetInt64(1);
     CATEGID = q.GetInt64(2);
     SPLITTRANSAMOUNT = q.GetDouble(3);
     NOTES = q.GetString(4);
+
+    return *this;
 }
 
 // Return the data record as a json string
@@ -112,7 +99,7 @@ void ScheduledSplitRow::as_json(PrettyWriter<StringBuffer>& json_writer) const
     json_writer.String(NOTES.utf8_str());
 }
 
-row_t ScheduledSplitRow::to_row_t() const
+row_t ScheduledSplitRow::to_html_row() const
 {
     row_t row;
 
@@ -125,7 +112,7 @@ row_t ScheduledSplitRow::to_row_t() const
     return row;
 }
 
-void ScheduledSplitRow::to_template(html_template& t) const
+void ScheduledSplitRow::to_html_template(html_template& t) const
 {
     t(L"SPLITTRANSID") = SPLITTRANSID.GetValue();
     t(L"TRANSID") = TRANSID.GetValue();
@@ -134,7 +121,7 @@ void ScheduledSplitRow::to_template(html_template& t) const
     t(L"NOTES") = NOTES;
 }
 
-ScheduledSplitRow& ScheduledSplitRow::operator=(const ScheduledSplitRow& other)
+ScheduledSplitRow& ScheduledSplitRow::operator= (const ScheduledSplitRow& other)
 {
     if (this == &other) return *this;
 
@@ -145,6 +132,17 @@ ScheduledSplitRow& ScheduledSplitRow::operator=(const ScheduledSplitRow& other)
     NOTES = other.NOTES;
 
     return *this;
+}
+
+bool ScheduledSplitRow::equals(const ScheduledSplitRow* other) const
+{
+    if ( SPLITTRANSID != other->SPLITTRANSID) return false;
+    if ( TRANSID != other->TRANSID) return false;
+    if ( CATEGID != other->CATEGID) return false;
+    if ( SPLITTRANSAMOUNT != other->SPLITTRANSAMOUNT) return false;
+    if (!NOTES.IsSameAs(other->NOTES)) return false;
+
+    return true;
 }
 
 ScheduledSplitTable::ScheduledSplitTable()
@@ -166,17 +164,4 @@ ScheduledSplitTable::ScheduledSplitTable()
     m_delete_query = "DELETE FROM BUDGETSPLITTRANSACTIONS_V1 WHERE SPLITTRANSID = ?";
 
     m_select_query = "SELECT SPLITTRANSID, TRANSID, CATEGID, SPLITTRANSAMOUNT, NOTES FROM BUDGETSPLITTRANSACTIONS_V1";
-}
-
-// Destructor: clears any data records stored in memory
-ScheduledSplitTable::~ScheduledSplitTable()
-{
-    delete fake_;
-    destroy_cache();
-}
-
-void ScheduledSplitTable::ensure_data()
-{
-    m_db->Begin();
-    m_db->Commit();
 }

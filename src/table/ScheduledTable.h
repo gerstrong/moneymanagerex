@@ -13,14 +13,14 @@
  *      @author [sqlite2cpp.py]
  *
  *      Revision History:
- *          AUTO GENERATED at 2026-02-16 15:07:22.405413.
+ *          AUTO GENERATED at 2026-02-23 02:03:14.067947.
  *          DO NOT EDIT!
  */
 //=============================================================================
 
 #pragma once
 
-#include "_TableFactory.h"
+#include "_TableBase.h"
 
 // Columns in database table BILLSDEPOSITS_V1
 struct ScheduledCol
@@ -194,7 +194,6 @@ struct ScheduledCol
 struct ScheduledRow
 {
     using Col = ScheduledCol;
-    using COL_ID = Col::COL_ID;
 
     int64 BDID; // primary key
     int64 ACCOUNTID;
@@ -220,17 +219,18 @@ struct ScheduledRow
 
     int64 id() const { return BDID; }
     void id(const int64 id) { BDID = id; }
-    void destroy() { delete this; }
-
-    bool equals(const ScheduledRow* r) const;
     void to_insert_stmt(wxSQLite3Statement& stmt, int64 id) const;
-    void from_select_result(wxSQLite3ResultSet& q);
+    void to_update_stmt(wxSQLite3Statement& stmt) const;
+    ScheduledRow& from_select_result(wxSQLite3ResultSet& q);
     wxString to_json() const;
     void as_json(PrettyWriter<StringBuffer>& json_writer) const;
-    row_t to_row_t() const;
-    void to_template(html_template& t) const;
+    row_t to_html_row() const;
+    void to_html_template(html_template& t) const;
+    void destroy() { delete this; }
 
-    ScheduledRow& operator=(const ScheduledRow& other);
+    ScheduledRow& operator= (const ScheduledRow& other);
+    ScheduledRow& clone_from(const ScheduledRow& other);
+    bool equals(const ScheduledRow* other) const;
     bool operator< (const ScheduledRow& other) const { return id() < other.id(); }
     bool operator< (const ScheduledRow* other) const { return id() < other->id(); }
 
@@ -471,29 +471,28 @@ struct ScheduledRow
 };
 
 // Interface to database table BILLSDEPOSITS_V1
-struct ScheduledTable : public TableFactory<ScheduledRow>
+struct ScheduledTable : public TableBase
 {
-    // Use Col::(COLUMN_NAME) until model provides similar functionality based on Data.
-    using BDID = Col::BDID;
-    using ACCOUNTID = Col::ACCOUNTID;
-    using TOACCOUNTID = Col::TOACCOUNTID;
-    using PAYEEID = Col::PAYEEID;
-    using TRANSCODE = Col::TRANSCODE;
-    using TRANSAMOUNT = Col::TRANSAMOUNT;
-    using STATUS = Col::STATUS;
-    using TRANSACTIONNUMBER = Col::TRANSACTIONNUMBER;
-    using NOTES = Col::NOTES;
-    using CATEGID = Col::CATEGID;
-    using TRANSDATE = Col::TRANSDATE;
-    using FOLLOWUPID = Col::FOLLOWUPID;
-    using TOTRANSAMOUNT = Col::TOTRANSAMOUNT;
-    using REPEATS = Col::REPEATS;
-    using NEXTOCCURRENCEDATE = Col::NEXTOCCURRENCEDATE;
-    using NUMOCCURRENCES = Col::NUMOCCURRENCES;
-    using COLOR = Col::COLOR;
+    using Row = ScheduledRow;
+    using Col = typename Row::Col;
 
     ScheduledTable();
-    ~ScheduledTable();
-
-    void ensure_data() override;
+    ~ScheduledTable() {}
 };
+
+inline ScheduledRow::ScheduledRow(wxSQLite3ResultSet& q)
+{
+    from_select_result(q);
+}
+
+inline void ScheduledRow::to_update_stmt(wxSQLite3Statement& stmt) const
+{
+    to_insert_stmt(stmt, id());
+}
+
+inline ScheduledRow& ScheduledRow::clone_from(const ScheduledRow& other)
+{
+    *this = other;
+    id(-1);
+    return *this;
+}

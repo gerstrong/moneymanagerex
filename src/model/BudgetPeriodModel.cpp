@@ -19,8 +19,8 @@
 #include "BudgetPeriodModel.h"
 #include "BudgetModel.h"
 
-BudgetPeriodModel::BudgetPeriodModel()
-: Model<BudgetPeriodTable>()
+BudgetPeriodModel::BudgetPeriodModel() :
+    Model<BudgetPeriodTable, BudgetPeriodData>()
 {
 }
 
@@ -35,8 +35,8 @@ BudgetPeriodModel::~BudgetPeriodModel()
 BudgetPeriodModel& BudgetPeriodModel::instance(wxSQLite3Database* db)
 {
     BudgetPeriodModel& ins = Singleton<BudgetPeriodModel>::instance();
+    ins.reset_cache();
     ins.m_db = db;
-    ins.destroy_cache();
     ins.ensure_table();
 
     return ins;
@@ -48,26 +48,28 @@ BudgetPeriodModel& BudgetPeriodModel::instance()
     return Singleton<BudgetPeriodModel>::instance();
 }
 
-bool BudgetPeriodModel::remove(int64 id)
+bool BudgetPeriodModel::remove_depen(int64 id)
 {
-    for (const BudgetModel::Data& d : BudgetModel::instance().find(BudgetModel::BUDGETYEARID(id)))
-        BudgetModel::instance().remove(d.BUDGETENTRYID);
-    return this->remove(id);
+    for (const BudgetData& d : BudgetModel::instance().find(
+        BudgetCol::BUDGETYEARID(id)
+    ))
+        BudgetModel::instance().remove_depen(d.BUDGETENTRYID);
+    return remove_data(id);
 }
 
 // Setter
 void BudgetPeriodModel::Set(int64 year_id, const wxString& value)
 {
-    Data* info = this->get_id(year_id);
-    if (info) {
-        info->BUDGETYEARNAME = value;
-        save(info);
+    Data* bp_n = unsafe_get_data_n(year_id);
+    if (bp_n) {
+        bp_n->BUDGETYEARNAME = value;
+        unsafe_update_data(bp_n);
     }
     else {
-        info = this->create();
-        info->BUDGETYEARID = year_id;
-        info->BUDGETYEARNAME = value;
-        save(info);
+        Data new_bp_d = Data();
+        new_bp_d.BUDGETYEARID = year_id;
+        new_bp_d.BUDGETYEARNAME = value;
+        add_data(new_bp_d);
     }
 }
 
@@ -75,10 +77,10 @@ int64 BudgetPeriodModel::Add(const wxString& value)
 {
     int64 year_id = this->Get(value);
     if (year_id < 0) {
-        Data* e = this->create();
-        e->BUDGETYEARNAME = value;
-        save(e);
-        year_id = e->id();
+        Data new_bp_d = Data();
+        new_bp_d.BUDGETYEARNAME = value;
+        add_data(new_bp_d);
+        year_id = new_bp_d.id();
     }
     return year_id;
 }
@@ -86,15 +88,13 @@ int64 BudgetPeriodModel::Add(const wxString& value)
 // Getter
 wxString BudgetPeriodModel::Get(int64 year_id)
 {
-    Data* e = this->get_id(year_id);
-    if (e) return e->BUDGETYEARNAME;
-
-    return "";
+    const Data* bp_n = get_data_n(year_id);
+    return bp_n ? bp_n->BUDGETYEARNAME : "";
 }
 
 int64 BudgetPeriodModel::Get(const wxString& year_name)
 {
-    for (const auto& record: this->get_all()) {
+    for (const auto& record: this->find_all()) {
         if (record.BUDGETYEARNAME == year_name)
             return record.BUDGETYEARID;
     }
@@ -104,15 +104,12 @@ int64 BudgetPeriodModel::Get(const wxString& year_name)
 
 bool BudgetPeriodModel::Exists(int64 year_id)
 {
-    Data* e = this->get_id(year_id);
-    if (e) return true;
-
-    return false;
+    return get_data_n(year_id) != nullptr;
 }
 
 bool BudgetPeriodModel::Exists(const wxString& year_name)
 {
-    for (const auto& record: this->get_all()) {
+    for (const auto& record: this->find_all()) {
         if (record.BUDGETYEARNAME == year_name) 
             return true;
     }

@@ -23,8 +23,8 @@
 #include "TransactionShareModel.h"
 #include "CurrencyHistoryModel.h"
 
-StockModel::StockModel()
-: Model<StockTable>()
+StockModel::StockModel() :
+    Model<StockTable, StockData>()
 {
 }
 
@@ -39,8 +39,8 @@ StockModel::~StockModel()
 StockModel& StockModel::instance(wxSQLite3Database* db)
 {
     StockModel& ins = Singleton<StockModel>::instance();
+    ins.reset_cache();
     ins.m_db = db;
-    ins.destroy_cache();
     ins.ensure_table();
 
     return ins;
@@ -48,7 +48,7 @@ StockModel& StockModel::instance(wxSQLite3Database* db)
 
 wxString StockModel::get_stock_name(int64 stock_id)
 {
-    Data* stock = instance().get_id(stock_id);
+    const Data* stock = instance().get_data_n(stock_id);
     if (stock)
         return stock->STOCKNAME;
     else
@@ -97,19 +97,20 @@ double StockModel::CurrentValue(const Data& r)
 * Remove the Data record from memory and the database.
 * Delete also all stock history
 */
-bool StockModel::remove(int64 id)
+bool StockModel::remove_depen(int64 id)
 {
-    StockModel::Data *data = this->get_id(id);
-    const auto &stocks = StockModel::instance().find(StockModel::SYMBOL(data->SYMBOL));
-    if (stocks.size() == 1)
-    {
+    const StockData *stock_n = get_data_n(id);
+    const auto& stock_a = StockModel::instance().find(StockCol::SYMBOL(stock_n->SYMBOL));
+    if (stock_a.size() == 1) {
         this->Savepoint();
-        for (const auto& r : StockHistoryModel::instance().find(StockHistoryModel::SYMBOL(data->SYMBOL)))
-            StockHistoryModel::instance().remove(r.id());
+        for (const auto& sh_d : StockHistoryModel::instance().find(
+            StockHistoryCol::SYMBOL(stock_n->SYMBOL)
+        ))
+            StockHistoryModel::instance().remove_depen(sh_d.id());
         this->ReleaseSavepoint();
     }
 
-    return this->remove(id);
+    return remove_data(id);
 }
 
 /**
@@ -118,9 +119,11 @@ Returns the last price date of a given stock
 wxString StockModel::lastPriceDate(const Data* entity)
 {
     wxString dtStr = entity->PURCHASEDATE;
-    StockHistoryModel::Data_Set histData = StockHistoryModel::instance().find(SYMBOL(entity->SYMBOL));
+    StockHistoryModel::DataA histData = StockHistoryModel::instance().find(
+        StockCol::SYMBOL(entity->SYMBOL)
+    );
 
-    std::sort(histData.begin(), histData.end(), StockHistoryRow::SorterByDATE());
+    std::sort(histData.begin(), histData.end(), StockHistoryData::SorterByDATE());
     if (!histData.empty())
         dtStr = histData.back().DATE;
 
@@ -130,17 +133,19 @@ wxString StockModel::lastPriceDate(const Data* entity)
 /**
 Returns the total stock balance at a given date
 */
-double StockModel::getDailyBalanceAt(const AccountModel::Data *account, const wxDate& date)
+double StockModel::getDailyBalanceAt(const AccountData *account, const wxDate& date)
 {
     wxString strDate = date.FormatISODate();
     std::map<int64, double> totBalance;
 
-    Data_Set stocks = this->instance().find(HELDAT(account->id()));
+    DataA stocks = this->instance().find(StockCol::HELDAT(account->id()));
     for (const auto & stock : stocks)
     {
         wxString precValueDate, nextValueDate;
-        StockHistoryModel::Data_Set stock_hist = StockHistoryModel::instance().find(SYMBOL(stock.SYMBOL));
-        std::stable_sort(stock_hist.begin(), stock_hist.end(), StockHistoryRow::SorterByDATE());
+        StockHistoryModel::DataA stock_hist = StockHistoryModel::instance().find(
+            StockCol::SYMBOL(stock.SYMBOL)
+        );
+        std::stable_sort(stock_hist.begin(), stock_hist.end(), StockHistoryData::SorterByDATE());
         std::reverse(stock_hist.begin(), stock_hist.end());
 
         double valueAtDate = 0.0,  precValue = 0.0, nextValue = 0.0;
@@ -188,10 +193,10 @@ double StockModel::getDailyBalanceAt(const AccountModel::Data *account, const wx
 
         double numShares = 0.0;
 
-        TransactionLinkModel::Data_Set linkrecords = TransactionLinkModel::TranslinkList<StockModel>(stock.STOCKID);
+        TransactionLinkModel::DataA linkrecords = TransactionLinkModel::TranslinkList<StockModel>(stock.STOCKID);
         for (const auto& linkrecord : linkrecords)
         {
-            TransactionModel::Data* txn = TransactionModel::instance().get_id(linkrecord.CHECKINGACCOUNTID);
+            const TransactionData* txn = TransactionModel::instance().get_data_n(linkrecord.CHECKINGACCOUNTID);
             if (txn->TRANSID > -1 && txn->DELETEDTIME.IsEmpty() && TransactionModel::getTransDateTime(txn).FormatISODate() <= strDate) {
                 numShares += TransactionShareModel::instance().ShareEntry(linkrecord.CHECKINGACCOUNTID)->SHARENUMBER;
             }
@@ -217,25 +222,27 @@ to base currency.
 */
 double StockModel::RealGainLoss(const Data* r, bool to_base_curr)
 {
-    CurrencyModel::Data* currency = AccountModel::currency(AccountModel::instance().get_id(r->HELDAT));
-    TransactionLinkModel::Data_Set trans_list = TransactionLinkModel::TranslinkList<StockModel>(r->STOCKID);
+    const CurrencyData* currency = AccountModel::currency(
+        AccountModel::instance().get_data_n(r->HELDAT)
+    );
+    TransactionLinkModel::DataA trans_list = TransactionLinkModel::TranslinkList<StockModel>(r->STOCKID);
     double real_gain_loss = 0;
     double total_shares = 0;
     double total_initial_value = 0;
     double avg_share_price = 0;
     double conv_rate = 1;
 
-    TransactionModel::Data_Set checking_list;
+    TransactionModel::DataA checking_list;
     for (const auto &trans : trans_list)
     {
-        TransactionModel::Data* checking_entry = TransactionModel::instance().get_id(trans.CHECKINGACCOUNTID);
+        const TransactionData* checking_entry = TransactionModel::instance().get_data_n(trans.CHECKINGACCOUNTID);
         if (checking_entry->TRANSID > -1 && checking_entry->DELETEDTIME.IsEmpty()) checking_list.push_back(*checking_entry);
     }
-    std::stable_sort(checking_list.begin(), checking_list.end(), TransactionRow::SorterByTRANSDATE());
+    std::stable_sort(checking_list.begin(), checking_list.end(), TransactionData::SorterByTRANSDATE());
 
     for (const auto &trans : checking_list)
     {
-        TransactionShareModel::Data* share_entry = TransactionShareModel::ShareEntry(trans.TRANSID);
+        const TransactionShareData* share_entry = TransactionShareModel::ShareEntry(trans.TRANSID);
         conv_rate = to_base_curr ? CurrencyHistoryModel::getDayRate(currency->CURRENCYID, trans.TRANSDATE) : 1;
         total_shares += share_entry->SHARENUMBER;
 
@@ -285,48 +292,48 @@ double StockModel::UnrealGainLoss(const Data* r, bool to_base_curr)
 {
     if (!to_base_curr)
         return CurrentValue(r) - InvestmentValue(r);
-    else
-    {
-        CurrencyModel::Data* currency = AccountModel::currency(AccountModel::instance().get_id(r->HELDAT));
-        double conv_rate = CurrencyHistoryModel::getDayRate(currency->CURRENCYID);
-        TransactionLinkModel::Data_Set trans_list = TransactionLinkModel::TranslinkList<StockModel>(r->STOCKID);
-        if (!trans_list.empty())
-        {
-            double total_shares = 0;
-            double total_initial_value = 0;
-            double avg_share_price = 0;
 
-            TransactionModel::Data_Set checking_list;
-            for (const auto &trans : trans_list)
-            {
-                TransactionModel::Data* checking_entry = TransactionModel::instance().get_id(trans.CHECKINGACCOUNTID);
-                if (checking_entry->TRANSID > -1 && checking_entry->DELETEDTIME.IsEmpty()) checking_list.push_back(*checking_entry);
-            }
-            std::stable_sort(checking_list.begin(), checking_list.end(), TransactionRow::SorterByTRANSDATE());
+    const CurrencyData* currency = AccountModel::currency(
+        AccountModel::instance().get_data_n(r->HELDAT)
+    );
+    double conv_rate = CurrencyHistoryModel::getDayRate(currency->CURRENCYID);
+    TransactionLinkModel::DataA trans_list = TransactionLinkModel::TranslinkList<StockModel>(r->STOCKID);
+    if (!trans_list.empty()) {
+        double total_shares = 0;
+        double total_initial_value = 0;
+        double avg_share_price = 0;
 
-            for (const auto &trans : checking_list)
-            {
-                TransactionShareModel::Data* share_entry = TransactionShareModel::ShareEntry(trans.TRANSID);
-                conv_rate = CurrencyHistoryModel::getDayRate(currency->CURRENCYID, trans.TRANSDATE);
-                total_shares += share_entry->SHARENUMBER;
-                if (total_shares < 0) total_shares = 0;
-
-                if (share_entry->SHARENUMBER > 0) {
-                    total_initial_value += (share_entry->SHARENUMBER * share_entry->SHAREPRICE + share_entry->SHARECOMMISSION) * conv_rate;
-                }
-                else {
-                    total_initial_value += share_entry->SHARENUMBER * avg_share_price;
-                }
-
-                if (total_initial_value < 0) total_initial_value = 0;
-                if (total_shares > 0) avg_share_price = total_initial_value / total_shares;
-            }
-            conv_rate = CurrencyHistoryModel::getDayRate(currency->CURRENCYID);
-            return CurrentValue(r) * conv_rate - total_initial_value;
+        TransactionModel::DataA checking_list;
+        for (const auto &trans : trans_list) {
+            const TransactionData* checking_entry = TransactionModel::instance().get_data_n(trans.CHECKINGACCOUNTID);
+            if (checking_entry->TRANSID > -1 && checking_entry->DELETEDTIME.IsEmpty())
+                checking_list.push_back(*checking_entry);
         }
-        else {
-            return (CurrentValue(r) - InvestmentValue(r)) * conv_rate;
+        std::stable_sort(checking_list.begin(), checking_list.end(),
+            TransactionData::SorterByTRANSDATE()
+        );
+
+        for (const auto &trans : checking_list) {
+            const TransactionShareData* share_entry = TransactionShareModel::ShareEntry(trans.TRANSID);
+            conv_rate = CurrencyHistoryModel::getDayRate(currency->CURRENCYID, trans.TRANSDATE);
+            total_shares += share_entry->SHARENUMBER;
+            if (total_shares < 0) total_shares = 0;
+
+            if (share_entry->SHARENUMBER > 0) {
+                total_initial_value += (share_entry->SHARENUMBER * share_entry->SHAREPRICE + share_entry->SHARECOMMISSION) * conv_rate;
+            }
+            else {
+                total_initial_value += share_entry->SHARENUMBER * avg_share_price;
+            }
+
+            if (total_initial_value < 0) total_initial_value = 0;
+            if (total_shares > 0) avg_share_price = total_initial_value / total_shares;
         }
+        conv_rate = CurrencyHistoryModel::getDayRate(currency->CURRENCYID);
+        return CurrentValue(r) * conv_rate - total_initial_value;
+    }
+    else {
+        return (CurrentValue(r) - InvestmentValue(r)) * conv_rate;
     }
 }
 
@@ -335,79 +342,78 @@ void StockModel::UpdateCurrentPrice(const wxString& symbol, const double price)
 {
     double current_price = price;
     if (price == -1) {
-        StockHistoryModel::Data_Set histData = StockHistoryModel::instance().find(StockHistoryModel::SYMBOL(symbol));
-        if (!histData.empty())
-        {
-            std::sort(histData.begin(), histData.end(), StockHistoryRow::SorterByDATE());
+        StockHistoryModel::DataA histData = StockHistoryModel::instance().find(
+            StockHistoryCol::SYMBOL(symbol)
+        );
+        if (!histData.empty()) {
+            std::sort(histData.begin(), histData.end(), StockHistoryData::SorterByDATE());
             current_price = histData.back().VALUE;
         }
     }
-    if (current_price != -1)
-    {
-        StockModel::Data_Set stocks = StockModel::instance().find(StockModel::SYMBOL(symbol));
-        for (auto& stock : stocks) {
-            StockModel::Data* stockRecord = StockModel::instance().get_id(stock.STOCKID);
-            stockRecord->CURRENTPRICE = current_price;
-            StockModel::instance().save(stockRecord);
+    if (current_price != -1) {
+        StockModel::DataA stock_a = StockModel::instance().find(
+            StockCol::SYMBOL(symbol)
+        );
+        for (auto& stock_d : stock_a) {
+            // CHECK: use stock_d directly
+            StockData* stock_n = StockModel::instance().unsafe_get_data_n(stock_d.STOCKID);
+            stock_n->CURRENTPRICE = current_price;
+            StockModel::instance().unsafe_update_data(stock_n);
         }
     }
 }
 
-void StockModel::UpdatePosition(StockModel::Data* stock_entry)
+void StockModel::UpdatePosition(StockData* stock_n)
 {
-    TransactionLinkModel::Data_Set trans_list = TransactionLinkModel::TranslinkList<StockModel>(stock_entry->STOCKID);
+    TransactionLinkModel::DataA tl_a = TransactionLinkModel::TranslinkList<StockModel>(stock_n->STOCKID);
     double total_shares = 0;
     double total_initial_value = 0;
     double total_commission = 0;
     double avg_share_price = 0;
     wxString earliest_date = wxDate::Today().FormatISODate();
-    TransactionModel::Data_Set checking_list;
-    for (const auto &trans : trans_list)
-    {
-        TransactionModel::Data* checking_entry = TransactionModel::instance().get_id(trans.CHECKINGACCOUNTID);
-        if (checking_entry->TRANSID > -1 && checking_entry->DELETEDTIME.IsEmpty() && TransactionModel::status_id(checking_entry->STATUS) != TransactionModel::STATUS_ID_VOID)
-            checking_list.push_back(*checking_entry);
+    TransactionModel::DataA trx_a;
+    for (const auto& tl_d : tl_a) {
+        const TransactionData* trx_n = TransactionModel::instance().get_data_n(tl_d.CHECKINGACCOUNTID);
+        if (trx_n->TRANSID > -1 && trx_n->DELETEDTIME.IsEmpty() && TransactionModel::status_id(trx_n->STATUS) != TransactionModel::STATUS_ID_VOID)
+            trx_a.push_back(*trx_n);
     }
-    std::stable_sort(checking_list.begin(), checking_list.end(), TransactionRow::SorterByTRANSDATE());
-    for (const auto &trans : checking_list)
-    {
-        TransactionShareModel::Data* share_entry = TransactionShareModel::ShareEntry(trans.TRANSID);
+    std::stable_sort(trx_a.begin(), trx_a.end(), TransactionData::SorterByTRANSDATE());
+    for (const auto& trx_d : trx_a) {
+        const TransactionShareData* ts_n = TransactionShareModel::ShareEntry(trx_d.TRANSID);
 
-        total_shares += share_entry->SHARENUMBER;
+        total_shares += ts_n->SHARENUMBER;
         if (total_shares < 0)
             total_shares = 0;
 
-        if (share_entry->SHARENUMBER > 0)
-            total_initial_value += share_entry->SHARENUMBER * share_entry->SHAREPRICE + share_entry->SHARECOMMISSION;
+        if (ts_n->SHARENUMBER > 0)
+            total_initial_value += ts_n->SHARENUMBER * ts_n->SHAREPRICE + ts_n->SHARECOMMISSION;
         else
-            total_initial_value += share_entry->SHARENUMBER * avg_share_price;
+            total_initial_value += ts_n->SHARENUMBER * avg_share_price;
 
         if (total_initial_value < 0)
             total_initial_value = 0;
         if (total_shares > 0)
             avg_share_price = total_initial_value / total_shares;
 
-        total_commission += share_entry->SHARECOMMISSION;
+        total_commission += ts_n->SHARECOMMISSION;
 
-        wxString transdate = trans.TRANSDATE;
+        wxString transdate = trx_d.TRANSDATE;
         if (transdate < earliest_date)
             earliest_date = transdate;
     }
 
     // The stock record contains the total of share transactions.
-    if (trans_list.empty())
-    {
-        stock_entry->PURCHASEPRICE = stock_entry->CURRENTPRICE;
+    if (tl_a.empty()) {
+        stock_n->PURCHASEPRICE = stock_n->CURRENTPRICE;
     }
-    else
-    {
+    else {
         wxDateTime purchasedate;
         purchasedate.ParseDateTime(earliest_date) || purchasedate.ParseDate(earliest_date);
-        stock_entry->PURCHASEDATE = purchasedate.FormatISODate();
-        stock_entry->PURCHASEPRICE = avg_share_price;
-        stock_entry->NUMSHARES = total_shares;
-        stock_entry->VALUE = total_initial_value;
-        stock_entry->COMMISSION = total_commission;
+        stock_n->PURCHASEDATE  = purchasedate.FormatISODate();
+        stock_n->PURCHASEPRICE = avg_share_price;
+        stock_n->NUMSHARES     = total_shares;
+        stock_n->VALUE         = total_initial_value;
+        stock_n->COMMISSION    = total_commission;
     }
-    StockModel::instance().save(stock_entry);
+    StockModel::instance().unsafe_save_data(stock_n);
 }

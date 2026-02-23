@@ -20,11 +20,14 @@
 #pragma once
 
 #include "base/defs.h"
+
 #include "table/TransactionShareTable.h"
+#include "data/TransactionShareData.h"
+
 #include "_ModelBase.h"
 #include "TransactionSplitModel.h"
 
-class TransactionShareModel : public Model<TransactionShareTable>
+class TransactionShareModel : public Model<TransactionShareTable, TransactionShareData>
 {
 public:
     TransactionShareModel();
@@ -47,11 +50,11 @@ public:
 
 private:
     /** Return the list of share records for the given checking_id */
-    static TransactionShareModel::Data_Set ShareList(const int64 checking_id);
+    static TransactionShareModel::DataA ShareList(const int64 checking_id);
 
 public:
     /* Return the share record for the checking account */
-    static TransactionShareModel::Data* ShareEntry(const int64 checking_id);
+    static TransactionShareData* ShareEntry(const int64 checking_id);
 
     /**
     Create a Share record if it does not exist.

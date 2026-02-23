@@ -227,9 +227,11 @@ void OtherPreferences::SaveStocksUrl()
     }
     else
     {
-        InfoModel::Data_Set items = InfoModel::instance().find(InfoModel::INFONAME("STOCKURL"));
+        InfoModel::DataA items = InfoModel::instance().find(
+            InfoCol::INFONAME("STOCKURL")
+        );
         if (!items.empty())
-            InfoModel::instance().remove(items[0].INFOID);
+            InfoModel::instance().remove_depen(items[0].INFOID);
     }
 }
 

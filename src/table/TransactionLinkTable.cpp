@@ -13,15 +13,17 @@
  *      @author [sqlite2cpp.py]
  *
  *      Revision History:
- *          AUTO GENERATED at 2026-02-16 15:07:22.405413.
+ *          AUTO GENERATED at 2026-02-23 02:03:14.067947.
  *          DO NOT EDIT!
  */
 //=============================================================================
 
 #include "_TableFactory.tpp"
 #include "TransactionLinkTable.h"
+#include "data/TransactionLinkData.h"
 
-template class TableFactory<TransactionLinkRow>;
+template class TableFactory<TransactionLinkTable, TransactionLinkData>;
+template class mmCache<int64, TransactionLinkData>;
 
 // List of column names in database table TRANSLINK_V1,
 // in the order of TransactionLinkCol::COL_ID.
@@ -42,23 +44,7 @@ TransactionLinkRow::TransactionLinkRow()
     LINKRECORDID = -1;
 }
 
-TransactionLinkRow::TransactionLinkRow(wxSQLite3ResultSet& q)
-{
-    from_select_result(q);
-}
-
-bool TransactionLinkRow::equals(const TransactionLinkRow* r) const
-{
-    if ( TRANSLINKID != r->TRANSLINKID) return false;
-    if ( CHECKINGACCOUNTID != r->CHECKINGACCOUNTID) return false;
-    if (!LINKTYPE.IsSameAs(r->LINKTYPE)) return false;
-    if ( LINKRECORDID != r->LINKRECORDID) return false;
-
-    return true;
-}
-
-// Bind a Row record to database statement.
-// Use the id argument instead of the row id.
+// Bind a Row record to database insert statement.
 void TransactionLinkRow::to_insert_stmt(wxSQLite3Statement& stmt, int64 id) const
 {
     stmt.Bind(1, CHECKINGACCOUNTID);
@@ -67,12 +53,14 @@ void TransactionLinkRow::to_insert_stmt(wxSQLite3Statement& stmt, int64 id) cons
     stmt.Bind(4, id);
 }
 
-void TransactionLinkRow::from_select_result(wxSQLite3ResultSet& q)
+TransactionLinkRow& TransactionLinkRow::from_select_result(wxSQLite3ResultSet& q)
 {
     TRANSLINKID = q.GetInt64(0);
     CHECKINGACCOUNTID = q.GetInt64(1);
     LINKTYPE = q.GetString(2);
     LINKRECORDID = q.GetInt64(3);
+
+    return *this;
 }
 
 // Return the data record as a json string
@@ -104,7 +92,7 @@ void TransactionLinkRow::as_json(PrettyWriter<StringBuffer>& json_writer) const
     json_writer.Int64(LINKRECORDID.GetValue());
 }
 
-row_t TransactionLinkRow::to_row_t() const
+row_t TransactionLinkRow::to_html_row() const
 {
     row_t row;
 
@@ -116,7 +104,7 @@ row_t TransactionLinkRow::to_row_t() const
     return row;
 }
 
-void TransactionLinkRow::to_template(html_template& t) const
+void TransactionLinkRow::to_html_template(html_template& t) const
 {
     t(L"TRANSLINKID") = TRANSLINKID.GetValue();
     t(L"CHECKINGACCOUNTID") = CHECKINGACCOUNTID.GetValue();
@@ -124,7 +112,7 @@ void TransactionLinkRow::to_template(html_template& t) const
     t(L"LINKRECORDID") = LINKRECORDID.GetValue();
 }
 
-TransactionLinkRow& TransactionLinkRow::operator=(const TransactionLinkRow& other)
+TransactionLinkRow& TransactionLinkRow::operator= (const TransactionLinkRow& other)
 {
     if (this == &other) return *this;
 
@@ -134,6 +122,16 @@ TransactionLinkRow& TransactionLinkRow::operator=(const TransactionLinkRow& othe
     LINKRECORDID = other.LINKRECORDID;
 
     return *this;
+}
+
+bool TransactionLinkRow::equals(const TransactionLinkRow* other) const
+{
+    if ( TRANSLINKID != other->TRANSLINKID) return false;
+    if ( CHECKINGACCOUNTID != other->CHECKINGACCOUNTID) return false;
+    if (!LINKTYPE.IsSameAs(other->LINKTYPE)) return false;
+    if ( LINKRECORDID != other->LINKRECORDID) return false;
+
+    return true;
 }
 
 TransactionLinkTable::TransactionLinkTable()
@@ -156,17 +154,4 @@ TransactionLinkTable::TransactionLinkTable()
     m_delete_query = "DELETE FROM TRANSLINK_V1 WHERE TRANSLINKID = ?";
 
     m_select_query = "SELECT TRANSLINKID, CHECKINGACCOUNTID, LINKTYPE, LINKRECORDID FROM TRANSLINK_V1";
-}
-
-// Destructor: clears any data records stored in memory
-TransactionLinkTable::~TransactionLinkTable()
-{
-    delete fake_;
-    destroy_cache();
-}
-
-void TransactionLinkTable::ensure_data()
-{
-    m_db->Begin();
-    m_db->Commit();
 }

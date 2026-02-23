@@ -471,14 +471,13 @@ int mmGUIApp::OnExit()
         m_frame->Destroy();
 #endif
 
-    UsageModel::Data* usage = UsageModel::instance().create();
-    usage->USAGEDATE = wxDate::Today().FormatISODate();
-
     wxString rj = UsageModel::instance().To_JSON_String();
     wxLogDebug("RapidJson\n%s", rj);
 
-    usage->JSONCONTENT = rj;
-    UsageModel::instance().save(usage);
+    UsageData new_usage_d = UsageData();
+    new_usage_d.USAGEDATE   = wxDate::Today().FormatISODate();
+    new_usage_d.JSONCONTENT = rj;
+    UsageModel::instance().add_data(new_usage_d);
 
     if (m_setting_db) {
         m_setting_db->Close();

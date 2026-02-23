@@ -85,7 +85,7 @@ void TransactionFilter::setCategoryList(const wxArrayInt64 &categoryList)
 template<class MODEL, class DATA>
 bool TransactionFilter::checkCategory(
     const DATA& tran,
-    const std::map<int64, typename MODEL::Split_Data_Set> & splits
+    const std::map<int64, typename MODEL::Split_DataA> & splits
 ) {
     const auto it = splits.find(tran.id());
     if (it == splits.end()) {
@@ -107,8 +107,8 @@ bool TransactionFilter::checkCategory(
 }
 
 bool TransactionFilter::mmIsRecordMatches(
-    const TransactionModel::Data &tran,
-    const std::map<int64, TransactionSplitModel::Data_Set>& split
+    const TransactionData &tran,
+    const std::map<int64, TransactionSplitModel::DataA>& split
 ) {
     bool ok = true;
     wxString strDate = TransactionModel::getTransDateTime(tran).FormatISOCombined();
@@ -131,7 +131,7 @@ wxString TransactionFilter::getHTML()
     m_trans.clear();
     const auto splits = TransactionSplitModel::instance().get_all_id();
     const auto tags = TagLinkModel::instance().get_all_id(TransactionModel::refTypeName);
-    for (const auto& tran : TransactionModel::instance().get_all()) //TODO: find should be faster
+    for (const auto& tran : TransactionModel::instance().find_all()) //TODO: find should be faster
     {
         if (!mmIsRecordMatches(tran, splits)) continue;
         TransactionModel::Full_Data full_tran(tran, splits, tags);
@@ -167,7 +167,7 @@ wxString TransactionFilter::getHTML()
             m_trans.push_back(full_tran);
     }
 
-    std::stable_sort(m_trans.begin(), m_trans.end(), TransactionRow::SorterByTRANSDATE());
+    std::stable_sort(m_trans.begin(), m_trans.end(), TransactionData::SorterByTRANSDATE());
 
     const wxString extra_style = R"(
 table {
@@ -231,25 +231,20 @@ table {
         else
             hb.addTableCell(wxGetTranslation(transaction.TRANSCODE));
 
-        AccountModel::Data* acc;
-        const CurrencyModel::Data* curr;
-        acc = AccountModel::instance().get_id(transaction.ACCOUNTID);
-        curr = AccountModel::currency(acc);
-        if (acc)
-        {
+        const AccountData* acc = AccountModel::instance().get_data_n(transaction.ACCOUNTID);
+        if (acc) {
+            const CurrencyData* curr = AccountModel::currency(acc);
             double flow = TransactionModel::account_flow(transaction, acc->ACCOUNTID);
             hb.addCurrencyCell(flow, curr);
         }
-        else
-        {
+        else {
             wxFAIL_MSG("account for transaction not found");
             hb.addEmptyTableCell();
         }
 
         // Attachments
         wxString AttachmentsLink = "";
-        if (AttachmentModel::instance().NrAttachments(AttRefType, transaction.TRANSID))
-        {
+        if (AttachmentModel::instance().NrAttachments(AttRefType, transaction.TRANSID)) {
             AttachmentsLink = wxString::Format(R"(<a href = "attachment:%s|%lld" target="_blank">%s</a>)",
                 AttRefType, transaction.TRANSID, mmAttachmentManage::GetAttachmentNoteSign());
         }

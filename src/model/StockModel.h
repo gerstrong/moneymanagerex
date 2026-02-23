@@ -20,14 +20,16 @@
 #pragma once
 
 #include "base/defs.h"
+
 #include "table/StockTable.h"
+#include "data/StockData.h"
+
 #include "_ModelBase.h"
 #include "AccountModel.h"
 
-class StockModel : public Model<StockTable>
+class StockModel : public Model<StockTable, StockData>
 {
 public:
-    using Model<StockTable>::remove;
     StockModel();
     ~StockModel();
 
@@ -78,7 +80,7 @@ public:
     * Remove the Data record from memory and the database.
     * Delete also all stock history
     */
-    bool remove(int64 id);
+    bool remove_depen(int64 id) override;
 
     /**
     Returns the last price date of a given stock
@@ -88,7 +90,7 @@ public:
     /**
     Returns the total stock balance at a given date
     */
-    double getDailyBalanceAt(const AccountModel::Data *account, const wxDate& date);
+    double getDailyBalanceAt(const AccountData *account, const wxDate& date);
 
     /*
     stock_entry.PURCHASEPRICE = avg price of shares purchased.
@@ -96,7 +98,7 @@ public:
     stock_entry.VALUE     = value of shares based on:
     ... share_entry.SHARENUMBER * share_entry.SHAREPRICE
     */
-    static void UpdatePosition(StockModel::Data* stock_entry);
+    static void UpdatePosition(StockData* stock_entry);
 
 public:
     static const wxString refTypeName;

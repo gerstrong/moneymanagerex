@@ -165,7 +165,7 @@ void CategoryManager::saveCurrentCollapseState()
     }
 }
 
-bool CategoryManager::AppendSubcategoryItems(wxTreeItemId parent, const CategoryModel::Data* category) {
+bool CategoryManager::AppendSubcategoryItems(wxTreeItemId parent, const CategoryData* category) {
     bool show_hidden_categs = m_tbShowAll->GetValue();
     bool catDisplayed = false;
     for (auto& subcat : m_categ_children[category->CATEGID]) {
@@ -202,7 +202,7 @@ void CategoryManager::fillControls()
     const wxString match = m_maskStr + "*";
     wxTreeItemId maincat = root_;
     m_categ_children.clear();
-    for (CategoryModel::Data cat : CategoryModel::instance().get_all(CategoryCol::COL_ID_CATEGNAME)) {
+    for (CategoryData cat : CategoryModel::instance().find_all(CategoryCol::COL_ID_CATEGNAME)) {
         m_categ_children[cat.PARENTID].push_back(cat);
     }
 
@@ -360,43 +360,58 @@ bool CategoryManager::validateName(wxString name)
 void CategoryManager::OnAdd(wxCommandEvent& /*event*/)
 {
     wxString prompt_msg = _t("Enter the name for the new category:");
-    const wxString& text = wxGetTextFromUser(prompt_msg, _t("Add Category"), "");
-    if (text.IsEmpty() || !validateName(text))
+    const wxString& name = wxGetTextFromUser(prompt_msg, _t("Add Category"), "");
+    if (name.IsEmpty() || !validateName(name))
         return;
-    CategoryModel::Data* selectedCategory = dynamic_cast<mmTreeItemCateg*>(m_treeCtrl->GetItemData(m_selectedItemId))->getCategData();
-    CategoryModel::Data* category = CategoryModel::instance().create();
-    category->CATEGNAME = text;
-    category->ACTIVE = 1;
+
+    CategoryData* selectedCategory = dynamic_cast<mmTreeItemCateg*>(
+        m_treeCtrl->GetItemData(m_selectedItemId)
+    )->getCategData();
+    CategoryData new_category_d = CategoryData();
+    new_category_d.CATEGNAME = name;
+    new_category_d.ACTIVE    = 1;
     if (m_selectedItemId == root_) {
-        const auto& categories = CategoryModel::instance().find(CategoryModel::CATEGNAME(text), CategoryModel::PARENTID(-1));
-        if (!categories.empty())
-        {
-            wxMessageBox(_t("A category with this name already exists for the parent"), _t("Category Manager: Adding Error"), wxOK | wxICON_ERROR);
+        const auto& category_a = CategoryModel::instance().find(
+            CategoryCol::CATEGNAME(name),
+            CategoryCol::PARENTID(-1)
+        );
+        if (!category_a.empty()) {
+            wxMessageBox(
+                _t("A category with this name already exists for the parent"),
+                _t("Category Manager: Adding Error"),
+                wxOK | wxICON_ERROR
+            );
             return;
         }
-        category->PARENTID = -1;
+        new_category_d.PARENTID = -1;
     }
     else {
-        const auto& categories = CategoryModel::instance().find(CategoryModel::CATEGNAME(text), CategoryModel::PARENTID(selectedCategory->CATEGID));
-        if (!categories.empty())
-        {
-            wxMessageBox(_t("A category with this name already exists for the parent"), _t("Category Manager: Adding Error"), wxOK | wxICON_ERROR);
+        const auto& category_a = CategoryModel::instance().find(
+            CategoryCol::CATEGNAME(name),
+            CategoryCol::PARENTID(selectedCategory->CATEGID)
+        );
+        if (!category_a.empty()) {
+            wxMessageBox(
+                _t("A category with this name already exists for the parent"),
+                _t("Category Manager: Adding Error"),
+                wxOK | wxICON_ERROR
+            );
             return;
         }
-        category->PARENTID = selectedCategory->CATEGID;
+        new_category_d.PARENTID = selectedCategory->CATEGID;
     }
 
-    CategoryModel::instance().save(category);
+    CategoryModel::instance().add_data(new_category_d);
     mmWebApp::MMEX_WebApp_UpdateCategory();
 
-    wxTreeItemId tid = m_treeCtrl->AppendItem(m_selectedItemId, text);
-    m_treeCtrl->SetItemData(tid, new mmTreeItemCateg(*category));
+    wxTreeItemId tid = m_treeCtrl->AppendItem(m_selectedItemId, name);
+    m_treeCtrl->SetItemData(tid, new mmTreeItemCateg(new_category_d));
     m_treeCtrl->SortChildren(m_selectedItemId);
     m_treeCtrl->Expand(m_selectedItemId);
     m_treeCtrl->SelectItem(tid);
     m_treeCtrl->SetFocus();
     m_refresh_requested = true;
-    m_categ_id = category->CATEGID;
+    m_categ_id = new_category_d.CATEGID;
     return;
 }
 
@@ -420,7 +435,7 @@ void CategoryManager::OnEndDrag(wxTreeEvent& event)
     int64 categID = -1;
 
     if (destItem.IsOk() && destItem != root_) {
-        CategoryModel::Data* newParent = dynamic_cast<mmTreeItemCateg*>(m_treeCtrl->GetItemData(destItem))->getCategData();
+        CategoryData* newParent = dynamic_cast<mmTreeItemCateg*>(m_treeCtrl->GetItemData(destItem))->getCategData();
         if (newParent) {
             categID = newParent->CATEGID;
         }
@@ -428,12 +443,15 @@ void CategoryManager::OnEndDrag(wxTreeEvent& event)
 
     if (categID == -1 || categID == m_dragSourceCATEGID) return;
 
-    CategoryModel::Data* sourceCat = CategoryModel::instance().get_id(m_dragSourceCATEGID);
+    CategoryData* sourceCat = CategoryModel::instance().unsafe_get_data_n(m_dragSourceCATEGID);
 
-    if (categID == sourceCat->PARENTID) return;
+    if (categID == sourceCat->PARENTID)
+        return;
 
-    if (!CategoryModel::instance().find(CategoryModel::CATEGNAME(sourceCat->CATEGNAME), CategoryModel::PARENTID(categID)).empty() && sourceCat->PARENTID != categID)
-    {
+    if (!CategoryModel::instance().find(
+        CategoryCol::CATEGNAME(sourceCat->CATEGNAME),
+        CategoryCol::PARENTID(categID)
+    ).empty() && sourceCat->PARENTID != categID) {
         wxMessageBox(_t("Unable to move a subcategory to a category that already has a subcategory with that name. Consider renaming before moving.")
             , _t("A subcategory with this name already exists")
             , wxOK | wxICON_ERROR);
@@ -441,11 +459,9 @@ void CategoryManager::OnEndDrag(wxTreeEvent& event)
     }
 
     wxString subtree_root;
-    for (const auto& subcat : CategoryModel::sub_tree(sourceCat))
-    {
+    for (const auto& subcat : CategoryModel::sub_tree(sourceCat)) {
         if (subcat.PARENTID == sourceCat->CATEGID) subtree_root = subcat.CATEGNAME;
-        if (subcat.CATEGID == categID)
-        {
+        if (subcat.CATEGID == categID) {
             wxMessageBox(wxString::Format("Unable to move a category to one of its own descendants.\n\nConsider first relocating subcategory %s to move the subtree.", subtree_root)
                 , _t("Target category is a descendant")
                 , wxOK | wxICON_ERROR);
@@ -464,7 +480,7 @@ void CategoryManager::OnEndDrag(wxTreeEvent& event)
         return;
 
     sourceCat->PARENTID = categID;
-    CategoryModel::instance().save(sourceCat);
+    CategoryModel::instance().unsafe_update_data(sourceCat);
 
     m_refresh_requested = true;
     m_categ_id = categID;
@@ -491,19 +507,27 @@ void CategoryManager::showCategDialogDeleteError(bool category)
 void CategoryManager::mmDoDeleteSelectedCategory()
 {
     wxTreeItemId PreviousItem = m_treeCtrl->GetPrevVisible(m_selectedItemId);
-    TransactionModel::Data_Set deletedTrans;
-    TransactionSplitModel::Data_Set splits;
+    TransactionModel::DataA deletedTrans;
+    TransactionSplitModel::DataA splits;
     if (CategoryModel::is_used(m_categ_id) || m_categ_id == m_init_selected_categ_id)
         return showCategDialogDeleteError();
     else {
-        deletedTrans = TransactionModel::instance().find(TransactionModel::CATEGID(m_categ_id));
-        for (const auto& subcat : CategoryModel::sub_tree(CategoryModel::instance().get_id(m_categ_id))) {
-            TransactionModel::Data_Set trans = TransactionModel::instance().find(TransactionModel::CATEGID(subcat.CATEGID));
+        deletedTrans = TransactionModel::instance().find(
+            TransactionCol::CATEGID(m_categ_id)
+        );
+        for (const auto& subcat : CategoryModel::sub_tree(CategoryModel::instance().get_data_n(m_categ_id))) {
+            TransactionModel::DataA trans = TransactionModel::instance().find(
+                TransactionCol::CATEGID(subcat.CATEGID)
+            );
             deletedTrans.insert(deletedTrans.end(), trans.begin(), trans.end());
         }
-        splits = TransactionSplitModel::instance().find(TransactionSplitModel::CATEGID(m_categ_id));
-        for (const auto& subcat : CategoryModel::sub_tree(CategoryModel::instance().get_id(m_categ_id))) {
-            TransactionSplitModel::Data_Set trans = TransactionSplitModel::instance().find(TransactionSplitModel::CATEGID(subcat.CATEGID));
+        splits = TransactionSplitModel::instance().find(
+            TransactionSplitCol::CATEGID(m_categ_id)
+        );
+        for (const auto& subcat : CategoryModel::sub_tree(CategoryModel::instance().get_data_n(m_categ_id))) {
+            TransactionSplitModel::DataA trans = TransactionSplitModel::instance().find(
+                TransactionSplitCol::CATEGID(subcat.CATEGID)
+            );
             splits.insert(splits.end(), trans.begin(), trans.end());
         }
     }
@@ -521,13 +545,13 @@ void CategoryManager::mmDoDeleteSelectedCategory()
             FieldValueModel::instance().Savepoint();
             const wxString& RefType = TransactionModel::refTypeName;
             for (auto& split : splits) {
-                TransactionModel::instance().remove(split.TRANSID);
+                TransactionModel::instance().remove_depen(split.TRANSID);
                 mmAttachmentManage::DeleteAllAttachments(RefType, split.TRANSID);
                 FieldValueModel::DeleteAllData(RefType, split.TRANSID);
             }
 
             for (auto& tran : deletedTrans) {
-                TransactionModel::instance().remove(tran.TRANSID);
+                TransactionModel::instance().remove_depen(tran.TRANSID);
                 mmAttachmentManage::DeleteAllAttachments(RefType, tran.TRANSID);
                 FieldValueModel::DeleteAllData(RefType, tran.TRANSID);
             }
@@ -538,23 +562,22 @@ void CategoryManager::mmDoDeleteSelectedCategory()
             FieldValueModel::instance().ReleaseSavepoint();
         }
 
-        for (auto& subcat : CategoryModel::sub_tree(CategoryModel::instance().get_id(m_categ_id)))
-            CategoryModel::instance().remove(subcat.CATEGID);
+        for (auto& subcat : CategoryModel::sub_tree(CategoryModel::instance().get_data_n(m_categ_id)))
+            CategoryModel::instance().remove_depen(subcat.CATEGID);
 
-        CategoryModel::instance().remove(m_categ_id);
+        CategoryModel::instance().remove_depen(m_categ_id);
     }
     else return;
 
     m_refresh_requested = true;
     m_treeCtrl->Delete(m_selectedItemId);
 
-    //Clear categories associated with payees
-    auto payees = PayeeModel::instance().find(PayeeModel::CATEGID(m_categ_id));
-    for (auto& payee : payees)
-    {
-        payee.CATEGID = -1;
+    // Clear categories associated with payees
+    auto payee_a = PayeeModel::instance().find(PayeeCol::CATEGID(m_categ_id));
+    for (auto& payee_d : payee_a) {
+        payee_d.CATEGID = -1;
     }
-    PayeeModel::instance().save(payees);
+    PayeeModel::instance().save_data_a(payee_a);
     mmWebApp::MMEX_WebApp_UpdatePayee();
 
     m_treeCtrl->SelectItem(PreviousItem);
@@ -626,18 +649,21 @@ void CategoryManager::OnEdit(wxCommandEvent& /*event*/)
         return;
     }
 
-    CategoryModel::Data* category = dynamic_cast<mmTreeItemCateg*>
-        (m_treeCtrl->GetItemData(m_selectedItemId))->getCategData();
+    CategoryData* category = dynamic_cast<mmTreeItemCateg*>(
+        m_treeCtrl->GetItemData(m_selectedItemId)
+    )->getCategData();
 
-    CategoryModel::Data_Set categories = CategoryModel::instance().find(CategoryModel::CATEGNAME(text), CategoryModel::PARENTID(category->PARENTID));
-    if (!categories.empty())
-    {
+    CategoryModel::DataA category_a = CategoryModel::instance().find(
+        CategoryCol::CATEGNAME(text),
+        CategoryCol::PARENTID(category->PARENTID)
+    );
+    if (!category_a.empty()) {
         wxString errMsg = _t("A category with this name already exists for the parent");
         wxMessageBox(errMsg, _t("Category Manager: Editing Error"), wxOK | wxICON_ERROR);
         return;
     }
     category->CATEGNAME = text;
-    CategoryModel::instance().save(category);
+    CategoryModel::instance().unsafe_save_data(category);
     mmWebApp::MMEX_WebApp_UpdateCategory();
 
     m_treeCtrl->SetItemText(m_selectedItemId, text);
@@ -664,10 +690,9 @@ wxTreeItemId CategoryManager::getTreeItemFor(const wxTreeItemId& itemID, const w
 
 void CategoryManager::setTreeSelection(int64 category_id)
 {
-    CategoryModel::Data* category = CategoryModel::instance().get_id(category_id);
-    if (category)
-    {
-        setTreeSelection(category->CATEGNAME, category->PARENTID);
+    const CategoryData* category_n = CategoryModel::instance().get_data_n(category_id);
+    if (category_n) {
+        setTreeSelection(category_n->CATEGNAME, category_n->PARENTID);
     }
     m_categ_id = category_id;
 }
@@ -739,7 +764,7 @@ void CategoryManager::OnMenuSelected(wxCommandEvent& event)
 {
     int id = event.GetId();
 
-    auto cat = CategoryModel::instance().get_id(m_categ_id);
+    CategoryData* cat = CategoryModel::instance().unsafe_get_data_n(m_categ_id);
     switch (id)
     {
         case MENU_ITEM_EDIT:
@@ -752,10 +777,10 @@ void CategoryManager::OnMenuSelected(wxCommandEvent& event)
         {
             m_treeCtrl->SetItemTextColour(m_selectedItemId, m_hiddenColor);
             cat->ACTIVE = 0;
-            CategoryModel::instance().save(cat);
-            for (auto& subcat : CategoryModel::sub_tree(cat)) {
-                subcat.ACTIVE = 0;
-                CategoryModel::instance().save(&subcat);
+            CategoryModel::instance().unsafe_update_data(cat);
+            for (auto& subcat_d : CategoryModel::sub_tree(cat)) {
+                subcat_d.ACTIVE = 0;
+                CategoryModel::instance().save_data(subcat_d);
             }
             break;
         }
@@ -763,10 +788,10 @@ void CategoryManager::OnMenuSelected(wxCommandEvent& event)
         {
             m_treeCtrl->SetItemTextColour(m_selectedItemId, NormalColor_);
             cat->ACTIVE = 1;
-            CategoryModel::instance().save(cat);
-            for (auto& subcat : CategoryModel::sub_tree(cat)) {
-                subcat.ACTIVE = 1;
-                CategoryModel::instance().save(&subcat);
+            CategoryModel::instance().unsafe_update_data(cat);
+            for (auto& subcat_d : CategoryModel::sub_tree(cat)) {
+                subcat_d.ACTIVE = 1;
+                CategoryModel::instance().save_data(subcat_d);
             }
             break;
         }
@@ -791,14 +816,12 @@ void CategoryManager::OnClearSettings(wxCommandEvent& /*event*/)
     wxMessageDialog msgDlg(this, _t("Do you want to show all categories?")
             , _t("Show all categories")
             , wxYES_NO | wxNO_DEFAULT | wxICON_EXCLAMATION);
-    if (msgDlg.ShowModal() == wxID_YES)
-    {
-        auto categList = CategoryModel::instance().get_all();
+    if (msgDlg.ShowModal() == wxID_YES) {
+        auto category_a = CategoryModel::instance().find_all();
         CategoryModel::instance().Savepoint();
-        for (auto &catItem : categList)
-        {
-            catItem.ACTIVE = 1;
-            CategoryModel::instance().save(&catItem);
+        for (auto &category_d : category_a) {
+            category_d.ACTIVE = 1;
+            CategoryModel::instance().save_data(category_d);
         }
         CategoryModel::instance().ReleaseSavepoint();
         fillControls();

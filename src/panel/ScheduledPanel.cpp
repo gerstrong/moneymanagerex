@@ -341,8 +341,8 @@ int ScheduledPanel::initVirtualListControl(int64 id)
 
     bills_.clear();
     const auto split = ScheduledSplitModel::instance().get_all_id();
-    for (const ScheduledModel::Data& data
-        : ScheduledModel::instance().get_all(ScheduledCol::COL_ID_NEXTOCCURRENCEDATE))
+    for (const ScheduledData& data
+        : ScheduledModel::instance().find_all(ScheduledCol::COL_ID_NEXTOCCURRENCEDATE))
     {
         if (transFilterActive_ && !transFilterDlg_->mmIsRecordMatches(data, split))
             continue;
@@ -477,9 +477,9 @@ wxString ScheduledPanel::getItem(long item, int col_id)
             }
             else
                 return value;
-            AccountModel::Data* account = AccountModel::instance().get_id(accountid);
-            CurrencyModel::Data* currency = account ?
-                CurrencyModel::instance().get_id(account->CURRENCYID) : nullptr;
+            const AccountData* account = AccountModel::instance().get_data_n(accountid);
+            const CurrencyData* currency = account ?
+                CurrencyModel::instance().get_data_n(account->CURRENCYID) : nullptr;
             if (currency)
                 value = CurrencyModel::toCurrency(transamount, currency);
             if (!value.IsEmpty() && TransactionModel::status_id(bill.STATUS) == TransactionModel::STATUS_ID_VOID)
@@ -499,9 +499,9 @@ wxString ScheduledPanel::getItem(long item, int col_id)
             }
             else
                 return value;
-            AccountModel::Data* account = AccountModel::instance().get_id(accountid);
-            CurrencyModel::Data* currency = account ?
-                CurrencyModel::instance().get_id(account->CURRENCYID) : nullptr;
+            const AccountData* account = AccountModel::instance().get_data_n(accountid);
+            const CurrencyData* currency = account ?
+                CurrencyModel::instance().get_data_n(account->CURRENCYID) : nullptr;
             if (currency)
                 value = CurrencyModel::toCurrency(transamount, currency);
             if (!value.IsEmpty() && TransactionModel::status_id(bill.STATUS) == TransactionModel::STATUS_ID_VOID)
@@ -543,7 +543,7 @@ wxString ScheduledPanel::getItem(long item, int col_id)
     }
 }
 
-const wxString ScheduledPanel::GetFrequency(const ScheduledModel::Data* item) const
+const wxString ScheduledPanel::GetFrequency(const ScheduledData* item) const
 {
     int repeats = item->REPEATS.GetValue() % BD_REPEATS_MULTIPLEX_BASE; // DeMultiplex the Auto Executable fields.
 
@@ -553,7 +553,7 @@ const wxString ScheduledPanel::GetFrequency(const ScheduledModel::Data* item) co
     return text;
 }
 
-int ScheduledPanel::GetNumRepeats(const ScheduledModel::Data* item) const
+int ScheduledPanel::GetNumRepeats(const ScheduledData* item) const
 {
     int repeats = item->REPEATS.GetValue() % BD_REPEATS_MULTIPLEX_BASE; // DeMultiplex the Auto Executable fields.
     int numRepeats = item->NUMOCCURRENCES.GetValue();
@@ -573,7 +573,7 @@ int ScheduledPanel::GetNumRepeats(const ScheduledModel::Data* item) const
     return numRepeats;
 }
 
-const wxString ScheduledPanel::GetRemainingDays(const ScheduledModel::Data* item) const
+const wxString ScheduledPanel::GetRemainingDays(const ScheduledData* item) const
 {
     int repeats = item->REPEATS.GetValue() % BD_REPEATS_MULTIPLEX_BASE; // DeMultiplex the Auto Executable fields.
     if (repeats >= ScheduledModel::REPEAT_IN_X_DAYS && repeats <= ScheduledModel::REPEAT_EVERY_X_MONTHS && item->NUMOCCURRENCES < 0)
@@ -696,7 +696,7 @@ void ScheduledList::OnDeleteBDSeries(wxCommandEvent& WXUNUSED(event))
     if (msgDlg.ShowModal() == wxID_YES)
     {
         int64 BdId = m_bdp->bills_[m_selected_row].BDID;
-        ScheduledModel::instance().remove(BdId);
+        ScheduledModel::instance().remove_depen(BdId);
         mmAttachmentManage::DeleteAllAttachments(ScheduledModel::refTypeName, BdId);
         m_bdp->do_delete_custom_values(-BdId);
         m_bdp->initVirtualListControl();
@@ -796,13 +796,13 @@ void ScheduledPanel::sortList()
     switch (m_lc->getSortColId())
     {
     case ScheduledList::LIST_ID_ID:
-        std::stable_sort(bills_.begin(), bills_.end(), ScheduledRow::SorterByBDID());
+        std::stable_sort(bills_.begin(), bills_.end(), ScheduledData::SorterByBDID());
         break;
     case ScheduledList::LIST_ID_PAYMENT_DATE:
-        std::stable_sort(bills_.begin(), bills_.end(), ScheduledRow::SorterByTRANSDATE());
+        std::stable_sort(bills_.begin(), bills_.end(), ScheduledData::SorterByTRANSDATE());
         break;
     case ScheduledList::LIST_ID_DUE_DATE:
-        std::stable_sort(bills_.begin(), bills_.end(), ScheduledRow::SorterByNEXTOCCURRENCEDATE());
+        std::stable_sort(bills_.begin(), bills_.end(), ScheduledData::SorterByNEXTOCCURRENCEDATE());
         break;
     case ScheduledList::LIST_ID_ACCOUNT:
         std::stable_sort(bills_.begin(), bills_.end(), ScheduledModel::SorterByACCOUNTNAME());
@@ -811,7 +811,7 @@ void ScheduledPanel::sortList()
         std::stable_sort(bills_.begin(), bills_.end(), ScheduledModel::SorterByPAYEENAME());
         break;
     case ScheduledList::LIST_ID_STATUS:
-        std::stable_sort(bills_.begin(), bills_.end(), ScheduledRow::SorterBySTATUS());
+        std::stable_sort(bills_.begin(), bills_.end(), ScheduledData::SorterBySTATUS());
         break;
     case ScheduledList::LIST_ID_CATEGORY:
         std::stable_sort(bills_.begin(), bills_.end(), ScheduledModel::SorterByCATEGNAME());
@@ -855,10 +855,10 @@ void ScheduledPanel::sortList()
         break;
     case ScheduledList::LIST_ID_REMAINING:
         // in almost all cases, sorting by remaining days is equivalent to sorting by TRANSDATE
-        std::stable_sort(bills_.begin(), bills_.end(), ScheduledRow::SorterByTRANSDATE());
+        std::stable_sort(bills_.begin(), bills_.end(), ScheduledData::SorterByTRANSDATE());
         break;
     case ScheduledList::LIST_ID_NOTES:
-        std::stable_sort(bills_.begin(), bills_.end(), ScheduledRow::SorterByNOTES());
+        std::stable_sort(bills_.begin(), bills_.end(), ScheduledData::SorterByNOTES());
         break;
     default:
         break;
@@ -945,11 +945,10 @@ void ScheduledList::OnSetUserColour(wxCommandEvent& event)
 
     ScheduledModel::instance().Savepoint();
 
-    ScheduledModel::Data* item = ScheduledModel::instance().get_id(id);
-    if (item)
-    {
-        item->COLOR = user_color_id;
-        ScheduledModel::instance().save(item);
+    ScheduledData* sched_n = ScheduledModel::instance().unsafe_get_data_n(id);
+    if (sched_n) {
+        sched_n->COLOR = user_color_id;
+        ScheduledModel::instance().unsafe_update_data(sched_n);
     }
     ScheduledModel::instance().ReleaseSavepoint();
 

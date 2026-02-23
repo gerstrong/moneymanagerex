@@ -29,11 +29,11 @@
  // TODO: Move attachment management outside of AttachmentDialog
 #include "dialog/AttachmentDialog.h"
 
-ScheduledModel::ScheduledModel()
-    : Model<ScheduledTable>()
-    , m_autoExecute (REPEAT_AUTO_NONE)
-    , m_requireExecution (false)
-    , m_allowExecution (false)
+ScheduledModel::ScheduledModel() :
+    Model<ScheduledTable, ScheduledData>(),
+    m_autoExecute (REPEAT_AUTO_NONE),
+    m_requireExecution (false),
+    m_allowExecution (false)
 {
 }
 
@@ -54,8 +54,8 @@ ScheduledModel& ScheduledModel::instance()
 ScheduledModel& ScheduledModel::instance(wxSQLite3Database* db)
 {
     ScheduledModel& ins = Singleton<ScheduledModel>::instance();
+    ins.reset_cache();
     ins.m_db = db;
-    ins.destroy_cache();
     ins.ensure_table();
 
     return ins;
@@ -101,44 +101,44 @@ TransactionModel::STATUS_ID ScheduledModel::status_id(const Data& r)
 * Remove the Data record instance from memory and the database
 * including any splits associated with the Data Record.
 */
-bool ScheduledModel::remove(int64 id)
+bool ScheduledModel::remove_depen(int64 id)
 {
-    for (auto &item : ScheduledModel::split(get_id(id)))
-        ScheduledSplitModel::instance().remove(item.SPLITTRANSID);
+    for (auto &item : ScheduledModel::split(get_data_n(id)))
+        ScheduledSplitModel::instance().remove_depen(item.SPLITTRANSID);
     // Delete tags for the scheduled transaction
     TagLinkModel::instance().DeleteAllTags(this->refTypeName, id);
-    return this->remove(id);
+    return remove_data(id);
 }
 
-ScheduledTable::STATUS ScheduledModel::STATUS(OP op, TransactionModel::STATUS_ID status)
+ScheduledCol::STATUS ScheduledModel::STATUS(OP op, TransactionModel::STATUS_ID status)
 {
-    return ScheduledTable::STATUS(op, TransactionModel::status_key(status));
+    return ScheduledCol::STATUS(op, TransactionModel::status_key(status));
 }
 
-ScheduledTable::TRANSCODE ScheduledModel::TRANSCODE(OP op, TransactionModel::TYPE_ID type)
+ScheduledCol::TRANSCODE ScheduledModel::TRANSCODE(OP op, TransactionModel::TYPE_ID type)
 {
-    return ScheduledTable::TRANSCODE(op, TransactionModel::type_name(type));
+    return ScheduledCol::TRANSCODE(op, TransactionModel::type_name(type));
 }
 
-const ScheduledSplitModel::Data_Set ScheduledModel::split(const Data* r)
+const ScheduledSplitModel::DataA ScheduledModel::split(const Data* r)
 {
     return ScheduledSplitModel::instance().find(
-        ScheduledSplitModel::TRANSID(r->BDID));
+        ScheduledSplitCol::TRANSID(r->BDID));
 }
 
-const ScheduledSplitModel::Data_Set ScheduledModel::split(const Data& r)
+const ScheduledSplitModel::DataA ScheduledModel::split(const Data& r)
 {
     return split(&r);
 }
 
-const TagLinkModel::Data_Set ScheduledModel::taglink(const Data* r)
+const TagLinkModel::DataA ScheduledModel::taglink(const Data* r)
 {
     return TagLinkModel::instance().find(
-        TagLinkModel::REFTYPE(ScheduledModel::refTypeName),
-        TagLinkModel::REFID(r->BDID));
+        TagLinkCol::REFTYPE(ScheduledModel::refTypeName),
+        TagLinkCol::REFID(r->BDID));
 }
 
-const TagLinkModel::Data_Set ScheduledModel::taglink(const Data& r)
+const TagLinkModel::DataA ScheduledModel::taglink(const Data& r)
 {
     return taglink(&r);
 }
@@ -190,7 +190,7 @@ bool ScheduledModel::AllowTransaction(const Data& r)
         return true;
 
     const int64 acct_id = r.ACCOUNTID;
-    AccountModel::Data* account = AccountModel::instance().get_id(acct_id);
+    const AccountData* account = AccountModel::instance().get_data_n(acct_id);
 
     if (account->MINIMUMBALANCE == 0 && account->CREDITLIMIT == 0)
         return true;
@@ -233,41 +233,47 @@ bool ScheduledModel::AllowTransaction(const Data& r)
 
 void ScheduledModel::completeBDInSeries(int64 bdID)
 {
-    Data* bill = get_id(bdID);
-    if (!bill) return;
+    const Data* sched_n = get_data_n(bdID);
+    if (!sched_n)
+        return;
+    Data sched_d = *sched_n;
 
-    int repeats = bill->REPEATS.GetValue() % BD_REPEATS_MULTIPLEX_BASE; // DeMultiplex the Auto Executable fields.
-    int numRepeats = bill->NUMOCCURRENCES.GetValue();
+    // DeMultiplex the Auto Executable fields.
+    int repeats = sched_d.REPEATS.GetValue() % BD_REPEATS_MULTIPLEX_BASE;
+    int numRepeats = sched_d.NUMOCCURRENCES.GetValue();
 
-    if ((repeats == REPEAT_TYPE::REPEAT_ONCE) || ((repeats < REPEAT_TYPE::REPEAT_IN_X_DAYS || repeats > REPEAT_TYPE::REPEAT_EVERY_X_MONTHS) && numRepeats == 1))
-    {
+    if (repeats == REPEAT_TYPE::REPEAT_ONCE || (
+        (repeats < REPEAT_TYPE::REPEAT_IN_X_DAYS || repeats > REPEAT_TYPE::REPEAT_EVERY_X_MONTHS) && numRepeats == 1
+    )) {
         mmAttachmentManage::DeleteAllAttachments(this->refTypeName, bdID);
-        remove(bdID);
+        remove_depen(bdID);
         return;
     }
 
     wxDateTime transdate;
-    transdate.ParseDateTime(bill->TRANSDATE) || transdate.ParseDate(bill->TRANSDATE);
+    transdate.ParseDateTime(sched_d.TRANSDATE) || transdate.ParseDate(sched_d.TRANSDATE);
     const wxDateTime& payment_date_current = transdate;
     const wxDateTime& payment_date_update = nextOccurDate(repeats, numRepeats, payment_date_current);
-    bill->TRANSDATE = payment_date_update.FormatISOCombined();
+    sched_d.TRANSDATE = payment_date_update.FormatISOCombined();
 
-    const wxDateTime& due_date_current = NEXTOCCURRENCEDATE(bill);
+    const wxDateTime& due_date_current = NEXTOCCURRENCEDATE(sched_d);
     const wxDateTime& due_date_update = nextOccurDate(repeats, numRepeats, due_date_current);
-    bill->NEXTOCCURRENCEDATE = due_date_update.FormatISODate();
+    sched_d.NEXTOCCURRENCEDATE = due_date_update.FormatISODate();
 
-    if ((repeats < REPEAT_TYPE::REPEAT_IN_X_DAYS || repeats > REPEAT_TYPE::REPEAT_EVERY_X_MONTHS) && numRepeats > 1)
-    {
-        bill->NUMOCCURRENCES = numRepeats - 1;
+    if ((repeats < REPEAT_TYPE::REPEAT_IN_X_DAYS || repeats > REPEAT_TYPE::REPEAT_EVERY_X_MONTHS)
+        && numRepeats > 1
+    ) {
+        sched_d.NUMOCCURRENCES = numRepeats - 1;
     }
-    else if (repeats >= REPEAT_TYPE::REPEAT_IN_X_DAYS && repeats <= REPEAT_TYPE::REPEAT_IN_X_MONTHS)
-    {
+    else if (repeats >= REPEAT_TYPE::REPEAT_IN_X_DAYS
+        && repeats <= REPEAT_TYPE::REPEAT_IN_X_MONTHS
+    ) {
         // preserve the Auto Executable fields, change type to REPEAT_ONCE
-        bill->REPEATS += REPEAT_TYPE::REPEAT_ONCE - repeats;
-        bill->NUMOCCURRENCES = -1;
+        sched_d.REPEATS += REPEAT_TYPE::REPEAT_ONCE - repeats;
+        sched_d.NUMOCCURRENCES = -1;
     }
 
-    save(bill);
+    save_data(sched_d);
 }
 
 const wxDateTime ScheduledModel::nextOccurDate(int repeatsType, int numRepeats, wxDateTime nextOccurDate, bool reverse)
@@ -369,13 +375,13 @@ ScheduledModel::Full_Data::Full_Data(const Data& r) :
     Data(r),
     m_bill_splits(split(r)),
     m_tags(TagLinkModel::instance().find(
-        TagLinkModel::REFTYPE(ScheduledModel::refTypeName),
-        TagLinkModel::REFID(r.BDID)))
+        TagLinkCol::REFTYPE(ScheduledModel::refTypeName),
+        TagLinkCol::REFID(r.BDID)))
 {
     if (!m_tags.empty()) {
         wxArrayString tagnames;
         for (const auto& entry : m_tags)
-            tagnames.Add(TagModel::instance().get_id(entry.TAGID)->TAGNAME);
+            tagnames.Add(TagModel::instance().get_data_n(entry.TAGID)->TAGNAME);
         // Sort TAGNAMES
         tagnames.Sort();
         for (const auto& name : tagnames)
@@ -390,7 +396,7 @@ ScheduledModel::Full_Data::Full_Data(const Data& r) :
                 + CategoryModel::full_name(entry.CATEGID);
 
             wxString splitTags;
-            for (const auto& tag : TagLinkModel::instance().cache_ref(ScheduledSplitModel::refTypeName, entry.SPLITTRANSID))
+            for (const auto& tag : TagLinkModel::instance().get_ref(ScheduledSplitModel::refTypeName, entry.SPLITTRANSID))
                 splitTags.Append(tag.first + " ");
             if (!splitTags.IsEmpty())
                 TAGNAMES.Append((TAGNAMES.IsEmpty() ? "" : ", ") + splitTags.Trim());
@@ -399,12 +405,12 @@ ScheduledModel::Full_Data::Full_Data(const Data& r) :
     else
         CATEGNAME = CategoryModel::full_name(r.CATEGID);
 
-    ACCOUNTNAME = AccountModel::cache_id_name(r.ACCOUNTID);
+    ACCOUNTNAME = AccountModel::get_id_name(r.ACCOUNTID);
 
     PAYEENAME = PayeeModel::get_payee_name(r.PAYEEID);
     if (ScheduledModel::type_id(r) == TransactionModel::TYPE_ID_TRANSFER)
     {
-        PAYEENAME = AccountModel::cache_id_name(r.TOACCOUNTID);
+        PAYEENAME = AccountModel::get_id_name(r.TOACCOUNTID);
     }
 
 }

@@ -124,7 +124,7 @@ public:
     ~ScheduledPanel();
 
     /* Helper Functions/data */
-    ScheduledModel::Full_Data_Set bills_;
+    ScheduledModel::Full_DataA bills_;
     void updateBottomPanelData(int selIndex);
     void enableEditDeleteButtons(bool en);
     /* updates the Repeating transactions panel data */
@@ -133,9 +133,9 @@ public:
     wxString getItem(long item, int col_id);
     void RefreshList();
 
-    const wxString GetFrequency(const ScheduledModel::Data* item) const;
-    int GetNumRepeats(const ScheduledModel::Data* item) const;
-    const wxString GetRemainingDays(const ScheduledModel::Data* item) const;
+    const wxString GetFrequency(const ScheduledData* item) const;
+    int GetNumRepeats(const ScheduledData* item) const;
+    const wxString GetRemainingDays(const ScheduledData* item) const;
 
     wxString BuildPage() const;
     wxDate getToday() const;

@@ -23,6 +23,8 @@
 #include "util/mmDateDay.h"
 
 #include "table/TransactionTable.h"
+#include "data/TransactionData.h"
+
 #include "_ModelBase.h"
 #include "TransactionSplitModel.h"
 #include "FieldModel.h"
@@ -31,13 +33,11 @@
 
 const wxString mmGetTimeForDisplay(const wxString& datetime_iso);
 
-class TransactionModel : public Model<TransactionTable>
+class TransactionModel : public Model<TransactionTable, TransactionData>
 {
 public:
-    using Model<TransactionTable>::remove;
-    using Model<TransactionTable>::save;
-    typedef TransactionSplitModel::Data_Set Split_Data_Set;
-    typedef TagLinkModel::Data_Set Taglink_Data_Set;
+    typedef TransactionSplitModel::DataA Split_DataA;
+    typedef TagLinkModel::DataA Taglink_DataA;
 
 public:
     enum TYPE_ID
@@ -83,8 +83,8 @@ public:
         wxString ACCOUNTNAME, TOACCOUNTNAME;
         wxString PAYEENAME;
         wxString CATEGNAME;
-        Split_Data_Set m_splits;
-        Taglink_Data_Set m_tags;
+        Split_DataA m_splits;
+        Taglink_DataA m_tags;
         wxString TAGNAMES;
 
         // filled-in by constructor; overwritten by JournalPanel::filterTable()
@@ -110,15 +110,15 @@ public:
         Full_Data();
         explicit Full_Data(const Data& r);
         Full_Data(const Data& r,
-            const std::map<int64 /* TRANSID */, TransactionSplitModel::Data_Set> & splits,
-            const std::map<int64 /* TRANSID */, TagLinkModel::Data_Set> & tags
+            const std::map<int64 /* TRANSID */, TransactionSplitModel::DataA> & splits,
+            const std::map<int64 /* TRANSID */, TagLinkModel::DataA> & tags
         );
         ~Full_Data();
 
         void fill_data();
         wxString real_payee_name(int64 account_id) const;
         const wxString get_currency_code(int64 account_id) const;
-        const wxString cache_id_name(int64 account_id) const;
+        const wxString get_account_name(int64 account_id) const;
         bool has_split() const;
         bool has_tags() const;
         bool has_attachment() const;
@@ -128,7 +128,7 @@ public:
         const wxString to_json();
     };
 
-    typedef std::vector<Full_Data> Full_Data_Set;
+    typedef std::vector<Full_Data> Full_DataA;
 
     struct SorterByNUMBER
     {
@@ -240,24 +240,26 @@ public:
     static TransactionModel& instance();
 
 public:
-    bool remove(int64 id);
-    int64 save_trx(Data* r);
-    int save_trx(std::vector<Data>& rows);
-    int save_trx(std::vector<Data*>& rows);
+    bool remove_depen(int64 id) override;
+    void update_timestamp(Data& trx_d);
+    const Data* unsafe_save_trx(Data* trx_n);
+    const Data* save_trx(Data& trx_d);
+    bool save_trx_a(DataA& rows);
     void updateTimestamp(int64 id);
-public:
-    static const TransactionModel::Data_Set allByDateTimeId();
-    static const Split_Data_Set split(const Data* r);
-    static const Split_Data_Set split(const Data& r);
 
 public:
-    static TransactionTable::TRANSDATE TRANSDATE(OP op, const wxString& date_iso_str);
-    static TransactionTable::TRANSDATE TRANSDATE(OP op, const mmDateDay& date);
-    static TransactionTable::TRANSDATE TRANSDATE(OP op, const wxDateTime& date);
-    static TransactionTable::DELETEDTIME DELETEDTIME(OP op, const wxString& date);
-    static TransactionTable::STATUS STATUS(OP op, STATUS_ID status);
-    static TransactionTable::TRANSCODE TRANSCODE(OP op, TYPE_ID type);
-    static TransactionTable::TRANSACTIONNUMBER TRANSACTIONNUMBER(OP op, const wxString& num);
+    static const TransactionModel::DataA allByDateTimeId();
+    static const Split_DataA split(const Data* r);
+    static const Split_DataA split(const Data& r);
+
+public:
+    static TransactionCol::TRANSDATE TRANSDATE(OP op, const wxString& date_iso_str);
+    static TransactionCol::TRANSDATE TRANSDATE(OP op, const mmDateDay& date);
+    static TransactionCol::TRANSDATE TRANSDATE(OP op, const wxDateTime& date);
+    static TransactionCol::DELETEDTIME DELETEDTIME(OP op, const wxString& date);
+    static TransactionCol::STATUS STATUS(OP op, STATUS_ID status);
+    static TransactionCol::TRANSCODE TRANSCODE(OP op, TYPE_ID type);
+    static TransactionCol::TRANSACTIONNUMBER TRANSACTIONNUMBER(OP op, const wxString& num);
 
 public:
     static const wxString type_name(int id);
@@ -293,7 +295,7 @@ public:
     static bool is_split(const Data* r);
     static bool is_split(const Data& r);
     static void getFrequentUsedNotes(std::vector<wxString> &frequentNotes, int64 accountID = -1);
-    static void getEmptyData(Data &data, int64 accountID);
+    static void setEmptyData(Data &data, int64 accountID);
 
     static bool getTransactionData(Data &data, const Data* r);
     static void putDataToTransaction(Data *r, const Data &data);

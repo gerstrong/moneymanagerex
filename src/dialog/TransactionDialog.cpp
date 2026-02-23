@@ -115,7 +115,7 @@ TransactionDialog::TransactionDialog(
     m_account_id(account_id)
 {
     SetEvtHandlerEnabled(false);
-    bool found = Journal::getJournalData(m_journal_data, journal_id);
+    bool found = Journal::setJournalData(m_journal_data, journal_id);
     if (found) {
         // a bill can only be duplicated
         m_mode = (duplicate || journal_id.second) ? MODE_DUP : MODE_EDIT;
@@ -125,8 +125,8 @@ TransactionDialog::TransactionDialog(
         for (const auto& split : Journal::split(m_journal_data)) {
             wxArrayInt64 tags;
             for (const auto& tag : TagLinkModel::instance().find(
-                TagLinkModel::REFTYPE(splitRefType),
-                TagLinkModel::REFID(split.SPLITTRANSID))
+                TagLinkCol::REFTYPE(splitRefType),
+                TagLinkCol::REFID(split.SPLITTRANSID))
             )
                 tags.push_back(tag.TAGID);
             m_local_splits.push_back({split.CATEGID, split.SPLITTRANSAMOUNT, tags, split.NOTES});
@@ -135,14 +135,14 @@ TransactionDialog::TransactionDialog(
         if (m_mode == MODE_DUP && !SettingModel::instance().getBool(INIDB_USE_ORG_DATE_DUPLICATE, false))
         {
             // Use the empty transaction logic to generate the new date to be used
-            TransactionModel::Data emptyTrx;
-            TransactionModel::getEmptyData(emptyTrx, account_id);
+            TransactionData emptyTrx;
+            TransactionModel::setEmptyData(emptyTrx, account_id);
             m_journal_data.TRANSDATE = emptyTrx.TRANSDATE;
         }
     }
     else {
         m_mode = MODE_NEW;
-        TransactionModel::getEmptyData(m_journal_data, account_id);
+        TransactionModel::setEmptyData(m_journal_data, account_id);
         m_journal_data.TRANSCODE = TransactionModel::type_name(type);
     }
 
@@ -245,16 +245,16 @@ void TransactionDialog::dataToControls()
     //Account
     if (!skip_account_init_)
     {
-        AccountModel::Data* acc = AccountModel::instance().get_id(m_journal_data.ACCOUNTID);
-        if (acc)
+        const AccountData* acc_n = AccountModel::instance().get_data_n(m_journal_data.ACCOUNTID);
+        if (acc_n)
         {
-            cbAccount_->ChangeValue(acc->ACCOUNTNAME);
-            m_textAmount->SetCurrency(CurrencyModel::instance().get_id(acc->CURRENCYID));
+            cbAccount_->ChangeValue(acc_n->ACCOUNTNAME);
+            m_textAmount->SetCurrency(CurrencyModel::instance().get_data_n(acc_n->CURRENCYID));
         }
-        AccountModel::Data* to_acc = AccountModel::instance().get_id(m_journal_data.TOACCOUNTID);
+        const AccountData* to_acc = AccountModel::instance().get_data_n(m_journal_data.TOACCOUNTID);
         if (to_acc) {
             cbToAccount_->ChangeValue(to_acc->ACCOUNTNAME);
-            toTextAmount_->SetCurrency(CurrencyModel::instance().get_id(to_acc->CURRENCYID));
+            toTextAmount_->SetCurrency(CurrencyModel::instance().get_data_n(to_acc->CURRENCYID));
         }
 
         skip_account_init_ = true;
@@ -307,37 +307,37 @@ void TransactionDialog::dataToControls()
             }
 
             int64 accountID = cbAccount_->mmGetId();
-            if (m_mode == MODE_NEW && PreferencesModel::instance().getTransPayeeNone() == PreferencesModel::LASTUSED
-                && (-1 != accountID))
-            {
-                TransactionModel::Data_Set transactions = TransactionModel::instance().find(
+            if (m_mode == MODE_NEW
+                && PreferencesModel::instance().getTransPayeeNone() == PreferencesModel::LASTUSED
+                && (accountID != -1)
+            ) {
+                TransactionModel::DataA transactions = TransactionModel::instance().find(
                     TransactionModel::TRANSCODE(OP_NE, TransactionModel::TYPE_ID_TRANSFER),
-                    TransactionModel::ACCOUNTID(OP_EQ, accountID));
+                    TransactionCol::ACCOUNTID(OP_EQ, accountID));
 
                 if (!transactions.empty()) {
-                    PayeeModel::Data* payee = PayeeModel::instance().get_id(transactions.back().PAYEEID);
-                    cbPayee_->ChangeValue(payee->PAYEENAME);
+                    const PayeeData* payee_n = PayeeModel::instance().get_data_n(transactions.back().PAYEEID);
+                    cbPayee_->ChangeValue(payee_n->PAYEENAME);
                 }
             }
-            else if (m_mode == MODE_NEW && PreferencesModel::instance().getTransPayeeNone() == PreferencesModel::UNUSED)
-            {
-                PayeeModel::Data *payee = PayeeModel::instance().get_key(_t("Unknown"));
-                if (!payee)
-                {
-                    payee = PayeeModel::instance().create();
-                    payee->PAYEENAME = _t("Unknown");
-                    payee->ACTIVE = 1;
-                    PayeeModel::instance().save(payee);
+            else if (m_mode == MODE_NEW
+                && PreferencesModel::instance().getTransPayeeNone() == PreferencesModel::UNUSED
+            ) {
+                const PayeeData* payee_n = PayeeModel::instance().get_key(_t("Unknown"));
+                if (!payee_n) {
+                    PayeeData new_payee_d = PayeeData();
+                    new_payee_d.PAYEENAME = _t("Unknown");
+                    new_payee_d.ACTIVE    = 1;
+                    PayeeModel::instance().add_data(new_payee_d);
                     cbPayee_->mmDoReInitialize();
                 }
 
                 cbPayee_->ChangeValue(_t("Unknown"));
             }
-            else
-            {
-                PayeeModel::Data* payee = PayeeModel::instance().get_id(m_journal_data.PAYEEID);
-                if (payee)
-                    cbPayee_->ChangeValue(payee->PAYEENAME);
+            else {
+                const PayeeData* payee_n = PayeeModel::instance().get_data_n(m_journal_data.PAYEEID);
+                if (payee_n)
+                    cbPayee_->ChangeValue(payee_n->PAYEENAME);
             }
 
             SetCategoryForPayee();
@@ -366,7 +366,7 @@ void TransactionDialog::dataToControls()
         else if (m_mode == MODE_NEW && m_transfer
             && PreferencesModel::instance().getTransCategoryTransferNone() == PreferencesModel::LASTUSED)
         {
-            TransactionModel::Data_Set transactions = TransactionModel::instance().find(
+            TransactionModel::DataA transactions = TransactionModel::instance().find(
                 TransactionModel::TRANSCODE(OP_EQ, TransactionModel::TYPE_ID_TRANSFER)
             );
 
@@ -394,10 +394,10 @@ void TransactionDialog::dataToControls()
     {
         wxArrayInt64 tagIds;
         for (const auto& tag : TagLinkModel::instance().find(
-            TagLinkModel::REFTYPE((m_journal_data.m_repeat_num == 0) ?
+            TagLinkCol::REFTYPE((m_journal_data.m_repeat_num == 0) ?
                 TransactionModel::refTypeName :
                 ScheduledModel::refTypeName),
-            TagLinkModel::REFID((m_journal_data.m_repeat_num == 0) ?
+            TagLinkCol::REFID((m_journal_data.m_repeat_num == 0) ?
                 m_journal_data.TRANSID :
                 m_journal_data.m_bdid))
         )
@@ -479,7 +479,7 @@ void TransactionDialog::CreateControls()
 
     for (int i = 0; i < TransactionModel::TYPE_ID_size; ++i) {
         if (i != TransactionModel::TYPE_ID_TRANSFER ||
-            AccountModel::instance().get_all().size() > 1
+            AccountModel::instance().find_all().size() > 1
         ) {
             wxString type = TransactionModel::type_name(i);
             transaction_type_->Append(wxGetTranslation(type), new wxStringClientData(type));
@@ -696,16 +696,14 @@ bool TransactionDialog::ValidateData()
         return false;
     }
     m_journal_data.ACCOUNTID = cbAccount_->mmGetId();
-    const AccountModel::Data* account = AccountModel::instance().get_id(m_journal_data.ACCOUNTID);
+    const AccountData* account = AccountModel::instance().get_data_n(m_journal_data.ACCOUNTID);
 
-    if (m_journal_data.TRANSDATE < account->INITIALDATE)
-    {
+    if (m_journal_data.TRANSDATE < account->INITIALDATE) {
         mmErrorDialogs::ToolTip4Object(cbAccount_, _t("The opening date for the account is later than the date of this transaction"), _t("Invalid Date"));
         return false;
     }
 
-    if (m_local_splits.empty())
-    {
+    if (m_local_splits.empty()) {
         if (!cbCategory_->mmIsValid()) {
             mmErrorDialogs::ToolTip4Object(cbCategory_, _t("Invalid value"), _t("Category"), wxICON_ERROR);
             return false;
@@ -713,8 +711,7 @@ bool TransactionDialog::ValidateData()
         m_journal_data.CATEGID = cbCategory_->mmGetCategoryId();
     }
 
-    if (!m_transfer)
-    {
+    if (!m_transfer) {
         wxString payee_name = cbPayee_->GetValue();
         if (payee_name.IsEmpty())
         {
@@ -727,42 +724,42 @@ bool TransactionDialog::ValidateData()
         if (payee_loc != wxNOT_FOUND)
             payee_name = cbPayee_->GetString(payee_loc);
 
-        PayeeModel::Data* payee = PayeeModel::instance().get_key(payee_name);
-        if (!payee)
-        {
-            wxMessageDialog msgDlg( this
-                , wxString::Format(_t("Payee name has not been used before. Is the name correct?\n%s"), payee_name)
-                , _t("Confirm payee name")
-                , wxYES_NO | wxYES_DEFAULT | wxICON_WARNING);
-            if (msgDlg.ShowModal() == wxID_YES)
-            {
-                payee = PayeeModel::instance().create();
-                payee->PAYEENAME = payee_name;
-                payee->ACTIVE = 1;
-                PayeeModel::instance().save(payee);
+        const PayeeData* payee_n = PayeeModel::instance().get_key(payee_name);
+        if (!payee_n) {
+            wxMessageDialog msgDlg(this,
+                wxString::Format(_t("Payee name has not been used before. Is the name correct?\n%s"), payee_name),
+                _t("Confirm payee name"),
+                wxYES_NO | wxYES_DEFAULT | wxICON_WARNING
+            );
+            if (msgDlg.ShowModal() == wxID_YES) {
+                PayeeData new_payee_d = PayeeData();
+                new_payee_d.PAYEENAME = payee_name;
+                new_payee_d.ACTIVE    = 1;
+                PayeeModel::instance().add_data(new_payee_d);
+                payee_n = PayeeModel::instance().get_data_n(new_payee_d.id());
                 mmWebApp::MMEX_WebApp_UpdatePayee();
             }
             else
                 return false;
         }
         m_journal_data.TOTRANSAMOUNT = m_journal_data.TRANSAMOUNT;
-        m_journal_data.PAYEEID = payee->PAYEEID;
-        if (!TransactionModel::foreignTransaction(m_journal_data))
-        {
+        m_journal_data.PAYEEID = payee_n->PAYEEID;
+        if (!TransactionModel::foreignTransaction(m_journal_data)) {
             m_journal_data.TOACCOUNTID = -1;
         }
 
-        if ((PreferencesModel::instance().getTransCategoryNone() == PreferencesModel::LASTUSED)
-            && (!CategoryModel::is_hidden(m_journal_data.CATEGID)))
-        {
-            payee->CATEGID = m_journal_data.CATEGID;
-            PayeeModel::instance().save(payee);
+        if (PreferencesModel::instance().getTransCategoryNone() == PreferencesModel::LASTUSED
+            && !CategoryModel::is_hidden(m_journal_data.CATEGID)
+        ) {
+            PayeeData payee_d = *payee_n;
+            payee_d.CATEGID = m_journal_data.CATEGID;
+            PayeeModel::instance().save_data(payee_d);
             mmWebApp::MMEX_WebApp_UpdatePayee();
         }
     }
     else //transfer
     {
-        const AccountModel::Data *to_account = AccountModel::instance().get_key(cbToAccount_->GetValue());
+        const AccountData *to_account = AccountModel::instance().get_key(cbToAccount_->GetValue());
 
         if (!to_account || to_account->ACCOUNTID == m_journal_data.ACCOUNTID)
         {
@@ -915,9 +912,9 @@ void TransactionDialog::OnFocusChange(wxChildFocusEvent& event)
     }
     else
     {
-        const AccountModel::Data* to_account = AccountModel::instance().get_id(cbToAccount_->mmGetId());
-        if (to_account)
-            m_journal_data.TOACCOUNTID = to_account->ACCOUNTID;
+        const AccountData* to_account_n = AccountModel::instance().get_data_n(cbToAccount_->mmGetId());
+        if (to_account_n)
+            m_journal_data.TOACCOUNTID = to_account_n->ACCOUNTID;
     }
 
     dataToControls();
@@ -931,9 +928,8 @@ void TransactionDialog::SetDialogTitle(const wxString& title)
 
 void TransactionDialog::OnPayeeChanged(wxCommandEvent& /*event*/)
 {
-    PayeeModel::Data * payee = PayeeModel::instance().get_key(cbPayee_->GetValue());
-    if (payee)
-    {
+    const PayeeData * payee = PayeeModel::instance().get_key(cbPayee_->GetValue());
+    if (payee) {
         SetCategoryForPayee(payee);
     }
 }
@@ -974,18 +970,17 @@ void TransactionDialog::OnComboKey(wxKeyEvent& event)
         case mmID_PAYEE:
         {
             const auto payeeName = cbPayee_->GetValue();
-            if (payeeName.empty())
-            {
+            if (payeeName.empty()) {
                 mmPayeeDialog dlg(this, true);
                 dlg.ShowModal();
                 if (dlg.getRefreshRequested())
                     cbPayee_->mmDoReInitialize();
                 int64 payee_id = dlg.getPayeeId();
-                PayeeModel::Data* payee = PayeeModel::instance().get_id(payee_id);
-                if (payee) {
-                    cbPayee_->ChangeValue(payee->PAYEENAME);
+                const PayeeData* payee_n = PayeeModel::instance().get_data_n(payee_id);
+                if (payee_n) {
+                    cbPayee_->ChangeValue(payee_n->PAYEENAME);
                     cbPayee_->SetInsertionPointEnd();
-                    SetCategoryForPayee(payee);
+                    SetCategoryForPayee(payee_n);
                 }
                 return;
             }
@@ -1021,30 +1016,30 @@ void TransactionDialog::OnComboKey(wxKeyEvent& event)
     event.Skip();
 }
 
-void TransactionDialog::SetCategoryForPayee(const PayeeModel::Data *payee)
+void TransactionDialog::SetCategoryForPayee(const PayeeData *payee)
 {
     // Only for new transactions: if user does not want to use categories.
     // If this is a Split Transaction, ignore displaying last category for payee
-    if (m_mode == MODE_NEW && PreferencesModel::instance().getTransCategoryNone() == PreferencesModel::UNUSED
-        && m_local_splits.empty())
-    {
-        CategoryModel::Data *category = CategoryModel::instance().get_key(_t("Unknown"), int64(-1));
-        if (!category)
-        {
-            category = CategoryModel::instance().create();
-            category->CATEGNAME = _t("Unknown");
-            category->ACTIVE = 1;
-            CategoryModel::instance().save(category);
+    if (m_mode == MODE_NEW
+        && PreferencesModel::instance().getTransCategoryNone() == PreferencesModel::UNUSED
+        && m_local_splits.empty()
+    ) {
+        const CategoryData* category_n = CategoryModel::instance().get_key(_t("Unknown"), int64(-1));
+        if (!category_n) {
+            CategoryData new_category_d = CategoryData();
+            new_category_d.CATEGNAME = _t("Unknown");
+            new_category_d.ACTIVE    = 1;
+            CategoryModel::instance().add_data(new_category_d);
+            category_n = CategoryModel::instance().get_data_n(new_category_d.id());
             cbCategory_->mmDoReInitialize();
         }
 
-        m_journal_data.CATEGID = category->CATEGID;
+        m_journal_data.CATEGID = category_n->CATEGID;
         cbCategory_->ChangeValue(_t("Unknown"));
         return;
     }
 
-    if (!payee)
-    {
+    if (!payee) {
         payee = PayeeModel::instance().get_key(cbPayee_->GetValue());
         if (!payee)
             return;
@@ -1053,20 +1048,18 @@ void TransactionDialog::SetCategoryForPayee(const PayeeModel::Data *payee)
     // Only for new transactions: if user want to autofill last category used for payee.
     // If this is a Split Transaction, ignore displaying last category for payee
     if ((PreferencesModel::instance().getTransCategoryNone() == PreferencesModel::LASTUSED ||
-        PreferencesModel::instance().getTransCategoryNone() == PreferencesModel::DEFAULT)
+            PreferencesModel::instance().getTransCategoryNone() == PreferencesModel::DEFAULT)
         && m_mode == MODE_NEW && m_local_splits.empty()
-        && (!CategoryModel::is_hidden(payee->CATEGID)))
-    {
+        && (!CategoryModel::is_hidden(payee->CATEGID))
+    ) {
         // if payee has memory of last category used then display last category for payee
-        CategoryModel::Data *category = CategoryModel::instance().get_id(payee->CATEGID);
-        if (category)
-        {
+        const CategoryData* category_n = CategoryModel::instance().get_data_n(payee->CATEGID);
+        if (category_n) {
             m_journal_data.CATEGID = payee->CATEGID;
             cbCategory_->ChangeValue(CategoryModel::full_name(payee->CATEGID));
             wxLogDebug("Category: %s = %.2f", cbCategory_->GetLabel(), m_journal_data.TRANSAMOUNT);
         }
-        else
-        {
+        else {
             m_journal_data.CATEGID = -1;
             cbCategory_->ChangeValue("");
         }
@@ -1096,9 +1089,9 @@ void TransactionDialog::OnAutoTransNum(wxCommandEvent& WXUNUSED(event))
     auto d = TransactionModel::getTransDateTime(m_journal_data).Subtract(wxDateSpan::Months(12));
     double next_number = 0, temp_num;
     const auto numbers = TransactionModel::instance().find(
-        TransactionModel::ACCOUNTID(OP_EQ, m_journal_data.ACCOUNTID),
+        TransactionCol::ACCOUNTID(OP_EQ, m_journal_data.ACCOUNTID),
         TransactionModel::TRANSDATE(OP_GE, d),
-        TransactionModel::TRANSACTIONNUMBER(OP_NE, "")
+        TransactionCol::TRANSACTIONNUMBER(OP_NE, "")
     );
     for (const auto &num : numbers)
     {
@@ -1242,34 +1235,42 @@ void TransactionDialog::OnOk(wxCommandEvent& event)
     if (!m_advanced)
         m_journal_data.TOTRANSAMOUNT = m_journal_data.TRANSAMOUNT;
 
-    if (m_transfer && !m_advanced && (AccountModel::currency(AccountModel::instance().get_id(m_journal_data.ACCOUNTID))
-        != AccountModel::currency(AccountModel::instance().get_id(m_journal_data.TOACCOUNTID))))
-    {
-        wxMessageDialog msgDlg( this
-            , _t("The two accounts have different currencies, but no advanced transaction is defined. Is this correct?")
-            , _t("Currencies are different")
-            , wxYES_NO | wxNO_DEFAULT | wxICON_WARNING);
+    if (m_transfer && !m_advanced && (
+        AccountModel::currency(AccountModel::instance().get_data_n(m_journal_data.ACCOUNTID))
+        != AccountModel::currency(AccountModel::instance().get_data_n(m_journal_data.TOACCOUNTID))
+    )) {
+        wxMessageDialog msgDlg(this,
+            _t("The two accounts have different currencies, but no advanced transaction is defined. Is this correct?"),
+            _t("Currencies are different"),
+            wxYES_NO | wxNO_DEFAULT | wxICON_WARNING
+        );
         if (msgDlg.ShowModal() == wxID_NO)
             return;
     }
 
-    TransactionModel::Data *r = (m_mode == MODE_EDIT) ?
-        TransactionModel::instance().get_id(m_journal_data.TRANSID) :
-        TransactionModel::instance().create();
+    TransactionData* trx_n;
+    TransactionData trx_d;
+    if (m_mode == MODE_EDIT) {
+        trx_n = TransactionModel::instance().unsafe_get_data_n(m_journal_data.TRANSID);
+    }
+    else {
+        trx_d = TransactionData();
+        trx_n = &trx_d;
+    }
 
-    TransactionModel::putDataToTransaction(r, m_journal_data);
-    m_journal_data.TRANSID = TransactionModel::instance().save_trx(r);
+    TransactionModel::putDataToTransaction(trx_n, m_journal_data);
+    TransactionModel::instance().unsafe_save_trx(trx_n);
+    m_journal_data.TRANSID = trx_n->id();
     m_journal_data.m_bdid = 0;
     m_journal_data.m_repeat_num = 0;
 
-    TransactionSplitModel::Data_Set splt;
-    for (const auto& entry : m_local_splits)
-    {
-        TransactionSplitModel::Data *s = TransactionSplitModel::instance().create();
-        s->CATEGID = entry.CATEGID;
-        s->SPLITTRANSAMOUNT = entry.SPLITTRANSAMOUNT;
-        s->NOTES = entry.NOTES;
-        splt.push_back(*s);
+    TransactionSplitModel::DataA splt;
+    for (const auto& entry : m_local_splits) {
+        TransactionSplitData s = TransactionSplitData();
+        s.CATEGID = entry.CATEGID;
+        s.SPLITTRANSAMOUNT = entry.SPLITTRANSAMOUNT;
+        s.NOTES = entry.NOTES;
+        splt.push_back(s);
     }
     TransactionSplitModel::instance().update(splt, m_journal_data.TRANSID);
 
@@ -1278,14 +1279,13 @@ void TransactionDialog::OnOk(wxCommandEvent& event)
 
     for (unsigned int i = 0; i < m_local_splits.size(); i++)
     {
-        TagLinkModel::Data_Set splitTaglinks;
-        for (const auto& tagId : m_local_splits.at(i).TAGS)
-        {
-            TagLinkModel::Data* t = TagLinkModel::instance().create();
-            t->REFTYPE = splitRefType;
-            t->REFID = splt.at(i).SPLITTRANSID;
-            t->TAGID = tagId;
-            splitTaglinks.push_back(*t);
+        TagLinkModel::DataA splitTaglinks;
+        for (const auto& tagId : m_local_splits.at(i).TAGS) {
+            TagLinkData t = TagLinkData();
+            t.REFTYPE = splitRefType;
+            t.REFID = splt.at(i).SPLITTRANSID;
+            t.TAGID = tagId;
+            splitTaglinks.push_back(t);
         }
         TagLinkModel::instance().update(splitTaglinks, splitRefType, splt.at(i).SPLITTRANSID);
     }
@@ -1297,19 +1297,18 @@ void TransactionDialog::OnOk(wxCommandEvent& event)
     m_custom_fields->SaveCustomValues(m_journal_data.TRANSID);
 
     // Save base transaction tags
-    TagLinkModel::Data_Set taglinks;
+    TagLinkModel::DataA taglinks;
     for (const auto& tagId : tagTextCtrl_->GetTagIDs())
     {
-        TagLinkModel::Data* t = TagLinkModel::instance().create();
-        t->REFTYPE = RefType;
-        t->REFID = m_journal_data.TRANSID;
-        t->TAGID = tagId;
-        taglinks.push_back(*t);
+        TagLinkData t = TagLinkData();
+        t.REFTYPE = RefType;
+        t.REFID = m_journal_data.TRANSID;
+        t.TAGID = tagId;
+        taglinks.push_back(t);
     }
     TagLinkModel::instance().update(taglinks, RefType, m_journal_data.TRANSID);
 
-    const TransactionModel::Data& tran(*r);
-    TransactionModel::Full_Data trx(tran);
+    //TransactionModel::Full_Data trx(trx_d);
     //wxLogDebug("%s", trx.to_json());
 
     if (event.GetId() == ID_BTN_OK_NEW) {
@@ -1349,10 +1348,10 @@ void TransactionDialog::SetTooltips()
     if (this->m_local_splits.empty())
         mmToolTip(bSplit_, _t("Use split Categories"));
     else {
-        const CurrencyModel::Data* currency = CurrencyModel::GetBaseCurrency();
-        const AccountModel::Data* account = AccountModel::instance().get_id(m_journal_data.ACCOUNTID);
-        if (account)
-            currency = AccountModel::currency(account);
+        const CurrencyData* currency = CurrencyModel::GetBaseCurrency();
+        const AccountData* account_n = AccountModel::instance().get_data_n(m_journal_data.ACCOUNTID);
+        if (account_n)
+            currency = AccountModel::currency(account_n);
 
         bSplit_->SetToolTip(TransactionSplitModel::get_tooltip(m_local_splits, currency));
     }

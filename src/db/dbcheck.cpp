@@ -39,27 +39,35 @@ bool dbCheck::checkAccounts()
     bool result = true;
 
     // Transactions
-    const auto &transactions = TransactionModel::instance().get_all();
-    for (const auto& trx : transactions)
-        if (!AccountModel::instance().get_id(trx.ACCOUNTID) || (TransactionModel::type_id(trx) == TransactionModel::TYPE_ID_TRANSFER && !AccountModel::instance().get_id(trx.TOACCOUNTID)))
-        {
+    const auto& trx_a = TransactionModel::instance().find_all();
+    for (const auto& trx_d : trx_a)
+        if (!AccountModel::instance().get_data_n(trx_d.ACCOUNTID) || (
+            TransactionModel::type_id(trx_d) == TransactionModel::TYPE_ID_TRANSFER &&
+            !AccountModel::instance().get_data_n(trx_d.TOACCOUNTID)
+        )) {
             result = false;
         }
 
     // BillsDeposits
-    const auto &bills = ScheduledModel::instance().get_all();
-    for (const auto& bill : bills)
-        if (!AccountModel::instance().get_id(bill.ACCOUNTID) || (ScheduledModel::type_id(bill) == TransactionModel::TYPE_ID_TRANSFER && !AccountModel::instance().get_id(bill.TOACCOUNTID)))
-        {
+    const auto& sched_a = ScheduledModel::instance().find_all();
+    for (const auto& sched_d : sched_a)
+        if (!AccountModel::instance().get_data_n(sched_d.ACCOUNTID) || (
+            ScheduledModel::type_id(sched_d) == TransactionModel::TYPE_ID_TRANSFER &&
+            !AccountModel::instance().get_data_n(sched_d.TOACCOUNTID)
+        )) {
             result = false;
         }
 
     // Stocks
-    const auto &stocks = StockModel::instance().get_all();
-    for (const auto& stock : stocks)
-        if (!AccountModel::instance().get_id(stock.HELDAT) || (AccountModel::type_id(AccountModel::instance().get_id(stock.HELDAT)) != NavigatorTypes::TYPE_ID_INVESTMENT)) {
+    const auto& stock_a = StockModel::instance().find_all();
+    for (const auto& stock_d : stock_a) {
+        const auto& account_n = AccountModel::instance().get_data_n(stock_d.HELDAT);
+        if (!account_n ||
+            AccountModel::type_id(*account_n) != NavigatorTypes::TYPE_ID_INVESTMENT
+        ) {
             result = false;
         }
+    }
 
     return result;
 }

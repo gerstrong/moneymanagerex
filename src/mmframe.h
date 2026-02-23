@@ -111,7 +111,7 @@ private:
 
 private:
     std::vector<WebsiteNews> websiteNewsArray_;
-    std::vector<ModelBase*> m_all_models;
+    std::vector<TableBase*> m_all_models;
 
     /* handles to SQLite Database */
     wxSharedPtr<wxSQLite3Database> m_db;

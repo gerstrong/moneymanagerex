@@ -21,14 +21,17 @@
 #pragma once
 
 #include "base/defs.h"
+
 #include "table/TransactionLinkTable.h"
+#include "data/TransactionLinkData.h"
+
 #include "_ModelBase.h"
 #include "TransactionModel.h"
 #include "StockModel.h"
 #include "AssetModel.h"
 #include "AttachmentModel.h"
 
-class TransactionLinkModel : public Model<TransactionLinkTable>
+class TransactionLinkModel : public Model<TransactionLinkTable, TransactionLinkData>
 {
 public:
     enum CHECKING_TYPE { AS_INCOME_EXPENSE = 32701, AS_TRANSFER }; /* Transfers ignore accounting */
@@ -57,12 +60,12 @@ public:
 
 public:
     /* Create the translink record as Asset */
-    static TransactionLinkModel::Data* SetAssetTranslink(const int64 asset_id
+    static void SetAssetTranslink(const int64 asset_id
         , const int64 checking_id
         , const CHECKING_TYPE checking_type = AS_INCOME_EXPENSE);
 
     /* Create a translink record as Stock */
-    static TransactionLinkModel::Data* SetStockTranslink(const int64 stock_id
+    static void SetStockTranslink(const int64 stock_id
         , const int64 checking_id
         , const CHECKING_TYPE checking_type = AS_INCOME_EXPENSE);
 
@@ -73,14 +76,14 @@ public:
     select * from TRANSLINK_V1 where LINKTYPE = "Stock" AND LINKRECORDID = link_id;
     */
     template <typename T>
-    static TransactionLinkModel::Data_Set TranslinkList(const int64 link_id);
+    static TransactionLinkModel::DataA TranslinkList(const int64 link_id);
 
     /*
     Return the link record for the symbol
     Equivalent SQL statements:
     SELECT * FROM TRANSLINK_V1 WHERE LINKRECORDID IN (SELECT STOCKID FROM STOCK_V1 WHERE SYMBOL = ?)
     */
-    static TransactionLinkModel::Data_Set TranslinkListBySymbol(const wxString symbol);
+    static TransactionLinkModel::DataA TranslinkListBySymbol(const wxString symbol);
 
     static bool HasShares(const int64 stock_id);
 
@@ -89,7 +92,7 @@ public:
     Equivalent SQL statements:
     select * from TRANSLINK_V1 where CHECKINGACCOUNTID = checking_id;
     */
-    static TransactionLinkModel::Data TranslinkRecord(const int64 checking_id);
+    static TransactionLinkData TranslinkRecord(const int64 checking_id);
 
     /* Remove all records associated with the Translink list */
     template <typename T>
@@ -98,13 +101,13 @@ public:
     /* Remove the checking account entry and its associated transfer transaction. */
     static void RemoveTranslinkEntry(const int64 checking_account_id);
 
-    static void UpdateAssetValue(AssetModel::Data* asset_entry);
+    static void UpdateAssetValue(AssetData* asset_entry);
 
     /* Return true with the account id of the first share entry in the stock translink list */
     static bool ShareAccountId(int64& stock_entry_id);
 
 private:
 
-    static TransactionLinkModel::Data* SetTranslink(const int64 checking_id, const CHECKING_TYPE checking_type
+    static void SetTranslink(const int64 checking_id, const CHECKING_TYPE checking_type
         , const wxString& link_type, const int64 link_record_id);
 };

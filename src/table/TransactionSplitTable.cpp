@@ -13,15 +13,17 @@
  *      @author [sqlite2cpp.py]
  *
  *      Revision History:
- *          AUTO GENERATED at 2026-02-16 15:07:22.405413.
+ *          AUTO GENERATED at 2026-02-23 02:03:14.067947.
  *          DO NOT EDIT!
  */
 //=============================================================================
 
 #include "_TableFactory.tpp"
 #include "TransactionSplitTable.h"
+#include "data/TransactionSplitData.h"
 
-template class TableFactory<TransactionSplitRow>;
+template class TableFactory<TransactionSplitTable, TransactionSplitData>;
+template class mmCache<int64, TransactionSplitData>;
 
 // List of column names in database table SPLITTRANSACTIONS_V1,
 // in the order of TransactionSplitCol::COL_ID.
@@ -44,24 +46,7 @@ TransactionSplitRow::TransactionSplitRow()
     SPLITTRANSAMOUNT = 0.0;
 }
 
-TransactionSplitRow::TransactionSplitRow(wxSQLite3ResultSet& q)
-{
-    from_select_result(q);
-}
-
-bool TransactionSplitRow::equals(const TransactionSplitRow* r) const
-{
-    if ( SPLITTRANSID != r->SPLITTRANSID) return false;
-    if ( TRANSID != r->TRANSID) return false;
-    if ( CATEGID != r->CATEGID) return false;
-    if ( SPLITTRANSAMOUNT != r->SPLITTRANSAMOUNT) return false;
-    if (!NOTES.IsSameAs(r->NOTES)) return false;
-
-    return true;
-}
-
-// Bind a Row record to database statement.
-// Use the id argument instead of the row id.
+// Bind a Row record to database insert statement.
 void TransactionSplitRow::to_insert_stmt(wxSQLite3Statement& stmt, int64 id) const
 {
     stmt.Bind(1, TRANSID);
@@ -71,13 +56,15 @@ void TransactionSplitRow::to_insert_stmt(wxSQLite3Statement& stmt, int64 id) con
     stmt.Bind(5, id);
 }
 
-void TransactionSplitRow::from_select_result(wxSQLite3ResultSet& q)
+TransactionSplitRow& TransactionSplitRow::from_select_result(wxSQLite3ResultSet& q)
 {
     SPLITTRANSID = q.GetInt64(0);
     TRANSID = q.GetInt64(1);
     CATEGID = q.GetInt64(2);
     SPLITTRANSAMOUNT = q.GetDouble(3);
     NOTES = q.GetString(4);
+
+    return *this;
 }
 
 // Return the data record as a json string
@@ -112,7 +99,7 @@ void TransactionSplitRow::as_json(PrettyWriter<StringBuffer>& json_writer) const
     json_writer.String(NOTES.utf8_str());
 }
 
-row_t TransactionSplitRow::to_row_t() const
+row_t TransactionSplitRow::to_html_row() const
 {
     row_t row;
 
@@ -125,7 +112,7 @@ row_t TransactionSplitRow::to_row_t() const
     return row;
 }
 
-void TransactionSplitRow::to_template(html_template& t) const
+void TransactionSplitRow::to_html_template(html_template& t) const
 {
     t(L"SPLITTRANSID") = SPLITTRANSID.GetValue();
     t(L"TRANSID") = TRANSID.GetValue();
@@ -134,7 +121,7 @@ void TransactionSplitRow::to_template(html_template& t) const
     t(L"NOTES") = NOTES;
 }
 
-TransactionSplitRow& TransactionSplitRow::operator=(const TransactionSplitRow& other)
+TransactionSplitRow& TransactionSplitRow::operator= (const TransactionSplitRow& other)
 {
     if (this == &other) return *this;
 
@@ -145,6 +132,17 @@ TransactionSplitRow& TransactionSplitRow::operator=(const TransactionSplitRow& o
     NOTES = other.NOTES;
 
     return *this;
+}
+
+bool TransactionSplitRow::equals(const TransactionSplitRow* other) const
+{
+    if ( SPLITTRANSID != other->SPLITTRANSID) return false;
+    if ( TRANSID != other->TRANSID) return false;
+    if ( CATEGID != other->CATEGID) return false;
+    if ( SPLITTRANSAMOUNT != other->SPLITTRANSAMOUNT) return false;
+    if (!NOTES.IsSameAs(other->NOTES)) return false;
+
+    return true;
 }
 
 TransactionSplitTable::TransactionSplitTable()
@@ -166,17 +164,4 @@ TransactionSplitTable::TransactionSplitTable()
     m_delete_query = "DELETE FROM SPLITTRANSACTIONS_V1 WHERE SPLITTRANSID = ?";
 
     m_select_query = "SELECT SPLITTRANSID, TRANSID, CATEGID, SPLITTRANSAMOUNT, NOTES FROM SPLITTRANSACTIONS_V1";
-}
-
-// Destructor: clears any data records stored in memory
-TransactionSplitTable::~TransactionSplitTable()
-{
-    delete fake_;
-    destroy_cache();
-}
-
-void TransactionSplitTable::ensure_data()
-{
-    m_db->Begin();
-    m_db->Commit();
 }

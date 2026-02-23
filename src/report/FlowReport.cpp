@@ -41,14 +41,20 @@ FlowReport::~FlowReport()
 {
 }
 
-double FlowReport::trueAmount(const TransactionModel::Data& trx)
+double FlowReport::trueAmount(const TransactionData& trx)
 {
     double amount = 0.0;
-    bool isAccountFound = std::find(m_account_id.begin(), m_account_id.end(), trx.ACCOUNTID) != m_account_id.end();
-    bool isToAccountFound = std::find(m_account_id.begin(), m_account_id.end(), trx.TOACCOUNTID) != m_account_id.end();
-    if (!(isAccountFound && isToAccountFound))
-    {
-        const double convRate = CurrencyHistoryModel::getDayRate(AccountModel::instance().get_id(trx.ACCOUNTID)->CURRENCYID, trx.TRANSDATE);
+    bool isAccountFound = std::find(m_account_id.begin(), m_account_id.end(),
+        trx.ACCOUNTID
+    ) != m_account_id.end();
+    bool isToAccountFound = std::find(m_account_id.begin(), m_account_id.end(),
+        trx.TOACCOUNTID
+    ) != m_account_id.end();
+    if (!(isAccountFound && isToAccountFound)) {
+        const double convRate = CurrencyHistoryModel::getDayRate(
+            AccountModel::instance().get_data_n(trx.ACCOUNTID)->CURRENCYID,
+            trx.TRANSDATE
+        );
         switch (TransactionModel::type_id(trx.TRANSCODE)) {
         case TransactionModel::TYPE_ID_WITHDRAWAL:
             amount = -trx.TRANSAMOUNT * convRate;
@@ -59,9 +65,11 @@ double FlowReport::trueAmount(const TransactionModel::Data& trx)
         case TransactionModel::TYPE_ID_TRANSFER:
             if (isAccountFound)
                 amount = -trx.TRANSAMOUNT * convRate;
-            else
-            {
-                const double toConvRate = CurrencyHistoryModel::getDayRate(AccountModel::instance().get_id(trx.TOACCOUNTID)->CURRENCYID, trx.TRANSDATE);
+            else {
+                const double toConvRate = CurrencyHistoryModel::getDayRate(
+                    AccountModel::instance().get_data_n(trx.TOACCOUNTID)->CURRENCYID,
+                    trx.TRANSDATE
+                );
                 amount = +trx.TOTRANSAMOUNT * toConvRate;
             }
         }
@@ -81,7 +89,7 @@ void FlowReport::getTransactions()
 
     // Get initial Balance as of today
     for (const auto& account : AccountModel::instance().find(
-        AccountModel::ACCOUNTTYPE(OP_NE, NavigatorTypes::instance().getInvestmentAccountStr()),
+        AccountCol::ACCOUNTTYPE(OP_NE, NavigatorTypes::instance().getInvestmentAccountStr()),
         AccountModel::STATUS(OP_NE, AccountModel::STATUS_ID_CLOSED)
     )) {
         if (m_account_a &&
@@ -106,7 +114,7 @@ void FlowReport::getTransactions()
     }
 
     // Now gather all transations posted after today
-    TransactionModel::Data_Set transactions = TransactionModel::instance().find(
+    TransactionModel::DataA transactions = TransactionModel::instance().find(
         TransactionModel::TRANSDATE(OP_GT, endOfToday),
         TransactionModel::TRANSDATE(OP_LT, endDate),
         TransactionModel::STATUS(OP_NE, TransactionModel::STATUS_ID_VOID)
@@ -118,7 +126,7 @@ void FlowReport::getTransactions()
         if (!isAccountFound && !isToAccountFound)
             continue; // skip account
         if (TransactionModel::is_split(trx)) {
-            TransactionModel::Data *transaction = TransactionModel::instance().get_id(trx.TRANSID);
+            const TransactionData *transaction = TransactionModel::instance().get_data_n(trx.TRANSID);
             for (const auto& split_item : TransactionModel::split(transaction)) {
                 trx.CATEGID = split_item.CATEGID;
                 trx.TRANSAMOUNT = split_item.SPLITTRANSAMOUNT;
@@ -160,7 +168,7 @@ void FlowReport::getTransactions()
         while (1) {
             if (nextOccurDate > endDate) break;
 
-            TransactionModel::Data trx;
+            TransactionData trx;
             trx.TRANSDATE = nextOccurDate.FormatISODate();
             trx.ACCOUNTID = entry.ACCOUNTID;
             trx.TOACCOUNTID = entry.TOACCOUNTID;
@@ -204,7 +212,7 @@ void FlowReport::getTransactions()
     // Sort by transaction date
     sort(
         m_forecastVector.begin(), m_forecastVector.end(),
-        [] (TransactionModel::Data const& a, TransactionModel::Data const& b) {
+        [] (TransactionData const& a, TransactionData const& b) {
             return a.TRANSDATE < b.TRANSDATE;
         }
     );
@@ -441,9 +449,9 @@ wxString mmReportCashFlowTransactions::getHTMLText()
         else
             hb.startAltTableRow();
         hb.addTableCellDate(trx.TRANSDATE);
-        hb.addTableCell(AccountModel::cache_id_name(trx.ACCOUNTID));
+        hb.addTableCell(AccountModel::get_id_name(trx.ACCOUNTID));
         hb.addTableCell((trx.TOACCOUNTID == -1) ? PayeeModel::get_payee_name(trx.PAYEEID)
-            : "> " + AccountModel::cache_id_name(trx.TOACCOUNTID));
+            : "> " + AccountModel::get_id_name(trx.TOACCOUNTID));
         hb.addTableCell(CategoryModel::full_name(trx.CATEGID));
         double amount = trx.TRANSAMOUNT;
         hb.addMoneyCell(amount);

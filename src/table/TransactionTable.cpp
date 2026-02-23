@@ -13,15 +13,17 @@
  *      @author [sqlite2cpp.py]
  *
  *      Revision History:
- *          AUTO GENERATED at 2026-02-16 15:07:22.405413.
+ *          AUTO GENERATED at 2026-02-23 02:03:14.067947.
  *          DO NOT EDIT!
  */
 //=============================================================================
 
 #include "_TableFactory.tpp"
 #include "TransactionTable.h"
+#include "data/TransactionData.h"
 
-template class TableFactory<TransactionRow>;
+template class TableFactory<TransactionTable, TransactionData>;
+template class mmCache<int64, TransactionData>;
 
 // List of column names in database table CHECKINGACCOUNT_V1,
 // in the order of TransactionCol::COL_ID.
@@ -60,35 +62,7 @@ TransactionRow::TransactionRow()
     COLOR = -1;
 }
 
-TransactionRow::TransactionRow(wxSQLite3ResultSet& q)
-{
-    from_select_result(q);
-}
-
-bool TransactionRow::equals(const TransactionRow* r) const
-{
-    if ( TRANSID != r->TRANSID) return false;
-    if ( ACCOUNTID != r->ACCOUNTID) return false;
-    if ( TOACCOUNTID != r->TOACCOUNTID) return false;
-    if ( PAYEEID != r->PAYEEID) return false;
-    if (!TRANSCODE.IsSameAs(r->TRANSCODE)) return false;
-    if ( TRANSAMOUNT != r->TRANSAMOUNT) return false;
-    if (!STATUS.IsSameAs(r->STATUS)) return false;
-    if (!TRANSACTIONNUMBER.IsSameAs(r->TRANSACTIONNUMBER)) return false;
-    if (!NOTES.IsSameAs(r->NOTES)) return false;
-    if ( CATEGID != r->CATEGID) return false;
-    if (!TRANSDATE.IsSameAs(r->TRANSDATE)) return false;
-    if (!LASTUPDATEDTIME.IsSameAs(r->LASTUPDATEDTIME)) return false;
-    if (!DELETEDTIME.IsSameAs(r->DELETEDTIME)) return false;
-    if ( FOLLOWUPID != r->FOLLOWUPID) return false;
-    if ( TOTRANSAMOUNT != r->TOTRANSAMOUNT) return false;
-    if ( COLOR != r->COLOR) return false;
-
-    return true;
-}
-
-// Bind a Row record to database statement.
-// Use the id argument instead of the row id.
+// Bind a Row record to database insert statement.
 void TransactionRow::to_insert_stmt(wxSQLite3Statement& stmt, int64 id) const
 {
     stmt.Bind(1, ACCOUNTID);
@@ -109,7 +83,7 @@ void TransactionRow::to_insert_stmt(wxSQLite3Statement& stmt, int64 id) const
     stmt.Bind(16, id);
 }
 
-void TransactionRow::from_select_result(wxSQLite3ResultSet& q)
+TransactionRow& TransactionRow::from_select_result(wxSQLite3ResultSet& q)
 {
     TRANSID = q.GetInt64(0);
     ACCOUNTID = q.GetInt64(1);
@@ -127,6 +101,8 @@ void TransactionRow::from_select_result(wxSQLite3ResultSet& q)
     FOLLOWUPID = q.GetInt64(13);
     TOTRANSAMOUNT = q.GetDouble(14);
     COLOR = q.GetInt64(15);
+
+    return *this;
 }
 
 // Return the data record as a json string
@@ -194,7 +170,7 @@ void TransactionRow::as_json(PrettyWriter<StringBuffer>& json_writer) const
     json_writer.Int64(COLOR.GetValue());
 }
 
-row_t TransactionRow::to_row_t() const
+row_t TransactionRow::to_html_row() const
 {
     row_t row;
 
@@ -218,7 +194,7 @@ row_t TransactionRow::to_row_t() const
     return row;
 }
 
-void TransactionRow::to_template(html_template& t) const
+void TransactionRow::to_html_template(html_template& t) const
 {
     t(L"TRANSID") = TRANSID.GetValue();
     t(L"ACCOUNTID") = ACCOUNTID.GetValue();
@@ -238,7 +214,7 @@ void TransactionRow::to_template(html_template& t) const
     t(L"COLOR") = COLOR.GetValue();
 }
 
-TransactionRow& TransactionRow::operator=(const TransactionRow& other)
+TransactionRow& TransactionRow::operator= (const TransactionRow& other)
 {
     if (this == &other) return *this;
 
@@ -262,6 +238,28 @@ TransactionRow& TransactionRow::operator=(const TransactionRow& other)
     return *this;
 }
 
+bool TransactionRow::equals(const TransactionRow* other) const
+{
+    if ( TRANSID != other->TRANSID) return false;
+    if ( ACCOUNTID != other->ACCOUNTID) return false;
+    if ( TOACCOUNTID != other->TOACCOUNTID) return false;
+    if ( PAYEEID != other->PAYEEID) return false;
+    if (!TRANSCODE.IsSameAs(other->TRANSCODE)) return false;
+    if ( TRANSAMOUNT != other->TRANSAMOUNT) return false;
+    if (!STATUS.IsSameAs(other->STATUS)) return false;
+    if (!TRANSACTIONNUMBER.IsSameAs(other->TRANSACTIONNUMBER)) return false;
+    if (!NOTES.IsSameAs(other->NOTES)) return false;
+    if ( CATEGID != other->CATEGID) return false;
+    if (!TRANSDATE.IsSameAs(other->TRANSDATE)) return false;
+    if (!LASTUPDATEDTIME.IsSameAs(other->LASTUPDATEDTIME)) return false;
+    if (!DELETEDTIME.IsSameAs(other->DELETEDTIME)) return false;
+    if ( FOLLOWUPID != other->FOLLOWUPID) return false;
+    if ( TOTRANSAMOUNT != other->TOTRANSAMOUNT) return false;
+    if ( COLOR != other->COLOR) return false;
+
+    return true;
+}
+
 TransactionTable::TransactionTable()
 {
     m_table_name = "CHECKINGACCOUNT_V1";
@@ -282,17 +280,4 @@ TransactionTable::TransactionTable()
     m_delete_query = "DELETE FROM CHECKINGACCOUNT_V1 WHERE TRANSID = ?";
 
     m_select_query = "SELECT TRANSID, ACCOUNTID, TOACCOUNTID, PAYEEID, TRANSCODE, TRANSAMOUNT, STATUS, TRANSACTIONNUMBER, NOTES, CATEGID, TRANSDATE, LASTUPDATEDTIME, DELETEDTIME, FOLLOWUPID, TOTRANSAMOUNT, COLOR FROM CHECKINGACCOUNT_V1";
-}
-
-// Destructor: clears any data records stored in memory
-TransactionTable::~TransactionTable()
-{
-    delete fake_;
-    destroy_cache();
-}
-
-void TransactionTable::ensure_data()
-{
-    m_db->Begin();
-    m_db->Commit();
 }

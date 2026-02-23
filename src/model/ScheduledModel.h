@@ -20,7 +20,10 @@
 #pragma once
 
 #include "base/defs.h"
+
 #include "table/ScheduledTable.h"
+#include "data/ScheduledData.h"
+
 #include "_ModelBase.h"
 #include "TransactionModel.h"
 #include "TransactionSplitModel.h"
@@ -29,11 +32,10 @@
 
 const int BD_REPEATS_MULTIPLEX_BASE = 100;
 
-class ScheduledModel : public Model<ScheduledTable>
+class ScheduledModel : public Model<ScheduledTable, ScheduledData>
 {
 public:
-    using Model<ScheduledTable>::remove;
-    typedef ScheduledSplitModel::Data_Set Split_Data_Set;
+    typedef ScheduledSplitModel::DataA Split_DataA;
 
 public:
     enum REPEAT_TYPE {
@@ -101,8 +103,8 @@ public:
         wxString ACCOUNTNAME;
         wxString PAYEENAME;
         wxString CATEGNAME;
-        ScheduledSplitModel::Data_Set m_bill_splits;
-        TagLinkModel::Data_Set m_tags;
+        ScheduledSplitModel::DataA m_bill_splits;
+        TagLinkModel::DataA m_tags;
         wxString TAGNAMES;
 
         Full_Data();
@@ -110,7 +112,7 @@ public:
 
         wxString real_payee_name() const;
     };
-    typedef std::vector<Full_Data> Full_Data_Set;
+    typedef std::vector<Full_Data> Full_DataA;
 
     struct SorterByACCOUNTNAME
     {
@@ -228,15 +230,15 @@ public:
     * Remove the Data record instance from memory and the database
     * including any splits associated with the Data Record.
     */
-    bool remove(int64 id);
+    bool remove_depen(int64 id) override;
 
-    static ScheduledTable::STATUS STATUS(OP op, TransactionModel::STATUS_ID status);
-    static ScheduledTable::TRANSCODE TRANSCODE(OP op, TransactionModel::TYPE_ID type);
+    static ScheduledCol::STATUS STATUS(OP op, TransactionModel::STATUS_ID status);
+    static ScheduledCol::TRANSCODE TRANSCODE(OP op, TransactionModel::TYPE_ID type);
 
-    static const ScheduledSplitModel::Data_Set split(const Data* r);
-    static const ScheduledSplitModel::Data_Set split(const Data& r);
-    static const TagLinkModel::Data_Set taglink(const Data* r);
-    static const TagLinkModel::Data_Set taglink(const Data& r);
+    static const ScheduledSplitModel::DataA split(const Data* r);
+    static const ScheduledSplitModel::DataA split(const Data& r);
+    static const TagLinkModel::DataA taglink(const Data* r);
+    static const TagLinkModel::DataA taglink(const Data& r);
     static wxArrayString unroll(const Data* r, const wxString end_date, int limit = -1);
     static wxArrayString unroll(const Data& r, const wxString end_date, int limit = -1);
 

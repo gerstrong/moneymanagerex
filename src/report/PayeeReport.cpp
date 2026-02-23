@@ -67,7 +67,7 @@ void PayeeReport::loadData()
     const auto &trx_a = TransactionModel::instance().find(
         TransactionModel::TRANSDATE(OP_GE, m_date_range2.rangeStart().value()),
         TransactionModel::TRANSDATE(OP_LE, m_date_range2.rangeEnd().value()),
-        TransactionModel::DELETEDTIME(OP_EQ, wxEmptyString),
+        TransactionCol::DELETEDTIME(OP_EQ, wxEmptyString),
         TransactionModel::STATUS(OP_NE, TransactionModel::STATUS_ID_VOID)
     );
     for (const auto& trx: trx_a) {
@@ -86,7 +86,7 @@ void PayeeReport::loadData()
         auto [it, new_payee] = m_id_data.try_emplace(trx.PAYEEID, Data{});
         Data& data = it->second;
         if (new_payee) {
-            PayeeModel::Data* payee = PayeeModel::instance().get_id(payee_id);
+            const PayeeData* payee = PayeeModel::instance().get_data_n(payee_id);
             data.payee_name = payee ? payee->PAYEENAME : "";
             data.flow_pos = 0.0;
             data.flow_neg = 0.0;
@@ -96,11 +96,11 @@ void PayeeReport::loadData()
         // NOTE: call to getDayRate() in every transaction is slow
         // if "Use historical currency" is enabled in settings
         const double convRate = CurrencyHistoryModel::getDayRate(
-            AccountModel::instance().get_id(trx.ACCOUNTID)->CURRENCYID,
+            AccountModel::instance().get_data_n(trx.ACCOUNTID)->CURRENCYID,
             trx.TRANSDATE
         );
 
-        TransactionSplitModel::Data_Set splits;
+        TransactionSplitModel::DataA splits;
         if (all_splits.count(trx.id()))
             splits = all_splits.at(trx.id());
         if (splits.empty()) {

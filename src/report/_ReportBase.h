@@ -153,14 +153,14 @@ inline int ReportBase::getChartSelection() const { return this->m_chart_selectio
 class mmGeneralReport : public ReportBase
 {
 public:
-    explicit mmGeneralReport(const ReportModel::Data* report);
+    explicit mmGeneralReport(const ReportData* report);
 
 public:
     wxString getHTMLText();
     virtual int getParameters();
 
 private:
-    const ReportModel::Data* m_report;
+    const ReportData* m_report;
 };
 
 #include <html_template.h>

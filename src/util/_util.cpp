@@ -824,10 +824,10 @@ bool getOnlineCurrencyRates(wxString& msg,const int64 curr_id, const bool used_o
     const wxDateTime today = wxDateTime::Today();
     const wxString today_str = today.FormatISODate();
 
-    auto currencies = CurrencyModel::instance().find(
-        CurrencyModel::CURRENCY_SYMBOL(OP_NE, base_currency_symbol)
+    auto currency_a = CurrencyModel::instance().find(
+        CurrencyCol::CURRENCY_SYMBOL(OP_NE, base_currency_symbol)
     );
-    for (const auto& currency : currencies)
+    for (const auto& currency : currency_a)
     {
         if (curr_id > 0 && currency.CURRENCYID != curr_id)
             continue;
@@ -877,42 +877,39 @@ bool getOnlineCurrencyRates(wxString& msg,const int64 curr_id, const bool used_o
     const auto b = CurrencyModel::GetBaseCurrency();
     msg << _t("Currency rates have been updated");
     msg << "\n\n";
-    for (const auto & item : fiat)
-    {
+    for (const auto & item : fiat) {
         const wxString value0_str(fmt::format("{:>{}}", fmt::string_view(CurrencyModel::toString(item.second, b, 4).mb_str()), 20));
         const wxString symbol(fmt::format("{:<{}}", fmt::string_view(item.first.mb_str()), 10));
 
-        if (currency_data.find(item.first) != currency_data.end())
-        {
+        if (currency_data.find(item.first) != currency_data.end()) {
             auto value1 = currency_data[item.first];
             const wxString value1_str(fmt::format("{:>{}}", fmt::string_view(CurrencyModel::toString(value1, b, 4).mb_str()), 20));
             msg << wxString::Format("%s\t%s\t\t%s\n", symbol, value0_str, value1_str);
         }
-        else
-        {
+        else {
             msg << wxString::Format("%s\t%s\t\t%s\n", symbol, value0_str, _t("Invalid value"));
         }
     }
 
-
     CurrencyModel::instance().Savepoint();
     CurrencyHistoryModel::instance().Savepoint();
-    for (auto& currency : currencies)
-    {
-        if (!used_only && !AccountModel::is_used(currency)) continue;
+    for (auto& currency_d : currency_a) {
+        if (!used_only && !AccountModel::is_used(currency_d))
+            continue;
 
-        const wxString currency_symbol = currency.CURRENCY_SYMBOL;
-        if (!currency_symbol.IsEmpty() && currency_data.find(currency_symbol) != currency_data.end())
-        {
+        const wxString currency_symbol = currency_d.CURRENCY_SYMBOL;
+        if (!currency_symbol.IsEmpty()
+            && currency_data.find(currency_symbol) != currency_data.end()
+        ) {
             double new_rate = currency_data[currency_symbol];
-            if (new_rate > 0)
-            {
+            if (new_rate > 0) {
                 if(PreferencesModel::instance().getUseCurrencyHistory())
-                    CurrencyHistoryModel::instance().addUpdate(currency.CURRENCYID, today, new_rate, CurrencyHistoryModel::ONLINE);
-                else
-                {
-                    currency.BASECONVRATE = new_rate;
-                    CurrencyModel::instance().save(&currency);
+                    CurrencyHistoryModel::instance().addUpdate(
+                        currency_d.CURRENCYID, today, new_rate, CurrencyHistoryModel::ONLINE
+                    );
+                else {
+                    currency_d.BASECONVRATE = new_rate;
+                    CurrencyModel::instance().save_data(currency_d);
                 }
             }
         }

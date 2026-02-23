@@ -63,12 +63,12 @@ public:
     void setSelection(int &id)
     {
         if (m_payee) {
-            for (const auto &payee : PayeeModel::instance().get_all(PayeeCol::COL_ID_PAYEENAME))
+            for (const auto &payee : PayeeModel::instance().find_all(PayeeCol::COL_ID_PAYEENAME))
                 if (payee.PAYEEID == id) this->ChangeValue(payee.PAYEENAME);
         }
         else
         {
-            for (const auto &acc : AccountModel::instance().get_all(AccountCol::COL_ID_ACCOUNTNAME))
+            for (const auto &acc : AccountModel::instance().find_all(AccountCol::COL_ID_ACCOUNTNAME))
                 if (acc.ACCOUNTID == id) this->ChangeValue(acc.ACCOUNTNAME);
         }
     }
@@ -77,21 +77,23 @@ public:
     {
         int64 id = -1;
         if (m_payee) {
-            PayeeModel::Data * p = PayeeModel::instance().get_key(this->GetValue());
-            if (p) {
-                id = p->PAYEEID;
+            const PayeeData* payee_n = PayeeModel::instance().get_key(this->GetValue());
+            if (payee_n) {
+                id = payee_n->PAYEEID;
             }
             else {
-                p = PayeeModel::instance().create();
-                p->PAYEENAME = this->GetValue();
-                p->ACTIVE = 1;
-                PayeeModel::instance().save(p);
+                PayeeData new_payee_d = PayeeData();
+                new_payee_d.PAYEENAME = this->GetValue();
+                new_payee_d.ACTIVE    = 1;
+                PayeeModel::instance().add_data(new_payee_d);
                 mmWebApp::MMEX_WebApp_UpdatePayee();
             }
         }
         else {
-            AccountModel::Data* a = AccountModel::instance().get_key(this->GetValue());
-            if (a) id = a->ACCOUNTID;
+            const AccountData* account_n = AccountModel::instance().get_key(this->GetValue());
+            if (account_n) {
+                id = account_n->ACCOUNTID;
+            }
             else {
                 //TODO:
             }

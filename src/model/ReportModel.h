@@ -19,14 +19,14 @@
 #pragma once
 
 #include "base/defs.h"
-#include "_ModelBase.h"
+
 #include "table/ReportTable.h"
+#include "data/ReportData.h"
 
-class ReportModel : public Model<ReportTable>
+#include "_ModelBase.h"
+
+class ReportModel : public Model<ReportTable, ReportData>
 {
-public:
-    using Model<ReportTable>::get_id;
-
 public:
     ReportModel(); 
     ~ReportModel();
@@ -53,7 +53,7 @@ public:
     //wxString get_html(const Data& r);
 
 public:
-    Data* get_key(const wxString& name);
+    const Data* get_key(const wxString& name);
     static bool PrepareSQL(wxString& sql, std::map <wxString, wxString>& rep_params);
     static const std::vector<std::pair<wxString, wxString>> getParamNames();
 

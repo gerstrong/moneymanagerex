@@ -13,15 +13,17 @@
  *      @author [sqlite2cpp.py]
  *
  *      Revision History:
- *          AUTO GENERATED at 2026-02-16 15:07:22.405413.
+ *          AUTO GENERATED at 2026-02-23 02:03:14.067947.
  *          DO NOT EDIT!
  */
 //=============================================================================
 
 #include "_TableFactory.tpp"
 #include "ScheduledTable.h"
+#include "data/ScheduledData.h"
 
-template class TableFactory<ScheduledRow>;
+template class TableFactory<ScheduledTable, ScheduledData>;
+template class mmCache<int64, ScheduledData>;
 
 // List of column names in database table BILLSDEPOSITS_V1,
 // in the order of ScheduledCol::COL_ID.
@@ -63,36 +65,7 @@ ScheduledRow::ScheduledRow()
     COLOR = -1;
 }
 
-ScheduledRow::ScheduledRow(wxSQLite3ResultSet& q)
-{
-    from_select_result(q);
-}
-
-bool ScheduledRow::equals(const ScheduledRow* r) const
-{
-    if ( BDID != r->BDID) return false;
-    if ( ACCOUNTID != r->ACCOUNTID) return false;
-    if ( TOACCOUNTID != r->TOACCOUNTID) return false;
-    if ( PAYEEID != r->PAYEEID) return false;
-    if (!TRANSCODE.IsSameAs(r->TRANSCODE)) return false;
-    if ( TRANSAMOUNT != r->TRANSAMOUNT) return false;
-    if (!STATUS.IsSameAs(r->STATUS)) return false;
-    if (!TRANSACTIONNUMBER.IsSameAs(r->TRANSACTIONNUMBER)) return false;
-    if (!NOTES.IsSameAs(r->NOTES)) return false;
-    if ( CATEGID != r->CATEGID) return false;
-    if (!TRANSDATE.IsSameAs(r->TRANSDATE)) return false;
-    if ( FOLLOWUPID != r->FOLLOWUPID) return false;
-    if ( TOTRANSAMOUNT != r->TOTRANSAMOUNT) return false;
-    if ( REPEATS != r->REPEATS) return false;
-    if (!NEXTOCCURRENCEDATE.IsSameAs(r->NEXTOCCURRENCEDATE)) return false;
-    if ( NUMOCCURRENCES != r->NUMOCCURRENCES) return false;
-    if ( COLOR != r->COLOR) return false;
-
-    return true;
-}
-
-// Bind a Row record to database statement.
-// Use the id argument instead of the row id.
+// Bind a Row record to database insert statement.
 void ScheduledRow::to_insert_stmt(wxSQLite3Statement& stmt, int64 id) const
 {
     stmt.Bind(1, ACCOUNTID);
@@ -114,7 +87,7 @@ void ScheduledRow::to_insert_stmt(wxSQLite3Statement& stmt, int64 id) const
     stmt.Bind(17, id);
 }
 
-void ScheduledRow::from_select_result(wxSQLite3ResultSet& q)
+ScheduledRow& ScheduledRow::from_select_result(wxSQLite3ResultSet& q)
 {
     BDID = q.GetInt64(0);
     ACCOUNTID = q.GetInt64(1);
@@ -133,6 +106,8 @@ void ScheduledRow::from_select_result(wxSQLite3ResultSet& q)
     NEXTOCCURRENCEDATE = q.GetString(14);
     NUMOCCURRENCES = q.GetInt64(15);
     COLOR = q.GetInt64(16);
+
+    return *this;
 }
 
 // Return the data record as a json string
@@ -203,7 +178,7 @@ void ScheduledRow::as_json(PrettyWriter<StringBuffer>& json_writer) const
     json_writer.Int64(COLOR.GetValue());
 }
 
-row_t ScheduledRow::to_row_t() const
+row_t ScheduledRow::to_html_row() const
 {
     row_t row;
 
@@ -228,7 +203,7 @@ row_t ScheduledRow::to_row_t() const
     return row;
 }
 
-void ScheduledRow::to_template(html_template& t) const
+void ScheduledRow::to_html_template(html_template& t) const
 {
     t(L"BDID") = BDID.GetValue();
     t(L"ACCOUNTID") = ACCOUNTID.GetValue();
@@ -249,7 +224,7 @@ void ScheduledRow::to_template(html_template& t) const
     t(L"COLOR") = COLOR.GetValue();
 }
 
-ScheduledRow& ScheduledRow::operator=(const ScheduledRow& other)
+ScheduledRow& ScheduledRow::operator= (const ScheduledRow& other)
 {
     if (this == &other) return *this;
 
@@ -274,6 +249,29 @@ ScheduledRow& ScheduledRow::operator=(const ScheduledRow& other)
     return *this;
 }
 
+bool ScheduledRow::equals(const ScheduledRow* other) const
+{
+    if ( BDID != other->BDID) return false;
+    if ( ACCOUNTID != other->ACCOUNTID) return false;
+    if ( TOACCOUNTID != other->TOACCOUNTID) return false;
+    if ( PAYEEID != other->PAYEEID) return false;
+    if (!TRANSCODE.IsSameAs(other->TRANSCODE)) return false;
+    if ( TRANSAMOUNT != other->TRANSAMOUNT) return false;
+    if (!STATUS.IsSameAs(other->STATUS)) return false;
+    if (!TRANSACTIONNUMBER.IsSameAs(other->TRANSACTIONNUMBER)) return false;
+    if (!NOTES.IsSameAs(other->NOTES)) return false;
+    if ( CATEGID != other->CATEGID) return false;
+    if (!TRANSDATE.IsSameAs(other->TRANSDATE)) return false;
+    if ( FOLLOWUPID != other->FOLLOWUPID) return false;
+    if ( TOTRANSAMOUNT != other->TOTRANSAMOUNT) return false;
+    if ( REPEATS != other->REPEATS) return false;
+    if (!NEXTOCCURRENCEDATE.IsSameAs(other->NEXTOCCURRENCEDATE)) return false;
+    if ( NUMOCCURRENCES != other->NUMOCCURRENCES) return false;
+    if ( COLOR != other->COLOR) return false;
+
+    return true;
+}
+
 ScheduledTable::ScheduledTable()
 {
     m_table_name = "BILLSDEPOSITS_V1";
@@ -293,17 +291,4 @@ ScheduledTable::ScheduledTable()
     m_delete_query = "DELETE FROM BILLSDEPOSITS_V1 WHERE BDID = ?";
 
     m_select_query = "SELECT BDID, ACCOUNTID, TOACCOUNTID, PAYEEID, TRANSCODE, TRANSAMOUNT, STATUS, TRANSACTIONNUMBER, NOTES, CATEGID, TRANSDATE, FOLLOWUPID, TOTRANSAMOUNT, REPEATS, NEXTOCCURRENCEDATE, NUMOCCURRENCES, COLOR FROM BILLSDEPOSITS_V1";
-}
-
-// Destructor: clears any data records stored in memory
-ScheduledTable::~ScheduledTable()
-{
-    delete fake_;
-    destroy_cache();
-}
-
-void ScheduledTable::ensure_data()
-{
-    m_db->Begin();
-    m_db->Commit();
 }

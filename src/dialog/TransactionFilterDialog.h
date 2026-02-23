@@ -47,12 +47,12 @@ public:
 
     virtual int ShowModal();
 
-    int mmIsRecordMatches(const TransactionModel::Data &tran
-        , const TransactionSplitModel::Data_Set& splits);
-    int mmIsRecordMatches(const TransactionModel::Data &tran
-        , const std::map<int64, TransactionSplitModel::Data_Set>& splits);
-    int mmIsRecordMatches(const ScheduledModel::Data &tran
-        , const std::map<int64, ScheduledSplitModel::Data_Set>& splits);
+    int mmIsRecordMatches(const TransactionData &tran
+        , const TransactionSplitModel::DataA& splits);
+    int mmIsRecordMatches(const TransactionData &tran
+        , const std::map<int64, TransactionSplitModel::DataA>& splits);
+    int mmIsRecordMatches(const ScheduledData &tran
+        , const std::map<int64, ScheduledSplitModel::DataA>& splits);
     template<class MODEL, class DATA = typename MODEL::DATA>
     bool mmIsRecordMatches(const DATA& tran, bool mergeSplitTags = false);
     template<class MODEL, class DATA = typename MODEL::DATA>

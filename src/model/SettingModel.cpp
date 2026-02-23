@@ -26,8 +26,8 @@
 
 #include "panel/JournalPanel.h"
 
-SettingModel::SettingModel()
-: Model<SettingTable>()
+SettingModel::SettingModel() :
+    Model<SettingTable, SettingData>()
 {
 }
 
@@ -40,10 +40,11 @@ SettingModel::~SettingModel()
 SettingModel& SettingModel::instance(wxSQLite3Database* db)
 {
     SettingModel& ins = Singleton<SettingModel>::instance();
+    ins.reset_cache();
     ins.m_db = db;
-    ins.destroy_cache();
     ins.ensure_table();
-    ins.preload();
+    ins.preload_cache();
+
     return ins;
 }
 
@@ -56,36 +57,37 @@ SettingModel& SettingModel::instance()
 // Returns true if key setting found
 bool SettingModel::contains(const wxString& key)
 {
-    return !find(SETTINGNAME(key)).empty();
+    return !find(SettingCol::SETTINGNAME(key)).empty();
 }
 
 // Raw
 void SettingModel::setRaw(const wxString& key, const wxString& newValue)
 {
     // search in cache
-    Data* setting = search_cache(SETTINGNAME(key));
-    if (!setting) {
+    const Data* setting_n = search_cache_n(SettingCol::SETTINGNAME(key));
+    if (!setting_n) {
         // not found in cache; search in db
-        Data_Set items = find(SETTINGNAME(key));
-        if (!items.empty())
-            setting = get_id(items[0].SETTINGID);
-        if (!setting) {
-            // not found; create
-            setting = create();
-            setting->SETTINGNAME = key;
-        }
+        const DataA setting_a = find(SettingCol::SETTINGNAME(key));
+        if (!setting_a.empty())
+            setting_n = get_data_n(setting_a[0].SETTINGID);
     }
-    setting->SETTINGVALUE = newValue;
-    save(setting);
+
+    Data setting_d = setting_n ? *setting_n : Data();
+    if (!setting_n) {
+        setting_d.SETTINGNAME = key;
+    }
+    setting_d.SETTINGVALUE = newValue;
+    save_data(setting_d);
 }
+
 const wxString SettingModel::getRaw(const wxString& key, const wxString& defaultValue)
 {
     // search in cache
-    Data* setting = search_cache(SETTINGNAME(key));
+    const Data* setting = search_cache_n(SettingCol::SETTINGNAME(key));
     if (setting)
         return setting->SETTINGVALUE;
     // search in db
-    Data_Set items = find(SETTINGNAME(key));
+    DataA items = find(SettingCol::SETTINGNAME(key));
     if (!items.empty())
         return items[0].SETTINGVALUE;
     // not found
@@ -214,21 +216,24 @@ void SettingModel::prependArrayItem(const wxString& key, const wxString& value, 
 {
     if (value.IsEmpty())
         return;
-    Data* setting = search_cache(SETTINGNAME(key));
-    if (!setting) { // not cached
-        Data_Set items = find(SETTINGNAME(key));
+
+    const Data* setting_n = search_cache_n(SettingCol::SETTINGNAME(key));
+    if (!setting_n) { // not cached
+        DataA items = find(SettingCol::SETTINGNAME(key));
         if (!items.empty())
-        setting = get_id(items[0].SETTINGID);
-        if (!setting) {
-            setting = create();
-            setting->SETTINGNAME = key;
-        }
+            setting_n = get_data_n(items[0].SETTINGID);
     }
+
+    Data setting_d = setting_n ? *setting_n : Data();
+    if (!setting_n) {
+        setting_d.SETTINGNAME = key;
+    }
+
     wxArrayString a;
     a.Add(value);
 
     Document j_doc;
-    if (!j_doc.Parse(setting->SETTINGVALUE.utf8_str()).HasParseError()
+    if (!j_doc.Parse(setting_d.SETTINGVALUE.utf8_str()).HasParseError()
         && j_doc.IsArray()
     ) {
         int i = 1;
@@ -252,8 +257,8 @@ void SettingModel::prependArrayItem(const wxString& key, const wxString& value, 
     }
     json_writer.EndArray();
 
-    setting->SETTINGVALUE = wxString::FromUTF8(json_buffer.GetString());
-    save(setting);
+    setting_d.SETTINGVALUE = wxString::FromUTF8(json_buffer.GetString());
+    save_data(setting_d);
 }
 
 //-------------------------------------------------------------------
@@ -318,10 +323,10 @@ void SettingModel::shrinkUsageTable()
     m_db->Vacuum();
 }
 
-row_t SettingModel::to_row_t()
+row_t SettingModel::to_html_row()
 {
     row_t row;
-    for (const auto &r: instance().get_all())
+    for (const auto &r: instance().find_all())
         row(r.SETTINGNAME.ToStdWstring()) = r.SETTINGVALUE;
     return row;
 }

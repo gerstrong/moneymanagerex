@@ -21,11 +21,14 @@
 
 #include "base/defs.h"
 #include "util/_choices.h"
+
 #include "table/AssetTable.h"
+#include "data/AssetData.h"
+
 #include "_ModelBase.h"
 #include "CurrencyModel.h"
 
-class AssetModel : public Model<AssetTable>
+class AssetModel : public Model<AssetTable, AssetData>
 {
 public:
     enum TYPE_ID
@@ -83,8 +86,8 @@ public:
     static AssetModel& instance();
 
 public:
-    static AssetTable::ASSETTYPE ASSETTYPE(OP op, TYPE_ID type);
-    static AssetTable::STARTDATE STARTDATE(OP op, const wxDate& date);
+    static AssetCol::ASSETTYPE ASSETTYPE(OP op, TYPE_ID type);
+    static AssetCol::STARTDATE STARTDATE(OP op, const wxDate& date);
     
 public:
     static wxString get_asset_name(int64 asset_id);
@@ -113,7 +116,7 @@ public:
     static CHANGEMODE_ID changemode_id(const Data& r);
 
     /** Returns the base currency Data record pointer*/
-    static CurrencyModel::Data* currency(const Data* /* r */);
+    static const CurrencyData* currency(const Data* /* r */);
     /** Returns the calculated current value */
     static std::pair<double, double> value(const Data* r);
     /** Returns the calculated current value */

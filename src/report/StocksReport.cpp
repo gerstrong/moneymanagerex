@@ -53,7 +53,7 @@ void  StocksReport::refreshData()
     account_holder account;
     const wxDate today = wxDate::Today();
 
-    for (const auto& a : AccountModel::instance().get_all(AccountCol::COL_ID_ACCOUNTNAME))
+    for (const auto& a : AccountModel::instance().find_all(AccountCol::COL_ID_ACCOUNTNAME))
     {
         if (AccountModel::type_id(a) != NavigatorTypes::TYPE_ID_INVESTMENT) continue;
         if (AccountModel::status_id(a) != AccountModel::STATUS_ID_OPEN) continue;
@@ -65,9 +65,9 @@ void  StocksReport::refreshData()
         account.total = AccountModel::investment_balance(a).first;
         account.data.clear();
 
-        for (const auto& stock : StockModel::instance().find(StockModel::HELDAT(a.ACCOUNTID)))
+        for (const auto& stock : StockModel::instance().find(StockCol::HELDAT(a.ACCOUNTID)))
         {
-            const CurrencyModel::Data* currency = AccountModel::currency(a);
+            const CurrencyData* currency = AccountModel::currency(a);
             const double today_rate = CurrencyHistoryModel::getDayRate(currency->CURRENCYID, today);
             m_stock_balance += today_rate * StockModel::CurrentValue(stock);
             line.realgainloss = StockModel::RealGainLoss(stock);
@@ -128,8 +128,8 @@ wxString StocksReport::getHTMLText()
 
             for (const auto& acct : m_stocks)
             {
-                const AccountModel::Data* account = AccountModel::instance().get_id(acct.id);
-                const CurrencyModel::Data* currency = AccountModel::currency(account);
+                const AccountData* account = AccountModel::instance().get_data_n(acct.id);
+                const CurrencyData* currency = AccountModel::currency(account);
 
                 hb.startThead();
                 {
@@ -264,19 +264,19 @@ wxString mmReportChartStocks::getHTMLText()
 
     wxTimeSpan dist;
     wxArrayString symbols;
-    for (const auto& stock : StockModel::instance().get_all(StockCol::COL_ID_SYMBOL))
+    for (const auto& stock : StockModel::instance().find_all(StockCol::COL_ID_SYMBOL))
     {
-        AccountModel::Data* account = AccountModel::instance().get_id(stock.HELDAT);
+        const AccountData* account = AccountModel::instance().get_data_n(stock.HELDAT);
         if (AccountModel::status_id(account) != AccountModel::STATUS_ID_OPEN) continue;
         if (symbols.Index(stock.SYMBOL) != wxNOT_FOUND) continue;
 
         symbols.Add(stock.SYMBOL);
         int dataCount = 0, freq = 1;
         auto histData = StockHistoryModel::instance().find(
-            StockHistoryModel::SYMBOL(stock.SYMBOL),
+            StockHistoryCol::SYMBOL(stock.SYMBOL),
             StockHistoryModel::DATE(OP_GE, m_date_range->start_date()),
             StockHistoryModel::DATE(OP_LE, m_date_range->end_date()));
-        std::stable_sort(histData.begin(), histData.end(), StockHistoryRow::SorterByDATE());
+        std::stable_sort(histData.begin(), histData.end(), StockHistoryData::SorterByDATE());
 
         //bool showGridLines = (histData.size() <= 366);
         //bool pointDot = (histData.size() <= 30);

@@ -434,7 +434,7 @@ void AssetDialog::OnOk(wxCommandEvent& /*event*/)
     m_asset_n->ASSETTYPE        = asset_type;
 
     int64 old_asset_id = m_asset_n->id();
-    AssetModel::instance().unsafe_save_data(m_asset_n);
+    AssetModel::instance().unsafe_save_data_n(m_asset_n);
     int64 new_asset_id = m_asset_n->id();
 
     if (old_asset_id < 0) {
@@ -491,7 +491,7 @@ void AssetDialog::CreateAssetAccount()
     new_account_d.INITIALBAL   = 0;
     new_account_d.INITIALDATE  = m_asset_n->STARTDATE;
     new_account_d.CURRENCYID   = CurrencyModel::GetBaseCurrency()->CURRENCYID;
-    AccountModel::instance().add_data(new_account_d);
+    AccountModel::instance().add_data_n(new_account_d);
 
     AssetDialog dlg(this, m_asset_n, true);
     dlg.SetTransactionAccountName(m_asset_n->ASSETTYPE);

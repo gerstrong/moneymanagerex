@@ -493,7 +493,7 @@ void StockDialog::OnSave(wxCommandEvent & /*event*/)
     m_stock_n->CURRENTPRICE  = currentPrice;
     m_stock_n->VALUE         = initValue;
     m_stock_n->COMMISSION    = commission;
-    StockModel::instance().unsafe_save_data(m_stock_n);
+    StockModel::instance().unsafe_save_data_n(m_stock_n);
     m_stock_id = m_stock_n->id();
 
     if (!m_edit) {
@@ -531,7 +531,7 @@ void StockDialog::CreateShareAccount(
     new_account_d.INITIALBAL   = 0;
     new_account_d.INITIALDATE  = openingDate;
     new_account_d.CURRENCYID   = stock_account->CURRENCYID;
-    AccountModel::instance().add_data(new_account_d);
+    AccountModel::instance().add_data_n(new_account_d);
 
     TransactionShareDialog share_dialog(this, m_stock_n);
     share_dialog.ShowModal();
@@ -665,7 +665,7 @@ void StockDialog::OnHistoryImportButton(wxCommandEvent& /*event*/)
         if (!canceledbyuser) {
             // we need to save them to the database.
             for (auto& new_sh_d : new_sh_a)
-                StockHistoryModel::instance().add_data(new_sh_d);
+                StockHistoryModel::instance().add_data_n(new_sh_d);
             // show the data
             ShowStockHistory();
         }
@@ -854,7 +854,7 @@ void StockDialog::OnHistoryDownloadButton(wxCommandEvent& /*event*/)
                 new_sh_d.DATE    = date_str;
                 new_sh_d.VALUE   = dPrice;
                 new_sh_d.UPDTYPE = StockHistoryModel::ONLINE;
-                StockHistoryModel::instance().add_data(new_sh_d);
+                StockHistoryModel::instance().add_data_n(new_sh_d);
             }
         }
         StockHistoryModel::instance().ReleaseSavepoint();

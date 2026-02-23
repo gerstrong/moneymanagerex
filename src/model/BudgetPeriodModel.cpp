@@ -63,13 +63,13 @@ void BudgetPeriodModel::Set(int64 year_id, const wxString& value)
     Data* bp_n = unsafe_get_data_n(year_id);
     if (bp_n) {
         bp_n->BUDGETYEARNAME = value;
-        unsafe_update_data(bp_n);
+        unsafe_update_data_n(bp_n);
     }
     else {
         Data new_bp_d = Data();
         new_bp_d.BUDGETYEARID = year_id;
         new_bp_d.BUDGETYEARNAME = value;
-        add_data(new_bp_d);
+        add_data_n(new_bp_d);
     }
 }
 
@@ -79,7 +79,7 @@ int64 BudgetPeriodModel::Add(const wxString& value)
     if (year_id < 0) {
         Data new_bp_d = Data();
         new_bp_d.BUDGETYEARNAME = value;
-        add_data(new_bp_d);
+        add_data_n(new_bp_d);
         year_id = new_bp_d.id();
     }
     return year_id;

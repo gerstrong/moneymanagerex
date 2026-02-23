@@ -677,7 +677,7 @@ void GeneralReportManager::importReport()
     report_d.TEMPLATECONTENT = htt;
     report_d.DESCRIPTION     = txt;
     report_d.ACTIVE          = 1;
-    ReportModel::instance().save_data(report_d);
+    ReportModel::instance().save_data_n(report_d);
     m_selectedReportID = report_d.id();
 
     fillControls();
@@ -746,7 +746,7 @@ void GeneralReportManager::OnUpdateReport(wxCommandEvent& WXUNUSED(event))
     report_n->LUACONTENT = LuaScriptText->GetValue();
     report_n->TEMPLATECONTENT = templateText->GetValue();
     report_n->DESCRIPTION = descriptionText->GetValue();
-    ReportModel::instance().unsafe_update_data(report_n);
+    ReportModel::instance().unsafe_update_data_n(report_n);
 
     templateText->SetSavePoint();  // reset change flags
     SqlScriptText->SetSavePoint();
@@ -958,7 +958,7 @@ void GeneralReportManager::renameReport(int64 id)
         && !label.empty()
     ) {
         report_n->REPORTNAME = label;
-        ReportModel::instance().unsafe_update_data(report_n);
+        ReportModel::instance().unsafe_update_data_n(report_n);
     }
 }
 
@@ -1004,7 +1004,7 @@ void GeneralReportManager::changeReportState(int64 id)
     ReportData* report_n = ReportModel::instance().unsafe_get_data_n(id);
     if (report_n) {
         report_n->ACTIVE = (report_n->ACTIVE + 1) % 2;
-        ReportModel::instance().unsafe_update_data(report_n);
+        ReportModel::instance().unsafe_update_data_n(report_n);
     }
 }
 
@@ -1032,7 +1032,7 @@ void GeneralReportManager::duplicateReport(int64 id)
         new_report_d.TEMPLATECONTENT = report_n->TEMPLATECONTENT;
         new_report_d.DESCRIPTION     = report_n->DESCRIPTION;
         new_report_d.ACTIVE          = report_n->ACTIVE;
-        ReportModel::instance().add_data(new_report_d);
+        ReportModel::instance().add_data_n(new_report_d);
         m_selectedReportID = new_report_d.id();
     }
 }
@@ -1043,7 +1043,7 @@ bool GeneralReportManager::changeReportGroup(int64 id, bool ungroup)
     if (report_n) {
         if (ungroup) {
             report_n->GROUPNAME = "";
-            ReportModel::instance().unsafe_update_data(report_n);
+            ReportModel::instance().unsafe_update_data_n(report_n);
             return true;
         }
         else {
@@ -1057,7 +1057,7 @@ bool GeneralReportManager::changeReportGroup(int64 id, bool ungroup)
             if (dlg.ShowModal() == wxID_OK) {
                 const wxString groupName = dlg.getText();
                 report_n->GROUPNAME = groupName;
-                ReportModel::instance().unsafe_update_data(report_n);
+                ReportModel::instance().unsafe_update_data_n(report_n);
                 return true;
             }
         }
@@ -1195,7 +1195,7 @@ void GeneralReportManager::newReport(int sample)
     new_report_d.TEMPLATECONTENT = httContent;
     new_report_d.DESCRIPTION     = description;
     new_report_d.ACTIVE          = 1;
-    ReportModel::instance().add_data(new_report_d);
+    ReportModel::instance().add_data_n(new_report_d);
     m_selectedReportID = new_report_d.id();
 }
 
@@ -1537,7 +1537,7 @@ void GeneralReportManager::DownloadAndStoreReport(const wxString& groupName, con
     report_d.TEMPLATECONTENT = htt;
     report_d.DESCRIPTION = txt;
     report_d.ACTIVE = 1;
-    ReportModel::instance().save_data(report_d);
+    ReportModel::instance().save_data_n(report_d);
     m_selectedReportID = report_d.id();
 }
 #endif

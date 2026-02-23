@@ -89,7 +89,7 @@ int64 CurrencyHistoryModel::addUpdate(
     ch_d.CURRDATE    = date.FormatISODate();
     ch_d.CURRVALUE   = price;
     ch_d.CURRUPDTYPE = type;
-    save_data(ch_d);
+    save_data_n(ch_d);
     return ch_d.id();
 }
 

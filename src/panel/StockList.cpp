@@ -343,7 +343,7 @@ void StockList::OnMoveStocks(wxCommandEvent& /*event*/)
     if ( toAccountID != -1 ) {
         StockData* stock_n = StockModel::instance().unsafe_get_data_n(m_stocks[m_selected_row].STOCKID);
         stock_n->HELDAT = toAccountID;
-        StockModel::instance().unsafe_update_data(stock_n);
+        StockModel::instance().unsafe_update_data_n(stock_n);
 
         DeleteItem(m_selected_row);
         m_stock_panel->m_frame->RefreshNavigationTree();

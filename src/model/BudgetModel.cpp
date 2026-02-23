@@ -236,7 +236,7 @@ void BudgetModel::copyBudgetYear(int64 newYearID, int64 baseYearID)
                 ? (yearAmount - yearDeduction[new_budget_d.CATEGID]) / (12 - budgetedMonths)
                 : 0;
         }
-        instance().add_data(new_budget_d);
+        instance().add_data_n(new_budget_d);
     }
 }
 

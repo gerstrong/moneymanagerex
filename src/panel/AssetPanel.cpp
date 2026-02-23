@@ -344,7 +344,7 @@ void AssetList::OnEndLabelEdit(wxListEvent& event)
         return;
     AssetData* asset_n = &m_panel->m_assets[event.GetIndex()];
     asset_n->ASSETNAME = event.m_item.m_text;
-    AssetModel::instance().unsafe_save_data(asset_n);
+    AssetModel::instance().unsafe_save_data_n(asset_n);
     RefreshItems(event.GetIndex(), event.GetIndex());
 }
 

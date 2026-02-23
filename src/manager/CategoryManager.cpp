@@ -401,7 +401,7 @@ void CategoryManager::OnAdd(wxCommandEvent& /*event*/)
         new_category_d.PARENTID = selectedCategory->CATEGID;
     }
 
-    CategoryModel::instance().add_data(new_category_d);
+    CategoryModel::instance().add_data_n(new_category_d);
     mmWebApp::MMEX_WebApp_UpdateCategory();
 
     wxTreeItemId tid = m_treeCtrl->AppendItem(m_selectedItemId, name);
@@ -480,7 +480,7 @@ void CategoryManager::OnEndDrag(wxTreeEvent& event)
         return;
 
     sourceCat->PARENTID = categID;
-    CategoryModel::instance().unsafe_update_data(sourceCat);
+    CategoryModel::instance().unsafe_update_data_n(sourceCat);
 
     m_refresh_requested = true;
     m_categ_id = categID;
@@ -663,7 +663,7 @@ void CategoryManager::OnEdit(wxCommandEvent& /*event*/)
         return;
     }
     category->CATEGNAME = text;
-    CategoryModel::instance().unsafe_save_data(category);
+    CategoryModel::instance().unsafe_save_data_n(category);
     mmWebApp::MMEX_WebApp_UpdateCategory();
 
     m_treeCtrl->SetItemText(m_selectedItemId, text);
@@ -777,10 +777,10 @@ void CategoryManager::OnMenuSelected(wxCommandEvent& event)
         {
             m_treeCtrl->SetItemTextColour(m_selectedItemId, m_hiddenColor);
             cat->ACTIVE = 0;
-            CategoryModel::instance().unsafe_update_data(cat);
+            CategoryModel::instance().unsafe_update_data_n(cat);
             for (auto& subcat_d : CategoryModel::sub_tree(cat)) {
                 subcat_d.ACTIVE = 0;
-                CategoryModel::instance().save_data(subcat_d);
+                CategoryModel::instance().save_data_n(subcat_d);
             }
             break;
         }
@@ -788,10 +788,10 @@ void CategoryManager::OnMenuSelected(wxCommandEvent& event)
         {
             m_treeCtrl->SetItemTextColour(m_selectedItemId, NormalColor_);
             cat->ACTIVE = 1;
-            CategoryModel::instance().unsafe_update_data(cat);
+            CategoryModel::instance().unsafe_update_data_n(cat);
             for (auto& subcat_d : CategoryModel::sub_tree(cat)) {
                 subcat_d.ACTIVE = 1;
-                CategoryModel::instance().save_data(subcat_d);
+                CategoryModel::instance().save_data_n(subcat_d);
             }
             break;
         }
@@ -821,7 +821,7 @@ void CategoryManager::OnClearSettings(wxCommandEvent& /*event*/)
         CategoryModel::instance().Savepoint();
         for (auto &category_d : category_a) {
             category_d.ACTIVE = 1;
-            CategoryModel::instance().save_data(category_d);
+            CategoryModel::instance().save_data_n(category_d);
         }
         CategoryModel::instance().ReleaseSavepoint();
         fillControls();

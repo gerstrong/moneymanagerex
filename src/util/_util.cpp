@@ -909,7 +909,7 @@ bool getOnlineCurrencyRates(wxString& msg,const int64 curr_id, const bool used_o
                     );
                 else {
                     currency_d.BASECONVRATE = new_rate;
-                    CurrencyModel::instance().save_data(currency_d);
+                    CurrencyModel::instance().save_data_n(currency_d);
                 }
             }
         }

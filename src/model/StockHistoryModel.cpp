@@ -97,6 +97,6 @@ int64 StockHistoryModel::addUpdate(
         StockModel::UpdateCurrentPrice(symbol, price);
     }
 
-    save_data(sh_d);
+    save_data_n(sh_d);
     return sh_d.id();
 }

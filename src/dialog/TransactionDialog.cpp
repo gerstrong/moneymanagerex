@@ -328,7 +328,7 @@ void TransactionDialog::dataToControls()
                     PayeeData new_payee_d = PayeeData();
                     new_payee_d.PAYEENAME = _t("Unknown");
                     new_payee_d.ACTIVE    = 1;
-                    PayeeModel::instance().add_data(new_payee_d);
+                    PayeeModel::instance().add_data_n(new_payee_d);
                     cbPayee_->mmDoReInitialize();
                 }
 
@@ -735,7 +735,7 @@ bool TransactionDialog::ValidateData()
                 PayeeData new_payee_d = PayeeData();
                 new_payee_d.PAYEENAME = payee_name;
                 new_payee_d.ACTIVE    = 1;
-                PayeeModel::instance().add_data(new_payee_d);
+                PayeeModel::instance().add_data_n(new_payee_d);
                 payee_n = PayeeModel::instance().get_data_n(new_payee_d.id());
                 mmWebApp::MMEX_WebApp_UpdatePayee();
             }
@@ -753,7 +753,7 @@ bool TransactionDialog::ValidateData()
         ) {
             PayeeData payee_d = *payee_n;
             payee_d.CATEGID = m_journal_data.CATEGID;
-            PayeeModel::instance().save_data(payee_d);
+            PayeeModel::instance().save_data_n(payee_d);
             mmWebApp::MMEX_WebApp_UpdatePayee();
         }
     }
@@ -1029,7 +1029,7 @@ void TransactionDialog::SetCategoryForPayee(const PayeeData *payee)
             CategoryData new_category_d = CategoryData();
             new_category_d.CATEGNAME = _t("Unknown");
             new_category_d.ACTIVE    = 1;
-            CategoryModel::instance().add_data(new_category_d);
+            CategoryModel::instance().add_data_n(new_category_d);
             category_n = CategoryModel::instance().get_data_n(new_category_d.id());
             cbCategory_->mmDoReInitialize();
         }

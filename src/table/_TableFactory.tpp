@@ -36,7 +36,7 @@ const wxString TableFactory<T, D>::DataA::to_json() const
 // If id exists in cache, return a pointer in cache, without search in database.
 // Otherwise, if id exists in database, add it in cache.
 // The returned pointer can modify the record in cache.
-// This call can be combined with unsafe_update_data() for efficiency.
+// This call can be combined with unsafe_update_data_n() for efficiency.
 template<typename T, typename D>
 auto TableFactory<T, D>::unsafe_get_data_n(const int64 id) -> Data*
 {
@@ -83,7 +83,7 @@ auto TableFactory<T, D>::get_data_n(const int64 id) -> const Data*
 // data.id() shall be invalid (<= 0) before the call; it set to a new id after the call.
 // data shall not be owned by cache before the call; it is not embraced by cache.
 template<typename T, typename D>
-auto TableFactory<T, D>::add_data(Data& data) -> const Data*
+auto TableFactory<T, D>::add_data_n(Data& data) -> const Data*
 {
     if (data.id() > 0) {
         wxLogError("%s: Cannot add existing %s",
@@ -118,7 +118,7 @@ bool TableFactory<T, D>::add_data_a(DataA& data_a)
     bool ok = true;
     this->Savepoint();
     for (auto& data : data_a) {
-        if (!add_data(data)) {
+        if (!add_data_n(data)) {
             ok = false;
             break;
         }
@@ -133,7 +133,7 @@ bool TableFactory<T, D>::add_data_a(DataA& data_a)
 // Return data, or nullptr in case of error.
 // This call can be combined with unsafe_get_data_n() for efficiency.
 template<typename T, typename D>
-auto TableFactory<T, D>::unsafe_update_data(Data* data) -> Data*
+auto TableFactory<T, D>::unsafe_update_data_n(Data* data) -> Data*
 {
     try {
         wxSQLite3Statement stmt = this->m_db->PrepareStatement(this->m_update_query);
@@ -161,7 +161,7 @@ auto TableFactory<T, D>::unsafe_update_data(Data* data) -> Data*
 // data.id() shall already exist in database; it may not exist in cache.
 // data shall not be owned by cache before the call; it is not embraced by cache.
 template<typename T, typename D>
-auto TableFactory<T, D>::update_data(Data& data) -> const Data*
+auto TableFactory<T, D>::update_data_n(Data& data) -> const Data*
 {
     if (data.id() <= 0) {
         wxLogError("%s: Cannot update non-existing %s",
@@ -183,7 +183,7 @@ auto TableFactory<T, D>::update_data(Data& data) -> const Data*
         return nullptr;
     }
 
-    // data is not modified, but see comments in unsafe_update_data().
+    // data is not modified, but see comments in unsafe_update_data_n().
 
     return m_cache.set(data.id(), data);
 }
@@ -192,27 +192,27 @@ auto TableFactory<T, D>::update_data(Data& data) -> const Data*
 // Return a pointer to the copy owned by cache, or nullptr in case of error.
 // If data.id() is valid (> 0), data may or may not be owned by cache.
 template<typename T, typename D>
-auto TableFactory<T, D>::unsafe_save_data(Data* data) -> const Data*
+auto TableFactory<T, D>::unsafe_save_data_n(Data* data) -> const Data*
 {
     if (!data)
         return nullptr;
 
     if (data->id() <= 0)
-        return add_data(*data);
+        return add_data_n(*data);
 
     Data* data_n = m_cache.unsafe_get(data->id());
     if (data_n == data)
-        return unsafe_update_data(data_n);
+        return unsafe_update_data_n(data_n);
     else
-        return update_data(*data);
+        return update_data_n(*data);
 }
 
 // Add a new or update an existing Data record in database and in cache.
 // Return a pointer to the copy owned by cache, or nullptr in case of error.
 template<typename T, typename D>
-auto TableFactory<T, D>::save_data(Data& data) -> const Data*
+auto TableFactory<T, D>::save_data_n(Data& data) -> const Data*
 {
-    return (data.id() <= 0) ? add_data(data) : update_data(data);
+    return (data.id() <= 0) ? add_data_n(data) : update_data_n(data);
 }
 
 // Add or update multiple Data records in database and in cache.
@@ -224,7 +224,7 @@ bool TableFactory<T, D>::save_data_a(DataA& data_a)
 
     this->Savepoint();
     for (Data& data : data_a) {
-        if (!save_data(data)) {
+        if (!save_data_n(data)) {
             ok = false;
             break;
         }

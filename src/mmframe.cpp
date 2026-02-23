@@ -681,7 +681,7 @@ void mmGUIFrame::OnAutoRepeatTransactionsTimer(wxTimerEvent& /*event*/)
                     new_fv_d.FIELDID = fv_d.FIELDID;
                     new_fv_d.REFID   = transID;
                     new_fv_d.CONTENT = fv_d.CONTENT;
-                    FieldValueModel::instance().add_data(new_fv_d);
+                    FieldValueModel::instance().add_data_n(new_fv_d);
                 }
                 FieldValueModel::instance().ReleaseSavepoint();
 
@@ -2453,14 +2453,14 @@ bool mmGUIFrame::createDataStore(const wxString& fileName, const wxString& pwd, 
                         CategoryData* cat_n = CategoryModel::instance().unsafe_get_data_n(catID);
                         if (cat_n && cat_n->CATEGID != -1) {
                             cat_n->ACTIVE = 0;
-                            CategoryModel::instance().unsafe_update_data(cat_n);
+                            CategoryModel::instance().unsafe_update_data_n(cat_n);
                         }
                     }
                     else {
                         CategoryData* subcat_n = CategoryModel::instance().unsafe_get_data_n(subCatID);
                         if (subcat_n && subcat_n->CATEGID != -1) {
                             subcat_n->ACTIVE = 0;
-                            CategoryModel::instance().unsafe_update_data(subcat_n);
+                            CategoryModel::instance().unsafe_update_data_n(subcat_n);
                         }
                     }
                 }
@@ -3896,7 +3896,7 @@ void mmGUIFrame::OnRates(wxCommandEvent& WXUNUSED(event))
                     stock_d.CURRENTPRICE = dPrice;
                     if (stock_d.STOCKNAME.empty())
                         stock_d.STOCKNAME = stock_d.SYMBOL;
-                    StockModel::instance().save_data(stock_d);
+                    StockModel::instance().save_data_n(stock_d);
                     StockHistoryModel::instance().addUpdate(
                         stock_d.SYMBOL, wxDate::Now(), dPrice, StockHistoryModel::ONLINE
                     );
@@ -3996,7 +3996,7 @@ void mmGUIFrame::ReallocateAccount(int64 accountID)
     if (type_choice.ShowModal() == wxID_OK) {
         int sel = type_choice.GetSelection();
         account->ACCOUNTTYPE = NavigatorTypes::instance().getAccountDbTypeFromChoice(types[sel]);
-        AccountModel::instance().unsafe_update_data(account);
+        AccountModel::instance().unsafe_update_data_n(account);
         DoRecreateNavTreeControl(true);
     }
 }

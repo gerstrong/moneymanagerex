@@ -96,7 +96,7 @@ void TransactionShareModel::ShareEntry(
     ts_d.SHAREPRICE      = share_price;
     ts_d.SHARECOMMISSION = share_commission;
     ts_d.SHARELOT        = share_lot;
-    TransactionShareModel::instance().save_data(ts_d);
+    TransactionShareModel::instance().save_data_n(ts_d);
     int64 id = ts_d.id();
 
     TransactionSplitModel::instance().update(commission_splits, id);

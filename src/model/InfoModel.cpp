@@ -79,7 +79,7 @@ void InfoModel::setRaw(const wxString& key, const wxString& newValue)
     if (!info_n)
         info_d.INFONAME = key;
     info_d.INFOVALUE = newValue;
-    save_data(info_d);
+    save_data_n(info_d);
 }
 
 wxString InfoModel::getRaw(const wxString& key, const wxString& defaultValue)
@@ -351,7 +351,7 @@ void InfoModel::prependArrayItem(const wxString& key, const wxString& value, int
     json_writer.EndArray();
 
     info_d.INFOVALUE = wxString::FromUTF8(json_buffer.GetString());
-    save_data(info_d);
+    save_data_n(info_d);
 }
 
 void InfoModel::eraseArrayItem(const wxString& key, int i)

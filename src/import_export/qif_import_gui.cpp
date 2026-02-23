@@ -1181,7 +1181,7 @@ void mmQIFImportDialog::OnOk(wxCommandEvent& WXUNUSED(event))
                             TagData new_tag_d = TagData();
                             new_tag_d.TAGNAME = tagname;
                             new_tag_d.ACTIVE  = 1;
-                            TagModel::instance().add_data(new_tag_d);
+                            TagModel::instance().add_data_n(new_tag_d);
                             tag_n = TagModel::instance().get_data_n(new_tag_d.id());
                         }
                         TagLinkData gl_d = TagLinkData();
@@ -1295,7 +1295,7 @@ void mmQIFImportDialog::saveSplit()
         // and each split in the group
         for (int j = 0; j < static_cast<int>(m_splitDataSets[i].size()); j++) {
             // save the split
-            TransactionSplitModel::instance().save_data(m_splitDataSets[i][j]);
+            TransactionSplitModel::instance().save_data_n(m_splitDataSets[i][j]);
             int64 splitTransID = m_splitDataSets[i][j].id();
             // check if there are any taglinks for this split index in this group
             if (!m_splitTaglinks[i][j].empty()) {
@@ -1536,7 +1536,7 @@ bool mmQIFImportDialog::completeTransaction(
                         TagData new_tag_d = TagData();
                         new_tag_d.TAGNAME = tagname;
                         new_tag_d.ACTIVE  = 1;
-                        TagModel::instance().add_data(new_tag_d);
+                        TagModel::instance().add_data_n(new_tag_d);
                         tag_n = TagModel::instance().get_data_n(new_tag_d.id());
                     }
                     TagLinkData gl_d = TagLinkData();
@@ -1689,7 +1689,7 @@ int64 mmQIFImportDialog::getOrCreateAccounts()
                 }
             }
 
-            AccountModel::instance().add_data(account_d);
+            AccountModel::instance().add_data_n(account_d);
             accountID = account_d.id();
             wxString sMsg = wxString::Format(_t("Added account: %s"), item.first);
             *log_field_ << sMsg << "\n";
@@ -1722,7 +1722,7 @@ void mmQIFImportDialog::getOrCreatePayees()
         new_payee_d.PAYEENAME = item;
         new_payee_d.ACTIVE    = 1;
         new_payee_d.CATEGID   = -1;
-        PayeeModel::instance().save_data(new_payee_d);
+        PayeeModel::instance().save_data_n(new_payee_d);
         wxString sMsg = wxString::Format(_t("Added payee: %s"), item);
         log_field_->AppendText(wxString() << sMsg << "\n");
         m_QIFpayeeNames[item] = std::make_tuple(new_payee_d.id(), new_payee_d.PAYEENAME, "");
@@ -1747,7 +1747,7 @@ void mmQIFImportDialog::getOrCreateCategories()
                     new_category_d.CATEGNAME = categStr;
                     new_category_d.ACTIVE    = 1;
                     new_category_d.PARENTID  = parentID;
-                    CategoryModel::instance().add_data(new_category_d);
+                    CategoryModel::instance().add_data_n(new_category_d);
                     category_n = CategoryModel::instance().get_data_n(new_category_d.id());
                 }
                 temp.Add(categStr + wxString::Format(":%lld", parentID));

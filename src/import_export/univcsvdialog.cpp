@@ -1355,7 +1355,7 @@ bool mmUnivCSVDialog::validateData(tran_holder & holder, wxString& message)
             new_payee_d.PAYEENAME = _t("Unknown");
             new_payee_d.ACTIVE    = 1;
             new_payee_d.CATEGID   = -1;
-            PayeeModel::instance().add_data(new_payee_d);
+            PayeeModel::instance().add_data_n(new_payee_d);
             holder.PayeeID = new_payee_d.id();
             const wxString& sMsg = wxString::Format(_t("Added payee: %s"), new_payee_d.PAYEENAME);
             log_field_->AppendText(wxString() << sMsg << "\n");
@@ -1381,7 +1381,7 @@ bool mmUnivCSVDialog::validateData(tran_holder & holder, wxString& message)
             new_category_d.CATEGNAME = _t("Unknown");
             new_category_d.ACTIVE    = 1;
             new_category_d.PARENTID  = -1;
-            CategoryModel::instance().add_data(new_category_d);
+            CategoryModel::instance().add_data_n(new_category_d);
             holder.CategoryID = new_category_d.id();
         }
     }
@@ -1549,7 +1549,7 @@ void mmUnivCSVDialog::OnImport(wxCommandEvent& WXUNUSED(event))
                 new_fv_d.FIELDID = field.first;
                 new_fv_d.REFID   = new_trx_d.TRANSID;
                 new_fv_d.CONTENT = field.second;
-                FieldValueModel::instance().add_data(new_fv_d);
+                FieldValueModel::instance().add_data_n(new_fv_d);
             }
         }
 
@@ -1560,7 +1560,7 @@ void mmUnivCSVDialog::OnImport(wxCommandEvent& WXUNUSED(event))
                 new_gl_d.REFTYPE = reftype;
                 new_gl_d.REFID   = new_trx_d.TRANSID;
                 new_gl_d.TAGID   = tag;
-                TagLinkModel::instance().add_data(new_gl_d);
+                TagLinkModel::instance().add_data_n(new_gl_d);
             }
         }
 
@@ -2759,7 +2759,7 @@ void mmUnivCSVDialog::parseToken(int index, const wxString& orig_token, tran_hol
             PayeeData new_payee_d = PayeeData();
             new_payee_d.PAYEENAME = token;
             new_payee_d.ACTIVE    = 1;
-            PayeeModel::instance().add_data(new_payee_d);
+            PayeeModel::instance().add_data_n(new_payee_d);
             holder.PayeeID = new_payee_d.id();
             m_CSVpayeeNames[token] = std::make_tuple(holder.PayeeID, token, wxEmptyString);
         }
@@ -2798,7 +2798,7 @@ void mmUnivCSVDialog::parseToken(int index, const wxString& orig_token, tran_hol
                     new_category_d.CATEGNAME = categname;
                     new_category_d.PARENTID  = parentID;
                     new_category_d.ACTIVE    = 1;
-                    CategoryModel::instance().add_data(new_category_d);
+                    CategoryModel::instance().add_data_n(new_category_d);
                     category_n = CategoryModel::instance().get_data_n(new_category_d.id());
                 }
                 parentID = category_n->CATEGID;
@@ -2826,7 +2826,7 @@ void mmUnivCSVDialog::parseToken(int index, const wxString& orig_token, tran_hol
             new_category_d.PARENTID  = holder.CategoryID;
             new_category_d.CATEGNAME = token;
             new_category_d.ACTIVE    = 1;
-            CategoryModel::instance().add_data(new_category_d);
+            CategoryModel::instance().add_data_n(new_category_d);
 
             holder.CategoryID = new_category_d.CATEGID;
             m_CSVcategoryNames[categname] = new_category_d.CATEGID;
@@ -2847,7 +2847,7 @@ void mmUnivCSVDialog::parseToken(int index, const wxString& orig_token, tran_hol
                 TagData new_tag_d = TagData();
                 new_tag_d.TAGNAME = tagname;
                 new_tag_d.ACTIVE  = 1;
-                TagModel::instance().save_data(new_tag_d);
+                TagModel::instance().save_data_n(new_tag_d);
                 tag_n = TagModel::instance().get_data_n(new_tag_d.id());
             }
             // add the tagID to the transaction if it isn't already there

@@ -365,7 +365,7 @@ void mmPayeeSelectionDialog::OnOK(wxCommandEvent& WXUNUSED(event))
     ) {
         if (selectedCategoryId != payee_n->CATEGID.GetValue()) {
             payee_n->CATEGID = selectedCategoryId;
-            PayeeModel::instance().unsafe_update_data(payee_n);
+            PayeeModel::instance().unsafe_update_data_n(payee_n);
             wxLogDebug("Updated payee '%s' category to ID=%lld",
                 selectedPayee_, selectedCategoryId
             );
@@ -417,13 +417,13 @@ void mmPayeeSelectionDialog::OnOK(wxCommandEvent& WXUNUSED(event))
                 new_payee_d.CATEGID   = selectedCategoryId;
                 new_payee_d.ACTIVE    = 1;
                 new_payee_d.PATTERN   = regexPattern_;
-                PayeeModel::instance().add_data(new_payee_d);
+                PayeeModel::instance().add_data_n(new_payee_d);
                 payee_n = PayeeModel::instance().unsafe_get_data_n(new_payee_d.id());
                 wxLogDebug("Saved regex pattern for payee '%s'", selectedPayee_);
             }
             else if (payee_n) {
                 payee_n->PATTERN = regexPattern_;
-                PayeeModel::instance().unsafe_update_data(payee_n);
+                PayeeModel::instance().unsafe_update_data_n(payee_n);
                 wxLogDebug("Saved regex pattern for payee '%s'", selectedPayee_);
             }
         }
@@ -431,7 +431,7 @@ void mmPayeeSelectionDialog::OnOK(wxCommandEvent& WXUNUSED(event))
             regexPattern_ = "{}";
             if (payee_n) {
                 payee_n->PATTERN = regexPattern_;
-                PayeeModel::instance().unsafe_update_data(payee_n);
+                PayeeModel::instance().unsafe_update_data_n(payee_n);
             }
         }
     }
@@ -440,7 +440,7 @@ void mmPayeeSelectionDialog::OnOK(wxCommandEvent& WXUNUSED(event))
         new_payee_d.PAYEENAME = selectedPayee_;
         new_payee_d.CATEGID   = selectedCategoryId;
         new_payee_d.ACTIVE    = 1;
-        PayeeModel::instance().add_data(new_payee_d);
+        PayeeModel::instance().add_data_n(new_payee_d);
         payee_n = PayeeModel::instance().unsafe_get_data_n(new_payee_d.id());
         wxLogDebug("Created new payee '%s' with category ID=%lld", selectedPayee_, selectedCategoryId);
     }
@@ -1695,7 +1695,7 @@ bool mmOFXImportDialog::ImportTransactions(wxXmlNode* banktranlist, wxLongLong a
                         new_payee_d.PAYEENAME = payeeName;
                         new_payee_d.CATEGID   = payeeDlg.GetSelectedCategoryID();
                         new_payee_d.ACTIVE    = 1;
-                        PayeeModel::instance().add_data(new_payee_d);
+                        PayeeModel::instance().add_data_n(new_payee_d);
                         transaction.PAYEEID = new_payee_d.PAYEEID;
                         stats.newPayeesCreated++;
                     }
@@ -1703,7 +1703,7 @@ bool mmOFXImportDialog::ImportTransactions(wxXmlNode* banktranlist, wxLongLong a
                         transaction.PAYEEID = payee_n->PAYEEID;
                         if (payeeDlg.ShouldUpdatePayeeCategory()) {
                             payee_n->CATEGID = payeeDlg.GetSelectedCategoryID();
-                            PayeeModel::instance().unsafe_update_data(payee_n);
+                            PayeeModel::instance().unsafe_update_data_n(payee_n);
                         }
                     }
                     transaction.CATEGID = payeeDlg.GetSelectedCategoryID();
@@ -1711,7 +1711,7 @@ bool mmOFXImportDialog::ImportTransactions(wxXmlNode* banktranlist, wxLongLong a
                     result.category = category_n ? category_n->CATEGNAME : "Uncategorized";
                     if (payeeDlg.ShouldUpdateRegex() && payee_n) {
                         payee_n->PATTERN = payeeDlg.GetRegexPattern();
-                        PayeeModel::instance().unsafe_update_data(payee_n);
+                        PayeeModel::instance().unsafe_update_data_n(payee_n);
                         result.regexPattern = payee_n->PATTERN;
                     }
                     stats.manuallyAllocated++;

@@ -713,7 +713,7 @@ void ReportPanel::onNewWindow(wxWebViewEvent& evt)
             budget_d.PERIOD       = "";
             budget_d.AMOUNT       = 0.0;
             budget_d.ACTIVE       = 1;
-            BudgetModel::instance().add_data(budget_d);
+            BudgetModel::instance().add_data_n(budget_d);
         }
         else
             budget_d = budget[0];

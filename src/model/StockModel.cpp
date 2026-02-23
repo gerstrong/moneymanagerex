@@ -358,7 +358,7 @@ void StockModel::UpdateCurrentPrice(const wxString& symbol, const double price)
             // CHECK: use stock_d directly
             StockData* stock_n = StockModel::instance().unsafe_get_data_n(stock_d.STOCKID);
             stock_n->CURRENTPRICE = current_price;
-            StockModel::instance().unsafe_update_data(stock_n);
+            StockModel::instance().unsafe_update_data_n(stock_n);
         }
     }
 }
@@ -415,5 +415,5 @@ void StockModel::UpdatePosition(StockData* stock_n)
         stock_n->VALUE         = total_initial_value;
         stock_n->COMMISSION    = total_commission;
     }
-    StockModel::instance().unsafe_save_data(stock_n);
+    StockModel::instance().unsafe_save_data_n(stock_n);
 }

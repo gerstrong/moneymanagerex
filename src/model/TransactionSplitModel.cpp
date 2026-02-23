@@ -114,7 +114,7 @@ int TransactionSplitModel::update(DataA& rows, int64 transactionID)
             split_d.SPLITTRANSAMOUNT = item.SPLITTRANSAMOUNT;
             split_d.CATEGID          = item.CATEGID;
             split_d.NOTES            = item.NOTES;
-            instance().add_data(split_d);
+            instance().add_data_n(split_d);
             item.SPLITTRANSID = split_d.id();
         }
     }

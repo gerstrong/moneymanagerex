@@ -477,7 +477,7 @@ int mmGUIApp::OnExit()
     UsageData new_usage_d = UsageData();
     new_usage_d.USAGEDATE   = wxDate::Today().FormatISODate();
     new_usage_d.JSONCONTENT = rj;
-    UsageModel::instance().add_data(new_usage_d);
+    UsageModel::instance().add_data_n(new_usage_d);
 
     if (m_setting_db) {
         m_setting_db->Close();

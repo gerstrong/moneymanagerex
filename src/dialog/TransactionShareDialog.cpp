@@ -511,7 +511,7 @@ void TransactionShareDialog::OnDeductibleSplit(wxCommandEvent&)
             new_category_d.CATEGNAME = _("Investment");
             new_category_d.ACTIVE    = 1;
             new_category_d.PARENTID  = -1;
-            CategoryModel::instance().add_data(new_category_d);
+            CategoryModel::instance().add_data_n(new_category_d);
             category_n = CategoryModel::instance().get_data_n(new_category_d.id());
         }
         m_local_deductible_splits.push_back({category_n->CATEGID, commission, wxArrayInt64(), ""});

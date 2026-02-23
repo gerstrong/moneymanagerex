@@ -273,7 +273,7 @@ void ScheduledModel::completeBDInSeries(int64 bdID)
         sched_d.NUMOCCURRENCES = -1;
     }
 
-    save_data(sched_d);
+    save_data_n(sched_d);
 }
 
 const wxDateTime ScheduledModel::nextOccurDate(int repeatsType, int numRepeats, wxDateTime nextOccurDate, bool reverse)

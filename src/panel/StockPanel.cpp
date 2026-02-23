@@ -550,7 +550,7 @@ bool StockPanel::onlineQuoteRefresh(wxString& msg)
                 stock_d.SYMBOL, stock_d.CURRENTPRICE, dPrice
             );
             stock_d.CURRENTPRICE = dPrice;
-            StockModel::instance().save_data(stock_d);
+            StockModel::instance().save_data_n(stock_d);
             StockHistoryModel::instance().addUpdate(
                 stock_d.SYMBOL, wxDate::Now(), dPrice, StockHistoryModel::ONLINE
             );

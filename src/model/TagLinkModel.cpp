@@ -122,7 +122,7 @@ int TagLinkModel::update(const DataA& rows, const wxString& refType, int64 refId
         new_gl_d.REFTYPE = refType;
         new_gl_d.REFID   = refId;
         new_gl_d.TAGID   = item.TAGID;
-        instance().add_data(new_gl_d);
+        instance().add_data_n(new_gl_d);
     }
 
     if (updateTimestamp) {

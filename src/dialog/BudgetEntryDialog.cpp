@@ -202,7 +202,7 @@ void BudgetEntryDialog::OnOk(wxCommandEvent& event)
     m_budget_n->PERIOD = BudgetModel::period_name(period);
     m_budget_n->AMOUNT = amt;
     m_budget_n->NOTES  = m_Notes->GetValue();
-    BudgetModel::instance().unsafe_save_data(m_budget_n);
+    BudgetModel::instance().unsafe_save_data_n(m_budget_n);
 
     EndModal(wxID_OK);
 }

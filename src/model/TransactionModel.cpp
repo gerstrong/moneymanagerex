@@ -134,13 +134,13 @@ void TransactionModel::update_timestamp(Data& trx_d)
 const TransactionData* TransactionModel::unsafe_save_trx(Data* trx_n)
 {
     update_timestamp(*trx_n);
-    return unsafe_save_data(trx_n);
+    return unsafe_save_data_n(trx_n);
 }
 
 const TransactionData* TransactionModel::save_trx(Data& trx_d)
 {
     update_timestamp(trx_d);
-    return save_data(trx_d);
+    return save_data_n(trx_d);
 }
 
 bool TransactionModel::save_trx_a(DataA& trx_a)
@@ -684,6 +684,6 @@ void TransactionModel::updateTimestamp(int64 id)
     Data* trx_n = instance().unsafe_get_data_n(id);
     if (trx_n && trx_n->TRANSID == id) {
         trx_n->LASTUPDATEDTIME = wxDateTime::Now().ToUTC().FormatISOCombined();
-        unsafe_update_data(trx_n);
+        unsafe_update_data_n(trx_n);
     }
 }

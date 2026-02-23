@@ -948,7 +948,7 @@ void ScheduledDialog::OnOk(wxCommandEvent& WXUNUSED(event))
                 PayeeData new_payee_d = PayeeData();
                 new_payee_d.PAYEENAME = payee_name;
                 new_payee_d.ACTIVE    = 1;
-                PayeeModel::instance().add_data(new_payee_d);
+                PayeeModel::instance().add_data_n(new_payee_d);
                 payee_n = PayeeModel::instance().get_data_n(new_payee_d.id());
                 mmWebApp::MMEX_WebApp_UpdatePayee();
             }
@@ -1062,7 +1062,7 @@ void ScheduledDialog::OnOk(wxCommandEvent& WXUNUSED(event))
         sched_d.NUMOCCURRENCES     = m_sched_d.NUMOCCURRENCES;
         sched_d.FOLLOWUPID         = m_sched_d.FOLLOWUPID;
         sched_d.COLOR              = m_sched_d.COLOR;
-        ScheduledModel::instance().save_data(sched_d);
+        ScheduledModel::instance().save_data_n(sched_d);
         m_trans_id = sched_d.id();
 
         ScheduledSplitModel::DataA splt;
@@ -1139,7 +1139,7 @@ void ScheduledDialog::OnOk(wxCommandEvent& WXUNUSED(event))
             new_trx_d.TOTRANSAMOUNT     = m_sched_d.TOTRANSAMOUNT;
             new_trx_d.FOLLOWUPID        = m_sched_d.FOLLOWUPID;
             new_trx_d.COLOR             = m_sched_d.COLOR;
-            TransactionModel::instance().add_data(new_trx_d);
+            TransactionModel::instance().add_data_n(new_trx_d);
             int64 trx_id = new_trx_d.id();
 
             TransactionSplitModel::DataA ts_a;

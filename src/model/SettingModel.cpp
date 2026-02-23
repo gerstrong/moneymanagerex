@@ -77,7 +77,7 @@ void SettingModel::setRaw(const wxString& key, const wxString& newValue)
         setting_d.SETTINGNAME = key;
     }
     setting_d.SETTINGVALUE = newValue;
-    save_data(setting_d);
+    save_data_n(setting_d);
 }
 
 const wxString SettingModel::getRaw(const wxString& key, const wxString& defaultValue)
@@ -258,7 +258,7 @@ void SettingModel::prependArrayItem(const wxString& key, const wxString& value, 
     json_writer.EndArray();
 
     setting_d.SETTINGVALUE = wxString::FromUTF8(json_buffer.GetString());
-    save_data(setting_d);
+    save_data_n(setting_d);
 }
 
 //-------------------------------------------------------------------

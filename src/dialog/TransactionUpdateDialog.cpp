@@ -358,7 +358,7 @@ void TransactionUpdateDialog::OnOk(wxCommandEvent& WXUNUSED(event))
                 PayeeData new_payee_d = PayeeData();
                 new_payee_d.PAYEENAME = cbPayee_->GetValue();
                 new_payee_d.ACTIVE    = 1;
-                PayeeModel::instance().add_data(new_payee_d);
+                PayeeModel::instance().add_data_n(new_payee_d);
                 mmWebApp::MMEX_WebApp_UpdatePayee();
                 payee_id = new_payee_d.PAYEEID;
             }

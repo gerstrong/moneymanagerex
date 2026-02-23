@@ -132,7 +132,7 @@ void CurrencyModel::ResetBaseConversionRates()
     CurrencyModel::instance().Savepoint();
     for (auto currency_d : CurrencyModel::instance().find_all()) {
         currency_d.BASECONVRATE = 1;
-        CurrencyModel::instance().save_data(currency_d);
+        CurrencyModel::instance().save_data_n(currency_d);
     }
     CurrencyModel::instance().ReleaseSavepoint();
 }

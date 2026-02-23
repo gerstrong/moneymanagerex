@@ -348,7 +348,7 @@ void AccountModel::resetAccountType(wxString oldtype)
         // CHECK: use account_d directly
         AccountData acc_d = *(get_key(account_d.ACCOUNTNAME));
         acc_d.ACCOUNTTYPE = "Checking";
-        save_data(acc_d);
+        save_data_n(acc_d);
     }
 }
 
@@ -359,7 +359,7 @@ void AccountModel::resetUnknownAccountTypes()
             // CHECK: use account_d directly
             AccountData acc_d = *(get_key(account_d.ACCOUNTNAME));
             acc_d.ACCOUNTTYPE = "Checking";
-            save_data(acc_d);
+            save_data_n(acc_d);
         }
     }
 }

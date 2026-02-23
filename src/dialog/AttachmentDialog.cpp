@@ -224,7 +224,7 @@ void AttachmentDialog::AddAttachment(wxString FilePath)
         new_att_d.REFID       = m_RefId;
         new_att_d.DESCRIPTION = attachmentDescription;
         new_att_d.FILENAME    = importedFileName;
-        AttachmentModel::instance().add_data(new_att_d);
+        AttachmentModel::instance().add_data_n(new_att_d);
         m_attachment_id = new_att_d.id();
 
         if (m_RefType == TransactionModel::refTypeName)
@@ -264,7 +264,7 @@ void AttachmentDialog::EditAttachment()
         return;
 
     att_n->DESCRIPTION = description;
-    AttachmentModel::instance().unsafe_update_data(att_n);
+    AttachmentModel::instance().unsafe_update_data_n(att_n);
     m_attachment_id = att_n->id();
 
     if (att_n->REFTYPE == TransactionModel::refTypeName)
@@ -630,7 +630,7 @@ bool mmAttachmentManage::CloneAllAttachments(
         dst_d.REFID       = dstRefId;
         dst_d.FILENAME    = dstFileName;
         dst_d.DESCRIPTION = src_d.DESCRIPTION;
-        AttachmentModel::instance().add_data(dst_d);
+        AttachmentModel::instance().add_data_n(dst_d);
     }
 
     if (refType == TransactionModel::refTypeName)

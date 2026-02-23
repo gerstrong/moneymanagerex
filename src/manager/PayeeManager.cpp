@@ -240,7 +240,7 @@ void PayeeManager::OnOk(wxCommandEvent& /*event*/)
         json_writer.EndObject();
         m_payee_n->PATTERN = wxString::FromUTF8(json_buffer.GetString());
 
-        PayeeModel::instance().unsafe_save_data(m_payee_n);
+        PayeeModel::instance().unsafe_save_data_n(m_payee_n);
         mmWebApp::MMEX_WebApp_UpdatePayee();
     }
     else
@@ -818,7 +818,7 @@ void mmPayeeDialog::DefineDefaultCategory()
             for (RowData* rdata : m_selectedItems) {
                 PayeeData* payee_n = PayeeModel::instance().unsafe_get_data_n(rdata->payeeId);
                 payee_n->CATEGID = dlg.getCategId();
-                PayeeModel::instance().unsafe_update_data(payee_n);
+                PayeeModel::instance().unsafe_update_data_n(payee_n);
                 mmWebApp::MMEX_WebApp_UpdatePayee();
                 addPayeeDataIntoItem(rdata->tidx, payee_n, rdata->count);
             }
@@ -836,7 +836,7 @@ void mmPayeeDialog::RemoveDefaultCategory()
     for (RowData* rdata : m_selectedItems) {
         PayeeData* payee_n = PayeeModel::instance().unsafe_get_data_n(rdata->payeeId);
         payee_n->CATEGID = -1;
-        PayeeModel::instance().unsafe_update_data(payee_n);
+        PayeeModel::instance().unsafe_update_data_n(payee_n);
         mmWebApp::MMEX_WebApp_UpdatePayee();
         addPayeeDataIntoItem(rdata->tidx, payee_n, rdata->count);
     }
@@ -928,7 +928,7 @@ void mmPayeeDialog::ToggleHide(long idx, bool state) {
         rdata->active = state;
         PayeeData *payee = PayeeModel::instance().unsafe_get_data_n(rdata->payeeId);
         payee->ACTIVE = state ? 1 : 0;
-        PayeeModel::instance().unsafe_update_data(payee);
+        PayeeModel::instance().unsafe_update_data_n(payee);
         payeeListBox_->SetItemTextColour(idx, state ? m_normalColor : m_hiddenColor);
         payeeListBox_->SetItem(idx, 1, state ? L"" : L"\u2713");
     }

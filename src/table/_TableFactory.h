@@ -43,12 +43,12 @@ public:
     auto unsafe_get_data_n(const int64 id) -> Data*;
     auto get_data_n(const int64 id) -> const Data*;
     auto get_data_n(wxLongLong_t id) -> const Data* { return get_data_n(int64(id)); }
-    auto add_data(Data& data) -> const Data*;
+    auto add_data_n(Data& data) -> const Data*;
     bool add_data_a(DataA& data);
-    auto unsafe_update_data(Data* data) -> Data*;
-    auto update_data(Data& data) -> const Data*;
-    auto unsafe_save_data(Data* data) -> const Data*;
-    auto save_data(Data& data) -> const Data*;
+    auto unsafe_update_data_n(Data* data) -> Data*;
+    auto update_data_n(Data& data) -> const Data*;
+    auto unsafe_save_data_n(Data* data) -> const Data*;
+    auto save_data_n(Data& data) -> const Data*;
     bool save_data_a(DataA& data);
     bool remove_data(const int64 id);
     auto find_all(const COL_ID = Col::PRIMARY_ID, const bool asc = true) -> const DataA;
@@ -60,6 +60,11 @@ public:
 
     virtual bool remove_depen(int64 id) { return remove_data(id); }
 
+    // this is a trivial implementation (linear search) of indexing in cache.
+    // it does not require additional storage, other than the cache.
+    // TODO: implement a more efficient indexing using a map<key, id> for each key.
+    // the index is used as a hint for fast access in cache. if the id is wrong,
+    // the entry in the index is removed and a full search (with find) is executed.
     template<typename... Args>
     auto unsafe_search_cache_n(const Args& ... args) -> Data*
     {
@@ -77,16 +82,16 @@ public:
         return unsafe_search_cache_n(args...);
     }
 
-    /*
-     * Return the result of a SELECT query as an array of Data records.
-     * The WHERE conditions are specified by one or more Specialised Parameters
-     * of the form: *Col::ColumnName(op, value) or *Col::ColumnName(value).
-     * The conditions are combined with AND or OR, if op_and is true or false, resp.
-     * Example:
-     *   true, AssetCol::ASSETID(2), AssetCol::ASSETTYPE(AssetModel::TYPE_ID_JEWELLERY)
-     *   produces the SQL statement condition: ASSETID = 2 AND ASSETTYPE = "Jewellery"
-     * Return an empty array if no records are found.
-     */
+    // Return the result of a SELECT query as an array of Data records.
+    // The WHERE conditions are specified by one or more Specialised Parameters
+    // of the form: *Col::ColumnName(op, value) or *Col::ColumnName(value).
+    // The conditions are combined with AND or OR, if op_and is true or false, resp.
+    // Example:
+    //   true, AssetCol::ASSETID(2), AssetCol::ASSETTYPE(AssetModel::TYPE_ID_JEWELLERY)
+    //   produces the SQL statement condition: ASSETID = 2 AND ASSETTYPE = "Jewellery"
+    // Return an empty array if no records are found.
+    // 
+    // TODO: do not store all record in a vactor; return an iterator instead.
     template<typename... Args>
     auto find_where(bool op_and, const Args&... args) -> const DataA
     {

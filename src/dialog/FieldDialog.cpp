@@ -298,7 +298,7 @@ void FieldDialog::OnOk(wxCommandEvent& WXUNUSED(event))
         m_itemUDFC->GetString(m_itemUDFC->GetSelection())
     );
 
-    FieldModel::instance().unsafe_save_data(m_field_n);
+    FieldModel::instance().unsafe_save_data_n(m_field_n);
     EndModal(wxID_OK);
 }
 

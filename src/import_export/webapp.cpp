@@ -513,7 +513,7 @@ int64 mmWebApp::MMEX_InsertNewTransaction(webtran_holder& WebAppTrans)
         new_category_d.CATEGNAME = WebAppTrans.Category;
         new_category_d.ACTIVE   = 1;
         new_category_d.PARENTID = -1;
-        CategoryModel::instance().add_data(new_category_d);
+        CategoryModel::instance().add_data_n(new_category_d);
         categoryID = new_category_d.id();
     }
 
@@ -528,7 +528,7 @@ int64 mmWebApp::MMEX_InsertNewTransaction(webtran_holder& WebAppTrans)
             new_subcategory_d.PARENTID  = categoryID;
             new_subcategory_d.CATEGNAME = WebAppTrans.SubCategory;
             new_subcategory_d.ACTIVE    = 1;
-            CategoryModel::instance().add_data(new_subcategory_d);
+            CategoryModel::instance().add_data_n(new_subcategory_d);
             categoryID = new_subcategory_d.id();
         }
     }
@@ -543,7 +543,7 @@ int64 mmWebApp::MMEX_InsertNewTransaction(webtran_holder& WebAppTrans)
         new_payee_d.PAYEENAME = WebAppTrans.Payee;
         new_payee_d.ACTIVE    = 1;
         new_payee_d.CATEGID   = categoryID;
-        PayeeModel::instance().add_data(new_payee_d);
+        PayeeModel::instance().add_data_n(new_payee_d);
         payeeID = new_payee_d.id();
     }
 
@@ -573,7 +573,7 @@ int64 mmWebApp::MMEX_InsertNewTransaction(webtran_holder& WebAppTrans)
     new_trx_d.FOLLOWUPID        = -1;
     new_trx_d.TOTRANSAMOUNT     = WebAppTrans.Amount;
     new_trx_d.COLOR             = -1;
-    TransactionModel::instance().add_data(new_trx_d);
+    TransactionModel::instance().add_data_n(new_trx_d);
     DeskNewTrID = new_trx_d.id();
 
     if (DeskNewTrID > 0)
@@ -612,7 +612,7 @@ int64 mmWebApp::MMEX_InsertNewTransaction(webtran_holder& WebAppTrans)
                         new_att_d.REFID       = DeskNewTrID;
                         new_att_d.DESCRIPTION = _t("Attachment") + "_" << AttachmentNr;
                         new_att_d.FILENAME    = DesktopAttachmentName;
-                        AttachmentModel::instance().add_data(new_att_d);
+                        AttachmentModel::instance().add_data_n(new_att_d);
                     }
                     else {
                         TransactionModel::instance().remove_depen(DeskNewTrID);

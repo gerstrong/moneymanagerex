@@ -231,7 +231,7 @@ void TagManager::OnAdd(wxCommandEvent& WXUNUSED(event))
     TagData new_tag_d = TagData();
     new_tag_d.TAGNAME = text;
     new_tag_d.ACTIVE  = 1;
-    TagModel::instance().add_data(new_tag_d);
+    TagModel::instance().add_data_n(new_tag_d);
 
     refreshRequested_ = true;
     tagList_.Add(text);
@@ -267,7 +267,7 @@ void TagManager::OnEdit(wxCommandEvent& WXUNUSED(event))
     tag_n = TagModel::instance().get_key(old_name);
     TagData tag_d = *tag_n;
     tag_d.TAGNAME = text;
-    TagModel::instance().save_data(tag_d);
+    TagModel::instance().save_data_n(tag_d);
 
     tagList_.Remove(old_name);
     tagList_.Add(text);

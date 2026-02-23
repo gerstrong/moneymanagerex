@@ -71,7 +71,7 @@ void mmAddAccountWizard::RunIt()
         account_d.INITIALBAL   = 0;
         account_d.INITIALDATE  = wxDate::Today().FormatISODate();
         account_d.CURRENCYID   = currencyID_;
-        AccountModel::instance().save_data(account_d);
+        AccountModel::instance().save_data_n(account_d);
         acctID_ = account_d.ACCOUNTID;
     }
     Destroy();

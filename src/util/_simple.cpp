@@ -1799,7 +1799,7 @@ bool mmTagTextCtrl::ValidateTagText(const wxString& tagText)
                 TagData new_tag_d = TagData();
                 new_tag_d.TAGNAME = tag;
                 new_tag_d.ACTIVE  = 1;
-                TagModel::instance().add_data(new_tag_d);
+                TagModel::instance().add_data_n(new_tag_d);
                 // Save the new tag to reference
                 tag_map_[tag] = new_tag_d.TAGID;
                 tagCheckListBox_->Append(tag);

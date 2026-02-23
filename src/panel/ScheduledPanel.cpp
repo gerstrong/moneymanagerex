@@ -948,7 +948,7 @@ void ScheduledList::OnSetUserColour(wxCommandEvent& event)
     ScheduledData* sched_n = ScheduledModel::instance().unsafe_get_data_n(id);
     if (sched_n) {
         sched_n->COLOR = user_color_id;
-        ScheduledModel::instance().unsafe_update_data(sched_n);
+        ScheduledModel::instance().unsafe_update_data_n(sched_n);
     }
     ScheduledModel::instance().ReleaseSavepoint();
 

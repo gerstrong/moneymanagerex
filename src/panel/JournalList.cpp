@@ -1724,7 +1724,7 @@ int64 JournalList::onPaste(const TransactionData* tran)
         TransactionSplitData new_split_d;
         new_split_d.clone_from(split_item);
         new_split_d.TRANSID = transactionID;
-        TransactionSplitModel::instance().add_data(new_split_d);
+        TransactionSplitModel::instance().add_data_n(new_split_d);
 
         // Clone split tags
         for (const auto& tl_d : TagLinkModel::instance().find(
@@ -1750,7 +1750,7 @@ int64 JournalList::onPaste(const TransactionData* tran)
             new_fv_d.FIELDID = fv_d.FIELDID;
             new_fv_d.REFID   = transactionID;
             new_fv_d.CONTENT = fv_d.CONTENT;
-            FieldValueModel::instance().add_data(new_fv_d);
+            FieldValueModel::instance().add_data_n(new_fv_d);
         }
         FieldValueModel::instance().ReleaseSavepoint();
     }
@@ -1837,7 +1837,7 @@ void JournalList::onSetUserColour(wxCommandEvent& event)
             ScheduledData* sched_n = ScheduledModel::instance().unsafe_get_data_n(id.first);
             if (sched_n) {
                 sched_n->COLOR = user_color_id;
-                ScheduledModel::instance().unsafe_update_data(sched_n);
+                ScheduledModel::instance().unsafe_update_data_n(sched_n);
             }
         }
     }

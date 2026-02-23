@@ -500,7 +500,7 @@ bool FieldValueDialog::SaveCustomValues(int64 ref_id)
             if (!fv_d.equals(&oldData))
                 updateTimestamp = true;
 
-            FieldValueModel::instance().save_data(fv_d);
+            FieldValueModel::instance().save_data_n(fv_d);
         }
         else if (fv_n) {
             FieldValueModel::instance().remove_depen(fv_n->FIELDATADID);
@@ -546,7 +546,7 @@ void FieldValueDialog::UpdateCustomValues(int64 ref_id)
                 if (!fv_d.equals(&oldData))
                     updateTimestamp = true;
 
-                FieldValueModel::instance().save_data(fv_d);
+                FieldValueModel::instance().save_data_n(fv_d);
             }
             else if (fv_n) {
                 FieldValueModel::instance().remove_depen(fv_n->FIELDATADID);

@@ -88,7 +88,7 @@ void TransactionLinkModel::SetTranslink(
     new_tl_d.CHECKINGACCOUNTID = checking_id;
     new_tl_d.LINKTYPE          = link_type;
     new_tl_d.LINKRECORDID      = link_record_id;
-    TransactionLinkModel::instance().add_data(new_tl_d);
+    TransactionLinkModel::instance().add_data_n(new_tl_d);
 
     // set the checking entry to recognise it as a foreign transaction
     // set the checking type as AS_INCOME_EXPENSE = 32701 or AS_TRANSFER
@@ -203,7 +203,7 @@ void TransactionLinkModel::UpdateAssetValue(AssetData* asset_n)
 
     if (asset_n->VALUE != new_value) {
         asset_n->VALUE = new_value;
-        AssetModel::instance().unsafe_save_data(asset_n);
+        AssetModel::instance().unsafe_save_data_n(asset_n);
     }
 }
 

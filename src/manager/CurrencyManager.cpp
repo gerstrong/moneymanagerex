@@ -293,7 +293,7 @@ void CurrencyManager::OnOk(wxCommandEvent& WXUNUSED(event))
     if (!w_baseConvRate->checkValue(m_currency_n->BASECONVRATE))
         return mmErrorDialogs::ToolTip4Object(w_baseConvRate, _t("Invalid Entry"), _t("Conversion to Base Rate"));;
 
-    CurrencyModel::instance().unsafe_save_data(m_currency_n);
+    CurrencyModel::instance().unsafe_save_data_n(m_currency_n);
     EndModal(wxID_OK);
 }
 

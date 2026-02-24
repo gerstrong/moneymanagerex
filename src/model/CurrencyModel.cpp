@@ -186,12 +186,14 @@ std::map<wxDateTime, int> CurrencyModel::DateUsed(int64 CurrencyID)
 */
 bool CurrencyModel::purge_id(int64 id)
 {
+    // purge CurrencyHistoryData owned by id
     Savepoint();
     for (const auto& r : CurrencyHistoryModel::instance().find(
         CurrencyHistoryCol::CURRENCYID(id)
     ))
         CurrencyHistoryModel::instance().purge_id(r.id());
     ReleaseSavepoint();
+
     return unsafe_remove_data(id);
 }
 

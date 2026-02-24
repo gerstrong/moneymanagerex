@@ -67,8 +67,7 @@ private:
     static mmChoiceNameA CHANGEMODE_CHOICES;
 
 public:
-    AssetModel();
-    ~AssetModel();
+    static const wxString refTypeName;
 
 public:
     /**
@@ -91,7 +90,6 @@ public:
     
 public:
     static wxString get_asset_name(int64 asset_id);
-    double balance();
     static wxDate STARTDATE(const Data& r);
 
     static const wxString type_name(int id);
@@ -116,11 +114,16 @@ public:
     static std::pair<double, double> value(const Data* r);
     // Returns the calculated current value
     static std::pair<double, double> value(const Data& r);
-    // Returns the calculated value at a given date
-    std::pair<double, double> valueAtDate(const Data* r, const wxDate& date);
 
 public:
-    static const wxString refTypeName;
+    AssetModel();
+    ~AssetModel();
+
+public:
+    // FIXME: add purge_id() to remove AttachmentData owned by AssetData
+    double balance();
+    // Returns the calculated value at a given date
+    std::pair<double, double> valueAtDate(const Data* r, const wxDate& date);
 };
 
 //----------------------------------------------------------------------------

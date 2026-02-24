@@ -266,10 +266,16 @@ ScheduledModel::~ScheduledModel()
 // including any splits associated with the Data Record.
 bool ScheduledModel::purge_id(int64 id)
 {
-    for (auto &item : ScheduledModel::split(*get_data_n(id)))
-        ScheduledSplitModel::instance().purge_id(item.SPLITTRANSID);
-    // Delete tags for the scheduled transaction
+    // purge ScheduledSplitData owned by id
+    for (auto& split_d : ScheduledModel::split(*get_data_n(id)))
+        ScheduledSplitModel::instance().purge_id(split_d.SPLITTRANSID);
+
+    // remove TagLinkData owned by id
     TagLinkModel::instance().DeleteAllTags(this->refTypeName, id);
+
+    // FIXME: remove FieldValueData owned by id
+    // FIXME: remove AttachmentData owned by id
+
     return unsafe_remove_data(id);
 }
 

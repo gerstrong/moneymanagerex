@@ -52,8 +52,9 @@ TransactionSplitModel& TransactionSplitModel::instance()
 
 bool TransactionSplitModel::purge_id(int64 id)
 {
-    // Delete all tags for the split before removing it
+    // remove TagLinkData owned by id
     TagLinkModel::instance().DeleteAllTags(TransactionSplitModel::refTypeName, id);
+
     return unsafe_remove_data(id);
 }
 

@@ -60,8 +60,9 @@ double ScheduledSplitModel::get_total(const DataA& rows)
 
 bool ScheduledSplitModel::purge_id(int64 id)
 {
-    // Delete all tags for the split before removing it
+    // remove TagLinkData owned by id
     TagLinkModel::instance().DeleteAllTags(ScheduledSplitModel::refTypeName, id);
+
     return unsafe_remove_data(id);
 }
 

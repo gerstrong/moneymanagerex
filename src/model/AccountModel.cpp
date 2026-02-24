@@ -134,7 +134,10 @@ wxString AccountModel::get_id_name(int64 account_id)
 /** Remove the Data record instance from memory and the database. */
 bool AccountModel::purge_id(int64 id)
 {
+    // FIXME: check if id is used in InfoTable
+
     Savepoint();
+
     for (const auto& r: TransactionModel::instance().find_or(
         TransactionCol::ACCOUNTID(id),
         TransactionCol::TOACCOUNTID(id)
@@ -146,6 +149,7 @@ bool AccountModel::purge_id(int64 id)
         }
         TransactionModel::instance().purge_id(r.TRANSID);
     }
+
     for (const auto& r: ScheduledModel::instance().find_or(
         ScheduledCol::ACCOUNTID(id),
         ScheduledCol::TOACCOUNTID(id)
@@ -156,6 +160,9 @@ bool AccountModel::purge_id(int64 id)
         TransactionLinkModel::RemoveTransLinkRecords<StockModel>(r.STOCKID);
         StockModel::instance().purge_id(r.STOCKID);
     }
+
+    // FIXME: remove AttachmentData owned by id
+
     ReleaseSavepoint();
 
     return unsafe_remove_data(id);

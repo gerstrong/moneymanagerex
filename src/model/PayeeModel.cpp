@@ -90,6 +90,9 @@ bool PayeeModel::purge_id(int64 id)
 {
     if (is_used(id))
         return false;
+
+    // FIXME: remove AttachmentData owned by id
+
     return unsafe_remove_data(id);
 }
 

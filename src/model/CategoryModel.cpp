@@ -201,25 +201,36 @@ bool CategoryModel::is_hidden(int64 catID)
 
 bool CategoryModel::is_used(int64 id)
 {
-    if (id < 0) return false;
-    const auto& trans = TransactionModel::instance().find(TransactionCol::CATEGID(id));
-    if (!trans.empty())
-    {
-        for (const auto& txn : trans)
-            if (txn.DELETEDTIME.IsEmpty())
-                return true;
-    }
-    const auto& split = TransactionSplitModel::instance().find(TransactionCol::CATEGID(id));
-    if (!split.empty())
-    {
-        for (const auto& txn : split)
-            if (TransactionModel::instance().get_data_n(txn.TRANSID)->DELETEDTIME.IsEmpty())
-                return true;
-    }
-    const auto& deposits = ScheduledModel::instance().find(ScheduledCol::CATEGID(id));
-    if (!deposits.empty()) return true;
-    const auto& deposit_split = ScheduledSplitModel::instance().find(ScheduledCol::CATEGID(id));
-    if (!deposit_split.empty()) return true;
+    if (id <= 0)
+        return false;
+
+    const auto& trx_a = TransactionModel::instance().find(
+        TransactionCol::CATEGID(id)
+    );
+    // FIXME: do not exclude deleted transactions
+    for (const auto& trx_d : trx_a)
+        if (trx_d.DELETEDTIME.IsEmpty())
+            return true;
+
+    const auto& split_a = TransactionSplitModel::instance().find(
+        TransactionCol::CATEGID(id)
+    );
+    for (const auto& split_d : split_a)
+        if (TransactionModel::instance().get_data_n(split_d.TRANSID)->DELETEDTIME.IsEmpty())
+            return true;
+
+    const auto& sched_a = ScheduledModel::instance().find(
+        ScheduledCol::CATEGID(id)
+    );
+    if (!sched_a.empty())
+        return true;
+
+    const auto& sched_split_a = ScheduledSplitModel::instance().find(
+        ScheduledCol::CATEGID(id)
+    );
+    if (!sched_split_a.empty())
+        return true;
+
     DataA children = instance().find(CategoryCol::PARENTID(id));
     if (!children.empty()){
         bool used = false;
@@ -228,6 +239,10 @@ bool CategoryModel::is_used(int64 id)
         }
         return used;
     }
+
+    // FIXME: check if id is used in PayeeData
+    // FIXME: check if id is used in BudgetData
+
     return false;
 }
 

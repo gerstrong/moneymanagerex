@@ -80,8 +80,8 @@ public:
     {
         REPEAT_EXEC exec; // auto execution mode
         REPEAT_FREQ freq; // repetition frequency
-        int num;          // occurrences if type is WEEKLY .. DAILY, MONTHLY_LAST_*
-        int x;            // x           if type is IN_X_*, EVERY_X_*
+        int num;          // occurrences if freq is WEEKLY .. DAILY, MONTHLY_LAST_*
+        int x;            // x           if freq is IN_X_*, EVERY_X_*
         RepeatNum() = default;
     };
 

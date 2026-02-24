@@ -100,15 +100,19 @@ double StockModel::CurrentValue(const Data& r)
 bool StockModel::purge_id(int64 id)
 {
     const StockData *stock_n = get_data_n(id);
-    const auto& stock_a = StockModel::instance().find(StockCol::SYMBOL(stock_n->SYMBOL));
+    const auto& stock_a = StockModel::instance().find(
+        StockCol::SYMBOL(stock_n->SYMBOL)
+    );
     if (stock_a.size() == 1) {
-        this->Savepoint();
+        Savepoint();
         for (const auto& sh_d : StockHistoryModel::instance().find(
             StockHistoryCol::SYMBOL(stock_n->SYMBOL)
         ))
             StockHistoryModel::instance().purge_id(sh_d.id());
-        this->ReleaseSavepoint();
+        ReleaseSavepoint();
     }
+
+    // FIXME: remove AttachmentData owned by id
 
     return unsafe_remove_data(id);
 }

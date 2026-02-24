@@ -184,15 +184,15 @@ std::map<wxDateTime, int> CurrencyModel::DateUsed(int64 CurrencyID)
 * Remove the Data record from memory and the database.
 * Delete also all currency history
 */
-bool CurrencyModel::remove_depen(int64 id)
+bool CurrencyModel::purge_id(int64 id)
 {
     Savepoint();
     for (const auto& r : CurrencyHistoryModel::instance().find(
         CurrencyHistoryCol::CURRENCYID(id)
     ))
-        CurrencyHistoryModel::instance().remove_depen(r.id());
+        CurrencyHistoryModel::instance().purge_id(r.id());
     ReleaseSavepoint();
-    return remove_data(id);
+    return unsafe_remove_data(id);
 }
 
 const wxString CurrencyModel::toCurrency(double value, const Data* currency, int precision)

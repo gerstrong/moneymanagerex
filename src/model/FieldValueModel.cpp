@@ -104,7 +104,7 @@ bool FieldValueModel::DeleteAllData(const wxString& RefType, int64 RefID)
     {
         const Data* data = FieldValueModel::instance().get_key(field.FIELDID, RefID);
         if (data)
-            FieldValueModel::instance().remove_depen(data->FIELDATADID);
+            FieldValueModel::instance().purge_id(data->FIELDATADID);
     }
     return true;
 }

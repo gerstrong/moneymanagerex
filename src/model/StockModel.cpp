@@ -97,7 +97,7 @@ double StockModel::CurrentValue(const Data& r)
 * Remove the Data record from memory and the database.
 * Delete also all stock history
 */
-bool StockModel::remove_depen(int64 id)
+bool StockModel::purge_id(int64 id)
 {
     const StockData *stock_n = get_data_n(id);
     const auto& stock_a = StockModel::instance().find(StockCol::SYMBOL(stock_n->SYMBOL));
@@ -106,11 +106,11 @@ bool StockModel::remove_depen(int64 id)
         for (const auto& sh_d : StockHistoryModel::instance().find(
             StockHistoryCol::SYMBOL(stock_n->SYMBOL)
         ))
-            StockHistoryModel::instance().remove_depen(sh_d.id());
+            StockHistoryModel::instance().purge_id(sh_d.id());
         this->ReleaseSavepoint();
     }
 
-    return remove_data(id);
+    return unsafe_remove_data(id);
 }
 
 /**

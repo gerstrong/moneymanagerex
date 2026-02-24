@@ -293,7 +293,7 @@ void AttachmentDialog::DeleteAttachment()
         )) {
             if (data_n->REFTYPE == TransactionModel::refTypeName)
                 TransactionModel::instance().save_timestamp(data_n->REFID);
-            AttachmentModel::instance().remove_depen(m_attachment_id);
+            AttachmentModel::instance().purge_id(m_attachment_id);
         }
         m_attachment_id = -1;
         fillControls();
@@ -551,7 +551,7 @@ bool mmAttachmentManage::DeleteAllAttachments(const wxString& RefType, int64 Ref
     for (const auto &entry : attachments)
     {
         mmAttachmentManage::DeleteAttachment(AttachmentsFolder + m_PathSep + entry.FILENAME);
-        AttachmentModel::instance().remove_depen(entry.ATTACHMENTID);
+        AttachmentModel::instance().purge_id(entry.ATTACHMENTID);
     }
 
     if (RefType == TransactionModel::refTypeName)

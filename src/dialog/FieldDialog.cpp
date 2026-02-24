@@ -248,7 +248,7 @@ void FieldDialog::OnOk(wxCommandEvent& WXUNUSED(event))
             // Is removal of CONTENT missing?
             FieldValueModel::instance().Savepoint();
             for (auto& fv_d : fv_a) {
-                FieldValueModel::instance().remove_depen(fv_d.id());
+                FieldValueModel::instance().purge_id(fv_d.id());
             }
             FieldValueModel::instance().save_data_a(fv_a);
             FieldValueModel::instance().ReleaseSavepoint();
@@ -271,7 +271,7 @@ void FieldDialog::OnOk(wxCommandEvent& WXUNUSED(event))
             FieldValueModel::instance().Savepoint();
             for (auto& fv_d : fv_a) {
                 if (ArrChoices.Index(fv_d.CONTENT) == wxNOT_FOUND)
-                    FieldValueModel::instance().remove_depen(fv_d.id());
+                    FieldValueModel::instance().purge_id(fv_d.id());
             }
             FieldValueModel::instance().save_data_a(fv_a);
             FieldValueModel::instance().ReleaseSavepoint();

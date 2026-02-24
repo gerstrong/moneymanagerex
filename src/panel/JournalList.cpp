@@ -1173,8 +1173,8 @@ void JournalList::onDeleteTransaction(wxCommandEvent& WXUNUSED(event))
             }
 
             if (m_cp->isDeletedTrans() || retainDays == 0) {
-                // remove_depen() also removes split transactions, translink entries, attachments, and custom field data
-                TransactionModel::instance().remove_depen(id.first);
+                // purge_id() also removes split transactions, translink entries, attachments, and custom field data
+                TransactionModel::instance().purge_id(id.first);
             }
             else {
                 trx_n->DELETEDTIME = deletionTime;
@@ -2198,7 +2198,7 @@ void JournalList::deleteTransactionsByStatus(const wxString& status)
         if (tran.STATUS == s || (s.empty() && status.empty())) {
             if (m_cp->isDeletedTrans() || retainDays == 0) {
                 // remove also removes any split transactions, translink entries, attachments, and custom field data
-                TransactionModel::instance().remove_depen(tran.TRANSID);
+                TransactionModel::instance().purge_id(tran.TRANSID);
             }
             else {
                 TransactionData* trx_n = TransactionModel::instance().unsafe_get_data_n(tran.TRANSID);

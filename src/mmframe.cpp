@@ -1592,7 +1592,7 @@ void mmGUIFrame::OnPopupDeleteAccount(wxCommandEvent& /*event*/)
         wxYES_NO | wxNO_DEFAULT | wxICON_ERROR
     );
     if (msgDlg.ShowModal() == wxID_YES) {
-        AccountModel::instance().remove_depen(account_n->ACCOUNTID);
+        AccountModel::instance().purge_id(account_n->ACCOUNTID);
         mmAttachmentManage::DeleteAllAttachments(
             AccountModel::refTypeName, account_n->ACCOUNTID
         );
@@ -3967,7 +3967,7 @@ void mmGUIFrame::OnDeleteAccount(wxCommandEvent& /*event*/)
             wxYES_NO | wxNO_DEFAULT | wxICON_EXCLAMATION);
         if (msgDlg.ShowModal() == wxID_YES) {
             mmAttachmentManage::DeleteAllAttachments(AccountModel::refTypeName, account->id());
-            AccountModel::instance().remove_depen(account->id());
+            AccountModel::instance().purge_id(account->id());
         }
     }
     DoRecreateNavTreeControl(true);
@@ -4217,7 +4217,7 @@ void mmGUIFrame::autocleanDeletedTransactions() {
         FieldValueModel::instance().Savepoint();
         for (const auto& transaction : deletedTransactions) {
             // removing the checking transaction also removes split, translink, and share entries
-            TransactionModel::instance().remove_depen(transaction.TRANSID);
+            TransactionModel::instance().purge_id(transaction.TRANSID);
 
             // remove also any attachments for the transaction
             const wxString& RefType = TransactionModel::refTypeName;

@@ -132,7 +132,7 @@ wxString AccountModel::get_id_name(int64 account_id)
 }
 
 /** Remove the Data record instance from memory and the database. */
-bool AccountModel::remove_depen(int64 id)
+bool AccountModel::purge_id(int64 id)
 {
     Savepoint();
     for (const auto& r: TransactionModel::instance().find_or(
@@ -142,23 +142,23 @@ bool AccountModel::remove_depen(int64 id)
         if (TransactionModel::is_foreign(r)) {
             TransactionShareModel::RemoveShareEntry(r.TRANSID);
             TransactionLinkData tr = TransactionLinkModel::TranslinkRecord(r.TRANSID);
-            TransactionLinkModel::instance().remove_depen(tr.TRANSLINKID);
+            TransactionLinkModel::instance().purge_id(tr.TRANSLINKID);
         }
-        TransactionModel::instance().remove_depen(r.TRANSID);
+        TransactionModel::instance().purge_id(r.TRANSID);
     }
     for (const auto& r: ScheduledModel::instance().find_or(
         ScheduledCol::ACCOUNTID(id),
         ScheduledCol::TOACCOUNTID(id)
     ))
-        ScheduledModel::instance().remove_depen(r.BDID);
+        ScheduledModel::instance().purge_id(r.BDID);
 
     for (const auto& r : StockModel::instance().find(StockCol::HELDAT(id))) {
         TransactionLinkModel::RemoveTransLinkRecords<StockModel>(r.STOCKID);
-        StockModel::instance().remove_depen(r.STOCKID);
+        StockModel::instance().purge_id(r.STOCKID);
     }
     ReleaseSavepoint();
 
-    return remove_data(id);
+    return unsafe_remove_data(id);
 }
 
 const CurrencyData* AccountModel::currency(const Data* r)

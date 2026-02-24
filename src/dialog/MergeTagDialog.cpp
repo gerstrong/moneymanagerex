@@ -177,7 +177,7 @@ void MergeTagDialog::OnOk(wxCommandEvent& WXUNUSED(event))
     TagLinkModel::instance().ReleaseSavepoint();
 
     if (cbDeleteSourceTag_->IsChecked()) {
-        TagModel::instance().remove_depen(sourceTagID_);
+        TagModel::instance().purge_id(sourceTagID_);
         choices_.Remove(source_tag_name);
         cbSourceTag_->Set(choices_);
         cbDestTag_->Set(choices_);

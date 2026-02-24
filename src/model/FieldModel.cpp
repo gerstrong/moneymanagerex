@@ -80,9 +80,9 @@ bool FieldModel::Delete(const int64& FieldID)
 {
     Savepoint();
     for (const auto& r : FieldValueModel::instance().find(FieldValueCol::FIELDID(FieldID)))
-        FieldValueModel::instance().remove_depen(r.id());
+        FieldValueModel::instance().purge_id(r.id());
     ReleaseSavepoint();
-    return remove_data(FieldID);
+    return unsafe_remove_data(FieldID);
 }
 
 const wxString FieldModel::getTooltip(const wxString& properties)

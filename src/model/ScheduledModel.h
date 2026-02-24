@@ -174,7 +174,7 @@ public:
 public:
     // Remove the Data record instance from memory and the database
     // including any splits associated with the Data Record.
-    bool remove_depen(int64 id) override;
+    bool purge_id(int64 id) override;
     bool AllowTransaction(const Data& sched_d);
     void completeBDInSeries(int64 bdID);
 

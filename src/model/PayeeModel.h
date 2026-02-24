@@ -53,7 +53,7 @@ public:
 
 public:
     static bool is_used(int64 id);
-    bool remove_depen(int64 id) override;
+    bool purge_id(int64 id) override;
 
     // Return the Data record pointer for the given payee name
     // Returns 0 when payee not found.

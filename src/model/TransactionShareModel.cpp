@@ -110,6 +110,6 @@ void TransactionShareModel::RemoveShareEntry(const int64 checking_id)
     DataA list = ShareList(checking_id);
     if (!list.empty())
     {
-        TransactionShareModel::instance().remove_depen(list.at(0).SHAREINFOID);
+        TransactionShareModel::instance().purge_id(list.at(0).SHAREINFOID);
     }
 }

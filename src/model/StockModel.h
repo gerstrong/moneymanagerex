@@ -80,7 +80,7 @@ public:
     * Remove the Data record from memory and the database.
     * Delete also all stock history
     */
-    bool remove_depen(int64 id) override;
+    bool purge_id(int64 id) override;
 
     /**
     Returns the last price date of a given stock

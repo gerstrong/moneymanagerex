@@ -788,7 +788,7 @@ void mmPayeeDialog::DeletePayee()
                 const wxString& RefType = TransactionModel::refTypeName;
 
                 for (auto& tran : deletedTrans) {
-                    TransactionModel::instance().remove_depen(tran.TRANSID);
+                    TransactionModel::instance().purge_id(tran.TRANSID);
                     mmAttachmentManage::DeleteAllAttachments(RefType, tran.TRANSID);
                     FieldValueModel::DeleteAllData(RefType, tran.TRANSID);
                 }
@@ -799,7 +799,7 @@ void mmPayeeDialog::DeletePayee()
                 FieldValueModel::instance().ReleaseSavepoint();
             }
 
-            PayeeModel::instance().remove_depen(payee->PAYEEID);
+            PayeeModel::instance().purge_id(payee->PAYEEID);
             mmAttachmentManage::DeleteAllAttachments(PayeeModel::refTypeName, payee->PAYEEID);
             refreshRequested_ = true;
             fillControls();

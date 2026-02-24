@@ -306,7 +306,7 @@ void StockList::OnDeleteStocks(wxCommandEvent& /*event*/)
         , wxYES_NO | wxNO_DEFAULT | wxICON_ERROR);
     if (msgDlg.ShowModal() == wxID_YES)
     {
-        StockModel::instance().remove_depen(m_stocks[m_selected_row].STOCKID);
+        StockModel::instance().purge_id(m_stocks[m_selected_row].STOCKID);
         mmAttachmentManage::DeleteAllAttachments(StockModel::refTypeName, m_stocks[m_selected_row].STOCKID);
         TransactionLinkModel::RemoveTransLinkRecords<StockModel>(m_stocks[m_selected_row].STOCKID);
         DeleteItem(m_selected_row);

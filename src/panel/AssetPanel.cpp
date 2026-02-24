@@ -215,7 +215,7 @@ void AssetList::OnDeleteAsset(wxCommandEvent& /*event*/)
 
     if (msgDlg.ShowModal() == wxID_YES) {
         const AssetData& asset = m_panel->m_assets[m_selected_row];
-        AssetModel::instance().remove_depen(asset.ASSETID);
+        AssetModel::instance().purge_id(asset.ASSETID);
         mmAttachmentManage::DeleteAllAttachments(AssetModel::refTypeName, asset.ASSETID);
         TransactionLinkModel::RemoveTransLinkRecords<AssetModel>(asset.ASSETID);
 

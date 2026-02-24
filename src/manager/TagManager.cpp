@@ -319,10 +319,10 @@ void TagManager::OnDelete(wxCommandEvent& WXUNUSED(event))
                 // Taglinks for deleted transactions are either TRANSACTION or TRANSACTIONSPLIT type.
                 // Remove the transactions which will delete all associated tags.
                 if (link.REFTYPE == TransactionModel::refTypeName)
-                    TransactionModel::instance().remove_depen(link.REFID);
+                    TransactionModel::instance().purge_id(link.REFID);
                 else if (link.REFTYPE == TransactionSplitModel::refTypeName)
-                    TransactionModel::instance().remove_depen(TransactionSplitModel::instance().get_data_n(link.REFID)->TRANSID);
-            TagModel::instance().remove_depen(tag->TAGID);
+                    TransactionModel::instance().purge_id(TransactionSplitModel::instance().get_data_n(link.REFID)->TRANSID);
+            TagModel::instance().purge_id(tag->TAGID);
             tagList_.Remove(selection);
             int index = selectedTags_.Index(selection);
             if (index != wxNOT_FOUND)

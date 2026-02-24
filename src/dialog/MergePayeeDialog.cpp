@@ -183,7 +183,7 @@ void MergePayeeDialog::OnOk(wxCommandEvent& WXUNUSED(event))
         ScheduledModel::instance().ReleaseSavepoint();
 
         if (cbDeleteSourcePayee_->IsChecked()) {
-            if (PayeeModel::instance().remove_depen(sourcePayeeID_)) {
+            if (PayeeModel::instance().purge_id(sourcePayeeID_)) {
                 mmAttachmentManage::DeleteAllAttachments(PayeeModel::refTypeName, sourcePayeeID_);
                 mmWebApp::MMEX_WebApp_UpdatePayee();
             }

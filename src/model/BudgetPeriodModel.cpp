@@ -48,13 +48,13 @@ BudgetPeriodModel& BudgetPeriodModel::instance()
     return Singleton<BudgetPeriodModel>::instance();
 }
 
-bool BudgetPeriodModel::remove_depen(int64 id)
+bool BudgetPeriodModel::purge_id(int64 id)
 {
     for (const BudgetData& d : BudgetModel::instance().find(
         BudgetCol::BUDGETYEARID(id)
     ))
-        BudgetModel::instance().remove_depen(d.BUDGETENTRYID);
-    return remove_data(id);
+        BudgetModel::instance().purge_id(d.BUDGETENTRYID);
+    return unsafe_remove_data(id);
 }
 
 // Setter

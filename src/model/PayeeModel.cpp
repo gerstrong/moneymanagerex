@@ -86,11 +86,11 @@ wxString PayeeModel::get_payee_name(int64 payee_id)
         return _t("Payee Error");
 }
 
-bool PayeeModel::remove_depen(int64 id)
+bool PayeeModel::purge_id(int64 id)
 {
     if (is_used(id))
         return false;
-    return remove_data(id);
+    return unsafe_remove_data(id);
 }
 
 const wxArrayString PayeeModel::all_payee_names()

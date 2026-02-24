@@ -236,8 +236,10 @@ bool TableFactory<T, D>::save_data_a(DataA& data_a)
 
 // Remove a Data record from the database and from the cache.
 // Return false in case of error.
+// Before calling this function, the caller shall remove all auxiliary data
+// belonging to id from other tables. See the comments in virtual remove_id().
 template<typename T, typename D>
-bool TableFactory<T, D>::remove_data(const int64 id)
+bool TableFactory<T, D>::unsafe_remove_data(const int64 id)
 {
     if (id <= 0) {
         wxLogError("%s: Cannot remove id %lld", this->m_table_name, id.GetValue());

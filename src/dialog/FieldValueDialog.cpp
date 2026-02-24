@@ -503,7 +503,7 @@ bool FieldValueDialog::SaveCustomValues(int64 ref_id)
             FieldValueModel::instance().save_data_n(fv_d);
         }
         else if (fv_n) {
-            FieldValueModel::instance().remove_depen(fv_n->FIELDATADID);
+            FieldValueModel::instance().purge_id(fv_n->FIELDATADID);
             save_timestamp = true;
         }
     }
@@ -549,7 +549,7 @@ void FieldValueDialog::UpdateCustomValues(int64 ref_id)
                 FieldValueModel::instance().save_data_n(fv_d);
             }
             else if (fv_n) {
-                FieldValueModel::instance().remove_depen(fv_n->FIELDATADID);
+                FieldValueModel::instance().purge_id(fv_n->FIELDATADID);
                 save_timestamp = true;
             }
         }

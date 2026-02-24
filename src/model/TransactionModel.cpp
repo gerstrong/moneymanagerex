@@ -348,14 +348,14 @@ bool TransactionModel::is_locked(const Data& trx_d)
     return val;
 }
 
-bool TransactionModel::remove_depen(int64 id)
+bool TransactionModel::purge_id(int64 id)
 {
     // TODO: remove all split at once
-    // TransactionSplitModel::instance().remove_depen(TransactionSplitModel::instance().find(TransactionSplitCol::TRANSID(id)));
+    // TransactionSplitModel::instance().purge_id(TransactionSplitModel::instance().find(TransactionSplitCol::TRANSID(id)));
     for (const auto& ts_d : TransactionSplitModel::instance().find(
         TransactionSplitCol::TRANSID(id)
     )) {
-        TransactionSplitModel::instance().remove_depen(ts_d.SPLITTRANSID);
+        TransactionSplitModel::instance().purge_id(ts_d.SPLITTRANSID);
     }
     if (is_foreign(*instance().get_data_n(id)))
         TransactionLinkModel::RemoveTranslinkEntry(id);
@@ -366,7 +366,7 @@ bool TransactionModel::remove_depen(int64 id)
     // remove all custom fields for the transaction
     FieldValueModel::DeleteAllData(RefType, id);
     TagLinkModel::instance().DeleteAllTags(RefType, id);
-    return remove_data(id);
+    return unsafe_remove_data(id);
 }
 
 void TransactionModel::save_timestamp(int64 id)

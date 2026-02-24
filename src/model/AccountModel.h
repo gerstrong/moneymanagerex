@@ -78,7 +78,7 @@ public:
     static wxString get_id_name(int64 account_id);
 
     /** Remove the Data record from memory and the database. */
-    bool remove_depen(int64 id) override;
+    bool purge_id(int64 id) override;
 
 public:
     wxArrayString all_checking_account_names(bool skip_closed = false);

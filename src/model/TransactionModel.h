@@ -193,7 +193,7 @@ public:
     ~TransactionModel();
 
 public:
-    bool remove_depen(int64 id) override;
+    bool purge_id(int64 id) override;
     void save_timestamp(int64 id);
     void update_timestamp(Data& trx_d);
     const Data* unsafe_save_trx(Data* trx_n);

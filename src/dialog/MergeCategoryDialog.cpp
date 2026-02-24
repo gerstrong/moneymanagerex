@@ -207,14 +207,14 @@ void MergeCategoryDialog::OnOk(wxCommandEvent& WXUNUSED(event))
         m_changedRecords += schedsplit_a.size();
 
         for (auto& budget_d : budget_a) {
-            BudgetModel::instance().remove_depen(budget_d.BUDGETENTRYID);
+            BudgetModel::instance().purge_id(budget_d.BUDGETENTRYID);
             m_changedRecords++;
         }
 
         if (cbDeleteSourceCategory_->IsChecked()) {
             if (m_sourceSubCatID == -1) {
                 if (CategoryModel::sub_category(CategoryModel::instance().get_data_n(m_sourceCatID)).empty())
-                    CategoryModel::instance().remove_depen(m_sourceCatID);
+                    CategoryModel::instance().purge_id(m_sourceCatID);
             }
 
             cbSourceCategory_->mmDoReInitialize();

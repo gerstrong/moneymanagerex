@@ -58,11 +58,11 @@ double ScheduledSplitModel::get_total(const DataA& rows)
     return total;
 }
 
-bool ScheduledSplitModel::remove_depen(int64 id)
+bool ScheduledSplitModel::purge_id(int64 id)
 {
     // Delete all tags for the split before removing it
     TagLinkModel::instance().DeleteAllTags(ScheduledSplitModel::refTypeName, id);
-    return remove_data(id);
+    return unsafe_remove_data(id);
 }
 
 std::map<int64, ScheduledSplitModel::DataA> ScheduledSplitModel::get_all_id()
@@ -81,7 +81,7 @@ int ScheduledSplitModel::update(DataA& rows, int64 transactionID)
 
     DataA split_a = instance().find(ScheduledSplitCol::TRANSID(transactionID));
     for (const auto& split_d : split_a) {
-        instance().remove_depen(split_d.id());
+        instance().purge_id(split_d.id());
     }
 
     if (!rows.empty()) {

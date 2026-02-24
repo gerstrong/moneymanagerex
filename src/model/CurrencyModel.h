@@ -89,7 +89,7 @@ public:
     * Remove the Data record from memory and the database.
     * Delete also all currency history
     */
-    bool remove_depen(int64 id) override;
+    bool purge_id(int64 id) override;
 
     static std::map<wxDateTime,int> DateUsed(int64 CurrencyID);
 

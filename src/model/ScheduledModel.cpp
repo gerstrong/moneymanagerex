@@ -264,13 +264,13 @@ ScheduledModel::~ScheduledModel()
 
 // Remove the Data record instance from memory and the database
 // including any splits associated with the Data Record.
-bool ScheduledModel::remove_depen(int64 id)
+bool ScheduledModel::purge_id(int64 id)
 {
     for (auto &item : ScheduledModel::split(*get_data_n(id)))
-        ScheduledSplitModel::instance().remove_depen(item.SPLITTRANSID);
+        ScheduledSplitModel::instance().purge_id(item.SPLITTRANSID);
     // Delete tags for the scheduled transaction
     TagLinkModel::instance().DeleteAllTags(this->refTypeName, id);
-    return remove_data(id);
+    return unsafe_remove_data(id);
 }
 
 bool ScheduledModel::AllowTransaction(const Data& r)
@@ -331,7 +331,7 @@ void ScheduledModel::completeBDInSeries(int64 bdID)
     RepeatNum rn;
     if (!decode_repeat_num(*sched_n, rn) || rn.num == 1) {
         mmAttachmentManage::DeleteAllAttachments(this->refTypeName, bdID);
-        remove_depen(bdID);
+        purge_id(bdID);
         return;
     }
 

@@ -371,7 +371,7 @@ void CurrencyChoiceDialog::OnBtnDelete()
         , _t("Currency Manager")
         , wxYES_NO | wxNO_DEFAULT | wxICON_ERROR) == wxYES)
     {
-        CurrencyModel::instance().remove_depen(m_currency_id);
+        CurrencyModel::instance().purge_id(m_currency_id);
         m_currency_id = -1;
         fillControls();
     }
@@ -449,7 +449,7 @@ void CurrencyChoiceDialog::OnListItemSelected(wxDataViewEvent& event)
                         for (const auto& r : CurrencyHistoryModel::instance().find(
                             CurrencyHistoryCol::CURRENCYID(m_currency_id)
                         )) {
-                            CurrencyHistoryModel::instance().remove_depen(r.id());
+                            CurrencyHistoryModel::instance().purge_id(r.id());
                         }
                         CurrencyHistoryModel::instance().ReleaseSavepoint();
                     }
@@ -652,7 +652,7 @@ void CurrencyChoiceDialog::OnHistoryDelete(wxCommandEvent& WXUNUSED(event))
     {
         item = valueListBox_->GetNextItem(item, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
         if (item == -1) break;
-        CurrencyHistoryModel::instance().remove_depen(static_cast<int64>(valueListBox_->GetItemData(item)));
+        CurrencyHistoryModel::instance().purge_id(static_cast<int64>(valueListBox_->GetItemData(item)));
     }
     CurrencyHistoryModel::instance().ReleaseSavepoint();
 
@@ -749,7 +749,7 @@ void CurrencyChoiceDialog::OnHistoryDeleteUnused(wxCommandEvent& WXUNUSED(event)
             for (const auto& r : CurrencyHistoryModel::instance().find(
                 CurrencyHistoryCol::CURRENCYID(currency.CURRENCYID)
             ))
-                CurrencyHistoryModel::instance().remove_depen(r.id());
+                CurrencyHistoryModel::instance().purge_id(r.id());
         }
         else {
             std::map<wxDateTime, int> DatesList = CurrencyModel::DateUsed(currency.CURRENCYID);
@@ -759,7 +759,7 @@ void CurrencyChoiceDialog::OnHistoryDeleteUnused(wxCommandEvent& WXUNUSED(event)
             )) {
                 CurrDate.ParseDate(r.CURRDATE);
                 if (DatesList.find(CurrDate) == DatesList.end())
-                    CurrencyHistoryModel::instance().remove_depen(r.id());
+                    CurrencyHistoryModel::instance().purge_id(r.id());
             }
         }
     }
@@ -815,7 +815,7 @@ bool CurrencyChoiceDialog::SetBaseCurrency(int64& baseCurrencyID)
     // Delete historical currency
     CurrencyHistoryModel::instance().Savepoint();
     for (const auto& r : CurrencyHistoryModel::instance().find_all())
-        CurrencyHistoryModel::instance().remove_depen(r.id());
+        CurrencyHistoryModel::instance().purge_id(r.id());
     CurrencyHistoryModel::instance().ReleaseSavepoint();
 
     if (wxMessageBox(_t("Do you want to update the currency rates?")

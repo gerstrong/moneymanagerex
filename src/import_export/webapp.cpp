@@ -583,7 +583,7 @@ int64 mmWebApp::MMEX_InsertNewTransaction(webtran_holder& WebAppTrans)
             const wxString AttachmentsFolder = mmex::getPathAttachment(mmAttachmentManage::InfotablePathSetting());
             if (AttachmentsFolder == wxEmptyString || !wxDirExists(AttachmentsFolder))
             {
-                TransactionModel::instance().remove_depen(DeskNewTrID);
+                TransactionModel::instance().purge_id(DeskNewTrID);
                 DeskNewTrID = -1;
 
                 wxString msgStr = wxString() << _t("Unable to download attachments from the WebApp.") << "\n"
@@ -615,7 +615,7 @@ int64 mmWebApp::MMEX_InsertNewTransaction(webtran_holder& WebAppTrans)
                         AttachmentModel::instance().add_data_n(new_att_d);
                     }
                     else {
-                        TransactionModel::instance().remove_depen(DeskNewTrID);
+                        TransactionModel::instance().purge_id(DeskNewTrID);
                         DeskNewTrID = -1;
 
                         wxString msgStr = wxString() << _t("Unable to download attachments from the WebApp.") << "\n"

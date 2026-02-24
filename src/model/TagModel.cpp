@@ -63,21 +63,21 @@ const TagData* TagModel::get_key(const wxString& name)
 
 int TagModel::is_used(int64 id)
 {
-    TagLinkModel::DataA taglink = TagLinkModel::instance().find(TagLinkCol::TAGID(id));
+    TagLinkModel::DataA taglink = TagLinkModel::instance().find(
+        TagLinkCol::TAGID(id)
+    );
 
     if (taglink.empty())
         return 0;
 
-    for (const auto& link : taglink)
-    {
-        if (link.REFTYPE == TransactionModel::refTypeName)
-        {
+    for (const auto& link : taglink) {
+        // FIXME: do not exclude deleted transactions
+        if (link.REFTYPE == TransactionModel::refTypeName) {
             const TransactionData* t = TransactionModel::instance().get_data_n(link.REFID);
             if (t && t->DELETEDTIME.IsEmpty())
                 return 1;
         }
-        else if (link.REFTYPE == TransactionSplitModel::refTypeName)
-        {
+        else if (link.REFTYPE == TransactionSplitModel::refTypeName) {
             const TransactionSplitData* s = TransactionSplitModel::instance().get_data_n(link.REFID);
             if (s) {
                 const TransactionData* t = TransactionModel::instance().get_data_n(s->TRANSID);

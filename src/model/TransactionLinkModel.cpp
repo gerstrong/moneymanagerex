@@ -150,7 +150,7 @@ void TransactionLinkModel::RemoveTransLinkRecords(const int64 entry_id)
 {
     for (const auto& translink : TranslinkList<T>(entry_id))
     {
-        TransactionModel::instance().remove_depen(translink.CHECKINGACCOUNTID);
+        TransactionModel::instance().purge_id(translink.CHECKINGACCOUNTID);
     }
 }
 
@@ -162,7 +162,7 @@ void TransactionLinkModel::RemoveTranslinkEntry(const int64 checking_account_id)
 {
     Data translink = TranslinkRecord(checking_account_id);
     TransactionShareModel::RemoveShareEntry(translink.CHECKINGACCOUNTID);
-    TransactionLinkModel::instance().remove_depen(translink.TRANSLINKID);
+    TransactionLinkModel::instance().purge_id(translink.TRANSLINKID);
 
     if (translink.LINKTYPE == AssetModel::refTypeName) {
         AssetData* asset_entry = AssetModel::instance().unsafe_get_data_n(translink.LINKRECORDID);

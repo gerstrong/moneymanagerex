@@ -50,11 +50,11 @@ TransactionSplitModel& TransactionSplitModel::instance()
     return Singleton<TransactionSplitModel>::instance();
 }
 
-bool TransactionSplitModel::remove_depen(int64 id)
+bool TransactionSplitModel::purge_id(int64 id)
 {
     // Delete all tags for the split before removing it
     TagLinkModel::instance().DeleteAllTags(TransactionSplitModel::refTypeName, id);
-    return remove_data(id);
+    return unsafe_remove_data(id);
 }
 
 double TransactionSplitModel::get_total(const DataA& rows)
@@ -104,7 +104,7 @@ int TransactionSplitModel::update(DataA& rows, int64 transactionID)
             save_timestamp = save_timestamp || !match;
         }
 
-        instance().remove_depen(split_item.SPLITTRANSID);
+        instance().purge_id(split_item.SPLITTRANSID);
     }
 
     if (!rows.empty()) {

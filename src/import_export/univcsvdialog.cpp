@@ -2487,7 +2487,7 @@ void mmUnivCSVDialog::OnButtonClearClick(wxCommandEvent& WXUNUSED(event))
             SettingCol::SETTINGNAME(preset_id)
         );
         if (data.size() > 0)
-            SettingModel::instance().remove_depen(data[0].SETTINGID);
+            SettingModel::instance().purge_id(data[0].SETTINGID);
 
         // update default presets to remove any that reference the deleted item
         for (auto& member : m_acct_default_preset)

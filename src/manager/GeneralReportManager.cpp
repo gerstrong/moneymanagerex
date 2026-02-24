@@ -989,7 +989,7 @@ bool GeneralReportManager::deleteReport(int64 id)
             << report_n->REPORTNAME;
         int iError = wxMessageBox(msg, "General Reports Manager", wxYES_NO | wxICON_ERROR);
         if (iError == wxYES) {
-            ReportModel::instance().remove_depen(id);
+            ReportModel::instance().purge_id(id);
             m_selectedReportID = -1;
             m_selectedItemID = m_rootItem;
             //fillControls();

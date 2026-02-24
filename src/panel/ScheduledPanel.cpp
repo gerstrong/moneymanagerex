@@ -669,7 +669,7 @@ void ScheduledList::OnDeleteBDSeries(wxCommandEvent& WXUNUSED(event))
     if (msgDlg.ShowModal() == wxID_YES)
     {
         int64 BdId = m_bdp->bills_[m_selected_row].BDID;
-        ScheduledModel::instance().remove_depen(BdId);
+        ScheduledModel::instance().purge_id(BdId);
         mmAttachmentManage::DeleteAllAttachments(ScheduledModel::refTypeName, BdId);
         m_bdp->do_delete_custom_values(-BdId);
         m_bdp->initVirtualListControl();

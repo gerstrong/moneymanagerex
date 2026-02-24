@@ -85,7 +85,7 @@ void TagLinkModel::DeleteAllTags(const wxString& refType, int64 refID)
     );
     instance().Savepoint();
     for (const auto& link : links)
-        instance().remove_depen(link.TAGLINKID);
+        instance().purge_id(link.TAGLINKID);
     instance().ReleaseSavepoint();
 }
 
@@ -114,7 +114,7 @@ int TagLinkModel::update(const DataA& rows, const wxString& refType, int64 refId
             save_timestamp = save_timestamp || !match;
         }
 
-        instance().remove_depen(link.TAGLINKID);
+        instance().purge_id(link.TAGLINKID);
     }
 
     for (const auto& item : rows) {

@@ -50,7 +50,7 @@ public:
     double get_total(const DataA& rows);
     std::map<int64, DataA> get_all_id();
     int update(DataA& rows, int64 transactionID);
-    bool remove_depen(int64 id) override;
+    bool purge_id(int64 id) override;
 
 public:
     static const wxString refTypeName;

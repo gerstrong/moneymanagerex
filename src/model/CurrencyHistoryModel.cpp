@@ -183,7 +183,7 @@ void CurrencyHistoryModel::ResetCurrencyHistory()
 {
     CurrencyHistoryModel::instance().Savepoint();
     for (const auto& r : CurrencyHistoryModel::instance().find_all()) {
-        CurrencyHistoryModel::instance().remove_depen(r.id());
+        CurrencyHistoryModel::instance().purge_id(r.id());
     }
     CurrencyHistoryModel::instance().ReleaseSavepoint();
 }

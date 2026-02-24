@@ -63,7 +63,7 @@ public:
     std::map<int64, TransactionSplitModel::DataA> get_all_id();
     int update(DataA& rows, int64 transactionID);
     int update(const std::vector<Split>& rows, int64 transactionID);
-    bool remove_depen(int64 id) override;
+    bool purge_id(int64 id) override;
 
 public:
     static const wxString refTypeName;

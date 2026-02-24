@@ -545,13 +545,13 @@ void CategoryManager::mmDoDeleteSelectedCategory()
             FieldValueModel::instance().Savepoint();
             const wxString& RefType = TransactionModel::refTypeName;
             for (auto& split : splits) {
-                TransactionModel::instance().remove_depen(split.TRANSID);
+                TransactionModel::instance().purge_id(split.TRANSID);
                 mmAttachmentManage::DeleteAllAttachments(RefType, split.TRANSID);
                 FieldValueModel::DeleteAllData(RefType, split.TRANSID);
             }
 
             for (auto& tran : deletedTrans) {
-                TransactionModel::instance().remove_depen(tran.TRANSID);
+                TransactionModel::instance().purge_id(tran.TRANSID);
                 mmAttachmentManage::DeleteAllAttachments(RefType, tran.TRANSID);
                 FieldValueModel::DeleteAllData(RefType, tran.TRANSID);
             }
@@ -563,9 +563,9 @@ void CategoryManager::mmDoDeleteSelectedCategory()
         }
 
         for (auto& subcat : CategoryModel::sub_tree(CategoryModel::instance().get_data_n(m_categ_id)))
-            CategoryModel::instance().remove_depen(subcat.CATEGID);
+            CategoryModel::instance().purge_id(subcat.CATEGID);
 
-        CategoryModel::instance().remove_depen(m_categ_id);
+        CategoryModel::instance().purge_id(m_categ_id);
     }
     else return;
 

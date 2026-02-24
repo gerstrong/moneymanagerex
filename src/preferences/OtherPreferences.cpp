@@ -231,7 +231,7 @@ void OtherPreferences::SaveStocksUrl()
             InfoCol::INFONAME("STOCKURL")
         );
         if (!items.empty())
-            InfoModel::instance().remove_depen(items[0].INFOID);
+            InfoModel::instance().purge_id(items[0].INFOID);
     }
 }
 

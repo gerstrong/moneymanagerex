@@ -1,4 +1,4 @@
-﻿// -*- C++ -*-
+// -*- C++ -*-
 //=============================================================================
 /**
  *      Copyright: (c) 2013-2026 Guan Lisheng (guanlisheng@gmail.com)
@@ -13,7 +13,7 @@
  *      @author [sqlite2cpp.py]
  *
  *      Revision History:
- *          AUTO GENERATED at 2026-02-23 02:42:42.918296.
+ *          AUTO GENERATED at 2026-02-24 10:36:10.572614.
  *          DO NOT EDIT!
  */
 //=============================================================================
@@ -212,30 +212,6 @@ void TransactionRow::to_html_template(html_template& t) const
     t(L"FOLLOWUPID") = FOLLOWUPID.GetValue();
     t(L"TOTRANSAMOUNT") = TOTRANSAMOUNT;
     t(L"COLOR") = COLOR.GetValue();
-}
-
-TransactionRow& TransactionRow::operator= (const TransactionRow& other)
-{
-    if (this == &other) return *this;
-
-    TRANSID = other.TRANSID;
-    ACCOUNTID = other.ACCOUNTID;
-    TOACCOUNTID = other.TOACCOUNTID;
-    PAYEEID = other.PAYEEID;
-    TRANSCODE = other.TRANSCODE;
-    TRANSAMOUNT = other.TRANSAMOUNT;
-    STATUS = other.STATUS;
-    TRANSACTIONNUMBER = other.TRANSACTIONNUMBER;
-    NOTES = other.NOTES;
-    CATEGID = other.CATEGID;
-    TRANSDATE = other.TRANSDATE;
-    LASTUPDATEDTIME = other.LASTUPDATEDTIME;
-    DELETEDTIME = other.DELETEDTIME;
-    FOLLOWUPID = other.FOLLOWUPID;
-    TOTRANSAMOUNT = other.TOTRANSAMOUNT;
-    COLOR = other.COLOR;
-
-    return *this;
 }
 
 bool TransactionRow::equals(const TransactionRow* other) const

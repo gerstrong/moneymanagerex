@@ -1,4 +1,4 @@
-﻿// -*- C++ -*-
+// -*- C++ -*-
 //=============================================================================
 /**
  *      Copyright: (c) 2013-2026 Guan Lisheng (guanlisheng@gmail.com)
@@ -13,7 +13,7 @@
  *      @author [sqlite2cpp.py]
  *
  *      Revision History:
- *          AUTO GENERATED at 2026-02-23 02:42:42.918296.
+ *          AUTO GENERATED at 2026-02-24 10:36:10.572614.
  *          DO NOT EDIT!
  */
 //=============================================================================
@@ -119,19 +119,6 @@ void TransactionSplitRow::to_html_template(html_template& t) const
     t(L"CATEGID") = CATEGID.GetValue();
     t(L"SPLITTRANSAMOUNT") = SPLITTRANSAMOUNT;
     t(L"NOTES") = NOTES;
-}
-
-TransactionSplitRow& TransactionSplitRow::operator= (const TransactionSplitRow& other)
-{
-    if (this == &other) return *this;
-
-    SPLITTRANSID = other.SPLITTRANSID;
-    TRANSID = other.TRANSID;
-    CATEGID = other.CATEGID;
-    SPLITTRANSAMOUNT = other.SPLITTRANSAMOUNT;
-    NOTES = other.NOTES;
-
-    return *this;
 }
 
 bool TransactionSplitRow::equals(const TransactionSplitRow* other) const

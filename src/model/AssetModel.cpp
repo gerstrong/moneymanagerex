@@ -21,7 +21,7 @@
 #include "TransactionLinkModel.h"
 #include "CurrencyHistoryModel.h"
 
-ChoicesName AssetModel::TYPE_CHOICES = ChoicesName({
+mmChoiceNameA AssetModel::TYPE_CHOICES = mmChoiceNameA({
     { TYPE_ID_PROPERTY,  _n("Property") },
     { TYPE_ID_AUTO,      _n("Automobile") },
     { TYPE_ID_HOUSE,     _n("Household Object") },
@@ -31,24 +31,24 @@ ChoicesName AssetModel::TYPE_CHOICES = ChoicesName({
     { TYPE_ID_OTHER,     _n("Other") }
 });
 
-ChoicesName AssetModel::STATUS_CHOICES = ChoicesName({
+mmChoiceNameA AssetModel::STATUS_CHOICES = mmChoiceNameA({
     { STATUS_ID_CLOSED, _n("Closed") },
     { STATUS_ID_OPEN,   _n("Open") }
 });
 
-ChoicesName AssetModel::CHANGE_CHOICES = ChoicesName({
+mmChoiceNameA AssetModel::CHANGE_CHOICES = mmChoiceNameA({
     { CHANGE_ID_NONE,       _n("None") },
     { CHANGE_ID_APPRECIATE, _n("Appreciates") },
     { CHANGE_ID_DEPRECIATE, _n("Depreciates") }
 });
 
-ChoicesName AssetModel::CHANGEMODE_CHOICES = ChoicesName({
+mmChoiceNameA AssetModel::CHANGEMODE_CHOICES = mmChoiceNameA({
     { CHANGEMODE_ID_PERCENTAGE, _n("Percentage") },
     { CHANGEMODE_ID_LINEAR,     _n("Linear") }
 });
 
 AssetModel::AssetModel() :
-    Model<AssetTable, AssetData>()
+    TableFactory<AssetTable, AssetData>()
 {
 }
 
@@ -105,11 +105,6 @@ AssetCol::STARTDATE AssetModel::STARTDATE(OP op, const wxDate& date)
     return AssetCol::STARTDATE(op, date.FormatISODate());
 }
 
-wxDate AssetModel::STARTDATE(const Data* r)
-{
-    return parseDateTime(r->STARTDATE);
-}
-
 wxDate AssetModel::STARTDATE(const Data& r)
 {
     return parseDateTime(r.STARTDATE);
@@ -133,7 +128,7 @@ std::pair<double, double> AssetModel::value(const Data& r)
 std::pair<double, double> AssetModel::valueAtDate(const Data* r, const wxDate& date)
 {
     std::pair<double /*initial*/, double /*market*/> balance;
-    if (date < STARTDATE(r)) return balance;
+    if (date < STARTDATE(*r)) return balance;
 
     TransactionLinkModel::DataA translink_records = TransactionLinkModel::instance().find(
         TransactionLinkCol::LINKRECORDID(r->ASSETID),
@@ -141,25 +136,20 @@ std::pair<double, double> AssetModel::valueAtDate(const Data* r, const wxDate& d
     );
 
     double dailyRate = r->VALUECHANGERATE / 36500.0;
-    int changeType = change_id(r);
+    int changeType = change_id(*r);
 
-    auto applyChangeRate = [changeType, dailyRate](double& value, double days)
-    {
-        if (changeType == CHANGE_ID_APPRECIATE)
-        {
+    auto applyChangeRate = [changeType, dailyRate](double& value, double days) {
+        if (changeType == CHANGE_ID_APPRECIATE) {
             value *= exp(dailyRate * days);
         }
-        else if (changeType == CHANGE_ID_DEPRECIATE)
-        {
+        else if (changeType == CHANGE_ID_DEPRECIATE) {
             value *= exp(-dailyRate * days);
         }
     };
 
-    if (!translink_records.empty())
-    {
+    if (!translink_records.empty()) {
         TransactionModel::DataA trans;
-        for (const auto& link : translink_records)
-        {
+        for (const auto& link : translink_records) {
             const TransactionData* tran = TransactionModel::instance().get_data_n(link.CHECKINGACCOUNTID);
             if(tran && tran->DELETEDTIME.IsEmpty()) trans.push_back(*tran);
         }
@@ -167,8 +157,7 @@ std::pair<double, double> AssetModel::valueAtDate(const Data* r, const wxDate& d
         std::stable_sort(trans.begin(), trans.end(), TransactionData::SorterByTRANSDATE());
 
         wxDate last = date;
-        for (const auto& tran: trans)
-        {
+        for (const auto& tran: trans) {
             if (tran.ACCOUNTID < 0) {
               continue;
             }
@@ -177,8 +166,7 @@ std::pair<double, double> AssetModel::valueAtDate(const Data* r, const wxDate& d
             if (tranDate > date) break;
 
             if (last == date) last = tranDate;
-            if (last < tranDate)
-            {
+            if (last < tranDate) {
                 applyChangeRate(balance.second, static_cast<double>((tranDate - last).GetDays()));
                 last = tranDate;
             }
@@ -189,12 +177,10 @@ std::pair<double, double> AssetModel::valueAtDate(const Data* r, const wxDate& d
             //double amount = -1 * TransactionModel::account_flow(tran, tran.ACCOUNTID) *
             //    CurrencyHistoryModel::getDayRate(AccountModel::instance().get_data_n(tran.ACCOUNTID)->CURRENCYID, tranDate);
 
-            if (amount >= 0)
-            {
+            if (amount >= 0) {
                 balance.first += amount;
             }
-            else
-            {
+            else {
                 double unrealized_gl = balance.second - balance.first;
                 balance.first += std::min(unrealized_gl + amount, 0.0);
             }
@@ -202,8 +188,9 @@ std::pair<double, double> AssetModel::valueAtDate(const Data* r, const wxDate& d
             balance.second += amount;
 
             // Self Transfer as Revaluation
-            if (tran.ACCOUNTID == tran.TOACCOUNTID && TransactionModel::type_id(tran.TRANSCODE) == TransactionModel::TYPE_ID_TRANSFER)
-            {
+            if (tran.ACCOUNTID == tran.TOACCOUNTID &&
+                TransactionModel::type_id(tran.TRANSCODE) == TransactionModel::TYPE_ID_TRANSFER
+            ) {
                 // TODO honor TRANSAMOUNT => TOTRANSAMOUNT
                 balance.second = tran.TOTRANSAMOUNT;
             }
@@ -214,7 +201,7 @@ std::pair<double, double> AssetModel::valueAtDate(const Data* r, const wxDate& d
     else
     {
         balance = {r->VALUE, r->VALUE};
-        applyChangeRate(balance.second, static_cast<double>((date - STARTDATE(r)).GetDays()));
+        applyChangeRate(balance.second, static_cast<double>((date - STARTDATE(*r)).GetDays()));
     }
     return balance;
 }

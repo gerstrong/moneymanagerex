@@ -65,7 +65,6 @@ struct PayeeData
     void to_html_template(html_template& t) const;
     void destroy() { delete this; }
 
-    PayeeData& operator= (const PayeeData& other);
     PayeeData& clone_from(const PayeeData& other);
     bool equals(const PayeeData* other) const;
     bool operator< (const PayeeData& other) const { return id() < other.id(); }

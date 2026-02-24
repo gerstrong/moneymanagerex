@@ -52,18 +52,6 @@ CategoryData& CategoryData::from_row(const CategoryRow& row)
     return *this;
 }
 
-CategoryData& CategoryData::operator= (const CategoryData& other)
-{
-    if (this == &other) return *this;
-
-    CATEGID = other.CATEGID;
-    CATEGNAME = other.CATEGNAME;
-    ACTIVE = other.ACTIVE;
-    PARENTID = other.PARENTID;
-
-    return *this;
-}
-
 bool CategoryData::equals(const CategoryData* other) const
 {
     if ( CATEGID != other->CATEGID) return false;

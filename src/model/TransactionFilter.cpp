@@ -226,7 +226,7 @@ table {
         hb.addTableCell(transaction.PAYEENAME);
         hb.addTableCell(transaction.STATUS, false, true);
         hb.addTableCell(transaction.CATEGNAME);
-        if (TransactionModel::foreignTransactionAsTransfer(transaction))
+        if (TransactionModel::is_foreignAsTransfer(transaction))
             hb.addTableCell("< " + wxGetTranslation(transaction.TRANSCODE));
         else
             hb.addTableCell(wxGetTranslation(transaction.TRANSCODE));

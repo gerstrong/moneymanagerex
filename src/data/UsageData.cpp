@@ -48,17 +48,6 @@ UsageData& UsageData::from_row(const UsageRow& row)
     return *this;
 }
 
-UsageData& UsageData::operator= (const UsageData& other)
-{
-    if (this == &other) return *this;
-
-    USAGEID = other.USAGEID;
-    USAGEDATE = other.USAGEDATE;
-    JSONCONTENT = other.JSONCONTENT;
-
-    return *this;
-}
-
 bool UsageData::equals(const UsageData* other) const
 {
     if ( USAGEID != other->USAGEID) return false;

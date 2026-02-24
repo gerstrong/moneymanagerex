@@ -68,7 +68,6 @@ struct StockData
     void to_html_template(html_template& t) const;
     void destroy() { delete this; }
 
-    StockData& operator= (const StockData& other);
     StockData& clone_from(const StockData& other);
     bool equals(const StockData* other) const;
     bool operator< (const StockData& other) const { return id() < other.id(); }

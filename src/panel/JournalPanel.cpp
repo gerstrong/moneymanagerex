@@ -654,7 +654,7 @@ void JournalPanel::filterList()
 
     const auto trans = m_account
         ? AccountModel::transactionsByDateTimeId(m_account)
-        : TransactionModel::instance().allByDateTimeId();
+        : TransactionModel::instance().find_allByDateTimeId();
     const auto trans_splits = TransactionSplitModel::instance().get_all_id();
     const auto trans_tags = TagLinkModel::instance().get_all_id(tranRefType);
     const auto trans_attachments = AttachmentModel::instance().get_reftype(TransactionModel::refTypeName);
@@ -672,8 +672,8 @@ void JournalPanel::filterList()
         for (auto it = trans.rbegin(); it != trans.rend(); ++it) {
             const TransactionData* tran = &(*it);
             if (tran && (isDeletedTrans() || tran->DELETEDTIME.IsEmpty())) {
-                if (date_end < TransactionModel::getTransDateTime(tran))
-                    date_end = TransactionModel::getTransDateTime(tran);
+                if (date_end < TransactionModel::getTransDateTime(*tran))
+                    date_end = TransactionModel::getTransDateTime(*tran);
                 // FIXME: early break
                 break;
             }
@@ -752,7 +752,7 @@ void JournalPanel::filterList()
         double account_flow = 0.0;
         if (isAccount()) {
             // assertion: tran->DELETEDTIME.IsEmpty()
-            account_flow = TransactionModel::account_flow(tran, m_account_id);
+            account_flow = TransactionModel::account_flow(*tran, m_account_id);
             m_balance += account_flow;
             if (TransactionModel::status_id(tran->STATUS) == TransactionModel::STATUS_ID_RECONCILED) {
                 m_reconciled_balance += account_flow;

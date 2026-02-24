@@ -23,7 +23,7 @@
 #include "ScheduledModel.h"
 
 PayeeModel::PayeeModel() :
-    Model<PayeeTable, PayeeData>()
+    TableFactory<PayeeTable, PayeeData>()
 {
 }
 
@@ -88,7 +88,8 @@ wxString PayeeModel::get_payee_name(int64 payee_id)
 
 bool PayeeModel::remove_depen(int64 id)
 {
-    if (is_used(id)) return false;
+    if (is_used(id))
+        return false;
     return remove_data(id);
 }
 
@@ -134,48 +135,30 @@ const std::map<wxString, int64> PayeeModel::used_payee()
 
 // -- Check if Payee should be made available for use
 
-bool PayeeModel::is_hidden(int64 id)
+bool PayeeModel::is_hidden(const Data& this_d)
 {
-    const PayeeData* payee_n = PayeeModel::instance().get_data_n(id);
-    if (payee_n && payee_n->ACTIVE == 0)
-        return true;
-
-    return false;
-}
-
-bool PayeeModel::is_hidden(const Data* record)
-{
-    return is_hidden(record->PAYEEID);
-}
-
-bool PayeeModel::is_hidden(const Data& record)
-{
-    return is_hidden(&record);
+    return this_d.ACTIVE == 0;
 }
 
 // -- Check if Payee if being used
 
 bool PayeeModel::is_used(int64 id)
 {
-    const auto &trans = TransactionModel::instance().find(TransactionCol::PAYEEID(id));
-    if (!trans.empty())
-    {
-        for (const auto& txn : trans)
-            if (txn.DELETEDTIME.IsEmpty())
-                return true;
-    }
-    const auto &bills = ScheduledModel::instance().find(ScheduledCol::PAYEEID(id));
-    if (!bills.empty()) return true;
+    const auto& trans = TransactionModel::instance().find(
+        TransactionCol::PAYEEID(id)
+    );
+    // FIXME: do not exclude deleted transactions; the payee is still used.
+    // deleted transactions are shown in a panel and must have a valid payee id.
+    for (const auto& txn : trans)
+        if (txn.DELETEDTIME.IsEmpty())
+            return true;
+
+    const auto& bills = ScheduledModel::instance().find(
+        ScheduledCol::PAYEEID(id)
+    );
+    if (!bills.empty())
+        return true;
 
     return false;
 }
 
-bool PayeeModel::is_used(const Data* record)
-{
-    return is_used(record->PAYEEID);
-}
-
-bool PayeeModel::is_used(const Data& record)
-{
-    return is_used(&record);
-}

@@ -58,6 +58,7 @@ public:
     auto stat_json() const -> const wxString;
     void debug_stat() const;
 
+    // virtual bool is_used(int64) { return false; }
     virtual bool remove_depen(int64 id) { return remove_data(id); }
 
     // this is a trivial implementation (linear search) of indexing in cache.

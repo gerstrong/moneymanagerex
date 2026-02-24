@@ -24,7 +24,7 @@
 #include "CurrencyHistoryModel.h"
 
 StockModel::StockModel() :
-    Model<StockTable, StockData>()
+    TableFactory<StockTable, StockData>()
 {
 }
 
@@ -197,7 +197,7 @@ double StockModel::getDailyBalanceAt(const AccountData *account, const wxDate& d
         for (const auto& linkrecord : linkrecords)
         {
             const TransactionData* txn = TransactionModel::instance().get_data_n(linkrecord.CHECKINGACCOUNTID);
-            if (txn->TRANSID > -1 && txn->DELETEDTIME.IsEmpty() && TransactionModel::getTransDateTime(txn).FormatISODate() <= strDate) {
+            if (txn->TRANSID > -1 && txn->DELETEDTIME.IsEmpty() && TransactionModel::getTransDateTime(*txn).FormatISODate() <= strDate) {
                 numShares += TransactionShareModel::instance().ShareEntry(linkrecord.CHECKINGACCOUNTID)->SHARENUMBER;
             }
         }

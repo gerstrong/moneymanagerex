@@ -114,8 +114,8 @@ void AssetDialog::dataToControls()
     w_assetName->SetValue(m_asset_n->ASSETNAME);
     if (AccountModel::instance().get_key(m_asset_n->ASSETNAME))
         w_assetName->Enable(false);
-    w_dpc->SetValue(AssetModel::STARTDATE(m_asset_n));
-    w_assetType->SetSelection(AssetModel::type_id(m_asset_n));
+    w_dpc->SetValue(AssetModel::STARTDATE(*m_asset_n));
+    w_assetType->SetSelection(AssetModel::type_id(*m_asset_n));
     if (AccountModel::instance().get_key(m_asset_n->ASSETTYPE))
         w_assetType->Enable(false);
 
@@ -123,7 +123,7 @@ void AssetDialog::dataToControls()
     w_value->SetValue(bal.first);
     w_curr_val->SetValue(bal.second);
 
-    int valueChangeType = AssetModel::change_id(m_asset_n);
+    int valueChangeType = AssetModel::change_id(*m_asset_n);
     w_valueChange->SetSelection(valueChangeType);
 
     // m_asset_n->VALUECHANGERATE is the rate with daily compounding

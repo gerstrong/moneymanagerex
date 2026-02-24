@@ -59,7 +59,6 @@ struct BudgetPeriodData
     void to_html_template(html_template& t) const;
     void destroy() { delete this; }
 
-    BudgetPeriodData& operator= (const BudgetPeriodData& other);
     BudgetPeriodData& clone_from(const BudgetPeriodData& other);
     bool equals(const BudgetPeriodData* other) const;
     bool operator< (const BudgetPeriodData& other) const { return id() < other.id(); }

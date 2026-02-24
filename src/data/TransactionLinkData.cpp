@@ -52,18 +52,6 @@ TransactionLinkData& TransactionLinkData::from_row(const TransactionLinkRow& row
     return *this;
 }
 
-TransactionLinkData& TransactionLinkData::operator= (const TransactionLinkData& other)
-{
-    if (this == &other) return *this;
-
-    TRANSLINKID = other.TRANSLINKID;
-    CHECKINGACCOUNTID = other.CHECKINGACCOUNTID;
-    LINKTYPE = other.LINKTYPE;
-    LINKRECORDID = other.LINKRECORDID;
-
-    return *this;
-}
-
 bool TransactionLinkData::equals(const TransactionLinkData* other) const
 {
     if ( TRANSLINKID != other->TRANSLINKID) return false;

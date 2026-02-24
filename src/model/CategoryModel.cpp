@@ -29,7 +29,7 @@
 #include "TransactionModel.h"
 
 CategoryModel::CategoryModel() :
-    Model<CategoryTable, CategoryData>()
+    TableFactory<CategoryTable, CategoryData>()
 {
 }
 
@@ -340,7 +340,7 @@ void CategoryModel::getCategoryStats(
             if (TransactionModel::type_id(transaction) != TransactionModel::TYPE_ID_TRANSFER)
             {
                 // Do not include asset or stock transfers in income expense calculations.
-                if (TransactionModel::foreignTransactionAsTransfer(transaction))
+                if (TransactionModel::is_foreignAsTransfer(transaction))
                     continue;
                 categoryStats[categID][month] += TransactionModel::account_flow(transaction, transaction.ACCOUNTID) * convRate;
             }

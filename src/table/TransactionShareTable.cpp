@@ -1,4 +1,4 @@
-﻿// -*- C++ -*-
+// -*- C++ -*-
 //=============================================================================
 /**
  *      Copyright: (c) 2013-2026 Guan Lisheng (guanlisheng@gmail.com)
@@ -13,7 +13,7 @@
  *      @author [sqlite2cpp.py]
  *
  *      Revision History:
- *          AUTO GENERATED at 2026-02-23 02:42:42.918296.
+ *          AUTO GENERATED at 2026-02-24 10:36:10.572614.
  *          DO NOT EDIT!
  */
 //=============================================================================
@@ -128,20 +128,6 @@ void TransactionShareRow::to_html_template(html_template& t) const
     t(L"SHAREPRICE") = SHAREPRICE;
     t(L"SHARECOMMISSION") = SHARECOMMISSION;
     t(L"SHARELOT") = SHARELOT;
-}
-
-TransactionShareRow& TransactionShareRow::operator= (const TransactionShareRow& other)
-{
-    if (this == &other) return *this;
-
-    SHAREINFOID = other.SHAREINFOID;
-    CHECKINGACCOUNTID = other.CHECKINGACCOUNTID;
-    SHARENUMBER = other.SHARENUMBER;
-    SHAREPRICE = other.SHAREPRICE;
-    SHARECOMMISSION = other.SHARECOMMISSION;
-    SHARELOT = other.SHARELOT;
-
-    return *this;
 }
 
 bool TransactionShareRow::equals(const TransactionShareRow* other) const

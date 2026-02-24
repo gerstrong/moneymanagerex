@@ -70,25 +70,6 @@ StockData& StockData::from_row(const StockRow& row)
     return *this;
 }
 
-StockData& StockData::operator= (const StockData& other)
-{
-    if (this == &other) return *this;
-
-    STOCKID = other.STOCKID;
-    HELDAT = other.HELDAT;
-    PURCHASEDATE = other.PURCHASEDATE;
-    STOCKNAME = other.STOCKNAME;
-    SYMBOL = other.SYMBOL;
-    NUMSHARES = other.NUMSHARES;
-    PURCHASEPRICE = other.PURCHASEPRICE;
-    NOTES = other.NOTES;
-    CURRENTPRICE = other.CURRENTPRICE;
-    VALUE = other.VALUE;
-    COMMISSION = other.COMMISSION;
-
-    return *this;
-}
-
 bool StockData::equals(const StockData* other) const
 {
     if ( STOCKID != other->STOCKID) return false;

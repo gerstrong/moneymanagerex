@@ -59,22 +59,6 @@ ReportData& ReportData::from_row(const ReportRow& row)
     return *this;
 }
 
-ReportData& ReportData::operator= (const ReportData& other)
-{
-    if (this == &other) return *this;
-
-    REPORTID = other.REPORTID;
-    REPORTNAME = other.REPORTNAME;
-    GROUPNAME = other.GROUPNAME;
-    ACTIVE = other.ACTIVE;
-    SQLCONTENT = other.SQLCONTENT;
-    LUACONTENT = other.LUACONTENT;
-    TEMPLATECONTENT = other.TEMPLATECONTENT;
-    DESCRIPTION = other.DESCRIPTION;
-
-    return *this;
-}
-
 bool ReportData::equals(const ReportData* other) const
 {
     if ( REPORTID != other->REPORTID) return false;

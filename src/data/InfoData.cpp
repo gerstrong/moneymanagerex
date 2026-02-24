@@ -48,17 +48,6 @@ InfoData& InfoData::from_row(const InfoRow& row)
     return *this;
 }
 
-InfoData& InfoData::operator= (const InfoData& other)
-{
-    if (this == &other) return *this;
-
-    INFOID = other.INFOID;
-    INFONAME = other.INFONAME;
-    INFOVALUE = other.INFOVALUE;
-
-    return *this;
-}
-
 bool InfoData::equals(const InfoData* other) const
 {
     if ( INFOID != other->INFOID) return false;

@@ -82,30 +82,6 @@ TransactionData& TransactionData::from_row(const TransactionRow& row)
     return *this;
 }
 
-TransactionData& TransactionData::operator= (const TransactionData& other)
-{
-    if (this == &other) return *this;
-
-    TRANSID = other.TRANSID;
-    ACCOUNTID = other.ACCOUNTID;
-    TOACCOUNTID = other.TOACCOUNTID;
-    PAYEEID = other.PAYEEID;
-    TRANSCODE = other.TRANSCODE;
-    TRANSAMOUNT = other.TRANSAMOUNT;
-    STATUS = other.STATUS;
-    TRANSACTIONNUMBER = other.TRANSACTIONNUMBER;
-    NOTES = other.NOTES;
-    CATEGID = other.CATEGID;
-    TRANSDATE = other.TRANSDATE;
-    LASTUPDATEDTIME = other.LASTUPDATEDTIME;
-    DELETEDTIME = other.DELETEDTIME;
-    FOLLOWUPID = other.FOLLOWUPID;
-    TOTRANSAMOUNT = other.TOTRANSAMOUNT;
-    COLOR = other.COLOR;
-
-    return *this;
-}
-
 bool TransactionData::equals(const TransactionData* other) const
 {
     if ( TRANSID != other->TRANSID) return false;

@@ -27,7 +27,7 @@
 #include "_ModelBase.h"
 #include "AccountModel.h"
 
-class StockModel : public Model<StockTable, StockData>
+class StockModel : public TableFactory<StockTable, StockData>
 {
 public:
     StockModel();

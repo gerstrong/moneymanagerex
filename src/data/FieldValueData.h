@@ -61,7 +61,6 @@ struct FieldValueData
     void to_html_template(html_template& t) const;
     void destroy() { delete this; }
 
-    FieldValueData& operator= (const FieldValueData& other);
     FieldValueData& clone_from(const FieldValueData& other);
     bool equals(const FieldValueData* other) const;
     bool operator< (const FieldValueData& other) const { return id() < other.id(); }

@@ -69,7 +69,7 @@ TransactionUpdateDialog::TransactionUpdateDialog(wxWindow* parent
     // Determine the mix of transaction that have been selected
     for (const auto& id : m_transaction_id) {
         const TransactionData *trx = TransactionModel::instance().get_data_n(id);
-        const bool isTransfer = TransactionModel::is_transfer(trx);
+        const bool isTransfer = TransactionModel::is_transfer(*trx);
 
         if (!m_hasSplits) {
             TransactionSplitModel::DataA split = TransactionSplitModel::instance().find(
@@ -390,7 +390,7 @@ void TransactionUpdateDialog::OnOk(wxCommandEvent& WXUNUSED(event))
     TagLinkModel::instance().Savepoint();
     for (const auto& id : m_transaction_id) {
         TransactionData* trx_n = TransactionModel::instance().unsafe_get_data_n(id);
-        bool is_locked = TransactionModel::is_locked(trx_n);
+        bool is_locked = TransactionModel::is_locked(*trx_n);
 
         if (is_locked) {
             skip_trx.push_back(trx_n->TRANSID);
@@ -500,7 +500,7 @@ void TransactionUpdateDialog::OnOk(wxCommandEvent& WXUNUSED(event))
 
         // Need to consider TOTRANSAMOUNT if material transaction change
         if (m_amount_checkbox->IsChecked() || m_type_checkbox->IsChecked() || m_transferAcc_checkbox->IsChecked()) {
-            if (!TransactionModel::is_transfer(trx_n)) {
+            if (!TransactionModel::is_transfer(*trx_n)) {
                 trx_n->TOTRANSAMOUNT = trx_n->TRANSAMOUNT;
             }
             else {

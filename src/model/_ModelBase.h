@@ -27,7 +27,7 @@ Copyright (C) 2018 Stefano Giorgio (stef145g)
 #include <wx/log.h>
 
 #include "util/mmSingleton.h"
-#include "util/_choices.h"
+#include "util/mmChoiceNameA.h"
 
 #include "table/_TableFactory.h"
 
@@ -69,7 +69,7 @@ public:
         REFTYPE_ID_size
     };
 
-    static ChoicesName REFTYPE_CHOICES;
+    static mmChoiceNameA REFTYPE_CHOICES;
     static const wxString REFTYPE_NAME_TRANSACTION;
     static const wxString REFTYPE_NAME_STOCK;
     static const wxString REFTYPE_NAME_ASSET;
@@ -84,14 +84,6 @@ public:
 public:
     ModelBase() {};
     ~ModelBase() {};
-};
-
-template<typename TableType, typename DataType>
-class Model : public TableFactory<TableType, DataType>
-{
-public:
-    //using Data  = typename TableType::Data;
-    //using DataA = typename TableType::DataA;
 };
 
 inline const wxString ModelBase::reftype_name(int id)

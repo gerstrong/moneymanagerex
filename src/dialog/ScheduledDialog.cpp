@@ -47,23 +47,23 @@
 // the order in gui may be different than the database encoding order.
 const std::vector<std::pair<int, wxString> > ScheduledDialog::BILLSDEPOSITS_REPEATS =
 {
-    { ScheduledModel::REPEAT_ONCE,                      _n("Once") },
-    { ScheduledModel::REPEAT_WEEKLY,                    _n("Weekly") },
-    { ScheduledModel::REPEAT_BI_WEEKLY,                 _n("Fortnightly") },
-    { ScheduledModel::REPEAT_MONTHLY,                   _n("Monthly") },
-    { ScheduledModel::REPEAT_BI_MONTHLY,                _n("Every 2 Months") },
-    { ScheduledModel::REPEAT_QUARTERLY,                 _n("Quarterly") },
-    { ScheduledModel::REPEAT_HALF_YEARLY,               _n("Half-Yearly") },
-    { ScheduledModel::REPEAT_YEARLY,                    _n("Yearly") },
-    { ScheduledModel::REPEAT_FOUR_MONTHLY,              _n("Four Months") },
-    { ScheduledModel::REPEAT_FOUR_WEEKLY,               _n("Four Weeks") },
-    { ScheduledModel::REPEAT_DAILY,                     _n("Daily") },
-    { ScheduledModel::REPEAT_IN_X_DAYS,                 _n("In (n) Days") },
-    { ScheduledModel::REPEAT_IN_X_MONTHS,               _n("In (n) Months") },
-    { ScheduledModel::REPEAT_EVERY_X_DAYS,              _n("Every (n) Days") },
-    { ScheduledModel::REPEAT_EVERY_X_MONTHS,            _n("Every (n) Months") },
-    { ScheduledModel::REPEAT_MONTHLY_LAST_DAY,          _n("Monthly (last day)") },
-    { ScheduledModel::REPEAT_MONTHLY_LAST_BUSINESS_DAY, _n("Monthly (last business day)") }
+    { ScheduledModel::REPEAT_FREQ_ONCE,                      _n("Once") },
+    { ScheduledModel::REPEAT_FREQ_WEEKLY,                    _n("Weekly") },
+    { ScheduledModel::REPEAT_FREQ_BI_WEEKLY,                 _n("Fortnightly") },
+    { ScheduledModel::REPEAT_FREQ_MONTHLY,                   _n("Monthly") },
+    { ScheduledModel::REPEAT_FREQ_BI_MONTHLY,                _n("Every 2 Months") },
+    { ScheduledModel::REPEAT_FREQ_QUARTERLY,                 _n("Quarterly") },
+    { ScheduledModel::REPEAT_FREQ_HALF_YEARLY,               _n("Half-Yearly") },
+    { ScheduledModel::REPEAT_FREQ_YEARLY,                    _n("Yearly") },
+    { ScheduledModel::REPEAT_FREQ_FOUR_MONTHLY,              _n("Four Months") },
+    { ScheduledModel::REPEAT_FREQ_FOUR_WEEKLY,               _n("Four Weeks") },
+    { ScheduledModel::REPEAT_FREQ_DAILY,                     _n("Daily") },
+    { ScheduledModel::REPEAT_FREQ_IN_X_DAYS,                 _n("In (n) Days") },
+    { ScheduledModel::REPEAT_FREQ_IN_X_MONTHS,               _n("In (n) Months") },
+    { ScheduledModel::REPEAT_FREQ_EVERY_X_DAYS,              _n("Every (n) Days") },
+    { ScheduledModel::REPEAT_FREQ_EVERY_X_MONTHS,            _n("Every (n) Months") },
+    { ScheduledModel::REPEAT_FREQ_MONTHLY_LAST_DAY,          _n("Monthly (last day)") },
+    { ScheduledModel::REPEAT_FREQ_MONTHLY_LAST_BUSINESS_DAY, _n("Monthly (last business day)") }
 };
 
 // Used to determine if we need to refresh the tag text ctrl after
@@ -122,22 +122,22 @@ ScheduledDialog::ScheduledDialog(
         // If duplicate then we will be creating a new identity
         if (!m_dup_bill)
             m_sched_d.BDID = bdID;
-        m_sched_d.TRANSDATE = bill->TRANSDATE;
-        m_sched_d.ACCOUNTID = bill->ACCOUNTID;
-        m_sched_d.TOACCOUNTID = bill->TOACCOUNTID;
-        m_sched_d.PAYEEID = bill->PAYEEID;
-        m_sched_d.CATEGID = bill->CATEGID;
-        m_sched_d.TOTRANSAMOUNT = bill->TOTRANSAMOUNT;
-        m_sched_d.TRANSAMOUNT = bill->TRANSAMOUNT;
+        m_sched_d.TRANSDATE          = bill->TRANSDATE;
+        m_sched_d.ACCOUNTID          = bill->ACCOUNTID;
+        m_sched_d.TOACCOUNTID        = bill->TOACCOUNTID;
+        m_sched_d.PAYEEID            = bill->PAYEEID;
+        m_sched_d.CATEGID            = bill->CATEGID;
+        m_sched_d.TOTRANSAMOUNT      = bill->TOTRANSAMOUNT;
+        m_sched_d.TRANSAMOUNT        = bill->TRANSAMOUNT;
         m_sched_d.NEXTOCCURRENCEDATE = bill->NEXTOCCURRENCEDATE;
-        m_sched_d.REPEATS = bill->REPEATS;
-        m_sched_d.NUMOCCURRENCES = bill->NUMOCCURRENCES;
-        m_sched_d.NOTES = bill->NOTES;
-        m_sched_d.STATUS = bill->STATUS;
-        m_sched_d.TRANSACTIONNUMBER = bill->TRANSACTIONNUMBER;
-        m_sched_d.TRANSCODE = bill->TRANSCODE;
-        m_sched_d.FOLLOWUPID = bill->FOLLOWUPID;
-        m_sched_d.COLOR = bill->COLOR;
+        m_sched_d.REPEATS            = bill->REPEATS;
+        m_sched_d.NUMOCCURRENCES     = bill->NUMOCCURRENCES;
+        m_sched_d.NOTES              = bill->NOTES;
+        m_sched_d.STATUS             = bill->STATUS;
+        m_sched_d.TRANSACTIONNUMBER  = bill->TRANSACTIONNUMBER;
+        m_sched_d.TRANSCODE          = bill->TRANSCODE;
+        m_sched_d.FOLLOWUPID         = bill->FOLLOWUPID;
+        m_sched_d.COLOR              = bill->COLOR;
         wxArrayInt64 billtags;
         for (const auto& tag : TagLinkModel::instance().find(
             TagLinkCol::REFTYPE(ScheduledModel::refTypeName),
@@ -147,7 +147,7 @@ ScheduledDialog::ScheduledDialog(
         m_sched_d.TAGS = billtags;
         //
         const wxString& splitRefType = ScheduledSplitModel::refTypeName;
-        for (const auto& item : ScheduledModel::split(bill)) {
+        for (const auto& item : ScheduledModel::split(*bill)) {
             wxArrayInt64 splittags;
             for (const auto& tag : TagLinkModel::instance().find(
                 TagLinkCol::REFTYPE(splitRefType),
@@ -218,7 +218,7 @@ void ScheduledDialog::dataToControls()
     {
         m_choice_repeat->Append(wxGetTranslation(entry.second));
     }
-    setRepeatType(ScheduledModel::REPEAT_MONTHLY);
+    setRepeatType(ScheduledModel::REPEAT_FREQ_MONTHLY);
 
     for (int i = 0; i < TransactionModel::TYPE_ID_size; ++i) {
         if (i == TransactionModel::TYPE_ID_TRANSFER && AccountModel::instance().find_all().size() < 2)
@@ -246,36 +246,31 @@ void ScheduledDialog::dataToControls()
     field_date.ParseDate(m_sched_d.NEXTOCCURRENCEDATE);
     m_date_due->SetValue(field_date);
 
-    // demultiplex m_sched_d.REPEATS
-    int autoExecute = m_sched_d.REPEATS.GetValue() / BD_REPEATS_MULTIPLEX_BASE;
-    int repeats = m_sched_d.REPEATS.GetValue() % BD_REPEATS_MULTIPLEX_BASE;
-
+    // demultiplex REPEATS and NUMOCCURRENCES
+    ScheduledModel::RepeatNum rn;
+    ScheduledModel::decode_repeat_num(m_sched_d, rn);
     // fix repeats
-    if (repeats < ScheduledModel::REPEAT_ONCE || repeats > ScheduledModel::REPEAT_MONTHLY_LAST_BUSINESS_DAY)
-    {
+    if (rn.freq < 0 || rn.freq > ScheduledModel::REPEAT_FREQ_size) {
         wxFAIL;
-        repeats = ScheduledModel::REPEAT_MONTHLY;
+        rn.freq = ScheduledModel::REPEAT_FREQ_MONTHLY;
     }
-    if (repeats >= ScheduledModel::REPEAT_IN_X_DAYS && repeats <= ScheduledModel::REPEAT_EVERY_X_MONTHS && m_sched_d.NUMOCCURRENCES < 1)
-    {
-        // old inactive entry. transform to REPEAT_ONCE and turn off automatic execution.
-        repeats = ScheduledModel::REPEAT_ONCE;
-        autoExecute = ScheduledModel::REPEAT_AUTO_NONE;
+    // old invalid entry. change to REPEAT_FREQ_ONCE and turn off automatic execution.
+    if (rn.freq >= ScheduledModel::REPEAT_FREQ_IN_X_DAYS && rn.freq <= ScheduledModel::REPEAT_FREQ_EVERY_X_MONTHS && rn.x < 1) {
+        rn.exec   = ScheduledModel::REPEAT_EXEC_NONE;
+        rn.freq = ScheduledModel::REPEAT_FREQ_ONCE;
     }
-    setRepeatType(repeats);
+    setRepeatType(rn.freq);
 
-    if (repeats != ScheduledModel::REPEAT_ONCE && m_sched_d.NUMOCCURRENCES > 0) {
+    if (rn.freq != ScheduledModel::REPEAT_FREQ_ONCE && m_sched_d.NUMOCCURRENCES > 0) {
         textNumRepeats_->SetValue(wxString::Format("%lld", m_sched_d.NUMOCCURRENCES));
     }
 
-    if (autoExecute == ScheduledModel::REPEAT_AUTO_SILENT)
-    {
+    if (rn.exec == ScheduledModel::REPEAT_EXEC_SILENT) {
         autoExecuteSilent_ = true;
         itemCheckBoxAutoExeSilent_->SetValue(true);
         itemCheckBoxAutoExeUserAck_->Enable(false);
     }
-    else if (autoExecute == ScheduledModel::REPEAT_AUTO_MANUAL)
-    {
+    else if (rn.exec == ScheduledModel::REPEAT_EXEC_MANUAL) {
         autoExecuteUserAck_ = true;
         itemCheckBoxAutoExeUserAck_->SetValue(true);
         itemCheckBoxAutoExeSilent_->Enable(false);
@@ -995,25 +990,26 @@ void ScheduledDialog::OnOk(wxCommandEvent& WXUNUSED(event))
         }
     }
 
-    int autoExecute =
-        autoExecuteSilent_ ? ScheduledModel::REPEAT_AUTO_SILENT :
-        autoExecuteUserAck_ ? ScheduledModel::REPEAT_AUTO_MANUAL :
-        ScheduledModel::REPEAT_AUTO_NONE;
-    int repeats = getRepeatType();
-    // multiplex autoExecute and repeats
-    m_sched_d.REPEATS = autoExecute * BD_REPEATS_MULTIPLEX_BASE + repeats;
-
+    ScheduledModel::RepeatNum rn;
+    rn.exec = 
+        autoExecuteSilent_  ? ScheduledModel::REPEAT_EXEC_SILENT :
+        autoExecuteUserAck_ ? ScheduledModel::REPEAT_EXEC_MANUAL :
+                              ScheduledModel::REPEAT_EXEC_NONE;
+    rn.freq = static_cast<ScheduledModel::REPEAT_FREQ>(getRepeatType());
+    rn.num = ScheduledModel::REPEAT_NUM_INFINITY;
+    rn.x = 1;
     const wxString& numRepeatStr = textNumRepeats_->GetValue();
-    m_sched_d.NUMOCCURRENCES = -1;
-    if (repeats >= ScheduledModel::REPEAT_IN_X_DAYS && repeats <= ScheduledModel::REPEAT_EVERY_X_MONTHS)
-        m_sched_d.NUMOCCURRENCES = 1;
-    if (!numRepeatStr.empty()) {
-        long cnt = 0;
-        if (numRepeatStr.ToLong(&cnt) && cnt > 0) {
-            wxASSERT(cnt <= std::numeric_limits<int>::max());
-            m_sched_d.NUMOCCURRENCES = cnt;
-        }
+    long cnt = 0;
+    if (!numRepeatStr.empty() && numRepeatStr.ToLong(&cnt) && cnt > 0) {
+        wxASSERT(cnt <= std::numeric_limits<int>::max());
+        if (rn.freq >= ScheduledModel::REPEAT_FREQ_IN_X_DAYS &&
+            rn.freq <= ScheduledModel::REPEAT_FREQ_EVERY_X_MONTHS
+        )
+            rn.x = cnt;
+        else
+            rn.num = cnt;
     }
+    ScheduledModel::encode_repeat_num(m_sched_d, rn);
 
     m_sched_d.NEXTOCCURRENCEDATE = m_date_due->GetValue().FormatISODate();
     m_sched_d.TRANSDATE = m_date_paid->GetValue().FormatISOCombined();
@@ -1109,15 +1105,13 @@ void ScheduledDialog::OnOk(wxCommandEvent& WXUNUSED(event))
         m_custom_fields->SaveCustomValues(-m_trans_id);
 
     }
-    else
-    {
-        // m_sched_d.REPEATS holds extra info; use repeats instead
+    else {
         // the following condition is always true, since old inactive entries of type
-        // REPEAT_IN_X_*, REPEAT_EVERY_X_* have been converted to entries of type REPEAT_ONCE
-        if ((repeats < ScheduledModel::REPEAT_IN_X_DAYS)
-            || (repeats > ScheduledModel::REPEAT_EVERY_X_MONTHS)
-            || (m_sched_d.NUMOCCURRENCES > 0))
-        {
+        // REPEAT_FREQ_IN_X_*, REPEAT_EVERY_X_* have been converted to entries of type REPEAT_FREQ_ONCE
+        if (rn.freq < ScheduledModel::REPEAT_FREQ_IN_X_DAYS ||
+            rn.freq > ScheduledModel::REPEAT_FREQ_EVERY_X_MONTHS ||
+            rn.x > 0
+        ) {
             ScheduledData sched_d;
             sched_d.ACCOUNTID   = m_sched_d.ACCOUNTID;
             sched_d.TRANSCODE   = m_sched_d.TRANSCODE;
@@ -1284,26 +1278,22 @@ void ScheduledDialog::setRepeatDetails()
     staticTextRepeats_->SetLabelText(_t("Repeats"));
 
     int repeats = getRepeatType();
-    if (repeats == ScheduledModel::REPEAT_IN_X_DAYS || repeats == ScheduledModel::REPEAT_EVERY_X_DAYS)
-    {
+    if (repeats == ScheduledModel::REPEAT_FREQ_IN_X_DAYS || repeats == ScheduledModel::REPEAT_FREQ_EVERY_X_DAYS) {
         staticTimesRepeat_->SetLabelText(_t("Period: Days"));
         const auto toolTipsStr = _t("Specify period in Days.");
         mmToolTip(textNumRepeats_, toolTipsStr);
     }
-    else if (repeats == ScheduledModel::REPEAT_IN_X_MONTHS || repeats == ScheduledModel::REPEAT_EVERY_X_MONTHS)
-    {
+    else if (repeats == ScheduledModel::REPEAT_FREQ_IN_X_MONTHS || repeats == ScheduledModel::REPEAT_FREQ_EVERY_X_MONTHS) {
         staticTimesRepeat_->SetLabelText(_t("Period: Months"));
         const auto toolTipsStr = _t("Specify period in Months.");
         mmToolTip(textNumRepeats_, toolTipsStr);
     }
-    else if (repeats == ScheduledModel::REPEAT_ONCE)
-    {
+    else if (repeats == ScheduledModel::REPEAT_FREQ_ONCE) {
         staticTimesRepeat_->SetLabelText(_t("Payments Left"));
         const auto toolTipsStr = _t("Ignored (leave blank).");
         mmToolTip(textNumRepeats_, toolTipsStr);
     }
-    else
-    {
+    else {
         staticTimesRepeat_->SetLabelText(_t("Payments Left"));
         const auto toolTipsStr = _t("Specify the number of payments to be made.\n"
             "Leave blank if the payments continue forever.");
@@ -1334,7 +1324,7 @@ void ScheduledDialog::setRepeatType(int repeatType)
     int repeatIndex = repeatType;
     if (BILLSDEPOSITS_REPEATS.at(repeatIndex).first != repeatType)
     {
-        // slow path: BILLSDEPOSITS_REPEATS is not sorted by REPEAT_TYPE
+        // slow path: BILLSDEPOSITS_REPEATS is not sorted by REPEAT_FREQ
         // cache the mapping from type to index
         static std::vector<int> index;
         if (index.size() == 0) {
@@ -1364,29 +1354,34 @@ void ScheduledDialog::setRepeatType(int repeatType)
 
 void ScheduledDialog::OnsetPrevOrNextRepeatDate(wxCommandEvent& event)
 {
-    int repeatType = getRepeatType();
+    ScheduledModel::RepeatNum rn;
+    rn.freq = static_cast<ScheduledModel::REPEAT_FREQ>(getRepeatType());
+    rn.x = 1;
     wxString valueStr = textNumRepeats_->GetValue();
-    int span = 1;
     bool goPrev = (event.GetId() == ID_DIALOG_TRANS_BUTTONTRANSNUMPREV);
 
-    switch (repeatType)
+    switch (rn.freq)
     {
-    case ScheduledModel::REPEAT_IN_X_DAYS:
+    case ScheduledModel::REPEAT_FREQ_IN_X_DAYS:
         wxFALLTHROUGH;
-    case ScheduledModel::REPEAT_IN_X_MONTHS:
+    case ScheduledModel::REPEAT_FREQ_IN_X_MONTHS:
         wxFALLTHROUGH;
-    case ScheduledModel::REPEAT_EVERY_X_DAYS:
+    case ScheduledModel::REPEAT_FREQ_EVERY_X_DAYS:
         wxFALLTHROUGH;
-    case ScheduledModel::REPEAT_EVERY_X_MONTHS:
-        span = wxAtoi(valueStr);
-        if (!valueStr.IsNumber() || !span) {
+    case ScheduledModel::REPEAT_FREQ_EVERY_X_MONTHS:
+        rn.x = wxAtoi(valueStr);
+        if (!valueStr.IsNumber() || !rn.x) {
             mmErrorDialogs::ToolTip4Object(textNumRepeats_, _t("Invalid value"), _t("Error"));
             break;
         }
         wxFALLTHROUGH;
     default:
-        m_date_paid->SetValue(ScheduledModel::nextOccurDate(repeatType, span, m_date_paid->GetValue(), goPrev));
-        m_date_due->SetValue(ScheduledModel::nextOccurDate(repeatType, span, m_date_due->GetValue(), goPrev));
+        m_date_paid->SetValue(ScheduledModel::nextOccurDate(
+            m_date_paid->GetValue(), rn, goPrev)
+        );
+        m_date_due->SetValue(ScheduledModel::nextOccurDate(
+            m_date_due->GetValue(), rn, goPrev)
+        );
     }
 }
 

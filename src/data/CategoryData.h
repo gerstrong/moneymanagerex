@@ -61,7 +61,6 @@ struct CategoryData
     void to_html_template(html_template& t) const;
     void destroy() { delete this; }
 
-    CategoryData& operator= (const CategoryData& other);
     CategoryData& clone_from(const CategoryData& other);
     bool equals(const CategoryData* other) const;
     bool operator< (const CategoryData& other) const { return id() < other.id(); }

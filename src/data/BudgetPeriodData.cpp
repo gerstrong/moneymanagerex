@@ -46,16 +46,6 @@ BudgetPeriodData& BudgetPeriodData::from_row(const BudgetPeriodRow& row)
     return *this;
 }
 
-BudgetPeriodData& BudgetPeriodData::operator= (const BudgetPeriodData& other)
-{
-    if (this == &other) return *this;
-
-    BUDGETYEARID = other.BUDGETYEARID;
-    BUDGETYEARNAME = other.BUDGETYEARNAME;
-
-    return *this;
-}
-
 bool BudgetPeriodData::equals(const BudgetPeriodData* other) const
 {
     if ( BUDGETYEARID != other->BUDGETYEARID) return false;

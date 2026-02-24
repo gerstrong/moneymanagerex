@@ -19,7 +19,7 @@
 #pragma once
 
 #include "base/defs.h"
-#include "util/_choices.h"
+#include "util/mmChoiceNameA.h"
 #include "util/mmDateDay.h"
 
 #include "table/TransactionTable.h"
@@ -33,11 +33,11 @@
 
 const wxString mmGetTimeForDisplay(const wxString& datetime_iso);
 
-class TransactionModel : public Model<TransactionTable, TransactionData>
+class TransactionModel : public TableFactory<TransactionTable, TransactionData>
 {
 public:
-    typedef TransactionSplitModel::DataA Split_DataA;
-    typedef TagLinkModel::DataA Taglink_DataA;
+    using Split_DataA   = TransactionSplitModel::DataA;
+    using Taglink_DataA = TagLinkModel::DataA;
 
 public:
     enum TYPE_ID
@@ -71,9 +71,13 @@ public:
     static const wxString STATUS_NAME_DUPLICATE;
 
 private:
-    static ChoicesName TYPE_CHOICES;
-    static ChoicesName TRADE_TYPE_CHOICES;
-    static ChoicesKeyName STATUS_CHOICES;
+    static mmChoiceNameA TYPE_CHOICES;
+    static mmChoiceNameA TRADE_TYPE_CHOICES;
+    static mmChoiceKeyNameA STATUS_CHOICES;
+
+public:
+    static const wxString type_name(int id);
+    static const wxString trade_type_name(int id);
 
 public:
     struct Full_Data: public Data
@@ -130,6 +134,73 @@ public:
 
     typedef std::vector<Full_Data> Full_DataA;
 
+public:
+    static const wxString refTypeName;
+
+public:
+    // Initialize the global TransactionModel table on initial call.
+    // Resets the global table on subsequent calls.
+    // Return the static instance address for TransactionModel table
+    // Note: Assigning the address to a local variable can destroy the instance.
+    static TransactionModel& instance(wxSQLite3Database* db);
+
+    // Return the static instance address for TransactionModel table
+    // Note: Assigning the address to a local variable can destroy the instance.
+    static TransactionModel& instance();
+
+public:
+    // Data properties (do not require access to Model)
+    // TODO: move to TransactionData
+    static void copy_from_trx(Data* this_n, const Data& other_d);
+    static int type_id(const wxString& name, int default_id = TYPE_ID_WITHDRAWAL);
+    static TYPE_ID type_id(const Data& this_d);
+    static bool is_transfer(const wxString& r);
+    static bool is_transfer(const Data& this_d);
+    static bool is_deposit(const wxString& r);
+    static bool is_deposit(const Data& this_d);
+    static const wxString status_key(int id);
+    static const wxString status_key(const wxString& keyOrName);
+    static const wxString status_name(int id);
+    static const wxString status_name(const wxString& keyOrName);
+    static int status_id(const wxString& keyOrName, int default_id = STATUS_ID_NONE);
+    static STATUS_ID status_id(const Data& this_d);
+    static wxDateTime getTransDateTime(const Data& this_d);
+    static double account_flow(const Data& this_d, int64 account_id);
+    static double account_outflow(const Data& this_d, int64 account_id);
+    static double account_inflow(const Data& this_d, int64 account_id);
+    static double account_recflow(const Data& this_d, int64 account_id);
+    static bool is_foreign(const Data& this_d);
+    static bool is_foreignAsTransfer(const Data& this_d);
+
+public:
+    static TransactionCol::TRANSDATE TRANSDATE(OP op, const wxString& date_iso_str);
+    static TransactionCol::TRANSDATE TRANSDATE(OP op, const mmDateDay& date);
+    static TransactionCol::TRANSDATE TRANSDATE(OP op, const wxDateTime& date);
+    static TransactionCol::DELETEDTIME DELETEDTIME(OP op, const wxString& date);
+    static TransactionCol::STATUS STATUS(OP op, STATUS_ID status);
+    static TransactionCol::TRANSCODE TRANSCODE(OP op, TYPE_ID type);
+    static TransactionCol::TRANSACTIONNUMBER TRANSACTIONNUMBER(OP op, const wxString& num);
+
+public:
+    static const TransactionModel::DataA find_allByDateTimeId();
+    static const Split_DataA find_split(const Data& r);
+    static void getFrequentUsedNotes(std::vector<wxString> &frequentNotes, int64 accountID = -1);
+    static void setEmptyData(Data &data, int64 accountID);
+    static bool is_locked(const Data& trx_d);
+
+public:
+    TransactionModel();
+    ~TransactionModel();
+
+public:
+    bool remove_depen(int64 id) override;
+    void save_timestamp(int64 id);
+    void update_timestamp(Data& trx_d);
+    const Data* unsafe_save_trx(Data* trx_n);
+    const Data* save_trx(Data& trx_d);
+    bool save_trx_a(DataA& rows);
+
+public:
     struct SorterByNUMBER
     {
         bool operator()(const Full_Data& x, const Full_Data& y)
@@ -219,91 +290,6 @@ public:
             return x.ACCOUNTID_W != -1 && (y.ACCOUNTID_W == -1 || x.TRANSAMOUNT_W < y.TRANSAMOUNT_W);
         }
     };
-
-public:
-    TransactionModel();
-    ~TransactionModel();
-
-public:
-    /**
-    Initialize the global TransactionModel table on initial call.
-    Resets the global table on subsequent calls.
-    * Return the static instance address for TransactionModel table
-    * Note: Assigning the address to a local variable can destroy the instance.
-    */
-    static TransactionModel& instance(wxSQLite3Database* db);
-
-    /**
-    * Return the static instance address for TransactionModel table
-    * Note: Assigning the address to a local variable can destroy the instance.
-    */
-    static TransactionModel& instance();
-
-public:
-    bool remove_depen(int64 id) override;
-    void update_timestamp(Data& trx_d);
-    const Data* unsafe_save_trx(Data* trx_n);
-    const Data* save_trx(Data& trx_d);
-    bool save_trx_a(DataA& rows);
-    void updateTimestamp(int64 id);
-
-public:
-    static const TransactionModel::DataA allByDateTimeId();
-    static const Split_DataA split(const Data* r);
-    static const Split_DataA split(const Data& r);
-
-public:
-    static TransactionCol::TRANSDATE TRANSDATE(OP op, const wxString& date_iso_str);
-    static TransactionCol::TRANSDATE TRANSDATE(OP op, const mmDateDay& date);
-    static TransactionCol::TRANSDATE TRANSDATE(OP op, const wxDateTime& date);
-    static TransactionCol::DELETEDTIME DELETEDTIME(OP op, const wxString& date);
-    static TransactionCol::STATUS STATUS(OP op, STATUS_ID status);
-    static TransactionCol::TRANSCODE TRANSCODE(OP op, TYPE_ID type);
-    static TransactionCol::TRANSACTIONNUMBER TRANSACTIONNUMBER(OP op, const wxString& num);
-
-public:
-    static const wxString type_name(int id);
-    static const wxString trade_type_name(int id);
-    static int type_id(const wxString& name, int default_id = TYPE_ID_WITHDRAWAL);
-    static TYPE_ID type_id(const Data* r);
-    static TYPE_ID type_id(const Data& r);
-
-    static const wxString status_key(int id);
-    static const wxString status_key(const wxString& keyOrName);
-    static const wxString status_name(int id);
-    static const wxString status_name(const wxString& keyOrName);
-    static int status_id(const wxString& keyOrName, int default_id = STATUS_ID_NONE);
-    static STATUS_ID status_id(const Data* r);
-    static STATUS_ID status_id(const Data& r);
-
-    static wxDate getTransDateTime(const Data* r);
-    static wxDate getTransDateTime(const Data& r);
-
-    static double account_flow(const Data* r, int64 account_id);
-    static double account_flow(const Data& r, int64 account_id);
-    static double account_outflow(const Data* r, int64 account_id);
-    static double account_outflow(const Data& r, int64 account_id);
-    static double account_inflow(const Data* r, int64 account_id);
-    static double account_inflow(const Data& r, int64 account_id);
-    static double account_recflow(const Data* r, int64 account_id);
-    static double account_recflow(const Data& r, int64 account_id);
-    static bool is_locked(const Data* r);
-    static bool is_transfer(const wxString& r);
-    static bool is_transfer(const Data* r);
-    static bool is_deposit(const wxString& r);
-    static bool is_deposit(const Data* r);
-    static bool is_split(const Data* r);
-    static bool is_split(const Data& r);
-    static void getFrequentUsedNotes(std::vector<wxString> &frequentNotes, int64 accountID = -1);
-    static void setEmptyData(Data &data, int64 accountID);
-
-    static bool getTransactionData(Data &data, const Data* r);
-    static void putDataToTransaction(Data *r, const Data &data);
-    static bool foreignTransaction(const Data& data);
-    static bool foreignTransactionAsTransfer(const Data& data);
-
-public:
-    static const wxString refTypeName;
 };
 
 //----------------------------------------------------------------------------
@@ -323,14 +309,9 @@ inline int TransactionModel::type_id(const wxString& name, int default_id)
     return TYPE_CHOICES.findName(name, default_id);
 }
 
-inline TransactionModel::TYPE_ID TransactionModel::type_id(const Data* r)
+inline TransactionModel::TYPE_ID TransactionModel::type_id(const Data& trx_d)
 {
-    return static_cast<TYPE_ID>(type_id(r->TRANSCODE));
-}
-
-inline TransactionModel::TYPE_ID TransactionModel::type_id(const Data& r)
-{
-    return type_id(&r);
+    return static_cast<TYPE_ID>(type_id(trx_d.TRANSCODE));
 }
 
 inline const wxString TransactionModel::status_key(int id)
@@ -358,14 +339,9 @@ inline int TransactionModel::status_id(const wxString& keyOrName, int default_id
     return STATUS_CHOICES.findKeyName(keyOrName, default_id);
 }
 
-inline TransactionModel::STATUS_ID TransactionModel::status_id(const Data* r)
+inline TransactionModel::STATUS_ID TransactionModel::status_id(const Data& trx_d)
 {
-    return static_cast<STATUS_ID>(status_id(r->STATUS));
-}
-
-inline TransactionModel::STATUS_ID TransactionModel::status_id(const Data& r)
-{
-    return status_id(&r);
+    return static_cast<STATUS_ID>(status_id(trx_d.STATUS));
 }
 
 inline bool TransactionModel::Full_Data::has_split() const

@@ -1,4 +1,4 @@
-﻿// -*- C++ -*-
+// -*- C++ -*-
 //=============================================================================
 /**
  *      Copyright: (c) 2013-2026 Guan Lisheng (guanlisheng@gmail.com)
@@ -13,7 +13,7 @@
  *      @author [sqlite2cpp.py]
  *
  *      Revision History:
- *          AUTO GENERATED at 2026-02-23 02:42:42.918296.
+ *          AUTO GENERATED at 2026-02-24 10:36:10.572614.
  *          DO NOT EDIT!
  */
 //=============================================================================
@@ -101,17 +101,6 @@ void TagRow::to_html_template(html_template& t) const
     t(L"TAGID") = TAGID.GetValue();
     t(L"TAGNAME") = TAGNAME;
     t(L"ACTIVE") = ACTIVE.GetValue();
-}
-
-TagRow& TagRow::operator= (const TagRow& other)
-{
-    if (this == &other) return *this;
-
-    TAGID = other.TAGID;
-    TAGNAME = other.TAGNAME;
-    ACTIVE = other.ACTIVE;
-
-    return *this;
 }
 
 bool TagRow::equals(const TagRow* other) const

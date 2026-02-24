@@ -48,17 +48,6 @@ SettingData& SettingData::from_row(const SettingRow& row)
     return *this;
 }
 
-SettingData& SettingData::operator= (const SettingData& other)
-{
-    if (this == &other) return *this;
-
-    SETTINGID = other.SETTINGID;
-    SETTINGNAME = other.SETTINGNAME;
-    SETTINGVALUE = other.SETTINGVALUE;
-
-    return *this;
-}
-
 bool SettingData::equals(const SettingData* other) const
 {
     if ( SETTINGID != other->SETTINGID) return false;

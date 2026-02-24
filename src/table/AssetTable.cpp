@@ -1,4 +1,4 @@
-﻿// -*- C++ -*-
+// -*- C++ -*-
 //=============================================================================
 /**
  *      Copyright: (c) 2013-2026 Guan Lisheng (guanlisheng@gmail.com)
@@ -13,7 +13,7 @@
  *      @author [sqlite2cpp.py]
  *
  *      Revision History:
- *          AUTO GENERATED at 2026-02-23 02:42:42.918296.
+ *          AUTO GENERATED at 2026-02-24 10:36:10.572614.
  *          DO NOT EDIT!
  */
 //=============================================================================
@@ -167,25 +167,6 @@ void AssetRow::to_html_template(html_template& t) const
     t(L"NOTES") = NOTES;
     t(L"VALUECHANGERATE") = VALUECHANGERATE;
     t(L"ASSETTYPE") = ASSETTYPE;
-}
-
-AssetRow& AssetRow::operator= (const AssetRow& other)
-{
-    if (this == &other) return *this;
-
-    ASSETID = other.ASSETID;
-    STARTDATE = other.STARTDATE;
-    ASSETNAME = other.ASSETNAME;
-    ASSETSTATUS = other.ASSETSTATUS;
-    CURRENCYID = other.CURRENCYID;
-    VALUECHANGEMODE = other.VALUECHANGEMODE;
-    VALUE = other.VALUE;
-    VALUECHANGE = other.VALUECHANGE;
-    NOTES = other.NOTES;
-    VALUECHANGERATE = other.VALUECHANGERATE;
-    ASSETTYPE = other.ASSETTYPE;
-
-    return *this;
 }
 
 bool AssetRow::equals(const AssetRow* other) const

@@ -54,19 +54,6 @@ StockHistoryData& StockHistoryData::from_row(const StockHistoryRow& row)
     return *this;
 }
 
-StockHistoryData& StockHistoryData::operator= (const StockHistoryData& other)
-{
-    if (this == &other) return *this;
-
-    HISTID = other.HISTID;
-    SYMBOL = other.SYMBOL;
-    DATE = other.DATE;
-    VALUE = other.VALUE;
-    UPDTYPE = other.UPDTYPE;
-
-    return *this;
-}
-
 bool StockHistoryData::equals(const StockHistoryData* other) const
 {
     if ( HISTID != other->HISTID) return false;

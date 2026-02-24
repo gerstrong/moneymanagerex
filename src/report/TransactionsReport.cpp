@@ -317,7 +317,7 @@ table {
                 if (showColumnById(TransactionFilterDialog::COL_TAGS))
                     hb.addTableCell(transaction.TAGNAMES);
                 if (showColumnById(TransactionFilterDialog::COL_TYPE)) {
-                    if (TransactionModel::foreignTransactionAsTransfer(transaction))
+                    if (TransactionModel::is_foreignAsTransfer(transaction))
                         hb.addTableCell("< " + wxGetTranslation(transaction.TRANSCODE));
                     else
                         hb.addTableCell(wxGetTranslation(transaction.TRANSCODE));

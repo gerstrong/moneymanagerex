@@ -635,7 +635,7 @@ void ReportPanel::onNewWindow(wxWebViewEvent& evt)
         if (sData.ToLongLong(&transId)) {
             TransactionData* transaction = TransactionModel::instance().unsafe_get_data_n(transId);
             if (transaction && transaction->TRANSID > -1) {
-                if (TransactionModel::foreignTransaction(*transaction)) {
+                if (TransactionModel::is_foreign(*transaction)) {
                     TransactionLinkData translink = TransactionLinkModel::TranslinkRecord(transId);
                     if (translink.LINKTYPE == StockModel::refTypeName) {
                         TransactionShareDialog dlg(w_frame, &translink, transaction);

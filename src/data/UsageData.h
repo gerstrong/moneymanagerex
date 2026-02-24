@@ -60,7 +60,6 @@ struct UsageData
     void to_html_template(html_template& t) const;
     void destroy() { delete this; }
 
-    UsageData& operator= (const UsageData& other);
     UsageData& clone_from(const UsageData& other);
     bool equals(const UsageData* other) const;
     bool operator< (const UsageData& other) const { return id() < other.id(); }

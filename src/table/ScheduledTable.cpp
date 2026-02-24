@@ -1,4 +1,4 @@
-﻿// -*- C++ -*-
+// -*- C++ -*-
 //=============================================================================
 /**
  *      Copyright: (c) 2013-2026 Guan Lisheng (guanlisheng@gmail.com)
@@ -13,7 +13,7 @@
  *      @author [sqlite2cpp.py]
  *
  *      Revision History:
- *          AUTO GENERATED at 2026-02-23 02:42:42.918296.
+ *          AUTO GENERATED at 2026-02-24 10:36:10.572614.
  *          DO NOT EDIT!
  */
 //=============================================================================
@@ -222,31 +222,6 @@ void ScheduledRow::to_html_template(html_template& t) const
     t(L"NEXTOCCURRENCEDATE") = NEXTOCCURRENCEDATE;
     t(L"NUMOCCURRENCES") = NUMOCCURRENCES.GetValue();
     t(L"COLOR") = COLOR.GetValue();
-}
-
-ScheduledRow& ScheduledRow::operator= (const ScheduledRow& other)
-{
-    if (this == &other) return *this;
-
-    BDID = other.BDID;
-    ACCOUNTID = other.ACCOUNTID;
-    TOACCOUNTID = other.TOACCOUNTID;
-    PAYEEID = other.PAYEEID;
-    TRANSCODE = other.TRANSCODE;
-    TRANSAMOUNT = other.TRANSAMOUNT;
-    STATUS = other.STATUS;
-    TRANSACTIONNUMBER = other.TRANSACTIONNUMBER;
-    NOTES = other.NOTES;
-    CATEGID = other.CATEGID;
-    TRANSDATE = other.TRANSDATE;
-    FOLLOWUPID = other.FOLLOWUPID;
-    TOTRANSAMOUNT = other.TOTRANSAMOUNT;
-    REPEATS = other.REPEATS;
-    NEXTOCCURRENCEDATE = other.NEXTOCCURRENCEDATE;
-    NUMOCCURRENCES = other.NUMOCCURRENCES;
-    COLOR = other.COLOR;
-
-    return *this;
 }
 
 bool ScheduledRow::equals(const ScheduledRow* other) const

@@ -22,7 +22,7 @@
 #include "base/defs.h"
 #include <float.h>
 
-#include "util/_choices.h"
+#include "util/mmChoiceNameA.h"
 #include "util/mmDateRange.h"
 
 #include "table/BudgetTable.h"
@@ -30,7 +30,7 @@
 
 #include "_ModelBase.h"
 
-class BudgetModel : public Model<BudgetTable, BudgetData>
+class BudgetModel : public TableFactory<BudgetTable, BudgetData>
 {
 public:
     BudgetModel();
@@ -67,7 +67,7 @@ public:
     };
 
 private:
-    static ChoicesName PERIOD_CHOICES;
+    static mmChoiceNameA PERIOD_CHOICES;
 
 public:
     static const wxString period_name(int id);

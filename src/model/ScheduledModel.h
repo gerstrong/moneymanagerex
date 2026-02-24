@@ -32,70 +32,85 @@
 
 const int BD_REPEATS_MULTIPLEX_BASE = 100;
 
-class ScheduledModel : public Model<ScheduledTable, ScheduledData>
+class ScheduledModel : public TableFactory<ScheduledTable, ScheduledData>
 {
 public:
-    typedef ScheduledSplitModel::DataA Split_DataA;
+    using Split_DataA = ScheduledSplitModel::DataA;
 
-public:
-    enum REPEAT_TYPE {
-        REPEAT_ONCE = 0,
-        REPEAT_WEEKLY,
-        REPEAT_BI_WEEKLY,      // FORTNIGHTLY
-        REPEAT_MONTHLY,
-        REPEAT_BI_MONTHLY,
-        REPEAT_QUARTERLY,      // TRI_MONTHLY
-        REPEAT_HALF_YEARLY,
-        REPEAT_YEARLY,
-        REPEAT_FOUR_MONTHLY,   // QUAD_MONTHLY
-        REPEAT_FOUR_WEEKLY,    // QUAD_WEEKLY
-        REPEAT_DAILY,
-        REPEAT_IN_X_DAYS,
-        REPEAT_IN_X_MONTHS,
-        REPEAT_EVERY_X_DAYS,
-        REPEAT_EVERY_X_MONTHS,
-        REPEAT_MONTHLY_LAST_DAY,
-        REPEAT_MONTHLY_LAST_BUSINESS_DAY
-    };
-    enum REPEAT_NUM {
-        REPEAT_NUM_INFINITY = -1,
-        REPEAT_NUM_UNKNOWN = 0
-    };
-    enum REPEAT_AUTO {
-        REPEAT_AUTO_NONE = 0,
-        REPEAT_AUTO_MANUAL = 1,
-        REPEAT_AUTO_SILENT = 2
-    };
-
-public:
-    ScheduledModel();
-    ~ScheduledModel();
-
-public:
-    /** Pre-initialised data structure*/
-    struct Bill_Data
+    enum REPEAT_EXEC
     {
-        int64 BDID = 0;
-        // This relates the 'Date Due' field.
-        wxString TRANSDATE = wxDateTime::Now().FormatISOCombined();
-        wxString STATUS = TransactionModel::STATUS_NAME_NONE;
-        int64 ACCOUNTID = -1;
-        int64 TOACCOUNTID = -1;
-        wxString TRANSCODE = TransactionModel::TYPE_NAME_WITHDRAWAL;
-        int64 CATEGID = -1;
-        double TRANSAMOUNT = 0;
-        double TOTRANSAMOUNT = 0;
-        int64 FOLLOWUPID = -1;
-        wxString NOTES;
-        wxString TRANSACTIONNUMBER;
-        int64 PAYEEID = -1;
+        REPEAT_EXEC_NONE   = 0,
+        REPEAT_EXEC_MANUAL = 1,
+        REPEAT_EXEC_SILENT = 2
+    };
+    enum REPEAT_FREQ
+    {
+        REPEAT_FREQ_INVALID = -1,   // this value is never stored in database
+        REPEAT_FREQ_ONCE = 0,
+        REPEAT_FREQ_WEEKLY,
+        REPEAT_FREQ_BI_WEEKLY,      // FORTNIGHTLY
+        REPEAT_FREQ_MONTHLY,
+        REPEAT_FREQ_BI_MONTHLY,
+        REPEAT_FREQ_QUARTERLY,      // TRI_MONTHLY
+        REPEAT_FREQ_HALF_YEARLY,
+        REPEAT_FREQ_YEARLY,
+        REPEAT_FREQ_FOUR_MONTHLY,   // QUAD_MONTHLY
+        REPEAT_FREQ_FOUR_WEEKLY,    // QUAD_WEEKLY
+        REPEAT_FREQ_DAILY,
+        REPEAT_FREQ_IN_X_DAYS,
+        REPEAT_FREQ_IN_X_MONTHS,
+        REPEAT_FREQ_EVERY_X_DAYS,
+        REPEAT_FREQ_EVERY_X_MONTHS,
+        REPEAT_FREQ_MONTHLY_LAST_DAY,
+        REPEAT_FREQ_MONTHLY_LAST_BUSINESS_DAY,
+        REPEAT_FREQ_size
+    };
+    enum REPEAT_NUM
+    {
+        REPEAT_NUM_INFINITY = -1,
+        REPEAT_NUM_INVALID  = 0
+    };
+    enum REPEAT_X
+    {
+        REPEAT_X_VOID    = -1,
+        REPEAT_X_INVALID = 0
+    };
+    // decoding of REPEATS and NUMOCCURRENCES
+    struct RepeatNum
+    {
+        REPEAT_EXEC exec; // auto execution mode
+        REPEAT_FREQ freq; // repetition frequency
+        int num;          // occurrences if type is WEEKLY .. DAILY, MONTHLY_LAST_*
+        int x;            // x           if type is IN_X_*, EVERY_X_*
+        RepeatNum() = default;
+    };
+
+public:
+    // Pre-initialised data structure
+    struct Bill_Data : ScheduledData
+    {
         std::vector<Split> local_splits;
-        int64 REPEATS;
-        int64 NUMOCCURRENCES;
-        // This relates the 'Date Paid' field.
-        wxString NEXTOCCURRENCEDATE;
-        int64 COLOR = -1;
         wxArrayInt64 TAGS;
+
+        Bill_Data() {
+            BDID               = 0;
+            ACCOUNTID          = -1;
+            TOACCOUNTID        = -1;
+            PAYEEID            = -1;
+            TRANSCODE          = TransactionModel::TYPE_NAME_WITHDRAWAL;
+            TRANSAMOUNT        = 0;
+            STATUS             = TransactionModel::STATUS_NAME_NONE;
+            TRANSACTIONNUMBER  = "";
+            NOTES              = "";
+            CATEGID            = -1;
+            TRANSDATE          = wxDateTime::Now().FormatISOCombined();
+            FOLLOWUPID         = -1;
+            TOTRANSAMOUNT      = 0;
+            REPEATS            = 0;
+            NEXTOCCURRENCEDATE = "";
+            NUMOCCURRENCES     = 0;
+            COLOR              = -1;
+        }
     };
 
     struct Full_Data : public Data
@@ -114,6 +129,56 @@ public:
     };
     typedef std::vector<Full_Data> Full_DataA;
 
+public:
+    static const wxString refTypeName;
+
+public:
+    // Initialize the global ScheduledModel table on initial call.
+    // Resets the global table on subsequent calls.
+    // Return the static instance address for ScheduledModel table
+    // Note: Assigning the address to a local variable can destroy the instance.
+    static ScheduledModel& instance(wxSQLite3Database* db);
+
+    // Return the static instance address for ScheduledModel table
+    // Note: Assigning the address to a local variable can destroy the instance.
+    static ScheduledModel& instance();
+
+public:
+    // Data properties (do not require access to Model)
+    // TODO: move to ScheduledData
+    static TransactionModel::TYPE_ID type_id(const Data& this_d);
+    static TransactionModel::STATUS_ID status_id(const Data& this_d);
+    static wxDate getTransDateTime(const Data& this_d);
+    static wxDate NEXTOCCURRENCEDATE(const Data& this_d);
+    static bool encode_repeat_num(Data& this_d, const RepeatNum& rn);
+    static bool decode_repeat_num(const Data& this_d, RepeatNum& rn);
+    static bool next_repeat_num(RepeatNum& rn);
+    static bool requires_execution(const Data& this_d);
+    static const wxDateTime nextOccurDate(
+        wxDateTime this_date, const RepeatNum& rn, bool reverse = false
+    );
+    static wxArrayString unroll(const Data& sched_d, const wxString end_date, int limit = -1);
+
+public:
+    static ScheduledCol::STATUS STATUS(OP op, TransactionModel::STATUS_ID status);
+    static ScheduledCol::TRANSCODE TRANSCODE(OP op, TransactionModel::TYPE_ID type);
+
+public:
+    static const ScheduledSplitModel::DataA split(const Data& sched_d);
+    static const TagLinkModel::DataA taglink(const Data& sched_d);
+
+public:
+    ScheduledModel();
+    ~ScheduledModel();
+
+public:
+    // Remove the Data record instance from memory and the database
+    // including any splits associated with the Data Record.
+    bool remove_depen(int64 id) override;
+    bool AllowTransaction(const Data& sched_d);
+    void completeBDInSeries(int64 bdID);
+
+public:
     struct SorterByACCOUNTNAME
     {
         bool operator()(const Full_Data& x, const Full_Data& y)
@@ -181,71 +246,4 @@ public:
             return x_accountid != -1 && (y_accountid == -1 || x_transamount < y_transamount);
         }
     };
-
-public:
-    /**
-    Initialize the global ScheduledModel table on initial call.
-    Resets the global table on subsequent calls.
-    * Return the static instance address for ScheduledModel table
-    * Note: Assigning the address to a local variable can destroy the instance.
-    */
-    static ScheduledModel& instance(wxSQLite3Database* db);
-
-    /**
-    * Return the static instance address for ScheduledModel table
-    * Note: Assigning the address to a local variable can destroy the instance.
-    */
-    static ScheduledModel& instance();
-
-public:
-    // This relates the 'Date Due' field
-    static wxDate getTransDateTime(const Data* r);
-    static wxDate getTransDateTime(const Data& r);
-    // This relates the 'Date Paid' field
-    static wxDate NEXTOCCURRENCEDATE(const Data* r);
-    static wxDate NEXTOCCURRENCEDATE(const Data& r);
-    static TransactionModel::TYPE_ID type_id(const Data* r);
-    static TransactionModel::TYPE_ID type_id(const Data& r);
-    static TransactionModel::STATUS_ID status_id(const Data* r);
-    static TransactionModel::STATUS_ID status_id(const Data& r);
-
-    /**
-    * Decodes the internal fields and sets the condition of the following parameters:
-    * autoExecuteManual(), autoExecuteSilent(), requireExecution(), allowExecution();
-    */
-    void decode_fields(const Data& r);
-    bool autoExecuteManual();
-    bool autoExecuteSilent();
-    bool requireExecution();
-    bool allowExecution();
-    bool AllowTransaction(const Data& r);
-
-private:
-    int m_autoExecute;
-    bool m_requireExecution;
-    bool m_allowExecution;
-
-public:
-    /**
-    * Remove the Data record instance from memory and the database
-    * including any splits associated with the Data Record.
-    */
-    bool remove_depen(int64 id) override;
-
-    static ScheduledCol::STATUS STATUS(OP op, TransactionModel::STATUS_ID status);
-    static ScheduledCol::TRANSCODE TRANSCODE(OP op, TransactionModel::TYPE_ID type);
-
-    static const ScheduledSplitModel::DataA split(const Data* r);
-    static const ScheduledSplitModel::DataA split(const Data& r);
-    static const TagLinkModel::DataA taglink(const Data* r);
-    static const TagLinkModel::DataA taglink(const Data& r);
-    static wxArrayString unroll(const Data* r, const wxString end_date, int limit = -1);
-    static wxArrayString unroll(const Data& r, const wxString end_date, int limit = -1);
-
-    void completeBDInSeries(int64 bdID);
-    static const wxDateTime nextOccurDate(int type, int numRepeats, wxDateTime nextOccurDate, bool reverse = false);
-
-public:
-    static const wxString refTypeName;
 };
-

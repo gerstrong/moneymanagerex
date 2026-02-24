@@ -22,7 +22,7 @@
 #include "TransactionModel.h"
 
 TransactionSplitModel::TransactionSplitModel() :
-    Model<TransactionSplitTable, TransactionSplitData>()
+    TableFactory<TransactionSplitTable, TransactionSplitData>()
 {
 }
 
@@ -81,14 +81,14 @@ std::map<int64, TransactionSplitModel::DataA> TransactionSplitModel::get_all_id(
 
 int TransactionSplitModel::update(DataA& rows, int64 transactionID)
 {
-    bool updateTimestamp = false;
+    bool save_timestamp = false;
     std::map<int, int64> row_id_map;
 
     DataA split = instance().find(TransactionSplitCol::TRANSID(transactionID));
-    if (split.size() != rows.size()) updateTimestamp = true;
+    if (split.size() != rows.size()) save_timestamp = true;
 
     for (const auto& split_item : split) {
-        if (!updateTimestamp) {
+        if (!save_timestamp) {
             bool match = false;
             for (decltype(rows.size()) i = 0; i < rows.size(); i++) {
                 match = (rows[i].CATEGID == split_item.CATEGID
@@ -101,7 +101,7 @@ int TransactionSplitModel::update(DataA& rows, int64 transactionID)
                 }
                     
             }
-            updateTimestamp = updateTimestamp || !match;
+            save_timestamp = save_timestamp || !match;
         }
 
         instance().remove_depen(split_item.SPLITTRANSID);
@@ -119,8 +119,8 @@ int TransactionSplitModel::update(DataA& rows, int64 transactionID)
         }
     }
 
-    if (updateTimestamp)
-        TransactionModel::instance().updateTimestamp(transactionID);
+    if (save_timestamp)
+        TransactionModel::instance().save_timestamp(transactionID);
     
     return rows.size();
 }

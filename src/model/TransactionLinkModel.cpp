@@ -23,7 +23,7 @@
 #include "CurrencyHistoryModel.h"
 
 TransactionLinkModel::TransactionLinkModel() :
-    Model<TransactionLinkTable, TransactionLinkData>()
+    TableFactory<TransactionLinkTable, TransactionLinkData>()
 {
 }
 

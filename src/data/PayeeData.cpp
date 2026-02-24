@@ -60,22 +60,6 @@ PayeeData& PayeeData::from_row(const PayeeRow& row)
     return *this;
 }
 
-PayeeData& PayeeData::operator= (const PayeeData& other)
-{
-    if (this == &other) return *this;
-
-    PAYEEID = other.PAYEEID;
-    PAYEENAME = other.PAYEENAME;
-    CATEGID = other.CATEGID;
-    NUMBER = other.NUMBER;
-    WEBSITE = other.WEBSITE;
-    NOTES = other.NOTES;
-    ACTIVE = other.ACTIVE;
-    PATTERN = other.PATTERN;
-
-    return *this;
-}
-
 bool PayeeData::equals(const PayeeData* other) const
 {
     if ( PAYEEID != other->PAYEEID) return false;

@@ -52,18 +52,6 @@ TagLinkData& TagLinkData::from_row(const TagLinkRow& row)
     return *this;
 }
 
-TagLinkData& TagLinkData::operator= (const TagLinkData& other)
-{
-    if (this == &other) return *this;
-
-    TAGLINKID = other.TAGLINKID;
-    REFTYPE = other.REFTYPE;
-    REFID = other.REFID;
-    TAGID = other.TAGID;
-
-    return *this;
-}
-
 bool TagLinkData::equals(const TagLinkData* other) const
 {
     if ( TAGLINKID != other->TAGLINKID) return false;

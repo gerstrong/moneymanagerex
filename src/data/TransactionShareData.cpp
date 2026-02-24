@@ -58,20 +58,6 @@ TransactionShareData& TransactionShareData::from_row(const TransactionShareRow& 
     return *this;
 }
 
-TransactionShareData& TransactionShareData::operator= (const TransactionShareData& other)
-{
-    if (this == &other) return *this;
-
-    SHAREINFOID = other.SHAREINFOID;
-    CHECKINGACCOUNTID = other.CHECKINGACCOUNTID;
-    SHARENUMBER = other.SHARENUMBER;
-    SHAREPRICE = other.SHAREPRICE;
-    SHARECOMMISSION = other.SHARECOMMISSION;
-    SHARELOT = other.SHARELOT;
-
-    return *this;
-}
-
 bool TransactionShareData::equals(const TransactionShareData* other) const
 {
     if ( SHAREINFOID != other->SHAREINFOID) return false;

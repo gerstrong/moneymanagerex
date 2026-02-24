@@ -21,7 +21,7 @@
 #include "TransactionShareModel.h"
 
 TransactionShareModel::TransactionShareModel() :
-    Model<TransactionShareTable, TransactionShareData>()
+    TableFactory<TransactionShareTable, TransactionShareData>()
 {
 }
 
@@ -77,7 +77,7 @@ void TransactionShareModel::ShareEntry(
     const std::vector<Split>& commission_splits,
     const wxString& share_lot
 ) {
-    bool updateTimestamp = false;
+    bool save_timestamp = false;
     Data old_entry;
     Data ts_d;
     DataA share_list = ShareList(trx_id);
@@ -85,7 +85,7 @@ void TransactionShareModel::ShareEntry(
     if (share_list.empty()) {
         ts_d = Data();
         ts_d.CHECKINGACCOUNTID = trx_id;
-        updateTimestamp = true;
+        save_timestamp = true;
     }
     else {
         old_entry = share_list[0];
@@ -101,8 +101,8 @@ void TransactionShareModel::ShareEntry(
 
     TransactionSplitModel::instance().update(commission_splits, id);
 
-    if (updateTimestamp || !ts_d.equals(&old_entry))
-        TransactionModel::instance().updateTimestamp(trx_id);
+    if (save_timestamp || !ts_d.equals(&old_entry))
+        TransactionModel::instance().save_timestamp(trx_id);
 }
 
 void TransactionShareModel::RemoveShareEntry(const int64 checking_id)

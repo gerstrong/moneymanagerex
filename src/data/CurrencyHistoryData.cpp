@@ -55,19 +55,6 @@ CurrencyHistoryData& CurrencyHistoryData::from_row(const CurrencyHistoryRow& row
     return *this;
 }
 
-CurrencyHistoryData& CurrencyHistoryData::operator= (const CurrencyHistoryData& other)
-{
-    if (this == &other) return *this;
-
-    CURRHISTID = other.CURRHISTID;
-    CURRENCYID = other.CURRENCYID;
-    CURRDATE = other.CURRDATE;
-    CURRVALUE = other.CURRVALUE;
-    CURRUPDTYPE = other.CURRUPDTYPE;
-
-    return *this;
-}
-
 bool CurrencyHistoryData::equals(const CurrencyHistoryData* other) const
 {
     if ( CURRHISTID != other->CURRHISTID) return false;

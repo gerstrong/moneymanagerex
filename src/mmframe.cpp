@@ -98,7 +98,7 @@
 
 //----------------------------------------------------------------------------
 
-int REPEAT_TRANS_DELAY_TIME = 3000; // 3 seconds
+int REPEAT_FREQ_TRANS_DELAY_TIME = 3000; // 3 seconds
 //----------------------------------------------------------------------------
 
 void mmToolbarArt::DrawPlainBackground(wxDC& dc, wxWindow* WXUNUSED(wnd), const wxRect& rect)
@@ -600,22 +600,30 @@ void mmGUIFrame::OnAutoRepeatTransactionsTimer(wxTimerEvent& /*event*/)
 
     ScheduledModel& bills = ScheduledModel::instance();
     for (const auto& q1 : bills.find_all()) {
-        bills.decode_fields(q1);
-        if (bills.autoExecuteManual() && bills.requireExecution()) {
-            if (bills.allowExecution() && bills.AllowTransaction(q1)) {
+        if (!bills.requires_execution(q1))
+            continue;
+
+        ScheduledModel::RepeatNum rn;
+        if (!bills.decode_repeat_num(q1, rn))
+            continue;
+
+        bool allow = bills.AllowTransaction(q1);
+        if (rn.exec == ScheduledModel::REPEAT_EXEC_MANUAL) {
+            if (allow) {
                 continueExecution = true;
                 ScheduledDialog repeatTransactionsDlg(this, q1.BDID, false, true);
                 repeatTransactionsDlg.SetDialogHeader(_t("Auto Repeat Transactions"));
                 if (repeatTransactionsDlg.ShowModal() == wxID_OK) {
                     refreshPanelData();
                 }
-                else // stop repeat executions from occuring
+                else {
+                    // stop repeat executions from occuring
                     continueExecution = false;
+                }
             }
         }
-
-        if (bills.autoExecuteSilent() && bills.requireExecution()) {
-            if (bills.allowExecution() && bills.AllowTransaction(q1)) {
+        else if (rn.exec == ScheduledModel::REPEAT_EXEC_SILENT) {
+            if (allow) {
                 continueExecution = true;
                 TransactionData new_trx_d = TransactionData();
                 const wxDateTime payment_date = bills.getTransDateTime(q1);
@@ -2579,7 +2587,7 @@ bool mmGUIFrame::openFile(const wxString& fileName, bool openingNew, const wxStr
         InfoModel::instance().setBool("ISUSED", true);
         db_lockInPlace = false;
         NavigatorTypes::instance().LoadFromDB();
-        autoRepeatTransactionsTimer_.Start(REPEAT_TRANS_DELAY_TIME, wxTIMER_ONE_SHOT);
+        autoRepeatTransactionsTimer_.Start(REPEAT_FREQ_TRANS_DELAY_TIME, wxTIMER_ONE_SHOT);
     }
     else
         return false;

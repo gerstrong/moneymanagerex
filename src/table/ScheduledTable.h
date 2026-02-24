@@ -1,4 +1,4 @@
-﻿// -*- C++ -*-
+// -*- C++ -*-
 //=============================================================================
 /**
  *      Copyright: (c) 2013-2026 Guan Lisheng (guanlisheng@gmail.com)
@@ -13,7 +13,7 @@
  *      @author [sqlite2cpp.py]
  *
  *      Revision History:
- *          AUTO GENERATED at 2026-02-23 02:42:42.918296.
+ *          AUTO GENERATED at 2026-02-24 10:36:10.572614.
  *          DO NOT EDIT!
  */
 //=============================================================================
@@ -228,7 +228,6 @@ struct ScheduledRow
     void to_html_template(html_template& t) const;
     void destroy() { delete this; }
 
-    ScheduledRow& operator= (const ScheduledRow& other);
     ScheduledRow& clone_from(const ScheduledRow& other);
     bool equals(const ScheduledRow* other) const;
     bool operator< (const ScheduledRow& other) const { return id() < other.id(); }

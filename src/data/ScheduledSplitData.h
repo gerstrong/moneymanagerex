@@ -62,7 +62,6 @@ struct ScheduledSplitData
     void to_html_template(html_template& t) const;
     void destroy() { delete this; }
 
-    ScheduledSplitData& operator= (const ScheduledSplitData& other);
     ScheduledSplitData& clone_from(const ScheduledSplitData& other);
     bool equals(const ScheduledSplitData* other) const;
     bool operator< (const ScheduledSplitData& other) const { return id() < other.id(); }

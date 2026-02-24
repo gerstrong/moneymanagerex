@@ -25,7 +25,7 @@
 
 #include "_ModelBase.h"
 
-class TagModel : public Model<TagTable, TagData>
+class TagModel : public TableFactory<TagTable, TagData>
 {
 public:
     TagModel();

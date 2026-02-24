@@ -60,7 +60,6 @@ struct InfoData
     void to_html_template(html_template& t) const;
     void destroy() { delete this; }
 
-    InfoData& operator= (const InfoData& other);
     InfoData& clone_from(const InfoData& other);
     bool equals(const InfoData* other) const;
     bool operator< (const InfoData& other) const { return id() < other.id(); }

@@ -35,7 +35,7 @@ struct Split
     wxString NOTES;
 };
 
-class TransactionSplitModel : public Model<TransactionSplitTable, TransactionSplitData>
+class TransactionSplitModel : public TableFactory<TransactionSplitTable, TransactionSplitData>
 {
 public:
     TransactionSplitModel();

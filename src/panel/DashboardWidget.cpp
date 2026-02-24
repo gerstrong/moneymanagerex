@@ -213,7 +213,7 @@ void htmlWidgetTop7Categories::getTopCategoryStats(
 
     for (const auto &trx : transactions) {
         // Do not include asset or stock transfers or deleted transactions in income expense calculations.
-        if (TransactionModel::foreignTransactionAsTransfer(trx) || !trx.DELETEDTIME.IsEmpty())
+        if (TransactionModel::is_foreignAsTransfer(trx) || !trx.DELETEDTIME.IsEmpty())
             continue;
 
         bool withdrawal = TransactionModel::type_id(trx) == TransactionModel::TYPE_ID_WITHDRAWAL;
@@ -291,18 +291,17 @@ const wxString htmlWidgetBillsAndDeposits::getHTMLText()
     std::vector< std::tuple<int, wxString, wxString, double, const AccountData*, wxString> > bd_days;
     for (const auto& entry : ScheduledModel::instance().find_all(ScheduledCol::COL_ID_TRANSDATE))
     {
-        int daysPayment = ScheduledModel::getTransDateTime(&entry)
+        int daysPayment = ScheduledModel::getTransDateTime(entry)
             .Subtract(today).GetDays();
         if (daysPayment > 14)
             break; // Done searching for all to include
 
-        int repeats = entry.REPEATS.GetValue() % BD_REPEATS_MULTIPLEX_BASE; // DeMultiplex the Auto Executable fields
-
-        // ignore inactive entries
-        if (repeats >= ScheduledModel::REPEAT_IN_X_DAYS && repeats <= ScheduledModel::REPEAT_EVERY_X_MONTHS && entry.NUMOCCURRENCES < 0)
+        // ignore invalid entries
+        ScheduledModel::RepeatNum rn;
+        if (!ScheduledModel::decode_repeat_num(entry, rn))
             continue;
 
-        int daysOverdue = ScheduledModel::NEXTOCCURRENCEDATE(&entry)
+        int daysOverdue = ScheduledModel::NEXTOCCURRENCEDATE(entry)
             .Subtract(today).GetDays();
         wxString daysRemainingStr = (daysPayment > 0
             ? wxString::Format(wxPLURAL("%d day", "%d days", daysPayment), daysPayment)
@@ -396,7 +395,7 @@ const wxString htmlWidgetIncomeVsExpenses::getHTMLText()
     {
 
         // Do not include asset or stock transfers or deleted transactions in income expense calculations.
-        if (TransactionModel::foreignTransactionAsTransfer(pBankTransaction) || !pBankTransaction.DELETEDTIME.IsEmpty())
+        if (TransactionModel::is_foreignAsTransfer(pBankTransaction) || !pBankTransaction.DELETEDTIME.IsEmpty())
             continue;
 
         double convRate = CurrencyHistoryModel::getDayRate(
@@ -495,7 +494,7 @@ const wxString htmlWidgetStatistics::getHTMLText()
         total_transactions++;
 
         // Do not include asset or stock transfers in income expense calculations.
-        if (TransactionModel::foreignTransactionAsTransfer(trx))
+        if (TransactionModel::is_foreignAsTransfer(trx))
             continue;
 
         if (TransactionModel::status_id(trx) == TransactionModel::STATUS_ID_FOLLOWUP)

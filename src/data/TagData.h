@@ -60,7 +60,6 @@ struct TagData
     void to_html_template(html_template& t) const;
     void destroy() { delete this; }
 
-    TagData& operator= (const TagData& other);
     TagData& clone_from(const TagData& other);
     bool equals(const TagData* other) const;
     bool operator< (const TagData& other) const { return id() < other.id(); }

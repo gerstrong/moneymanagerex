@@ -723,7 +723,7 @@ void JournalList::onMouseRightClick(wxMouseEvent& event)
             type_transfer = true;
         if (!tran.has_split())
             have_category = true;
-        if (TransactionModel::foreignTransaction(tran))
+        if (TransactionModel::is_foreign(tran))
             is_foreign = true;
     }
     wxMenu menu;
@@ -1408,7 +1408,7 @@ void JournalList::onMoveTransaction(wxCommandEvent& /*event*/)
                 if (!id.second) {
                     TransactionData* trx_n = TransactionModel::instance().unsafe_get_data_n(id.first);
                     if (checkTransactionLocked(trx_n->ACCOUNTID, trx_n->TRANSDATE)
-                            || TransactionModel::foreignTransaction(*trx_n)
+                            || TransactionModel::is_foreign(*trx_n)
                             || TransactionModel::type_id(trx_n->TRANSCODE) == TransactionModel::TYPE_ID_TRANSFER
                             || trx_n->TRANSDATE < dest_account->INITIALDATE
                     ) {
@@ -1671,7 +1671,7 @@ void JournalList::onPaste(wxCommandEvent& WXUNUSED(event))
     for (const auto& id : m_selectedForCopy) {
         if (!id.second) {
             const TransactionData* tran = TransactionModel::instance().get_data_n(id.first);
-            if (TransactionModel::foreignTransaction(*tran)) continue;
+            if (TransactionModel::is_foreign(*tran)) continue;
             onPaste(tran);
         }
     }
@@ -1720,7 +1720,7 @@ int64 JournalList::onPaste(const TransactionData* tran)
 
     // Clone split transactions
     reftype = TransactionSplitModel::refTypeName;
-    for (const auto& split_item : TransactionModel::split(tran)) {
+    for (const auto& split_item : TransactionModel::find_split(*tran)) {
         TransactionSplitData new_split_d;
         new_split_d.clone_from(split_item);
         new_split_d.TRANSID = transactionID;
@@ -2017,7 +2017,7 @@ void JournalList::setExtraTransactionData(const bool single)
         Journal::Data tran = !id.second
             ? Journal::Data(*TransactionModel::instance().get_data_n(id.first))
             : Journal::Data(*ScheduledModel::instance().get_data_n(id.first));
-        if (TransactionModel::foreignTransaction(tran))
+        if (TransactionModel::is_foreign(tran))
             isForeign = true;
         repeat_num = id.second;
     }

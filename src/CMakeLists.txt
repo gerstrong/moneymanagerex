@@ -80,8 +80,6 @@ add_executable(${MMEX_EXE} WIN32 MACOSX_BUNDLE
     base/platfdep.h
     base/types.h
 
-    util/_choices.cpp
-    util/_choices.h
     util/_primitive.cpp
     util/_primitive.h
     util/_simple.cpp
@@ -90,6 +88,8 @@ add_executable(${MMEX_EXE} WIN32 MACOSX_BUNDLE
     util/_util.h
     util/mmCache.h
     util/mmCache.tpp
+    util/mmChoiceNameA.cpp
+    util/mmChoiceNameA.h
     util/mmDateDay.cpp
     util/mmDateDay.h
     util/mmDateRange.cpp

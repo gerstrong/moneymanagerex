@@ -107,7 +107,7 @@ void FlowReport::getTransactions()
         for (const auto& tran : AccountModel::transactionsByDateTimeId(account)) {
             wxString strDate = TransactionModel::getTransDateTime(tran).FormatISOCombined();
             // Do not include asset or stock transfers in income expense calculations.
-            if (TransactionModel::foreignTransactionAsTransfer(tran) || (strDate > todayString))
+            if (TransactionModel::is_foreignAsTransfer(tran) || (strDate > todayString))
                 continue;
             m_balance += TransactionModel::account_flow(tran, account.ACCOUNTID) * convRate;
         }
@@ -119,93 +119,85 @@ void FlowReport::getTransactions()
         TransactionModel::TRANSDATE(OP_LT, endDate),
         TransactionModel::STATUS(OP_NE, TransactionModel::STATUS_ID_VOID)
     );
-    for (auto& trx : transactions) {
-        if (!trx.DELETEDTIME.IsEmpty()) continue;
-        bool isAccountFound = std::find(m_account_id.begin(), m_account_id.end(), trx.ACCOUNTID) != m_account_id.end();
-        bool isToAccountFound = std::find(m_account_id.begin(), m_account_id.end(), trx.TOACCOUNTID) != m_account_id.end();
+    for (auto& trx_d : transactions) {
+        if (!trx_d.DELETEDTIME.IsEmpty())
+            continue;
+        bool isAccountFound = std::find(m_account_id.begin(), m_account_id.end(),
+            trx_d.ACCOUNTID
+        ) != m_account_id.end();
+        bool isToAccountFound = std::find(m_account_id.begin(), m_account_id.end(),
+            trx_d.TOACCOUNTID
+        ) != m_account_id.end();
         if (!isAccountFound && !isToAccountFound)
             continue; // skip account
-        if (TransactionModel::is_split(trx)) {
-            const TransactionData *transaction = TransactionModel::instance().get_data_n(trx.TRANSID);
-            for (const auto& split_item : TransactionModel::split(transaction)) {
-                trx.CATEGID = split_item.CATEGID;
-                trx.TRANSAMOUNT = split_item.SPLITTRANSAMOUNT;
-                trx.TRANSAMOUNT = trueAmount(trx);
-                m_forecastVector.push_back(trx);
-            }
+        const auto& split_a = TransactionModel::find_split(trx_d);
+        if (split_a.empty()) {
+            trx_d.TRANSAMOUNT = trueAmount(trx_d);
+            m_forecastVector.push_back(trx_d);
         }
         else {
-            trx.TRANSAMOUNT = trueAmount(trx);
-            m_forecastVector.push_back(trx);
+            for (const auto& split_d : split_a) {
+                trx_d.CATEGID     = split_d.CATEGID;
+                trx_d.TRANSAMOUNT = split_d.SPLITTRANSAMOUNT;
+                trx_d.TRANSAMOUNT = trueAmount(trx_d);
+                m_forecastVector.push_back(trx_d);
+            }
         }
     }
 
     // Now we gather the recurring transaction list
-    for (const auto& entry : ScheduledModel::instance().find(
+    for (const auto& sched_d : ScheduledModel::instance().find(
         ScheduledModel::STATUS(OP_NE, TransactionModel::STATUS_ID_VOID)
     )) {
-        wxDateTime nextOccurDate = ScheduledModel::NEXTOCCURRENCEDATE(entry);
-        if (nextOccurDate > endDate) continue;
-
-        // demultiplex entry.REPEATS
-        int repeats = entry.REPEATS.GetValue() % BD_REPEATS_MULTIPLEX_BASE;
-        int numRepeats = entry.NUMOCCURRENCES.GetValue();
-
-        // ignore old inactive entries
-        if (repeats >= ScheduledModel::REPEAT_IN_X_DAYS && repeats <= ScheduledModel::REPEAT_EVERY_X_MONTHS && numRepeats == -1)
+        wxDateTime next_date = ScheduledModel::NEXTOCCURRENCEDATE(sched_d);
+        if (next_date > endDate)
             continue;
 
-        // ignore invalid entries
-        if (repeats != ScheduledModel::REPEAT_ONCE && (numRepeats == 0 || numRepeats < -1))
+        ScheduledModel::RepeatNum rn;
+        if (!ScheduledModel::decode_repeat_num(sched_d, rn))
             continue;
 
-        bool isAccountFound = std::find(m_account_id.begin(), m_account_id.end(), entry.ACCOUNTID) != m_account_id.end();
-        bool isToAccountFound = std::find(m_account_id.begin(), m_account_id.end(), entry.TOACCOUNTID) != m_account_id.end();
+        bool isAccountFound = std::find(m_account_id.begin(), m_account_id.end(),
+            sched_d.ACCOUNTID
+        ) != m_account_id.end();
+        bool isToAccountFound = std::find(m_account_id.begin(), m_account_id.end(),
+            sched_d.TOACCOUNTID
+        ) != m_account_id.end();
         if (!isAccountFound && !isToAccountFound)
             continue; // skip account
 
         // Process all possible recurring transactions for this BD
         while (1) {
-            if (nextOccurDate > endDate) break;
+            if (next_date > endDate)
+                break;
 
             TransactionData trx;
-            trx.TRANSDATE = nextOccurDate.FormatISODate();
-            trx.ACCOUNTID = entry.ACCOUNTID;
-            trx.TOACCOUNTID = entry.TOACCOUNTID;
-            trx.PAYEEID =  entry.PAYEEID;
-            trx.TRANSCODE = entry.TRANSCODE;
-            trx.TRANSAMOUNT = entry.TRANSAMOUNT;
-            trx.TOTRANSAMOUNT = entry.TOTRANSAMOUNT;
-            if (!ScheduledModel::split(entry).empty()) {
-                for (const auto& split_item : ScheduledModel::split(entry)) {
-                    trx.CATEGID = split_item.CATEGID;
+            trx.TRANSDATE     = next_date.FormatISODate();
+            trx.ACCOUNTID     = sched_d.ACCOUNTID;
+            trx.TOACCOUNTID   = sched_d.TOACCOUNTID;
+            trx.PAYEEID       = sched_d.PAYEEID;
+            trx.TRANSCODE     = sched_d.TRANSCODE;
+            trx.TRANSAMOUNT   = sched_d.TRANSAMOUNT;
+            trx.TOTRANSAMOUNT = sched_d.TOTRANSAMOUNT;
+            if (!ScheduledModel::split(sched_d).empty()) {
+                for (const auto& split_item : ScheduledModel::split(sched_d)) {
+                    trx.CATEGID     = split_item.CATEGID;
                     trx.TRANSAMOUNT = split_item.SPLITTRANSAMOUNT;
                     trx.TRANSAMOUNT = trueAmount(trx);
                     m_forecastVector.push_back(trx);
                 }
             }
             else {
-                trx.CATEGID = entry.CATEGID;
+                trx.CATEGID     = sched_d.CATEGID;
                 trx.TRANSAMOUNT = trueAmount(trx);
                 m_forecastVector.push_back(trx);
             }
 
-            if ((repeats == ScheduledModel::REPEAT_ONCE) || ((repeats < ScheduledModel::REPEAT_IN_X_DAYS || repeats > ScheduledModel::REPEAT_EVERY_X_MONTHS) && numRepeats == 1))
+            if (rn.num == 1)
                 break;
 
-            nextOccurDate = ScheduledModel::nextOccurDate(repeats, numRepeats, nextOccurDate);
-
-            if ((repeats < ScheduledModel::REPEAT_IN_X_DAYS || repeats > ScheduledModel::REPEAT_EVERY_X_MONTHS) &&
-                numRepeats > 1
-            ) {
-                numRepeats--;
-            }
-            else if (repeats >= ScheduledModel::REPEAT_IN_X_DAYS &&
-                repeats <= ScheduledModel::REPEAT_IN_X_MONTHS
-            ) {
-                // change repeat type to REPEAT_ONCE
-                repeats = ScheduledModel::REPEAT_ONCE;
-            }
+            next_date = ScheduledModel::nextOccurDate(next_date, rn);
+            ScheduledModel::next_repeat_num(rn);
         }
     }
 

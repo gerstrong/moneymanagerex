@@ -27,7 +27,7 @@
 
 #include "_ModelBase.h"
 
-class PayeeModel : public Model<PayeeTable, PayeeData>
+class PayeeModel : public TableFactory<PayeeTable, PayeeData>
 {
 public:
     PayeeModel();
@@ -48,29 +48,21 @@ public:
     */
     static PayeeModel& instance();
 
+    // TODO: move to PayeeData
+    static bool is_hidden(const Data& this_d);
+
 public:
-    const DataA FilterPayees(const wxString& payee_pattern, bool includeInActive = true);
-
-    /**
-    * Return the Data record pointer for the given payee name
-    * Returns 0 when payee not found.
-    */
-    const Data* get_key(const wxString& name);
-    static wxString get_payee_name(int64 payee_id);
-
+    static bool is_used(int64 id);
     bool remove_depen(int64 id) override;
 
+    // Return the Data record pointer for the given payee name
+    // Returns 0 when payee not found.
+    const Data* get_key(const wxString& name);
+    static wxString get_payee_name(int64 payee_id);
     const std::map<wxString, int64> all_payees(bool excludeHidden = false);
     const wxArrayString all_payee_names();
     const std::map<wxString, int64> used_payee();
-
-    static bool is_hidden(int64 id);
-    static bool is_hidden(const Data* record);
-    static bool is_hidden(const Data& record);
-
-    static bool is_used(int64 id);
-    static bool is_used(const Data* record);
-    static bool is_used(const Data& record);
+    const DataA FilterPayees(const wxString& payee_pattern, bool includeInActive = true);
 
 public:
     static const wxString refTypeName;

@@ -19,14 +19,14 @@
 #pragma once
 
 #include "base/defs.h"
-#include "util/_choices.h"
+#include "util/mmChoiceNameA.h"
 
 #include "table/AttachmentTable.h"
 #include "data/AttachmentData.h"
 
 #include "_ModelBase.h"
 
-class AttachmentModel : public Model<AttachmentTable, AttachmentData>
+class AttachmentModel : public TableFactory<AttachmentTable, AttachmentData>
 {
 public:
     AttachmentModel();

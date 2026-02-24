@@ -72,7 +72,7 @@ void PayeeReport::loadData()
     );
     for (const auto& trx: trx_a) {
         // Do not include asset or stock transfers
-        if (TransactionModel::foreignTransactionAsTransfer(trx))
+        if (TransactionModel::is_foreignAsTransfer(trx))
             continue;
 
         TransactionModel::TYPE_ID type_id = TransactionModel::type_id(trx);

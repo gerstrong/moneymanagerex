@@ -55,19 +55,6 @@ ScheduledSplitData& ScheduledSplitData::from_row(const ScheduledSplitRow& row)
     return *this;
 }
 
-ScheduledSplitData& ScheduledSplitData::operator= (const ScheduledSplitData& other)
-{
-    if (this == &other) return *this;
-
-    SPLITTRANSID = other.SPLITTRANSID;
-    TRANSID = other.TRANSID;
-    CATEGID = other.CATEGID;
-    SPLITTRANSAMOUNT = other.SPLITTRANSAMOUNT;
-    NOTES = other.NOTES;
-
-    return *this;
-}
-
 bool ScheduledSplitData::equals(const ScheduledSplitData* other) const
 {
     if ( SPLITTRANSID != other->SPLITTRANSID) return false;

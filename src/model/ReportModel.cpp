@@ -50,7 +50,7 @@ public:
 };
 
 ReportModel::ReportModel() :
-    Model<ReportTable, ReportData>()
+    TableFactory<ReportTable, ReportData>()
 {
 }
 

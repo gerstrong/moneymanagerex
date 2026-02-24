@@ -447,6 +447,9 @@ void ScheduledList::OnItemRightClick(wxMouseEvent& event)
 wxString ScheduledPanel::getItem(long item, int col_id)
 {
     const ScheduledModel::Full_Data& bill = this->bills_.at(item);
+    ScheduledModel::RepeatNum rn;
+    bool is_active = ScheduledModel::decode_repeat_num(bill, rn);
+
     switch (col_id) {
     case ScheduledList::LIST_ID_ID:
         return wxString::Format("%lld", bill.BDID).Trim();
@@ -509,26 +512,21 @@ wxString ScheduledPanel::getItem(long item, int col_id)
             return value;
         }
     case ScheduledList::LIST_ID_FREQUENCY:
-        return GetFrequency(&bill);
+        return GetFrequency(rn);
     case ScheduledList::LIST_ID_REPEATS: {
-        int numRepeats = GetNumRepeats(&bill);
-        if (numRepeats > 0)
-            return wxString::Format("%i", numRepeats).Trim();
-        else if (numRepeats == ScheduledModel::REPEAT_NUM_INFINITY)
-            return L"\x221E";  // INFITITY
-        else
-            return L"\x2015";  // HORIZONTAL BAR
+        return !is_active                                 ? L"\x2015" : // HORIZONTAL BAR
+            rn.num == ScheduledModel::REPEAT_NUM_INFINITY ? L"\x221E" : // INFITITY
+            wxString::Format("%i", rn.num).Trim();
     }
     case ScheduledList::LIST_ID_AUTO: {
-        int autoExecute = bill.REPEATS.GetValue() / BD_REPEATS_MULTIPLEX_BASE;
         wxString repeatSTR =
-            (autoExecute == ScheduledModel::REPEAT_AUTO_SILENT) ? _t("Automated") :
-            (autoExecute == ScheduledModel::REPEAT_AUTO_MANUAL) ? _t("Suggested") :
-            _t("Manual");
+            (rn.exec == ScheduledModel::REPEAT_EXEC_SILENT) ? _t("Automated") :
+            (rn.exec == ScheduledModel::REPEAT_EXEC_MANUAL) ? _t("Suggested") :
+                                                              _t("Manual");
         return repeatSTR;
     }
     case ScheduledList::LIST_ID_REMAINING:
-        return GetRemainingDays(&bill);
+        return is_active ? GetRemainingDays(bill) : _t("Inactive");
     case ScheduledList::LIST_ID_NUMBER:
         return bill.TRANSACTIONNUMBER;
     case ScheduledList::LIST_ID_NOTES: {
@@ -543,44 +541,18 @@ wxString ScheduledPanel::getItem(long item, int col_id)
     }
 }
 
-const wxString ScheduledPanel::GetFrequency(const ScheduledData* item) const
+const wxString ScheduledPanel::GetFrequency(const ScheduledModel::RepeatNum& rn) const
 {
-    int repeats = item->REPEATS.GetValue() % BD_REPEATS_MULTIPLEX_BASE; // DeMultiplex the Auto Executable fields.
-
-    wxString text = wxGetTranslation(BILLSDEPOSITS_REPEATS[repeats]);
-    if (repeats >= ScheduledModel::REPEAT_IN_X_DAYS && repeats <= ScheduledModel::REPEAT_EVERY_X_MONTHS)
-        text = wxString::Format(text, wxString::Format("%lld", item->NUMOCCURRENCES));
+    wxString text = wxGetTranslation(BILLSDEPOSITS_REPEATS[rn.freq]);
+    if (rn.freq >= ScheduledModel::REPEAT_FREQ_IN_X_DAYS &&
+        rn.freq <= ScheduledModel::REPEAT_FREQ_EVERY_X_MONTHS
+    )
+        text = wxString::Format(text, wxString::Format("%i", rn.x));
     return text;
 }
 
-int ScheduledPanel::GetNumRepeats(const ScheduledData* item) const
+const wxString ScheduledPanel::GetRemainingDays(const ScheduledData& item) const
 {
-    int repeats = item->REPEATS.GetValue() % BD_REPEATS_MULTIPLEX_BASE; // DeMultiplex the Auto Executable fields.
-    int numRepeats = item->NUMOCCURRENCES.GetValue();
-
-    if (repeats == ScheduledModel::REPEAT_ONCE)
-        numRepeats = 1;
-    else if (repeats >= ScheduledModel::REPEAT_IN_X_DAYS && repeats <= ScheduledModel::REPEAT_IN_X_MONTHS)
-        numRepeats = numRepeats > 0 ? 2 : ScheduledModel::REPEAT_NUM_UNKNOWN;
-    else if (repeats >= ScheduledModel::REPEAT_EVERY_X_DAYS && repeats <= ScheduledModel::REPEAT_EVERY_X_MONTHS)
-        numRepeats = numRepeats > 0 ? ScheduledModel::REPEAT_NUM_INFINITY : ScheduledModel::REPEAT_NUM_UNKNOWN;
-    else if (numRepeats < -1)
-    {
-        wxFAIL;
-        numRepeats = ScheduledModel::REPEAT_NUM_UNKNOWN;
-    }
-
-    return numRepeats;
-}
-
-const wxString ScheduledPanel::GetRemainingDays(const ScheduledData* item) const
-{
-    int repeats = item->REPEATS.GetValue() % BD_REPEATS_MULTIPLEX_BASE; // DeMultiplex the Auto Executable fields.
-    if (repeats >= ScheduledModel::REPEAT_IN_X_DAYS && repeats <= ScheduledModel::REPEAT_EVERY_X_MONTHS && item->NUMOCCURRENCES < 0)
-    {
-        return _t("Inactive");
-    }
-    
     int daysRemaining = ScheduledModel::getTransDateTime(item)
         .Subtract(this->getToday()).GetSeconds().GetValue() / 86400;
     int daysOverdue = ScheduledModel::NEXTOCCURRENCEDATE(item)
@@ -588,10 +560,13 @@ const wxString ScheduledPanel::GetRemainingDays(const ScheduledData* item) const
 
     // add a warning marker (*) in front, such that it is visible
     // to the user even when the Remaining column is too narrow.
-    wxString text =
-        (daysOverdue < 0) ? "*" + wxString::Format(wxPLURAL("%d day overdue", "%d days overdue", -daysOverdue), -daysOverdue) :
-        (daysRemaining < 0) ? "*" + wxString::Format(wxPLURAL("%d day delay", "%d days delay", -daysRemaining), -daysRemaining) :
-        wxString::Format(wxPLURAL("%d day", "%d days", daysRemaining), daysRemaining);
+    wxString text = (daysOverdue < 0)
+        ? "*" + wxString::Format(wxPLURAL( "%d day overdue", "%d days overdue", -daysOverdue),
+            -daysOverdue)
+        : (daysRemaining < 0)
+        ? "*" + wxString::Format(wxPLURAL("%d day delay", "%d days delay", -daysRemaining),
+            -daysRemaining)
+        : wxString::Format(wxPLURAL("%d day", "%d days", daysRemaining), daysRemaining);
 
     return text;
 }
@@ -621,11 +596,9 @@ void ScheduledList::OnListLeftClick(wxMouseEvent& event)
 
 int ScheduledList::OnGetItemImage(long item) const
 {
-    // demultiplex REPEATS
-    int autoExecute = m_bdp->bills_[item].REPEATS.GetValue() / BD_REPEATS_MULTIPLEX_BASE;
-    int repeats = m_bdp->bills_[item].REPEATS.GetValue() % BD_REPEATS_MULTIPLEX_BASE;
-    if (repeats >= ScheduledModel::REPEAT_IN_X_DAYS && repeats <= ScheduledModel::REPEAT_EVERY_X_MONTHS && m_bdp->bills_[item].NUMOCCURRENCES < 0)
-    {
+    ScheduledData& bill = m_bdp->bills_[item];
+    ScheduledModel::RepeatNum rn;
+    if (!ScheduledModel::decode_repeat_num(bill, rn)) {
         // inactive
         return -1;
     }
@@ -636,9 +609,9 @@ int ScheduledList::OnGetItemImage(long item) const
     /* Returns the icon to be shown for each entry */
     if (daysRemaining < 0)
         return ScheduledPanel::ICON_FOLLOWUP;
-    if (autoExecute == ScheduledModel::REPEAT_AUTO_SILENT)
+    if (rn.exec == ScheduledModel::REPEAT_EXEC_SILENT)
         return ScheduledPanel::ICON_RUN_AUTO;
-    if (autoExecute == ScheduledModel::REPEAT_AUTO_MANUAL)
+    if (rn.exec == ScheduledModel::REPEAT_EXEC_MANUAL)
         return ScheduledPanel::ICON_RUN;
     return -1;
 }
@@ -823,35 +796,40 @@ void ScheduledPanel::sortList()
         std::stable_sort(bills_.begin(), bills_.end(), ScheduledModel::SorterByDEPOSIT());
         break;
     case ScheduledList::LIST_ID_FREQUENCY:
-        std::stable_sort(bills_.begin(), bills_.end()
-            , [&](const ScheduledModel::Full_Data& x, const ScheduledModel::Full_Data& y)
-        {
-            wxString x_text = this->GetFrequency(&x);
-            wxString y_text = this->GetFrequency(&y);
-            return x_text < y_text;
-        });
+        std::stable_sort(bills_.begin(), bills_.end(),
+            [&](const ScheduledModel::Full_Data& x, const ScheduledModel::Full_Data& y) {
+                ScheduledModel::RepeatNum x_rn; ScheduledModel::decode_repeat_num(x, x_rn);
+                ScheduledModel::RepeatNum y_rn; ScheduledModel::decode_repeat_num(y, y_rn);
+                wxString x_text = this->GetFrequency(x_rn);
+                wxString y_text = this->GetFrequency(y_rn);
+                return x_text < y_text;
+            }
+        );
         break;
     case ScheduledList::LIST_ID_REPEATS:
-        std::stable_sort(bills_.begin(), bills_.end()
-            , [&](const ScheduledModel::Full_Data& x, const ScheduledModel::Full_Data& y)
-        {
-            int xn = this->GetNumRepeats(&x);
-            int yn = this->GetNumRepeats(&y);
-            // the order is: 1, 2, …, -1 (REPEAT_NUM_INFINITY), 0 (REPEAT_NUM_UNKNOWN)
-            if (xn > 0)
-                return yn > xn || yn == ScheduledModel::REPEAT_NUM_INFINITY || yn == ScheduledModel::REPEAT_NUM_UNKNOWN;
-            else
-                return xn == ScheduledModel::REPEAT_NUM_INFINITY && yn == ScheduledModel::REPEAT_NUM_UNKNOWN;
-        });
+        std::stable_sort(bills_.begin(), bills_.end(),
+            [&](const ScheduledModel::Full_Data& x, const ScheduledModel::Full_Data& y) {
+                ScheduledModel::RepeatNum x_rn; ScheduledModel::decode_repeat_num(x, x_rn);
+                ScheduledModel::RepeatNum y_rn; ScheduledModel::decode_repeat_num(y, y_rn);
+                // the order is: 1, 2, …, -1 (INFINITY), 0 (INVALID)
+                if (x_rn.num > 0)
+                    return y_rn.num > x_rn.num ||
+                        y_rn.num == ScheduledModel::REPEAT_NUM_INFINITY ||
+                        y_rn.num == ScheduledModel::REPEAT_NUM_INVALID;
+                else
+                    return x_rn.num == ScheduledModel::REPEAT_NUM_INFINITY &&
+                        y_rn.num == ScheduledModel::REPEAT_NUM_INVALID;
+            }
+        );
         break;
     case ScheduledList::LIST_ID_AUTO:
-        std::stable_sort(bills_.begin(), bills_.end()
-            , [&](const ScheduledModel::Full_Data& x, const ScheduledModel::Full_Data& y)
-        {
-            int x_auto = x.REPEATS.GetValue() / BD_REPEATS_MULTIPLEX_BASE;
-            int y_auto = y.REPEATS.GetValue() / BD_REPEATS_MULTIPLEX_BASE;
-            return x_auto < y_auto;
-        });
+        std::stable_sort(bills_.begin(), bills_.end(),
+            [&](const ScheduledModel::Full_Data& x, const ScheduledModel::Full_Data& y) {
+                ScheduledModel::RepeatNum x_rn; ScheduledModel::decode_repeat_num(x, x_rn);
+                ScheduledModel::RepeatNum y_rn; ScheduledModel::decode_repeat_num(y, y_rn);
+                return x_rn.exec < y_rn.exec;
+            }
+        );
         break;
     case ScheduledList::LIST_ID_REMAINING:
         // in almost all cases, sorting by remaining days is equivalent to sorting by TRANSDATE

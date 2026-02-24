@@ -133,9 +133,8 @@ public:
     wxString getItem(long item, int col_id);
     void RefreshList();
 
-    const wxString GetFrequency(const ScheduledData* item) const;
-    int GetNumRepeats(const ScheduledData* item) const;
-    const wxString GetRemainingDays(const ScheduledData* item) const;
+    const wxString GetFrequency(const ScheduledModel::RepeatNum& rn) const;
+    const wxString GetRemainingDays(const ScheduledData& item) const;
 
     wxString BuildPage() const;
     wxDate getToday() const;

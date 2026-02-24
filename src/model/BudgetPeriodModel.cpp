@@ -20,7 +20,7 @@
 #include "BudgetModel.h"
 
 BudgetPeriodModel::BudgetPeriodModel() :
-    Model<BudgetPeriodTable, BudgetPeriodData>()
+    TableFactory<BudgetPeriodTable, BudgetPeriodData>()
 {
 }
 

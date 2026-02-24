@@ -1,4 +1,4 @@
-﻿// -*- C++ -*-
+// -*- C++ -*-
 //=============================================================================
 /**
  *      Copyright: (c) 2013-2026 Guan Lisheng (guanlisheng@gmail.com)
@@ -13,7 +13,7 @@
  *      @author [sqlite2cpp.py]
  *
  *      Revision History:
- *          AUTO GENERATED at 2026-02-23 02:42:42.918296.
+ *          AUTO GENERATED at 2026-02-24 10:36:10.572614.
  *          DO NOT EDIT!
  */
 //=============================================================================
@@ -141,22 +141,6 @@ void ReportRow::to_html_template(html_template& t) const
     t(L"LUACONTENT") = LUACONTENT;
     t(L"TEMPLATECONTENT") = TEMPLATECONTENT;
     t(L"DESCRIPTION") = DESCRIPTION;
-}
-
-ReportRow& ReportRow::operator= (const ReportRow& other)
-{
-    if (this == &other) return *this;
-
-    REPORTID = other.REPORTID;
-    REPORTNAME = other.REPORTNAME;
-    GROUPNAME = other.GROUPNAME;
-    ACTIVE = other.ACTIVE;
-    SQLCONTENT = other.SQLCONTENT;
-    LUACONTENT = other.LUACONTENT;
-    TEMPLATECONTENT = other.TEMPLATECONTENT;
-    DESCRIPTION = other.DESCRIPTION;
-
-    return *this;
 }
 
 bool ReportRow::equals(const ReportRow* other) const

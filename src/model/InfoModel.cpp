@@ -24,7 +24,7 @@
 #include "InfoModel.h"
 
 InfoModel::InfoModel() :
-    Model<InfoTable, InfoData>()
+    TableFactory<InfoTable, InfoData>()
 {
 }
 

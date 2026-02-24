@@ -182,11 +182,11 @@ void TransactionShareDialog::DataToControls()
             if (m_translink_entry) {
                 const TransactionData* checking_entry = TransactionModel::instance().get_data_n(m_translink_entry->CHECKINGACCOUNTID);
                 if (checking_entry) {
-                    m_transaction_panel->TransactionDate(TransactionModel::getTransDateTime(checking_entry));
+                    m_transaction_panel->TransactionDate(TransactionModel::getTransDateTime(*checking_entry));
                     m_transaction_panel->SetTransactionValue(GetAmount(std::abs(m_share_entry->SHARENUMBER)
                         , m_share_entry->SHAREPRICE, m_share_entry->SHARECOMMISSION), true);
                     m_transaction_panel->SetTransactionAccount(AccountModel::get_id_name(checking_entry->ACCOUNTID));
-                    m_transaction_panel->SetTransactionStatus(TransactionModel::status_id(checking_entry));
+                    m_transaction_panel->SetTransactionStatus(TransactionModel::status_id(*checking_entry));
                     m_transaction_panel->SetTransactionPayee(checking_entry->PAYEEID);
                     m_transaction_panel->SetTransactionCategory(checking_entry->CATEGID);
                     if (!checking_entry->DELETEDTIME.IsEmpty()) {

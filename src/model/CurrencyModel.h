@@ -22,7 +22,7 @@
 #include <map>
 
 #include "base/defs.h"
-#include "util/_choices.h"
+#include "util/mmChoiceNameA.h"
 
 #include "table/CurrencyTable.h"
 #include "data/CurrencyData.h"
@@ -30,7 +30,7 @@
 #include "_ModelBase.h"
 #include "InfoModel.h" // detect base currency setting BASECURRENCYID
 
-class CurrencyModel : public Model<CurrencyTable, CurrencyData>
+class CurrencyModel : public TableFactory<CurrencyTable, CurrencyData>
 {
 public:
     CurrencyModel();
@@ -62,7 +62,7 @@ public:
     static const wxString TYPE_NAME_CRYPTO;
 
 private:
-    static ChoicesName TYPE_CHOICES;
+    static mmChoiceNameA TYPE_CHOICES;
 
 public:
     static const wxString type_name(int id);

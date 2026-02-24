@@ -62,7 +62,6 @@ struct CurrencyHistoryData
     void to_html_template(html_template& t) const;
     void destroy() { delete this; }
 
-    CurrencyHistoryData& operator= (const CurrencyHistoryData& other);
     CurrencyHistoryData& clone_from(const CurrencyHistoryData& other);
     bool equals(const CurrencyHistoryData* other) const;
     bool operator< (const CurrencyHistoryData& other) const { return id() < other.id(); }

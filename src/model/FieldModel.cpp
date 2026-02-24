@@ -23,7 +23,7 @@
 #include "FieldValueModel.h"
 #include "TransactionModel.h"
 
-ChoicesName FieldModel::TYPE_CHOICES = ChoicesName({
+mmChoiceNameA FieldModel::TYPE_CHOICES = mmChoiceNameA({
     { TYPE_ID_STRING,       _n("String") },
     { TYPE_ID_INTEGER,      _n("Integer") },
     { TYPE_ID_DECIMAL,      _n("Decimal") },
@@ -35,7 +35,7 @@ ChoicesName FieldModel::TYPE_CHOICES = ChoicesName({
 });
 
 FieldModel::FieldModel() :
-    Model<FieldTable, FieldData>()
+    TableFactory<FieldTable, FieldData>()
 {
 }
 

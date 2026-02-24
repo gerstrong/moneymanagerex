@@ -19,7 +19,7 @@
 #include "_ModelBase.h"
 #include "_all.h"
 
-ChoicesName ModelBase::REFTYPE_CHOICES = ChoicesName({
+mmChoiceNameA ModelBase::REFTYPE_CHOICES = mmChoiceNameA({
     { REFTYPE_ID_TRANSACTION,       _n("Transaction") },
     { REFTYPE_ID_STOCK,             _n("Stock") },
     { REFTYPE_ID_ASSET,             _n("Asset") },
@@ -49,3 +49,4 @@ const wxString TransactionModel::refTypeName      = ModelBase::REFTYPE_NAME_TRAN
 const wxString TransactionSplitModel::refTypeName = ModelBase::REFTYPE_NAME_TRANSACTIONSPLIT;
 const wxString ScheduledModel::refTypeName        = ModelBase::REFTYPE_NAME_BILLSDEPOSIT;
 const wxString ScheduledSplitModel::refTypeName   = ModelBase::REFTYPE_NAME_BILLSDEPOSITSPLIT;
+

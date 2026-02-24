@@ -78,7 +78,6 @@ struct AccountData
     void to_html_template(html_template& t) const;
     void destroy() { delete this; }
 
-    AccountData& operator= (const AccountData& other);
     AccountData& clone_from(const AccountData& other);
     bool equals(const AccountData* other) const;
     bool operator< (const AccountData& other) const { return id() < other.id(); }

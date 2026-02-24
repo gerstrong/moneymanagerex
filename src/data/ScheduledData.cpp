@@ -86,31 +86,6 @@ ScheduledData& ScheduledData::from_row(const ScheduledRow& row)
     return *this;
 }
 
-ScheduledData& ScheduledData::operator= (const ScheduledData& other)
-{
-    if (this == &other) return *this;
-
-    BDID = other.BDID;
-    ACCOUNTID = other.ACCOUNTID;
-    TOACCOUNTID = other.TOACCOUNTID;
-    PAYEEID = other.PAYEEID;
-    TRANSCODE = other.TRANSCODE;
-    TRANSAMOUNT = other.TRANSAMOUNT;
-    STATUS = other.STATUS;
-    TRANSACTIONNUMBER = other.TRANSACTIONNUMBER;
-    NOTES = other.NOTES;
-    CATEGID = other.CATEGID;
-    TRANSDATE = other.TRANSDATE;
-    FOLLOWUPID = other.FOLLOWUPID;
-    TOTRANSAMOUNT = other.TOTRANSAMOUNT;
-    REPEATS = other.REPEATS;
-    NEXTOCCURRENCEDATE = other.NEXTOCCURRENCEDATE;
-    NUMOCCURRENCES = other.NUMOCCURRENCES;
-    COLOR = other.COLOR;
-
-    return *this;
-}
-
 bool ScheduledData::equals(const ScheduledData* other) const
 {
     if ( BDID != other->BDID) return false;

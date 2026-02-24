@@ -1,4 +1,4 @@
-﻿// -*- C++ -*-
+// -*- C++ -*-
 //=============================================================================
 /**
  *      Copyright: (c) 2013-2026 Guan Lisheng (guanlisheng@gmail.com)
@@ -13,7 +13,7 @@
  *      @author [sqlite2cpp.py]
  *
  *      Revision History:
- *          AUTO GENERATED at 2026-02-23 02:42:42.918296.
+ *          AUTO GENERATED at 2026-02-24 10:36:10.572614.
  *          DO NOT EDIT!
  */
 //=============================================================================
@@ -119,19 +119,6 @@ void CurrencyHistoryRow::to_html_template(html_template& t) const
     t(L"CURRDATE") = CURRDATE;
     t(L"CURRVALUE") = CURRVALUE;
     t(L"CURRUPDTYPE") = CURRUPDTYPE.GetValue();
-}
-
-CurrencyHistoryRow& CurrencyHistoryRow::operator= (const CurrencyHistoryRow& other)
-{
-    if (this == &other) return *this;
-
-    CURRHISTID = other.CURRHISTID;
-    CURRENCYID = other.CURRENCYID;
-    CURRDATE = other.CURRDATE;
-    CURRVALUE = other.CURRVALUE;
-    CURRUPDTYPE = other.CURRUPDTYPE;
-
-    return *this;
 }
 
 bool CurrencyHistoryRow::equals(const CurrencyHistoryRow* other) const

@@ -25,7 +25,7 @@
 
 #include "_ModelBase.h"
 
-class BudgetPeriodModel : public Model<BudgetPeriodTable, BudgetPeriodData>
+class BudgetPeriodModel : public TableFactory<BudgetPeriodTable, BudgetPeriodData>
 {
 public:
     BudgetPeriodModel();

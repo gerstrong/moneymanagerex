@@ -27,7 +27,7 @@
 #include "panel/JournalPanel.h"
 
 SettingModel::SettingModel() :
-    Model<SettingTable, SettingData>()
+    TableFactory<SettingTable, SettingData>()
 {
 }
 

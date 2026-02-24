@@ -68,26 +68,6 @@ CurrencyData& CurrencyData::from_row(const CurrencyRow& row)
     return *this;
 }
 
-CurrencyData& CurrencyData::operator= (const CurrencyData& other)
-{
-    if (this == &other) return *this;
-
-    CURRENCYID = other.CURRENCYID;
-    CURRENCYNAME = other.CURRENCYNAME;
-    PFX_SYMBOL = other.PFX_SYMBOL;
-    SFX_SYMBOL = other.SFX_SYMBOL;
-    DECIMAL_POINT = other.DECIMAL_POINT;
-    GROUP_SEPARATOR = other.GROUP_SEPARATOR;
-    UNIT_NAME = other.UNIT_NAME;
-    CENT_NAME = other.CENT_NAME;
-    SCALE = other.SCALE;
-    BASECONVRATE = other.BASECONVRATE;
-    CURRENCY_SYMBOL = other.CURRENCY_SYMBOL;
-    CURRENCY_TYPE = other.CURRENCY_TYPE;
-
-    return *this;
-}
-
 bool CurrencyData::equals(const CurrencyData* other) const
 {
     if ( CURRENCYID != other->CURRENCYID) return false;

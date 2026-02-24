@@ -62,7 +62,6 @@ struct StockHistoryData
     void to_html_template(html_template& t) const;
     void destroy() { delete this; }
 
-    StockHistoryData& operator= (const StockHistoryData& other);
     StockHistoryData& clone_from(const StockHistoryData& other);
     bool equals(const StockHistoryData* other) const;
     bool operator< (const StockHistoryData& other) const { return id() < other.id(); }

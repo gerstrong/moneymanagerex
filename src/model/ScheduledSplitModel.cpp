@@ -22,7 +22,7 @@
 #include "TagLinkModel.h"
 
 ScheduledSplitModel::ScheduledSplitModel() :
-    Model<ScheduledSplitTable, ScheduledSplitData>()
+    TableFactory<ScheduledSplitTable, ScheduledSplitData>()
 {
 }
 

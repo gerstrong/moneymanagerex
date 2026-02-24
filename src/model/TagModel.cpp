@@ -22,7 +22,7 @@
 #include "TransactionModel.h"
 
 TagModel::TagModel() :
-    Model<TagTable, TagData>()
+    TableFactory<TagTable, TagData>()
 {
 }
 

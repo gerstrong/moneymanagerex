@@ -329,12 +329,11 @@ struct %s
 ''' % (fp['name'], fp['name'], cr)
 
         code += '''
-    %s& operator= (const %s& other);
     %s& clone_from(const %s& other);
     bool equals(const %s* other) const;
     bool operator< (const %s& other) const { return id() < other.id(); }
     bool operator< (const %s* other) const { return id() < other->id(); }
-''' % (cr, cr, cr, cr, cr, cr, cr)
+''' % (cr, cr, cr, cr, cr)
 
         # }}}
         # {{{ match
@@ -480,7 +479,7 @@ inline %s& %s::clone_from(const %s& other)
 
         file_name = self.file_basename + '.h'
         print ('Generate %s (source code for %s)' % (file_name, dt))
-        rfp = codecs.open(file_name, 'w', 'utf-8-sig')
+        rfp = codecs.open(file_name, 'w', 'utf-8')
         rfp.write(header
             .replace('@file', file_name)
             .replace('@brief', 'Interface to database table %s' % dt)
@@ -676,25 +675,6 @@ void %s::to_html_template(html_template& t) const
 '''
 
         # }}}
-        # {{{ *Row::operator=
-
-        code += '''
-%s& %s::operator= (const %s& other)
-{
-    if (this == &other) return *this;
-''' % (cr, cr, cr)
-
-        for f in fa:
-            code += '''
-    %s = other.%s;''' % (f['name'], f['name'])
-
-        code += '''
-
-    return *this;
-}
-'''
-
-        # }}}
         # {{{ *Row::equals
 
         code += '''
@@ -814,7 +794,7 @@ void %s::ensure_data()
 
         file_name = self.file_basename + '.cpp'
         print ('Generate %s (source code for %s)' % (file_name, dt))
-        rfp = codecs.open(file_name, 'w', 'utf-8-sig')
+        rfp = codecs.open(file_name, 'w', 'utf-8')
         rfp.write(header
             .replace('@file', file_name)
             .replace('@brief', 'Implementation of the interface to database table %s' % dt)
@@ -911,12 +891,11 @@ struct %s
 ''' % (fp['name'], fp['name'], cr, cd, cr, cd)
 
         code += '''
-    %s& operator= (const %s& other);
     %s& clone_from(const %s& other);
     bool equals(const %s* other) const;
     bool operator< (const %s& other) const { return id() < other.id(); }
     bool operator< (const %s* other) const { return id() < other->id(); }
-''' % (cd, cd, cd, cd, cd, cd, cd)
+''' % (cd, cd, cd, cd, cd)
 
         # }}}
         # {{{ SorterBy
@@ -1008,6 +987,10 @@ inline %s& %s::clone_from(const %s& other)
         # }}}
 
         file_name = self.class_basename + 'Data' + '.h'
+        if os.path.exists(file_name):
+            print ('WARNING: %s already exists!' % file_name)
+            return
+
         print ('Generate %s (sample data structure for %s)' % (file_name, dt))
         rfp = codecs.open(file_name, 'w', 'utf-8')
         rfp.write(header
@@ -1101,25 +1084,6 @@ inline %s& %s::clone_from(const %s& other)
 '''
 
         # }}}
-        # {{{ *Data::operator=
-
-        code += '''
-%s& %s::operator= (const %s& other)
-{
-    if (this == &other) return *this;
-''' % (cd, cd, cd)
-
-        for f in fa:
-            code += '''
-    %s = other.%s;''' % (f['name'], f['name'])
-
-        code += '''
-
-    return *this;
-}
-'''
-
-        # }}}
         # {{{ *Data::equals
 
         code += '''
@@ -1144,6 +1108,10 @@ bool %s::equals(const %s* other) const
         # }}}
 
         file_name = self.class_basename + 'Data' + '.cpp'
+        if os.path.exists(file_name):
+            print ('WARNING: %s already exists!' % file_name)
+            return
+
         print ('Generate %s (sample data structure for %s)' % (file_name, dt))
         rfp = codecs.open(file_name, 'w', 'utf-8')
         rfp.write(header

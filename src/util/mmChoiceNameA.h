@@ -22,7 +22,7 @@
 #include <unordered_map>
 #include "base/defs.h"
 
-class ChoicesName {
+class mmChoiceNameA {
 public:
     struct Item {
         int id;
@@ -36,14 +36,14 @@ private:
     std::unordered_map<wxString, int> name_id; // cache for findName()
 
 public:
-    ChoicesName(const std::vector<Item>& array_, bool nocase_ = true);
-    ~ChoicesName();
+    mmChoiceNameA(const std::vector<Item>& array_, bool nocase_ = true);
+    ~mmChoiceNameA();
 
     const wxString getName(int id) const;
     int findName(const wxString& name, int default_id);
 };
 
-class ChoicesKeyName {
+class mmChoiceKeyNameA {
 public:
     struct Item { int id; wxString key; wxString name; };
 
@@ -53,8 +53,8 @@ private:
     std::unordered_map<wxString, int> keyOrName_id;  // cache for findKeyName()
 
 public:
-    ChoicesKeyName(const std::vector<Item>& array_, bool nocase_ = true);
-    ~ChoicesKeyName();
+    mmChoiceKeyNameA(const std::vector<Item>& array_, bool nocase_ = true);
+    ~mmChoiceKeyNameA();
 
     const wxString getKey(int id) const;
     const wxString getName(int id) const;

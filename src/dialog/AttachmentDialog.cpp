@@ -228,7 +228,7 @@ void AttachmentDialog::AddAttachment(wxString FilePath)
         m_attachment_id = new_att_d.id();
 
         if (m_RefType == TransactionModel::refTypeName)
-            TransactionModel::instance().updateTimestamp(m_RefId);
+            TransactionModel::instance().save_timestamp(m_RefId);
     }
 
     fillControls();
@@ -268,7 +268,7 @@ void AttachmentDialog::EditAttachment()
     m_attachment_id = att_n->id();
 
     if (att_n->REFTYPE == TransactionModel::refTypeName)
-        TransactionModel::instance().updateTimestamp(att_n->REFID);
+        TransactionModel::instance().save_timestamp(att_n->REFID);
 
     fillControls();
 }
@@ -292,7 +292,7 @@ void AttachmentDialog::DeleteAttachment()
             AttachmentsFolder + m_PathSep + data_n->FILENAME
         )) {
             if (data_n->REFTYPE == TransactionModel::refTypeName)
-                TransactionModel::instance().updateTimestamp(data_n->REFID);
+                TransactionModel::instance().save_timestamp(data_n->REFID);
             AttachmentModel::instance().remove_depen(m_attachment_id);
         }
         m_attachment_id = -1;
@@ -555,7 +555,7 @@ bool mmAttachmentManage::DeleteAllAttachments(const wxString& RefType, int64 Ref
     }
 
     if (RefType == TransactionModel::refTypeName)
-        TransactionModel::instance().updateTimestamp(RefId);
+        TransactionModel::instance().save_timestamp(RefId);
 
     return true;
 }
@@ -598,9 +598,9 @@ bool mmAttachmentManage::RelocateAllAttachments(
     AttachmentModel::instance().save_data_a(attachment_a);
 
     if (OldRefType == TransactionModel::refTypeName)
-        TransactionModel::instance().updateTimestamp(OldRefId);
+        TransactionModel::instance().save_timestamp(OldRefId);
     if (NewRefType == TransactionModel::refTypeName)
-        TransactionModel::instance().updateTimestamp(NewRefId);
+        TransactionModel::instance().save_timestamp(NewRefId);
 
     return true;
 }
@@ -634,7 +634,7 @@ bool mmAttachmentManage::CloneAllAttachments(
     }
 
     if (refType == TransactionModel::refTypeName)
-        TransactionModel::instance().updateTimestamp(dstRefId);
+        TransactionModel::instance().save_timestamp(dstRefId);
 
     return true;
 }

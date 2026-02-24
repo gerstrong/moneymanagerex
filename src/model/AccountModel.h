@@ -21,7 +21,7 @@
 #pragma once
 
 #include "base/defs.h"
-#include "util/_choices.h"
+#include "util/mmChoiceNameA.h"
 #include "util/mmDateDay.h"
 
 #include "table/AccountTable.h"
@@ -34,7 +34,7 @@
 
 #include "uicontrols/navigatortypes.h"  // remove later
 
-class AccountModel : public Model<AccountTable, AccountData>
+class AccountModel : public TableFactory<AccountTable, AccountData>
 {
 public:
     enum STATUS_ID
@@ -47,7 +47,7 @@ public:
     static const wxString STATUS_NAME_CLOSED;
 
 public:
-    static ChoicesName STATUS_CHOICES;
+    static mmChoiceNameA STATUS_CHOICES;
 
 public:
     AccountModel();

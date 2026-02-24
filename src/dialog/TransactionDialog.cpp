@@ -302,7 +302,7 @@ void TransactionDialog::dataToControls()
         cbPayee_->UnsetToolTip();
         if (!m_transfer)
         {
-            if (!TransactionModel::foreignTransaction(m_journal_data)) {
+            if (!TransactionModel::is_foreign(m_journal_data)) {
                 m_journal_data.TOACCOUNTID = -1;
             }
 
@@ -744,7 +744,7 @@ bool TransactionDialog::ValidateData()
         }
         m_journal_data.TOTRANSAMOUNT = m_journal_data.TRANSAMOUNT;
         m_journal_data.PAYEEID = payee_n->PAYEEID;
-        if (!TransactionModel::foreignTransaction(m_journal_data)) {
+        if (!TransactionModel::is_foreign(m_journal_data)) {
             m_journal_data.TOACCOUNTID = -1;
         }
 
@@ -1258,7 +1258,7 @@ void TransactionDialog::OnOk(wxCommandEvent& event)
         trx_n = &trx_d;
     }
 
-    TransactionModel::putDataToTransaction(trx_n, m_journal_data);
+    TransactionModel::copy_from_trx(trx_n, m_journal_data);
     TransactionModel::instance().unsafe_save_trx(trx_n);
     m_journal_data.TRANSID = trx_n->id();
     m_journal_data.m_bdid = 0;

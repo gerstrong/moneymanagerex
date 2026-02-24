@@ -26,7 +26,7 @@
 #include "TransactionLinkModel.h"
 #include "TransactionShareModel.h"
 
-ChoicesName AccountModel::STATUS_CHOICES = ChoicesName({
+mmChoiceNameA AccountModel::STATUS_CHOICES = mmChoiceNameA({
     { STATUS_ID_OPEN,   _n("Open") },
     { STATUS_ID_CLOSED, _n("Closed") }
 });
@@ -35,7 +35,7 @@ const wxString AccountModel::STATUS_NAME_OPEN   = status_name(STATUS_ID_OPEN);
 const wxString AccountModel::STATUS_NAME_CLOSED = status_name(STATUS_ID_CLOSED);
 
 AccountModel::AccountModel() :
-    Model<AccountTable, AccountData>()
+    TableFactory<AccountTable, AccountData>()
 {
 }
 
@@ -139,7 +139,7 @@ bool AccountModel::remove_depen(int64 id)
         TransactionCol::ACCOUNTID(id),
         TransactionCol::TOACCOUNTID(id)
     )) {
-        if (TransactionModel::foreignTransaction(r)) {
+        if (TransactionModel::is_foreign(r)) {
             TransactionShareModel::RemoveShareEntry(r.TRANSID);
             TransactionLinkData tr = TransactionLinkModel::TranslinkRecord(r.TRANSID);
             TransactionLinkModel::instance().remove_depen(tr.TRANSLINKID);

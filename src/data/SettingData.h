@@ -60,7 +60,6 @@ struct SettingData
     void to_html_template(html_template& t) const;
     void destroy() { delete this; }
 
-    SettingData& operator= (const SettingData& other);
     SettingData& clone_from(const SettingData& other);
     bool equals(const SettingData* other) const;
     bool operator< (const SettingData& other) const { return id() < other.id(); }

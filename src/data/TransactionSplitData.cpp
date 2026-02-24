@@ -55,19 +55,6 @@ TransactionSplitData& TransactionSplitData::from_row(const TransactionSplitRow& 
     return *this;
 }
 
-TransactionSplitData& TransactionSplitData::operator= (const TransactionSplitData& other)
-{
-    if (this == &other) return *this;
-
-    SPLITTRANSID = other.SPLITTRANSID;
-    TRANSID = other.TRANSID;
-    CATEGID = other.CATEGID;
-    SPLITTRANSAMOUNT = other.SPLITTRANSAMOUNT;
-    NOTES = other.NOTES;
-
-    return *this;
-}
-
 bool TransactionSplitData::equals(const TransactionSplitData* other) const
 {
     if ( SPLITTRANSID != other->SPLITTRANSID) return false;

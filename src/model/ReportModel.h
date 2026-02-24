@@ -25,7 +25,7 @@
 
 #include "_ModelBase.h"
 
-class ReportModel : public Model<ReportTable, ReportData>
+class ReportModel : public TableFactory<ReportTable, ReportData>
 {
 public:
     ReportModel(); 

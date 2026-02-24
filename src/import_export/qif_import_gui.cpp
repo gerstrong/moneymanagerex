@@ -1228,7 +1228,7 @@ void mmQIFImportDialog::OnOk(wxCommandEvent& WXUNUSED(event))
 
         //Search for duplicates for transfers
         for (auto& trx : trx_a) {
-            if (!TransactionModel::is_transfer(&trx))
+            if (!TransactionModel::is_transfer(trx))
                 continue;
             wxDate dt;
             dt.ParseISODate(trx.TRANSDATE);
@@ -1517,7 +1517,7 @@ bool mmQIFImportDialog::completeTransaction(
                     break;
             }
 
-            ts_data.SPLITTRANSAMOUNT = (TransactionModel::is_deposit(trx) ? amount : -amount);
+            ts_data.SPLITTRANSAMOUNT = (TransactionModel::is_deposit(*trx) ? amount : -amount);
             ts_data.TRANSID = trx->TRANSID;
             ts_data.NOTES = memo;
             split.push_back(ts_data);

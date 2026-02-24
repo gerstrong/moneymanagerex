@@ -31,7 +31,7 @@
 #include "AssetModel.h"
 #include "AttachmentModel.h"
 
-class TransactionLinkModel : public Model<TransactionLinkTable, TransactionLinkData>
+class TransactionLinkModel : public TableFactory<TransactionLinkTable, TransactionLinkData>
 {
 public:
     enum CHECKING_TYPE { AS_INCOME_EXPENSE = 32701, AS_TRANSFER }; /* Transfers ignore accounting */

@@ -74,7 +74,6 @@ struct ScheduledData
     void to_html_template(html_template& t) const;
     void destroy() { delete this; }
 
-    ScheduledData& operator= (const ScheduledData& other);
     ScheduledData& clone_from(const ScheduledData& other);
     bool equals(const ScheduledData* other) const;
     bool operator< (const ScheduledData& other) const { return id() < other.id(); }

@@ -25,7 +25,7 @@
 
 #include "_ModelBase.h"
 
-class TagLinkModel : public Model<TagLinkTable, TagLinkData>
+class TagLinkModel : public TableFactory<TagLinkTable, TagLinkData>
 {
 public:
     TagLinkModel();

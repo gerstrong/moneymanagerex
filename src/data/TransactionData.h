@@ -73,7 +73,6 @@ struct TransactionData
     void to_html_template(html_template& t) const;
     void destroy() { delete this; }
 
-    TransactionData& operator= (const TransactionData& other);
     TransactionData& clone_from(const TransactionData& other);
     bool equals(const TransactionData* other) const;
     bool operator< (const TransactionData& other) const { return id() < other.id(); }

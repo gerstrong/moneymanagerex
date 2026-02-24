@@ -22,7 +22,7 @@
 #include "AttachmentModel.h"
 
 AttachmentModel::AttachmentModel() :
-    Model<AttachmentTable, AttachmentData>()
+    TableFactory<AttachmentTable, AttachmentData>()
 {
 }
 

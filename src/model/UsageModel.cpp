@@ -33,7 +33,7 @@ Copyright (C) 2018 Stefano Giorgio (stef145g)
 #include "report/_ReportBase.h"
 
 UsageModel::UsageModel() :
-    Model<UsageTable, UsageData>()
+    TableFactory<UsageTable, UsageData>()
 {
 }
 

@@ -27,7 +27,7 @@ Copyright (C) 2018 Stefano Giorgio (stef145g)
 
 class ReportBase;
 
-class UsageModel : public Model<UsageTable, UsageData>
+class UsageModel : public TableFactory<UsageTable, UsageData>
 {
 public:
     UsageModel();

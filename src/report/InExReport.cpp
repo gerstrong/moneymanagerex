@@ -51,7 +51,7 @@ wxString InExReport::getHTMLText()
         TransactionModel::STATUS(OP_NE, TransactionModel::STATUS_ID_VOID)
     )) {
         // Do not include asset or stock transfers
-        if (TransactionModel::foreignTransactionAsTransfer(transaction))
+        if (TransactionModel::is_foreignAsTransfer(transaction))
             continue;
 
         const AccountData *account = AccountModel::instance().get_data_n(transaction.ACCOUNTID);
@@ -155,7 +155,7 @@ wxString mmReportIncomeExpensesMonthly::getHTMLText()
         TransactionModel::STATUS(OP_NE, TransactionModel::STATUS_ID_VOID)
     )) {
         // Do not include asset or stock transfers
-        if (TransactionModel::foreignTransactionAsTransfer(transaction))
+        if (TransactionModel::is_foreignAsTransfer(transaction))
             continue;
 
         const AccountData *account = AccountModel::instance().get_data_n(transaction.ACCOUNTID);

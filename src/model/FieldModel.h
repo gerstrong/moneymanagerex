@@ -19,14 +19,14 @@
 #pragma once
 
 #include "base/defs.h"
-#include "util/_choices.h"
+#include "util/mmChoiceNameA.h"
 
 #include "table/FieldTable.h"
 #include "data/FieldData.h"
 
 #include "_ModelBase.h"
 
-class FieldModel : public Model<FieldTable, FieldData>
+class FieldModel : public TableFactory<FieldTable, FieldData>
 {
 public:
     enum TYPE_ID
@@ -44,7 +44,7 @@ public:
     };
 
 private:
-    static ChoicesName TYPE_CHOICES;
+    static mmChoiceNameA TYPE_CHOICES;
 
 public:
     FieldModel();

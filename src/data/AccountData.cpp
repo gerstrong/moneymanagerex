@@ -91,35 +91,6 @@ AccountData& AccountData::from_row(const AccountRow& row)
     return *this;
 }
 
-AccountData& AccountData::operator= (const AccountData& other)
-{
-    if (this == &other) return *this;
-
-    ACCOUNTID = other.ACCOUNTID;
-    ACCOUNTNAME = other.ACCOUNTNAME;
-    ACCOUNTTYPE = other.ACCOUNTTYPE;
-    ACCOUNTNUM = other.ACCOUNTNUM;
-    STATUS = other.STATUS;
-    NOTES = other.NOTES;
-    HELDAT = other.HELDAT;
-    WEBSITE = other.WEBSITE;
-    CONTACTINFO = other.CONTACTINFO;
-    ACCESSINFO = other.ACCESSINFO;
-    INITIALBAL = other.INITIALBAL;
-    INITIALDATE = other.INITIALDATE;
-    FAVORITEACCT = other.FAVORITEACCT;
-    CURRENCYID = other.CURRENCYID;
-    STATEMENTLOCKED = other.STATEMENTLOCKED;
-    STATEMENTDATE = other.STATEMENTDATE;
-    MINIMUMBALANCE = other.MINIMUMBALANCE;
-    CREDITLIMIT = other.CREDITLIMIT;
-    INTERESTRATE = other.INTERESTRATE;
-    PAYMENTDUEDATE = other.PAYMENTDUEDATE;
-    MINIMUMPAYMENT = other.MINIMUMPAYMENT;
-
-    return *this;
-}
-
 bool AccountData::equals(const AccountData* other) const
 {
     if ( ACCOUNTID != other->ACCOUNTID) return false;

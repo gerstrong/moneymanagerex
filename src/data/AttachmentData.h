@@ -62,7 +62,6 @@ struct AttachmentData
     void to_html_template(html_template& t) const;
     void destroy() { delete this; }
 
-    AttachmentData& operator= (const AttachmentData& other);
     AttachmentData& clone_from(const AttachmentData& other);
     bool equals(const AttachmentData* other) const;
     bool operator< (const AttachmentData& other) const { return id() < other.id(); }

@@ -16,26 +16,26 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  ********************************************************/
 
-#include "_choices.h"
+#include "mmChoiceNameA.h"
 
-ChoicesName::ChoicesName(const std::vector<Item>& array_, bool nocase_) :
+mmChoiceNameA::mmChoiceNameA(const std::vector<Item>& array_, bool nocase_) :
     array(array_),
     nocase(nocase_)
 {
 }
 
-ChoicesName::~ChoicesName()
+mmChoiceNameA::~mmChoiceNameA()
 {
 }
 
-const wxString ChoicesName::getName(int id) const
+const wxString mmChoiceNameA::getName(int id) const
 {
     wxASSERT(id >= 0 && id < static_cast<int>(array.size()));
     wxASSERT(array[id].id == id);
     return array[id].name;
 }
 
-int ChoicesName::findName(const wxString& name, int default_id)
+int mmChoiceNameA::findName(const wxString& name, int default_id)
 {
     if (const auto it = name_id.find(name); it != name_id.end())
         return it->second;
@@ -51,31 +51,31 @@ int ChoicesName::findName(const wxString& name, int default_id)
 
 //----------------------------------------------------------------------------
 
-ChoicesKeyName::ChoicesKeyName(const std::vector<Item>& array_, bool nocase_) :
+mmChoiceKeyNameA::mmChoiceKeyNameA(const std::vector<Item>& array_, bool nocase_) :
     array(array_),
     nocase(nocase_)
 {
 }
 
-ChoicesKeyName::~ChoicesKeyName()
+mmChoiceKeyNameA::~mmChoiceKeyNameA()
 {
 }
 
-const wxString ChoicesKeyName::getKey(int id) const
+const wxString mmChoiceKeyNameA::getKey(int id) const
 {
     wxASSERT(id >= 0 && id < static_cast<int>(array.size()));
     wxASSERT(array[id].id == id);
     return array[id].key;
 }
 
-const wxString ChoicesKeyName::getName(int id) const
+const wxString mmChoiceKeyNameA::getName(int id) const
 {
     wxASSERT(id >= 0 && id < static_cast<int>(array.size()));
     wxASSERT(array[id].id == id);
     return array[id].name;
 }
 
-int ChoicesKeyName::findKeyName(const wxString& keyOrName, int default_id)
+int mmChoiceKeyNameA::findKeyName(const wxString& keyOrName, int default_id)
 {
     if (const auto it = keyOrName_id.find(keyOrName); it != keyOrName_id.end())
         return it->second;

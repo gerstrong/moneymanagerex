@@ -22,7 +22,7 @@
 #include "TagModel.h"
 
 TagLinkModel::TagLinkModel() :
-    Model<TagLinkTable, TagLinkData>()
+    TableFactory<TagLinkTable, TagLinkData>()
 {
 }
 
@@ -92,17 +92,17 @@ void TagLinkModel::DeleteAllTags(const wxString& refType, int64 refID)
 int TagLinkModel::update(const DataA& rows, const wxString& refType, int64 refId)
 {
     TagLinkModel::instance().Savepoint();
-    bool updateTimestamp = false;
+    bool save_timestamp = false;
     std::map<int, int64> row_id_map;
 
     DataA links = instance().find(
         TagLinkCol::REFTYPE(refType), TagLinkCol::REFID(refId)
     );
     if (links.size() != rows.size())
-        updateTimestamp = true;
+        save_timestamp = true;
 
     for (const auto& link : links) {
-        if (!updateTimestamp) {
+        if (!save_timestamp) {
             bool match = false;
             for (decltype(rows.size()) i = 0; i < rows.size(); i++) {
                 match = (rows[i].TAGID == link.TAGID && row_id_map.find(i) == row_id_map.end());
@@ -111,7 +111,7 @@ int TagLinkModel::update(const DataA& rows, const wxString& refType, int64 refId
                     break;
                 }
             }
-            updateTimestamp = updateTimestamp || !match;
+            save_timestamp = save_timestamp || !match;
         }
 
         instance().remove_depen(link.TAGLINKID);
@@ -125,11 +125,11 @@ int TagLinkModel::update(const DataA& rows, const wxString& refType, int64 refId
         instance().add_data_n(new_gl_d);
     }
 
-    if (updateTimestamp) {
+    if (save_timestamp) {
         if (refType == TransactionModel::refTypeName)
-            TransactionModel::instance().updateTimestamp(refId);
+            TransactionModel::instance().save_timestamp(refId);
         else if (refType == TransactionSplitModel::refTypeName)
-            TransactionModel::instance().updateTimestamp(
+            TransactionModel::instance().save_timestamp(
                 TransactionSplitModel::instance().get_data_n(refId)->TRANSID
             );
     }

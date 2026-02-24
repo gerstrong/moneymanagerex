@@ -19,7 +19,7 @@
 #pragma once
 
 #include "base/defs.h"
-#include "util/_choices.h"
+#include "util/mmChoiceNameA.h"
 
 struct NavigatorTypesInfo {
     int type;

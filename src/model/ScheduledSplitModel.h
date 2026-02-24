@@ -25,7 +25,7 @@
 
 #include "_ModelBase.h"
 
-class ScheduledSplitModel : public Model<ScheduledSplitTable, ScheduledSplitData>
+class ScheduledSplitModel : public TableFactory<ScheduledSplitTable, ScheduledSplitData>
 {
 public:
     ScheduledSplitModel();

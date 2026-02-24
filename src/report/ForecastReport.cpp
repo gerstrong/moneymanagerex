@@ -54,7 +54,7 @@ wxString ForecastReport::getHTMLText()
     }
 
     for (const auto & trx : all_trans) {
-        if (TransactionModel::type_id(trx) == TransactionModel::TYPE_ID_TRANSFER || TransactionModel::foreignTransactionAsTransfer(trx))
+        if (TransactionModel::type_id(trx) == TransactionModel::TYPE_ID_TRANSFER || TransactionModel::is_foreignAsTransfer(trx))
             continue;
         const double convRate = CurrencyHistoryModel::getDayRate(
             AccountModel::instance().get_data_n(trx.ACCOUNTID)->CURRENCYID,

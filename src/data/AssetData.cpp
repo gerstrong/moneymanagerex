@@ -67,25 +67,6 @@ AssetData& AssetData::from_row(const AssetRow& row)
     return *this;
 }
 
-AssetData& AssetData::operator= (const AssetData& other)
-{
-    if (this == &other) return *this;
-
-    ASSETID = other.ASSETID;
-    STARTDATE = other.STARTDATE;
-    ASSETNAME = other.ASSETNAME;
-    ASSETSTATUS = other.ASSETSTATUS;
-    CURRENCYID = other.CURRENCYID;
-    VALUECHANGEMODE = other.VALUECHANGEMODE;
-    VALUE = other.VALUE;
-    VALUECHANGE = other.VALUECHANGE;
-    NOTES = other.NOTES;
-    VALUECHANGERATE = other.VALUECHANGERATE;
-    ASSETTYPE = other.ASSETTYPE;
-
-    return *this;
-}
-
 bool AssetData::equals(const AssetData* other) const
 {
     if ( ASSETID != other->ASSETID) return false;

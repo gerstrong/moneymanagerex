@@ -28,7 +28,7 @@
 
 #include "_ModelBase.h"
 
-class InfoModel : public Model<InfoTable, InfoData>
+class InfoModel : public TableFactory<InfoTable, InfoData>
 {
 public:
     InfoModel();

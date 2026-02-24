@@ -27,7 +27,7 @@
 #include "CategoryModel.h"
 #include "PreferencesModel.h"
 
-ChoicesName BudgetModel::PERIOD_CHOICES = ChoicesName({
+mmChoiceNameA BudgetModel::PERIOD_CHOICES = mmChoiceNameA({
     { PERIOD_ID_NONE,       _n("None") },
     { PERIOD_ID_WEEKLY,     _n("Weekly") },
     { PERIOD_ID_BIWEEKLY,   _n("Fortnightly") },
@@ -40,7 +40,7 @@ ChoicesName BudgetModel::PERIOD_CHOICES = ChoicesName({
 });
 
 BudgetModel::BudgetModel() :
-    Model<BudgetTable, BudgetData>()
+    TableFactory<BudgetTable, BudgetData>()
 {
 }
 

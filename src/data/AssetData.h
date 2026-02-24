@@ -68,7 +68,6 @@ struct AssetData
     void to_html_template(html_template& t) const;
     void destroy() { delete this; }
 
-    AssetData& operator= (const AssetData& other);
     AssetData& clone_from(const AssetData& other);
     bool equals(const AssetData* other) const;
     bool operator< (const AssetData& other) const { return id() < other.id(); }

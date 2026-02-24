@@ -1,4 +1,4 @@
-﻿// -*- C++ -*-
+// -*- C++ -*-
 //=============================================================================
 /**
  *      Copyright: (c) 2013-2026 Guan Lisheng (guanlisheng@gmail.com)
@@ -13,7 +13,7 @@
  *      @author [sqlite2cpp.py]
  *
  *      Revision History:
- *          AUTO GENERATED at 2026-02-23 02:42:42.918296.
+ *          AUTO GENERATED at 2026-02-24 10:36:10.572614.
  *          DO NOT EDIT!
  */
 //=============================================================================
@@ -110,18 +110,6 @@ void TransactionLinkRow::to_html_template(html_template& t) const
     t(L"CHECKINGACCOUNTID") = CHECKINGACCOUNTID.GetValue();
     t(L"LINKTYPE") = LINKTYPE;
     t(L"LINKRECORDID") = LINKRECORDID.GetValue();
-}
-
-TransactionLinkRow& TransactionLinkRow::operator= (const TransactionLinkRow& other)
-{
-    if (this == &other) return *this;
-
-    TRANSLINKID = other.TRANSLINKID;
-    CHECKINGACCOUNTID = other.CHECKINGACCOUNTID;
-    LINKTYPE = other.LINKTYPE;
-    LINKRECORDID = other.LINKRECORDID;
-
-    return *this;
 }
 
 bool TransactionLinkRow::equals(const TransactionLinkRow* other) const

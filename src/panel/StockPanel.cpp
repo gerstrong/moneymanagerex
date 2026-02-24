@@ -344,10 +344,10 @@ void StockPanel::BindListEvents(wxListCtrl* listCtrl)
         // Re-sort the list
         listCtrl->SortItems([](wxIntPtr item1, wxIntPtr item2, wxIntPtr) -> int {
             auto date1 = TransactionModel::getTransDateTime(
-                TransactionModel::instance().get_data_n(item1)
+                *TransactionModel::instance().get_data_n(item1)
             );
             auto date2 = TransactionModel::getTransDateTime(
-                TransactionModel::instance().get_data_n(item2)
+                *TransactionModel::instance().get_data_n(item2)
             );
             return date1.IsEarlierThan(date2) ? -1 : (date1.IsLaterThan(date2) ? 1 : 0);
         }, 0);

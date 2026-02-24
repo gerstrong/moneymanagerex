@@ -1,4 +1,4 @@
-﻿// -*- C++ -*-
+// -*- C++ -*-
 //=============================================================================
 /**
  *      Copyright: (c) 2013-2026 Guan Lisheng (guanlisheng@gmail.com)
@@ -13,7 +13,7 @@
  *      @author [sqlite2cpp.py]
  *
  *      Revision History:
- *          AUTO GENERATED at 2026-02-23 02:42:42.918296.
+ *          AUTO GENERATED at 2026-02-24 10:36:10.572614.
  *          DO NOT EDIT!
  */
 //=============================================================================
@@ -170,25 +170,6 @@ void StockRow::to_html_template(html_template& t) const
     t(L"CURRENTPRICE") = CURRENTPRICE;
     t(L"VALUE") = VALUE;
     t(L"COMMISSION") = COMMISSION;
-}
-
-StockRow& StockRow::operator= (const StockRow& other)
-{
-    if (this == &other) return *this;
-
-    STOCKID = other.STOCKID;
-    HELDAT = other.HELDAT;
-    PURCHASEDATE = other.PURCHASEDATE;
-    STOCKNAME = other.STOCKNAME;
-    SYMBOL = other.SYMBOL;
-    NUMSHARES = other.NUMSHARES;
-    PURCHASEPRICE = other.PURCHASEPRICE;
-    NOTES = other.NOTES;
-    CURRENTPRICE = other.CURRENTPRICE;
-    VALUE = other.VALUE;
-    COMMISSION = other.COMMISSION;
-
-    return *this;
 }
 
 bool StockRow::equals(const StockRow* other) const

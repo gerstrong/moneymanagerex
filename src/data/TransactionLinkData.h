@@ -61,7 +61,6 @@ struct TransactionLinkData
     void to_html_template(html_template& t) const;
     void destroy() { delete this; }
 
-    TransactionLinkData& operator= (const TransactionLinkData& other);
     TransactionLinkData& clone_from(const TransactionLinkData& other);
     bool equals(const TransactionLinkData* other) const;
     bool operator< (const TransactionLinkData& other) const { return id() < other.id(); }

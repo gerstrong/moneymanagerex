@@ -23,7 +23,7 @@
 #include "FieldValueModel.h"
 
 FieldValueModel::FieldValueModel() :
-    Model<FieldValueTable, FieldValueData>()
+    TableFactory<FieldValueTable, FieldValueData>()
 {
 }
 

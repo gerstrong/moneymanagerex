@@ -29,28 +29,10 @@
  // TODO: Move attachment management outside of AttachmentDialog
 #include "dialog/AttachmentDialog.h"
 
-ScheduledModel::ScheduledModel() :
-    Model<ScheduledTable, ScheduledData>(),
-    m_autoExecute (REPEAT_AUTO_NONE),
-    m_requireExecution (false),
-    m_allowExecution (false)
-{
-}
+// -- static methods --
 
-ScheduledModel::~ScheduledModel()
-{
-}
-
-/** Return the static instance of ScheduledModel table */
-ScheduledModel& ScheduledModel::instance()
-{
-    return Singleton<ScheduledModel>::instance();
-}
-
-/**
-* Initialize the global ScheduledModel table.
-* Reset the ScheduledModel table or create the table if it does not exist.
-*/
+// Initialize the global ScheduledModel table.
+// Reset the ScheduledModel table or create the table if it does not exist.
 ScheduledModel& ScheduledModel::instance(wxSQLite3Database* db)
 {
     ScheduledModel& ins = Singleton<ScheduledModel>::instance();
@@ -61,53 +43,185 @@ ScheduledModel& ScheduledModel::instance(wxSQLite3Database* db)
     return ins;
 }
 
-wxDate ScheduledModel::getTransDateTime(const Data* r)
+// Return the static instance of ScheduledModel table
+ScheduledModel& ScheduledModel::instance()
 {
-    return parseDateTime(r->TRANSDATE);
-}
-wxDate ScheduledModel::getTransDateTime(const Data& r)
-{
-    return parseDateTime(r.TRANSDATE);
+    return Singleton<ScheduledModel>::instance();
 }
 
-wxDate ScheduledModel::NEXTOCCURRENCEDATE(const Data* r)
+TransactionModel::TYPE_ID ScheduledModel::type_id(const Data& this_d)
 {
-    return parseDateTime(r->NEXTOCCURRENCEDATE);
-}
-wxDate ScheduledModel::NEXTOCCURRENCEDATE(const Data& r)
-{
-    return parseDateTime(r.NEXTOCCURRENCEDATE);
+    return static_cast<TransactionModel::TYPE_ID>(
+        TransactionModel::type_id(this_d.TRANSCODE)
+    );
 }
 
-TransactionModel::TYPE_ID ScheduledModel::type_id(const Data* r)
+TransactionModel::STATUS_ID ScheduledModel::status_id(const Data& this_d)
 {
-    return static_cast<TransactionModel::TYPE_ID>(TransactionModel::type_id(r->TRANSCODE));
-}
-TransactionModel::TYPE_ID ScheduledModel::type_id(const Data& r)
-{
-    return type_id(&r);
+    return static_cast<TransactionModel::STATUS_ID>(
+        TransactionModel::status_id(this_d.STATUS)
+    );
 }
 
-TransactionModel::STATUS_ID ScheduledModel::status_id(const Data* r)
+wxDate ScheduledModel::getTransDateTime(const Data& this_d)
 {
-    return static_cast<TransactionModel::STATUS_ID>(TransactionModel::status_id(r->STATUS));
-}
-TransactionModel::STATUS_ID ScheduledModel::status_id(const Data& r)
-{
-    return status_id(&r);
+    return parseDateTime(this_d.TRANSDATE);
 }
 
-/**
-* Remove the Data record instance from memory and the database
-* including any splits associated with the Data Record.
-*/
-bool ScheduledModel::remove_depen(int64 id)
+wxDate ScheduledModel::NEXTOCCURRENCEDATE(const Data& this_d)
 {
-    for (auto &item : ScheduledModel::split(get_data_n(id)))
-        ScheduledSplitModel::instance().remove_depen(item.SPLITTRANSID);
-    // Delete tags for the scheduled transaction
-    TagLinkModel::instance().DeleteAllTags(this->refTypeName, id);
-    return remove_data(id);
+    return parseDateTime(this_d.NEXTOCCURRENCEDATE);
+}
+
+bool ScheduledModel::encode_repeat_num(Data& this_d, const RepeatNum& rn)
+{
+    if (rn.freq == REPEAT_FREQ_INVALID)
+        return false;
+
+    this_d.REPEATS = rn.exec * BD_REPEATS_MULTIPLEX_BASE + rn.freq;
+    this_d.NUMOCCURRENCES = (
+        rn.freq >= ScheduledModel::REPEAT_FREQ_IN_X_DAYS &&
+        rn.freq <= ScheduledModel::REPEAT_FREQ_EVERY_X_MONTHS
+    ) ? rn.x : rn.num;
+
+    return true;
+}
+
+bool ScheduledModel::decode_repeat_num(const Data& this_d, RepeatNum& rn)
+{
+    rn.exec = static_cast<REPEAT_EXEC>(this_d.REPEATS.GetValue() / BD_REPEATS_MULTIPLEX_BASE);
+    rn.freq = static_cast<REPEAT_FREQ>(this_d.REPEATS.GetValue() % BD_REPEATS_MULTIPLEX_BASE);
+    rn.num  = static_cast<int>(this_d.NUMOCCURRENCES.GetValue());
+    rn.x    = REPEAT_X_VOID;
+
+    if (rn.freq == REPEAT_FREQ_ONCE) {
+        rn.num = 1;
+    }
+    else if (rn.freq >= REPEAT_FREQ_IN_X_DAYS && rn.freq <= REPEAT_FREQ_IN_X_MONTHS) {
+        rn.x = rn.num > 0 ? rn.num : REPEAT_X_INVALID;
+        rn.num = 2;
+    }
+    else if (rn.freq >= REPEAT_FREQ_EVERY_X_DAYS && rn.freq <= REPEAT_FREQ_EVERY_X_MONTHS) {
+        rn.x = rn.num > 0 ? rn.num : REPEAT_X_INVALID;
+        rn.num = REPEAT_NUM_INFINITY;
+    }
+    else if (rn.num < 1 && rn.num != REPEAT_NUM_INFINITY) {
+        rn.num = REPEAT_NUM_INVALID;
+    }
+
+    return (rn.freq >= 0 && rn.freq < REPEAT_FREQ_size &&
+        rn.num != REPEAT_NUM_INVALID && rn.x != REPEAT_X_INVALID
+    );
+}
+
+bool ScheduledModel::next_repeat_num(RepeatNum& rn)
+{
+    if (rn.freq == REPEAT_FREQ_INVALID)
+        return false;
+
+    if (rn.num > 0)
+        --rn.num;
+
+    if (rn.num == 0)
+        return false;
+
+    // change REPEAT_FREQ_IN_X_* to REPEAT_FREQ_ONCE
+    if (rn.x != REPEAT_X_VOID && rn.num == 1)
+        rn.freq = REPEAT_FREQ_ONCE;
+
+    return true;
+}
+
+bool ScheduledModel::requires_execution(const Data& this_d)
+{
+    return (
+        ScheduledModel::NEXTOCCURRENCEDATE(this_d)
+            .Subtract(wxDate::Today()).GetSeconds().GetValue()
+        / 86400 < 1
+    );
+}
+
+const wxDateTime ScheduledModel::nextOccurDate(
+    wxDateTime this_date,
+    const RepeatNum& rn,
+    bool reverse
+) {
+    int k = reverse ? -1 : 1;
+
+    wxDateTime next_date = this_date;
+    if (rn.freq == REPEAT_FREQ_WEEKLY)
+        next_date.Add(wxTimeSpan::Weeks(k));
+    else if (rn.freq == REPEAT_FREQ_BI_WEEKLY)
+        next_date.Add(wxTimeSpan::Weeks(2 * k));
+    else if (rn.freq == REPEAT_FREQ_MONTHLY)
+        next_date.Add(wxDateSpan::Months(k));
+    else if (rn.freq == REPEAT_FREQ_BI_MONTHLY)
+        next_date.Add(wxDateSpan::Months(2 * k));
+    else if (rn.freq == REPEAT_FREQ_FOUR_MONTHLY)
+        next_date.Add(wxDateSpan::Months(4 * k));
+    else if (rn.freq == REPEAT_FREQ_HALF_YEARLY)
+        next_date.Add(wxDateSpan::Months(6 * k));
+    else if (rn.freq == REPEAT_FREQ_YEARLY)
+        next_date.Add(wxDateSpan::Years(k));
+    else if (rn.freq == REPEAT_FREQ_QUARTERLY)
+        next_date.Add(wxDateSpan::Months(3 * k));
+    else if (rn.freq == REPEAT_FREQ_FOUR_WEEKLY)
+        next_date.Add(wxDateSpan::Weeks(4 * k));
+    else if (rn.freq == REPEAT_FREQ_DAILY)
+        next_date.Add(wxDateSpan::Days(k));
+    else if (rn.freq == REPEAT_FREQ_IN_X_DAYS)
+        next_date.Add(wxDateSpan::Days(rn.x * k));
+    else if (rn.freq == REPEAT_FREQ_IN_X_MONTHS)
+        next_date.Add(wxDateSpan::Months(rn.x * k));
+    else if (rn.freq == REPEAT_FREQ_EVERY_X_DAYS)
+        next_date.Add(wxDateSpan::Days(rn.x * k));
+    else if (rn.freq == REPEAT_FREQ_EVERY_X_MONTHS)
+        next_date.Add(wxDateSpan::Months(rn.x * k));
+    else if (rn.freq == REPEAT_FREQ_MONTHLY_LAST_DAY ||
+             rn.freq == REPEAT_FREQ_MONTHLY_LAST_BUSINESS_DAY)
+    {
+        next_date.Add(wxDateSpan::Months(k));
+        next_date.SetToLastMonthDay(next_date.GetMonth(), next_date.GetYear());
+        if (rn.freq == REPEAT_FREQ_MONTHLY_LAST_BUSINESS_DAY) {
+            // last weekday of month
+            if (next_date.GetWeekDay() == wxDateTime::Sun ||
+                next_date.GetWeekDay() == wxDateTime::Sat
+            )
+                next_date.SetToPrevWeekDay(wxDateTime::Fri);
+        }
+    }
+    wxLogDebug("init date: %s -> next date: %s",
+        this_date.FormatISOCombined(), next_date.FormatISOCombined()
+    );
+    return next_date;
+}
+
+wxArrayString ScheduledModel::unroll(const Data& sched_d, const wxString end_date, int limit)
+{
+    wxArrayString dates;
+
+    RepeatNum rn;
+    if (!decode_repeat_num(sched_d, rn))
+        return dates;
+
+    wxString date = sched_d.TRANSDATE;
+    while (date <= end_date && limit != 0) {
+        if (limit > 0)
+            --limit;
+        dates.push_back(date);
+
+        if (rn.num == 1)
+            break;
+
+        wxDateTime date_curr;
+        date_curr.ParseDateTime(date) || date_curr.ParseDate(date);
+        const wxDateTime& date_next = nextOccurDate(date_curr, rn);
+        date = date_next.FormatISOCombined();
+
+        next_repeat_num(rn);
+    }
+
+    return dates;
 }
 
 ScheduledCol::STATUS ScheduledModel::STATUS(OP op, TransactionModel::STATUS_ID status)
@@ -120,66 +234,43 @@ ScheduledCol::TRANSCODE ScheduledModel::TRANSCODE(OP op, TransactionModel::TYPE_
     return ScheduledCol::TRANSCODE(op, TransactionModel::type_name(type));
 }
 
-const ScheduledSplitModel::DataA ScheduledModel::split(const Data* r)
+const ScheduledSplitModel::DataA ScheduledModel::split(const Data& sched_d)
 {
     return ScheduledSplitModel::instance().find(
-        ScheduledSplitCol::TRANSID(r->BDID));
+        ScheduledSplitCol::TRANSID(sched_d.BDID)
+    );
 }
 
-const ScheduledSplitModel::DataA ScheduledModel::split(const Data& r)
-{
-    return split(&r);
-}
-
-const TagLinkModel::DataA ScheduledModel::taglink(const Data* r)
+const TagLinkModel::DataA ScheduledModel::taglink(const Data& sched_d)
 {
     return TagLinkModel::instance().find(
         TagLinkCol::REFTYPE(ScheduledModel::refTypeName),
-        TagLinkCol::REFID(r->BDID));
+        TagLinkCol::REFID(sched_d.BDID)
+    );
 }
 
-const TagLinkModel::DataA ScheduledModel::taglink(const Data& r)
+// -- constructor --
+
+ScheduledModel::ScheduledModel() :
+    TableFactory<ScheduledTable, ScheduledData>()
 {
-    return taglink(&r);
 }
 
-void ScheduledModel::decode_fields(const Data& q1)
+ScheduledModel::~ScheduledModel()
 {
-    // DeMultiplex the Auto Executable fields from the db entry: REPEATS
-    m_autoExecute = q1.REPEATS.GetValue() / BD_REPEATS_MULTIPLEX_BASE;
-    m_allowExecution = true;
-
-    int repeats = q1.REPEATS.GetValue() % BD_REPEATS_MULTIPLEX_BASE;
-    int numRepeats = q1.NUMOCCURRENCES.GetValue();
-    if (repeats >= ScheduledModel::REPEAT_IN_X_DAYS && repeats <= ScheduledModel::REPEAT_EVERY_X_MONTHS && numRepeats < 1)
-    {
-        // old inactive entry
-        m_autoExecute = REPEAT_AUTO_NONE;
-        m_allowExecution = false;
-    }
-
-    m_requireExecution = (ScheduledModel::NEXTOCCURRENCEDATE(&q1)
-        .Subtract(wxDate::Today()).GetSeconds().GetValue() / 86400 < 1);
 }
 
-bool ScheduledModel::autoExecuteManual()
-{
-    return m_autoExecute == REPEAT_AUTO_MANUAL;
-}
+// -- instance methods --
 
-bool ScheduledModel::autoExecuteSilent()
+// Remove the Data record instance from memory and the database
+// including any splits associated with the Data Record.
+bool ScheduledModel::remove_depen(int64 id)
 {
-    return m_autoExecute == REPEAT_AUTO_SILENT;
-}
-
-bool ScheduledModel::requireExecution()
-{
-    return m_requireExecution;
-}
-
-bool ScheduledModel::allowExecution()
-{
-    return m_allowExecution;
+    for (auto &item : ScheduledModel::split(*get_data_n(id)))
+        ScheduledSplitModel::instance().remove_depen(item.SPLITTRANSID);
+    // Delete tags for the scheduled transaction
+    TagLinkModel::instance().DeleteAllTags(this->refTypeName, id);
+    return remove_data(id);
 }
 
 bool ScheduledModel::AllowTransaction(const Data& r)
@@ -233,140 +324,34 @@ bool ScheduledModel::AllowTransaction(const Data& r)
 
 void ScheduledModel::completeBDInSeries(int64 bdID)
 {
-    const Data* sched_n = get_data_n(bdID);
+    Data* sched_n = unsafe_get_data_n(bdID);
     if (!sched_n)
         return;
-    Data sched_d = *sched_n;
 
-    // DeMultiplex the Auto Executable fields.
-    int repeats = sched_d.REPEATS.GetValue() % BD_REPEATS_MULTIPLEX_BASE;
-    int numRepeats = sched_d.NUMOCCURRENCES.GetValue();
-
-    if (repeats == REPEAT_TYPE::REPEAT_ONCE || (
-        (repeats < REPEAT_TYPE::REPEAT_IN_X_DAYS || repeats > REPEAT_TYPE::REPEAT_EVERY_X_MONTHS) && numRepeats == 1
-    )) {
+    RepeatNum rn;
+    if (!decode_repeat_num(*sched_n, rn) || rn.num == 1) {
         mmAttachmentManage::DeleteAllAttachments(this->refTypeName, bdID);
         remove_depen(bdID);
         return;
     }
 
     wxDateTime transdate;
-    transdate.ParseDateTime(sched_d.TRANSDATE) || transdate.ParseDate(sched_d.TRANSDATE);
+    transdate.ParseDateTime(sched_n->TRANSDATE) || transdate.ParseDate(sched_n->TRANSDATE);
     const wxDateTime& payment_date_current = transdate;
-    const wxDateTime& payment_date_update = nextOccurDate(repeats, numRepeats, payment_date_current);
-    sched_d.TRANSDATE = payment_date_update.FormatISOCombined();
+    const wxDateTime& payment_date_update = nextOccurDate(payment_date_current, rn);
+    sched_n->TRANSDATE = payment_date_update.FormatISOCombined();
 
-    const wxDateTime& due_date_current = NEXTOCCURRENCEDATE(sched_d);
-    const wxDateTime& due_date_update = nextOccurDate(repeats, numRepeats, due_date_current);
-    sched_d.NEXTOCCURRENCEDATE = due_date_update.FormatISODate();
+    const wxDateTime& due_date_current = NEXTOCCURRENCEDATE(*sched_n);
+    const wxDateTime& due_date_update = nextOccurDate(due_date_current, rn);
+    sched_n->NEXTOCCURRENCEDATE = due_date_update.FormatISODate();
 
-    if ((repeats < REPEAT_TYPE::REPEAT_IN_X_DAYS || repeats > REPEAT_TYPE::REPEAT_EVERY_X_MONTHS)
-        && numRepeats > 1
-    ) {
-        sched_d.NUMOCCURRENCES = numRepeats - 1;
-    }
-    else if (repeats >= REPEAT_TYPE::REPEAT_IN_X_DAYS
-        && repeats <= REPEAT_TYPE::REPEAT_IN_X_MONTHS
-    ) {
-        // preserve the Auto Executable fields, change type to REPEAT_ONCE
-        sched_d.REPEATS += REPEAT_TYPE::REPEAT_ONCE - repeats;
-        sched_d.NUMOCCURRENCES = -1;
-    }
+    next_repeat_num(rn);
+    encode_repeat_num(*sched_n, rn);
 
-    save_data_n(sched_d);
+    unsafe_save_data_n(sched_n);
 }
 
-const wxDateTime ScheduledModel::nextOccurDate(int repeatsType, int numRepeats, wxDateTime nextOccurDate, bool reverse)
-{
-    int k = reverse ? -1 : 1;
-
-    wxDateTime dt = nextOccurDate;
-    if (repeatsType == REPEAT_WEEKLY)
-        dt.Add(wxTimeSpan::Weeks(k));
-    else if (repeatsType == REPEAT_BI_WEEKLY)
-        dt.Add(wxTimeSpan::Weeks(2 * k));
-    else if (repeatsType == REPEAT_MONTHLY)
-        dt.Add(wxDateSpan::Months(k));
-    else if (repeatsType == REPEAT_BI_MONTHLY)
-        dt.Add(wxDateSpan::Months(2 * k));
-    else if (repeatsType == REPEAT_FOUR_MONTHLY)
-        dt.Add(wxDateSpan::Months(4 * k));
-    else if (repeatsType == REPEAT_HALF_YEARLY)
-        dt.Add(wxDateSpan::Months(6 * k));
-    else if (repeatsType == REPEAT_YEARLY)
-        dt.Add(wxDateSpan::Years(k));
-    else if (repeatsType == REPEAT_QUARTERLY)
-        dt.Add(wxDateSpan::Months(3 * k));
-    else if (repeatsType == REPEAT_FOUR_WEEKLY)
-        dt.Add(wxDateSpan::Weeks(4 * k));
-    else if (repeatsType == REPEAT_DAILY)
-        dt.Add(wxDateSpan::Days(k));
-    else if (repeatsType == REPEAT_IN_X_DAYS) // repeat in numRepeats Days (Once only)
-        dt.Add(wxDateSpan::Days(numRepeats * k));
-    else if (repeatsType == REPEAT_IN_X_MONTHS) // repeat in numRepeats Months (Once only)
-        dt.Add(wxDateSpan::Months(numRepeats * k));
-    else if (repeatsType == REPEAT_EVERY_X_DAYS) // repeat every numRepeats Days
-        dt.Add(wxDateSpan::Days(numRepeats * k));
-    else if (repeatsType == REPEAT_EVERY_X_MONTHS) // repeat every numRepeats Months
-        dt.Add(wxDateSpan::Months(numRepeats * k));
-    else if (repeatsType == REPEAT_MONTHLY_LAST_DAY
-        ||   repeatsType == REPEAT_MONTHLY_LAST_BUSINESS_DAY)
-    {
-        dt.Add(wxDateSpan::Months(k));
-
-        dt.SetToLastMonthDay(dt.GetMonth(), dt.GetYear());
-        if (repeatsType == REPEAT_MONTHLY_LAST_BUSINESS_DAY) // last weekday of month
-        {
-            if (dt.GetWeekDay() == wxDateTime::Sun || dt.GetWeekDay() == wxDateTime::Sat)
-                dt.SetToPrevWeekDay(wxDateTime::Fri);
-        }
-    }
-    wxLogDebug("init date: %s -> next date: %s", nextOccurDate.FormatISOCombined(), dt.FormatISOCombined());
-    return dt;
-}
-
-wxArrayString ScheduledModel::unroll(const Data* r, const wxString end_date, int limit)
-{
-    wxArrayString dates;
-    int repeats = r->REPEATS.GetValue() % BD_REPEATS_MULTIPLEX_BASE;
-    int numRepeats = r->NUMOCCURRENCES.GetValue();
-
-    // ignore old inactive entries
-    if (repeats >= ScheduledModel::REPEAT_IN_X_DAYS && repeats <= ScheduledModel::REPEAT_EVERY_X_MONTHS && numRepeats == -1)
-        return dates;
-
-    // ignore invalid entries
-    if (repeats != ScheduledModel::REPEAT_ONCE && (numRepeats == 0 || numRepeats < -1))
-        return dates;
-
-    wxString date = r->TRANSDATE;
-    while (date <= end_date && limit != 0) {
-        if (limit > 0) limit--;
-        dates.push_back(date);
-
-        if (repeats == ScheduledModel::REPEAT_ONCE)
-            break;
-        if ((repeats < ScheduledModel::REPEAT_IN_X_DAYS || repeats > ScheduledModel::REPEAT_EVERY_X_MONTHS) && numRepeats == 1)
-            break;
-
-        wxDateTime date_curr;
-        date_curr.ParseDateTime(date) || date_curr.ParseDate(date);
-        const wxDateTime& date_next = ScheduledModel::nextOccurDate(repeats, numRepeats, date_curr);
-        date = date_next.FormatISOCombined();
-
-        if ((repeats < ScheduledModel::REPEAT_IN_X_DAYS || repeats > ScheduledModel::REPEAT_EVERY_X_MONTHS) && numRepeats > 1)
-            numRepeats--;
-        else if (repeats >= ScheduledModel::REPEAT_IN_X_DAYS && repeats <= ScheduledModel::REPEAT_IN_X_MONTHS)
-            repeats = ScheduledModel::REPEAT_ONCE;
-    }
-
-    return dates;
-}
-
-wxArrayString ScheduledModel::unroll(const Data& r, const wxString end_date, int limit)
-{
-    return unroll(&r, end_date, limit);
-}
+// -- Full_Data --
 
 ScheduledModel::Full_Data::Full_Data()
 {}
@@ -417,9 +402,7 @@ ScheduledModel::Full_Data::Full_Data(const Data& r) :
 
 wxString ScheduledModel::Full_Data::real_payee_name() const
 {
-    if (TransactionModel::TYPE_ID_TRANSFER == TransactionModel::type_id(this->TRANSCODE))
-    {
-        return ("> " + this->PAYEENAME);
-    }
-    return this->PAYEENAME;
+    return (TransactionModel::type_id(this->TRANSCODE) == TransactionModel::TYPE_ID_TRANSFER)
+        ? ("> " + this->PAYEENAME)
+        : this->PAYEENAME;
 }

@@ -49,17 +49,6 @@ TagData& TagData::from_row(const TagRow& row)
     return *this;
 }
 
-TagData& TagData::operator= (const TagData& other)
-{
-    if (this == &other) return *this;
-
-    TAGID = other.TAGID;
-    TAGNAME = other.TAGNAME;
-    ACTIVE = other.ACTIVE;
-
-    return *this;
-}
-
 bool TagData::equals(const TagData* other) const
 {
     if ( TAGID != other->TAGID) return false;

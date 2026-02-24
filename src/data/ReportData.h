@@ -65,7 +65,6 @@ struct ReportData
     void to_html_template(html_template& t) const;
     void destroy() { delete this; }
 
-    ReportData& operator= (const ReportData& other);
     ReportData& clone_from(const ReportData& other);
     bool equals(const ReportData* other) const;
     bool operator< (const ReportData& other) const { return id() < other.id(); }

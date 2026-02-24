@@ -27,7 +27,7 @@
 #include "_ModelBase.h"
 #include "TransactionSplitModel.h"
 
-class TransactionShareModel : public Model<TransactionShareTable, TransactionShareData>
+class TransactionShareModel : public TableFactory<TransactionShareTable, TransactionShareData>
 {
 public:
     TransactionShareModel();

@@ -475,7 +475,7 @@ const wxString FieldValueDialog::GetWidgetData(wxWindowID controlID) const
 
 bool FieldValueDialog::SaveCustomValues(int64 ref_id)
 {
-    bool updateTimestamp = false;
+    bool save_timestamp = false;
     FieldValueModel::instance().Savepoint();
     int field_index = 0;
     for (const auto &field : m_fields) {
@@ -498,20 +498,20 @@ bool FieldValueDialog::SaveCustomValues(int64 ref_id)
             );
 
             if (!fv_d.equals(&oldData))
-                updateTimestamp = true;
+                save_timestamp = true;
 
             FieldValueModel::instance().save_data_n(fv_d);
         }
         else if (fv_n) {
             FieldValueModel::instance().remove_depen(fv_n->FIELDATADID);
-            updateTimestamp = true;
+            save_timestamp = true;
         }
     }
 
     FieldValueModel::instance().ReleaseSavepoint();
 
-    if (updateTimestamp && m_ref_type == TransactionModel::refTypeName)
-        TransactionModel::instance().updateTimestamp(ref_id);        
+    if (save_timestamp && m_ref_type == TransactionModel::refTypeName)
+        TransactionModel::instance().save_timestamp(ref_id);        
 
     return true;
 }
@@ -519,7 +519,7 @@ bool FieldValueDialog::SaveCustomValues(int64 ref_id)
 void FieldValueDialog::UpdateCustomValues(int64 ref_id)
 {
     FieldValueModel::instance().Savepoint();
-    bool updateTimestamp = false;
+    bool save_timestamp = false;
     int field_index = 0;
     for (const auto& field : m_fields) {
         bool is_changed = false;
@@ -544,21 +544,21 @@ void FieldValueDialog::UpdateCustomValues(int64 ref_id)
                 fv_d.CONTENT = data;
 
                 if (!fv_d.equals(&oldData))
-                    updateTimestamp = true;
+                    save_timestamp = true;
 
                 FieldValueModel::instance().save_data_n(fv_d);
             }
             else if (fv_n) {
                 FieldValueModel::instance().remove_depen(fv_n->FIELDATADID);
-                updateTimestamp = true;
+                save_timestamp = true;
             }
         }
     }
 
     FieldValueModel::instance().ReleaseSavepoint();
 
-    if (updateTimestamp && m_ref_type == TransactionModel::refTypeName)
-        TransactionModel::instance().updateTimestamp(ref_id);        
+    if (save_timestamp && m_ref_type == TransactionModel::refTypeName)
+        TransactionModel::instance().save_timestamp(ref_id);        
 }
 
 void FieldValueDialog::OnStringChanged(wxCommandEvent& event)

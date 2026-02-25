@@ -217,7 +217,7 @@ void AssetList::OnDeleteAsset(wxCommandEvent& /*event*/)
         const AssetData& asset = m_panel->m_assets[m_selected_row];
         AssetModel::instance().purge_id(asset.ASSETID);
         mmAttachmentManage::DeleteAllAttachments(AssetModel::refTypeName, asset.ASSETID);
-        TransactionLinkModel::RemoveTransLinkRecords<AssetModel>(asset.ASSETID);
+        TrxLinkModel::RemoveTransLinkRecords<AssetModel>(asset.ASSETID);
 
         m_panel->initVirtualListControl();
         m_selected_row = -1;
@@ -330,7 +330,7 @@ void AssetList::OnColClick(wxListEvent& event)
     else if (event.GetId() != MENU_HEADER_SORT)
         m_sort_asc[0] = !m_sort_asc[0];
     updateSortIcon();
-    savePreferences();
+    savePref();
 
     int64 trx_id = -1;
     if (m_selected_row>=0) trx_id = m_panel->m_assets[m_selected_row].ASSETID;
@@ -783,7 +783,7 @@ void AssetPanel::AddAssetTrans(const int selected_index)
         asset_dialog.SetTransactionAccountName(account ? asset->ASSETNAME : asset->ASSETTYPE);
     }
     else {
-        TransactionLinkModel::DataA translist = TransactionLinkModel::TranslinkList<AssetModel>(asset->ASSETID);
+        TrxLinkModel::DataA translist = TrxLinkModel::TranslinkList<AssetModel>(asset->ASSETID);
         if (translist.empty()) {
             wxMessageBox(_t(
                 "This asset does not have its own account\n\n"
@@ -852,11 +852,11 @@ wxListCtrl* AssetPanel::InitAssetTxnListCtrl(wxWindow* parent)
 // Load asset transactions into the list control
 void AssetPanel::LoadAssetTransactions(wxListCtrl* listCtrl, int64 assetId)
 {
-    TransactionLinkModel::DataA asset_a = TransactionLinkModel::TranslinkList<AssetModel>(assetId);
+    TrxLinkModel::DataA asset_a = TrxLinkModel::TranslinkList<AssetModel>(assetId);
 
     int row = 0;
     for (const auto& asset_d : asset_a) {
-        const TransactionData* trx_n = TransactionModel::instance().get_data_n(asset_d.CHECKINGACCOUNTID);
+        const TrxData* trx_n = TrxModel::instance().get_data_n(asset_d.CHECKINGACCOUNTID);
         if (!trx_n)
             continue;
 
@@ -866,11 +866,11 @@ void AssetPanel::LoadAssetTransactions(wxListCtrl* listCtrl, int64 assetId)
     }
 }
 
-void AssetPanel::FillAssetListRow(wxListCtrl* listCtrl, long index, const TransactionData& txn)
+void AssetPanel::FillAssetListRow(wxListCtrl* listCtrl, long index, const TrxData& txn)
 {
     listCtrl->SetItem(index, 0, AccountModel::get_id_name(txn.ACCOUNTID));
     listCtrl->SetItem(index, 1, mmGetDateTimeForDisplay(txn.TRANSDATE));
-    listCtrl->SetItem(index, 2, TransactionModel::trade_type_name(TransactionModel::type_id(txn.TRANSCODE)));
+    listCtrl->SetItem(index, 2, TrxModel::trade_type_name(TrxModel::type_id(txn.TRANSCODE)));
     listCtrl->SetItem(index, 3, CurrencyModel::toString(txn.TRANSAMOUNT));
 //    listCtrl->SetItem(index, 3, CurrencyModel::get_currency_symbol(txn.CURRENCYID));
 }
@@ -879,19 +879,19 @@ void AssetPanel::BindAssetListEvents(wxListCtrl* listCtrl)
 {
     listCtrl->Bind(wxEVT_LIST_ITEM_ACTIVATED, [listCtrl, this](wxListEvent& event) {
         long index = event.GetIndex();
-        TransactionData* trx_n = TransactionModel::instance().unsafe_get_data_n(event.GetData());
+        TrxData* trx_n = TrxModel::instance().unsafe_get_data_n(event.GetData());
         if (!trx_n)
             return;
 
-        auto link = TransactionLinkModel::TranslinkRecord(trx_n->TRANSID);
+        auto link = TrxLinkModel::TranslinkRecord(trx_n->TRANSID);
         AssetDialog dlg(listCtrl, &link, trx_n);
         dlg.ShowModal();
 
         this->FillAssetListRow(listCtrl, index, *trx_n);
 
         listCtrl->SortItems([](wxIntPtr item1, wxIntPtr item2, wxIntPtr) -> int {
-            auto date1 = TransactionModel::getTransDateTime(*TransactionModel::instance().get_data_n(item1));
-            auto date2 = TransactionModel::getTransDateTime(*TransactionModel::instance().get_data_n(item2));
+            auto date1 = TrxModel::getTransDateTime(*TrxModel::instance().get_data_n(item1));
+            auto date2 = TrxModel::getTransDateTime(*TrxModel::instance().get_data_n(item2));
             return date1.IsEarlierThan(date2) ? -1 : (date1.IsLaterThan(date2) ? 1 : 0);
         }, 0);
     });
@@ -937,9 +937,9 @@ void AssetPanel::GotoAssetAccount(const int selected_index)
         SetAccountParameters(account_n);
     }
     else {
-        TransactionLinkModel::DataA asset_a = TransactionLinkModel::TranslinkList<AssetModel>(asset->ASSETID);
+        TrxLinkModel::DataA asset_a = TrxLinkModel::TranslinkList<AssetModel>(asset->ASSETID);
         for (const auto &asset_d : asset_a) {
-            const TransactionData* trx_n = TransactionModel::instance().get_data_n(asset_d.CHECKINGACCOUNTID);
+            const TrxData* trx_n = TrxModel::instance().get_data_n(asset_d.CHECKINGACCOUNTID);
             if (trx_n) {
                 account_n = AccountModel::instance().get_data_n(trx_n->ACCOUNTID);
                 SetAccountParameters(account_n);

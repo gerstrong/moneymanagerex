@@ -31,8 +31,8 @@
 #include "util/_util.h"
 
 #include "model/_all.h"
-#include "model/PreferencesModel.h"
-#include "model/TransactionFilter.h"
+#include "model/PrefModel.h"
+#include "model/TrxFilter.h"
 
 #include "mmframe.h"
 #include "ReportPanel.h"
@@ -40,8 +40,8 @@
 #include "manager/DateRangeManager.h"
 #include "dialog/AssetDialog.h"
 #include "dialog/AttachmentDialog.h"
-#include "dialog/TransactionDialog.h"
-#include "dialog/TransactionShareDialog.h"
+#include "dialog/TrxDialog.h"
+#include "dialog/TrxShareDialog.h"
 #include "dialog/BudgetEntryDialog.h"
 #include "report/htmlbuilder.h"
 #include "uicontrols/navigatortypes.h"
@@ -98,7 +98,7 @@ bool ReportPanel::Create(
     SetExtraStyle(GetExtraStyle() | wxWS_EX_BLOCK_EVENTS);
     wxPanel::Create(parent, winid, pos, size, style, name);
 
-    m_use_account_specific_filter = PreferencesModel::instance().getUsePerAccountFilter();
+    m_use_account_specific_filter = PrefModel::instance().getUsePerAccountFilter();
 
     m_rb->restoreReportSettings();
 
@@ -344,7 +344,7 @@ void ReportPanel::CreateControls()
             w_date_range_button = new wxButton(itemPanel3, ID_DATE_RANGE_BUTTON, _tu("Period…"));
             w_date_range_button->SetBitmap(mmBitmapBundle(png::TRANSFILTER, mmBitmapButtonSize));
             w_date_range_button->SetMinSize(
-                wxSize(200 + PreferencesModel::instance().getIconSize() * 2, -1)
+                wxSize(200 + PrefModel::instance().getIconSize() * 2, -1)
             );
             itemBoxSizerHeader->Add(w_date_range_button, g_flagsH);
             itemBoxSizerHeader->AddSpacer(5);
@@ -618,7 +618,7 @@ void ReportPanel::onNewWindow(wxWebViewEvent& evt)
     else if (uri.StartsWith("trxid:", &sData)) {
         long long transID = -1;
         if (sData.ToLongLong(&transID)) {
-            const TransactionData* transaction = TransactionModel::instance().get_data_n(transID);
+            const TrxData* transaction = TrxModel::instance().get_data_n(transID);
             if (transaction && transaction->TRANSID > -1) {
                 const AccountData* account = AccountModel::instance().get_data_n(transaction->ACCOUNTID);
                 if (account) {
@@ -633,12 +633,12 @@ void ReportPanel::onNewWindow(wxWebViewEvent& evt)
     else if (uri.StartsWith("trx:", &sData)) {
         long long transId = -1;
         if (sData.ToLongLong(&transId)) {
-            TransactionData* transaction = TransactionModel::instance().unsafe_get_data_n(transId);
+            TrxData* transaction = TrxModel::instance().unsafe_get_data_n(transId);
             if (transaction && transaction->TRANSID > -1) {
-                if (TransactionModel::is_foreign(*transaction)) {
-                    TransactionLinkData translink = TransactionLinkModel::TranslinkRecord(transId);
+                if (TrxModel::is_foreign(*transaction)) {
+                    TrxLinkData translink = TrxLinkModel::TranslinkRecord(transId);
                     if (translink.LINKTYPE == StockModel::refTypeName) {
-                        TransactionShareDialog dlg(w_frame, &translink, transaction);
+                        TrxShareDialog dlg(w_frame, &translink, transaction);
                         if (dlg.ShowModal() == wxID_OK) {
                             m_rb->getHTMLText();
                             saveReportText();
@@ -653,7 +653,7 @@ void ReportPanel::onNewWindow(wxWebViewEvent& evt)
                     }
                 }
                 else {
-                    TransactionDialog dlg(w_frame, -1, {transId, false});
+                    TrxDialog dlg(w_frame, -1, {transId, false});
                     if (dlg.ShowModal() != wxID_CANCEL) {
                         m_rb->getHTMLText();
                         saveReportText();
@@ -932,8 +932,8 @@ void ReportPanel::loadDateRanges(
     date_range_a->clear();
     *date_range_m = -1;
     int src_i = 0;
-    int src_m = PreferencesModel::instance().getReportingRangeM();
-    for (const auto& range : PreferencesModel::instance().getReportingRangeA()) {
+    int src_m = PrefModel::instance().getReportingRangeM();
+    for (const auto& range : PrefModel::instance().getReportingRangeA()) {
         if (date_range_a->size() > ID_DATE_RANGE_MAX - ID_DATE_RANGE_MIN) {
             break;
         }

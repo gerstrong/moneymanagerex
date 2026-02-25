@@ -18,7 +18,7 @@
  ********************************************************/
 
 #include "AssetModel.h"
-#include "TransactionLinkModel.h"
+#include "TrxLinkModel.h"
 #include "CurrencyHistoryModel.h"
 
 mmChoiceNameA AssetModel::TYPE_CHOICES = mmChoiceNameA({
@@ -130,9 +130,9 @@ std::pair<double, double> AssetModel::valueAtDate(const Data* r, const wxDate& d
     std::pair<double /*initial*/, double /*market*/> balance;
     if (date < STARTDATE(*r)) return balance;
 
-    TransactionLinkModel::DataA translink_records = TransactionLinkModel::instance().find(
-        TransactionLinkCol::LINKRECORDID(r->ASSETID),
-        TransactionLinkCol::LINKTYPE(this->refTypeName)
+    TrxLinkModel::DataA translink_records = TrxLinkModel::instance().find(
+        TrxLinkCol::LINKRECORDID(r->ASSETID),
+        TrxLinkCol::LINKTYPE(this->refTypeName)
     );
 
     double dailyRate = r->VALUECHANGERATE / 36500.0;
@@ -148,13 +148,13 @@ std::pair<double, double> AssetModel::valueAtDate(const Data* r, const wxDate& d
     };
 
     if (!translink_records.empty()) {
-        TransactionModel::DataA trans;
+        TrxModel::DataA trans;
         for (const auto& link : translink_records) {
-            const TransactionData* tran = TransactionModel::instance().get_data_n(link.CHECKINGACCOUNTID);
+            const TrxData* tran = TrxModel::instance().get_data_n(link.CHECKINGACCOUNTID);
             if(tran && tran->DELETEDTIME.IsEmpty()) trans.push_back(*tran);
         }
 
-        std::stable_sort(trans.begin(), trans.end(), TransactionData::SorterByTRANSDATE());
+        std::stable_sort(trans.begin(), trans.end(), TrxData::SorterByTRANSDATE());
 
         wxDate last = date;
         for (const auto& tran: trans) {
@@ -162,7 +162,7 @@ std::pair<double, double> AssetModel::valueAtDate(const Data* r, const wxDate& d
               continue;
             }
 
-            const wxDate tranDate = TransactionModel::getTransDateTime(tran);
+            const wxDate tranDate = TrxModel::getTransDateTime(tran);
             if (tranDate > date) break;
 
             if (last == date) last = tranDate;
@@ -171,10 +171,10 @@ std::pair<double, double> AssetModel::valueAtDate(const Data* r, const wxDate& d
                 last = tranDate;
             }
 
-            double accflow = TransactionModel::account_flow(tran, tran.ACCOUNTID);
+            double accflow = TrxModel::account_flow(tran, tran.ACCOUNTID);
             double amount = -1 * accflow *
                 CurrencyHistoryModel::getDayRate(AccountModel::instance().get_data_n(tran.ACCOUNTID)->CURRENCYID, tranDate);
-            //double amount = -1 * TransactionModel::account_flow(tran, tran.ACCOUNTID) *
+            //double amount = -1 * TrxModel::account_flow(tran, tran.ACCOUNTID) *
             //    CurrencyHistoryModel::getDayRate(AccountModel::instance().get_data_n(tran.ACCOUNTID)->CURRENCYID, tranDate);
 
             if (amount >= 0) {
@@ -189,7 +189,7 @@ std::pair<double, double> AssetModel::valueAtDate(const Data* r, const wxDate& d
 
             // Self Transfer as Revaluation
             if (tran.ACCOUNTID == tran.TOACCOUNTID &&
-                TransactionModel::type_id(tran.TRANSCODE) == TransactionModel::TYPE_ID_TRANSFER
+                TrxModel::type_id(tran.TRANSCODE) == TrxModel::TYPE_ID_TRANSFER
             ) {
                 // TODO honor TRANSAMOUNT => TOTRANSAMOUNT
                 balance.second = tran.TOTRANSAMOUNT;

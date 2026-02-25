@@ -41,7 +41,7 @@
 #include "model/FieldValueModel.h"
 #include "model/InfoModel.h"
 #include "model/PayeeModel.h"
-#include "model/PreferencesModel.h"
+#include "model/PrefModel.h"
 #include "model/SettingModel.h"
 #include "model/StockModel.h"
 #include "model/TagModel.h"
@@ -97,7 +97,7 @@ mmUnivCSVDialog::mmUnivCSVDialog(
     m_account_id(account_id),
     m_file_path(file_path),
     decimal_(CurrencyModel::GetBaseCurrency()->DECIMAL_POINT),
-    depositType_(TransactionModel::TYPE_NAME_DEPOSIT)
+    depositType_(TrxModel::TYPE_NAME_DEPOSIT)
 {
     CSVFieldName_[UNIV_CSV_ID].first                    = _n("ID");
     CSVFieldName_[UNIV_CSV_DATE].first                  = _n("Date");
@@ -301,7 +301,7 @@ void mmUnivCSVDialog::CreateControls()
 
     //Custom Fields
     FieldModel::DataA fields = FieldModel::instance().find(
-        FieldCol::REFTYPE(TransactionModel::refTypeName)
+        FieldCol::REFTYPE(TrxModel::refTypeName)
     );
     if (!fields.empty()) {
         std::sort(fields.begin(), fields.end(), FieldData::SorterByDESCRIPTION());
@@ -377,7 +377,7 @@ void mmUnivCSVDialog::CreateControls()
     flex_sizer->Add(itemStaticText66, g_flagsH);
     itemStaticText66->SetFont(staticBoxFontSetting);
 
-    date_format_ = PreferencesModel::instance().getDateFormat();
+    date_format_ = PrefModel::instance().getDateFormat();
     choiceDateFormat_ = new wxChoice(itemPanel7, ID_DATE_FORMAT);
     flex_sizer->Add(choiceDateFormat_, g_flagsH);
     initDateMask();
@@ -1444,8 +1444,8 @@ void mmUnivCSVDialog::OnImport(wxCommandEvent& WXUNUSED(event))
         return mmErrorDialogs::ToolTip4Object(colorButton_, _t("Color"), _t("Invalid value"), wxICON_ERROR);
     }
 
-    TransactionModel::instance().Begin();
-    TransactionModel::instance().Savepoint("IMP");
+    TrxModel::instance().Begin();
+    TrxModel::instance().Savepoint("IMP");
     FieldValueModel::instance().Savepoint("IMP");
 
     wxProgressDialog progressDlg(_t("Universal CSV Import")
@@ -1458,7 +1458,7 @@ void mmUnivCSVDialog::OnImport(wxCommandEvent& WXUNUSED(event))
     m_reverce_sign = m_choiceAmountFieldSign->GetCurrentSelection() == PositiveIsWithdrawal;
     // A place to store all rejected rows to display after import
     wxString rejectedRows;
-    wxString reftype = TransactionModel::refTypeName;
+    wxString reftype = TrxModel::refTypeName;
     for (long nLines = firstRow; nLines < lastRow; nLines++)
     {
         const wxString& progressMsg = wxString::Format(_t("Transactions imported to account %s: %ld")
@@ -1522,7 +1522,7 @@ void mmUnivCSVDialog::OnImport(wxCommandEvent& WXUNUSED(event))
             continue;
         }
 
-        TransactionData new_trx_d = TransactionData();
+        TrxData new_trx_d = TrxData();
         new_trx_d.TRANSDATE         = trxDate;
         new_trx_d.ACCOUNTID         = accountID_;
         new_trx_d.TOACCOUNTID       = holder.ToAccountID;
@@ -1540,7 +1540,7 @@ void mmUnivCSVDialog::OnImport(wxCommandEvent& WXUNUSED(event))
             );
         new_trx_d.COLOR = color_id;
 
-        TransactionModel::instance().save_trx(new_trx_d);
+        TrxModel::instance().save_trx(new_trx_d);
 
         // save custom field data
         if (!holder.customFieldData.empty()) {
@@ -1606,13 +1606,13 @@ void mmUnivCSVDialog::OnImport(wxCommandEvent& WXUNUSED(event))
 
     msg << "\n\n";
 
-    TransactionModel::instance().ReleaseSavepoint("IMP");
+    TrxModel::instance().ReleaseSavepoint("IMP");
     FieldValueModel::instance().ReleaseSavepoint("IMP");
 
     if (!is_canceled && nImportedLines > 0)
     {
         // we need to save them to the database.
-        TransactionModel::instance().Commit();
+        TrxModel::instance().Commit();
         mmWebApp::MMEX_WebApp_UpdateAccount();
         mmWebApp::MMEX_WebApp_UpdatePayee();
         mmWebApp::MMEX_WebApp_UpdateCategory();
@@ -1625,7 +1625,7 @@ void mmUnivCSVDialog::OnImport(wxCommandEvent& WXUNUSED(event))
     else
     {
         // discard the database changes.
-        TransactionModel::instance().Rollback("");
+        TrxModel::instance().Rollback("");
         if (is_canceled) msg << _t("Imported transactions discarded by user!");
         else msg << _t("No imported transactions!");
         msg << "\n\n";
@@ -1677,8 +1677,8 @@ void mmUnivCSVDialog::OnExport(wxCommandEvent& WXUNUSED(event))
     if (!from_account)
         return mmErrorDialogs::ToolTip4Object(m_choice_account_, _t("Invalid Account"), _t("Error"));
 
-    const auto split = TransactionSplitModel::instance().get_all_id();
-    const auto tags = TagLinkModel::instance().get_all_id(TransactionModel::refTypeName);
+    const auto split = TrxSplitModel::instance().get_all_id();
+    const auto tags = TagLinkModel::instance().get_all_id(TrxModel::refTypeName);
     int64 fromAccountID = from_account->ACCOUNTID;
 
     long numRecords = 0;
@@ -1702,25 +1702,25 @@ void mmUnivCSVDialog::OnExport(wxCommandEvent& WXUNUSED(event))
     if (m_exportStocksCheckBox->GetValue()==false)
     {
         // Write transactions to file.
-        TransactionModel::DataA txns = TransactionModel::instance().find_or(
-            TransactionCol::ACCOUNTID(fromAccountID),
-            TransactionCol::TOACCOUNTID(fromAccountID)
+        TrxModel::DataA txns = TrxModel::instance().find_or(
+            TrxCol::ACCOUNTID(fromAccountID),
+            TrxCol::TOACCOUNTID(fromAccountID)
         );
         std::sort(txns.begin(), txns.end());
-        std::stable_sort(txns.begin(), txns.end(), TransactionData::SorterByTRANSDATE());
+        std::stable_sort(txns.begin(), txns.end(), TrxData::SorterByTRANSDATE());
 
         for (const auto& pBankTransaction : txns)
         {
-            if (TransactionModel::status_id(pBankTransaction) == TransactionModel::STATUS_ID_VOID || !pBankTransaction.DELETEDTIME.IsEmpty())
+            if (TrxModel::status_id(pBankTransaction) == TrxModel::STATUS_ID_VOID || !pBankTransaction.DELETEDTIME.IsEmpty())
                 continue;
 
-            TransactionModel::Full_Data tran(pBankTransaction, split, tags);
+            TrxModel::Full_Data tran(pBankTransaction, split, tags);
             bool has_split = tran.has_split();
-            double value = TransactionModel::account_flow(pBankTransaction, fromAccountID);
+            double value = TrxModel::account_flow(pBankTransaction, fromAccountID);
             account_balance += value;
 
             if (!has_split) {
-                TransactionSplitData splt = TransactionSplitData();
+                TrxSplitData splt = TrxSplitData();
                 splt.TRANSID = tran.TRANSID;
                 splt.CATEGID = tran.CATEGID;
                 splt.SPLITTRANSAMOUNT = value;
@@ -1729,14 +1729,14 @@ void mmUnivCSVDialog::OnExport(wxCommandEvent& WXUNUSED(event))
 
             for (const auto& splt : tran.m_splits) {
                 //Export the transaction only if the transaction is between the selected dates or if the user select to export all the transactions regardless of their date
-                if (TransactionModel::getTransDateTime(pBankTransaction).IsBetween(m_date_picker_start->GetValue(),m_date_picker_end->GetValue()) || m_haveDatesCheckBox->IsChecked()==false
+                if (TrxModel::getTransDateTime(pBankTransaction).IsBetween(m_date_picker_start->GetValue(),m_date_picker_end->GetValue()) || m_haveDatesCheckBox->IsChecked()==false
                 ) {
                     pTxFile->AddNewLine();
 
                     const CategoryData* category = CategoryModel::instance().get_data_n(splt.CATEGID);
 
                     double amt = splt.SPLITTRANSAMOUNT;
-                    if (TransactionModel::type_id(pBankTransaction) == TransactionModel::TYPE_ID_WITHDRAWAL
+                    if (TrxModel::type_id(pBankTransaction) == TrxModel::TYPE_ID_WITHDRAWAL
                         && has_split) {
                         amt = -amt;
                         }
@@ -1750,7 +1750,7 @@ void mmUnivCSVDialog::OnExport(wxCommandEvent& WXUNUSED(event))
                         switch (it.first)
                         {
                         case UNIV_CSV_DATE:
-                            entry = mmGetDateTimeForDisplay(TransactionModel::getTransDateTime(pBankTransaction).FormatISODate(), date_format_);
+                            entry = mmGetDateTimeForDisplay(TrxModel::getTransDateTime(pBankTransaction).FormatISODate(), date_format_);
                             break;
                         case UNIV_CSV_PAYEE:
                             entry = tran.real_payee_name(fromAccountID);
@@ -1781,7 +1781,7 @@ void mmUnivCSVDialog::OnExport(wxCommandEvent& WXUNUSED(event))
                         case UNIV_CSV_TAGS:
                         {
                             wxString splitTags;
-                            for (const auto& tag : TagLinkModel::instance().get_ref(TransactionSplitModel::refTypeName, splt.SPLITTRANSID))
+                            for (const auto& tag : TagLinkModel::instance().get_ref(TrxSplitModel::refTypeName, splt.SPLITTRANSID))
                                 splitTags.Append((splitTags.IsEmpty() ? "" : " ") + tag.first);
                             entry = tran.TAGNAMES;
                             if (!splitTags.IsEmpty())
@@ -1808,7 +1808,7 @@ void mmUnivCSVDialog::OnExport(wxCommandEvent& WXUNUSED(event))
                             itemType = ITransactionsFile::TYPE_NUMBER;
                             break;
                         case UNIV_CSV_TYPE:
-                            entry = TransactionModel::type_name(TransactionModel::type_id(pBankTransaction));
+                            entry = TrxModel::type_name(TrxModel::type_id(pBankTransaction));
                             break;
                         case UNIV_CSV_ID:
                             entry = wxString::Format("%lld", tran.TRANSID);
@@ -2083,8 +2083,8 @@ void mmUnivCSVDialog::update_preview()
 
         if (from_account)
         {
-            const auto split = TransactionSplitModel::instance().get_all_id();
-            const auto tags = TagLinkModel::instance().get_all_id(TransactionModel::refTypeName);
+            const auto split = TrxSplitModel::instance().get_all_id();
+            const auto tags = TagLinkModel::instance().get_all_id(TrxModel::refTypeName);
             int64 fromAccountID = from_account->ACCOUNTID;
             size_t count = 0;
             int row = 0;
@@ -2095,28 +2095,28 @@ void mmUnivCSVDialog::update_preview()
             //If the user wants to export transactions
             if (m_exportStocksCheckBox->GetValue()==false)
             {
-                TransactionModel::DataA txns =
-        TransactionModel::instance().find_or(
-            TransactionCol::ACCOUNTID(fromAccountID),
-            TransactionCol::TOACCOUNTID(fromAccountID)
+                TrxModel::DataA txns =
+        TrxModel::instance().find_or(
+            TrxCol::ACCOUNTID(fromAccountID),
+            TrxCol::TOACCOUNTID(fromAccountID)
         );
                 std::sort(txns.begin(), txns.end());
-                std::stable_sort(txns.begin(), txns.end(), TransactionData::SorterByTRANSDATE());
+                std::stable_sort(txns.begin(), txns.end(), TrxData::SorterByTRANSDATE());
                 for (const auto& pBankTransaction : txns)
                 {
-                    if (TransactionModel::status_id(pBankTransaction) == TransactionModel::STATUS_ID_VOID || !pBankTransaction.DELETEDTIME.IsEmpty())
+                    if (TrxModel::status_id(pBankTransaction) == TrxModel::STATUS_ID_VOID || !pBankTransaction.DELETEDTIME.IsEmpty())
                         continue;
 
                     //If the transaction happened between the dates that the user selected or if the user selected to export all the transactions regardless of date then the row is added to the preview
-                    if (TransactionModel::getTransDateTime(pBankTransaction).IsBetween(m_date_picker_start->GetValue(),m_date_picker_end->GetValue()) || m_haveDatesCheckBox->GetValue()==false)
+                    if (TrxModel::getTransDateTime(pBankTransaction).IsBetween(m_date_picker_start->GetValue(),m_date_picker_end->GetValue()) || m_haveDatesCheckBox->GetValue()==false)
                     {
-                        TransactionModel::Full_Data tran(pBankTransaction, split, tags);
+                        TrxModel::Full_Data tran(pBankTransaction, split, tags);
                         bool has_split = tran.has_split();
-                        double value = TransactionModel::account_flow(pBankTransaction, fromAccountID);
+                        double value = TrxModel::account_flow(pBankTransaction, fromAccountID);
                         account_balance += value;
 
                         if (!has_split) {
-                            TransactionSplitData s = TransactionSplitData();
+                            TrxSplitData s = TrxSplitData();
                             s.TRANSID = tran.TRANSID;
                             s.CATEGID = tran.CATEGID;
                             s.SPLITTRANSAMOUNT = value;
@@ -2136,7 +2136,7 @@ void mmUnivCSVDialog::update_preview()
                             const CurrencyData* currency = AccountModel::currency(from_account);
 
                             double amt = splt.SPLITTRANSAMOUNT;
-                            if (TransactionModel::type_id(pBankTransaction) == TransactionModel::TYPE_ID_WITHDRAWAL
+                            if (TrxModel::type_id(pBankTransaction) == TrxModel::TYPE_ID_WITHDRAWAL
                                 && has_split) {
                                 amt = -amt;
                                 }
@@ -2153,7 +2153,7 @@ void mmUnivCSVDialog::update_preview()
                                     text << wxString::Format("%lld", tran.TRANSID);
                                     break;
                                 case UNIV_CSV_DATE:
-                                    text << inQuotes(mmGetDateTimeForDisplay(TransactionModel::getTransDateTime(pBankTransaction).FormatISODate(), date_format_), delimit);
+                                    text << inQuotes(mmGetDateTimeForDisplay(TrxModel::getTransDateTime(pBankTransaction).FormatISODate(), date_format_), delimit);
                                     break;
                                 case UNIV_CSV_PAYEE:
                                     text << inQuotes(tran.real_payee_name(fromAccountID), delimit);
@@ -2186,7 +2186,7 @@ void mmUnivCSVDialog::update_preview()
                                 {
                                     wxString splitTags;
                                     for (const auto& tag :
-                                         TagLinkModel::instance().get_ref(TransactionSplitModel::refTypeName, splt.SPLITTRANSID))
+                                         TagLinkModel::instance().get_ref(TrxSplitModel::refTypeName, splt.SPLITTRANSID))
                                         splitTags.Append((splitTags.IsEmpty() ? "" : " ") + tag.first);
                                     text << inQuotes(tran.TAGNAMES + (tran.TAGNAMES.IsEmpty() ? "" : " ") + splitTags, delimit);
                                     break;
@@ -2770,7 +2770,7 @@ void mmUnivCSVDialog::parseToken(int index, const wxString& orig_token, tran_hol
 
         if (find_if(csvFieldOrder_.begin(), csvFieldOrder_.end(), [](const std::pair<int, int>& element) {return element.first == UNIV_CSV_TYPE; }) == csvFieldOrder_.end()) {
             if ((amount > 0.0 && !m_reverce_sign) || (amount <= 0.0 && m_reverce_sign)) {
-                holder.Type = TransactionModel::TYPE_NAME_DEPOSIT;
+                holder.Type = TrxModel::TYPE_NAME_DEPOSIT;
             }
         }
 
@@ -2880,7 +2880,7 @@ void mmUnivCSVDialog::parseToken(int index, const wxString& orig_token, tran_hol
             break;
 
         holder.Amount = fabs(amount);
-        holder.Type = TransactionModel::TYPE_NAME_WITHDRAWAL;
+        holder.Type = TrxModel::TYPE_NAME_WITHDRAWAL;
         break;
 
     case UNIV_CSV_DEPOSIT:
@@ -2898,7 +2898,7 @@ void mmUnivCSVDialog::parseToken(int index, const wxString& orig_token, tran_hol
             break;
 
         holder.Amount = fabs(amount);
-        holder.Type = TransactionModel::TYPE_NAME_DEPOSIT;
+        holder.Type = TrxModel::TYPE_NAME_DEPOSIT;
         break;
 
         // A number of type options are supported to make amount positive 
@@ -2908,7 +2908,7 @@ void mmUnivCSVDialog::parseToken(int index, const wxString& orig_token, tran_hol
         {
             if (depositType_.CmpNoCase(token) == 0)
             {
-                holder.Type = TransactionModel::TYPE_NAME_DEPOSIT;
+                holder.Type = TrxModel::TYPE_NAME_DEPOSIT;
                 break;
             }
         }
@@ -2916,7 +2916,7 @@ void mmUnivCSVDialog::parseToken(int index, const wxString& orig_token, tran_hol
         {
             for (const wxString entry : { "debit", "deposit", "+" }) {
                 if (entry.CmpNoCase(token) == 0) {
-                    holder.Type = TransactionModel::TYPE_NAME_DEPOSIT;
+                    holder.Type = TrxModel::TYPE_NAME_DEPOSIT;
                     break;
                 }
             }

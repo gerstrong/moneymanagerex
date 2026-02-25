@@ -26,7 +26,7 @@ mmChoiceNameA ModelBase::REFTYPE_CHOICES = mmChoiceNameA({
     { REFTYPE_ID_BANKACCOUNT,       _n("BankAccount") },
     { REFTYPE_ID_BILLSDEPOSIT,      _n("RecurringTransaction") },
     { REFTYPE_ID_PAYEE,             _n("Payee") },
-    { REFTYPE_ID_TRANSACTIONSPLIT,  _n("TransactionSplit") },
+    { REFTYPE_ID_TRANSACTIONSPLIT,  _n("TrxSplit") },
     { REFTYPE_ID_BILLSDEPOSITSPLIT, _n("RecurringTransactionSplit") },
 });
 
@@ -45,8 +45,8 @@ const wxString AccountModel::refTypeName          = ModelBase::REFTYPE_NAME_BANK
 const wxString AssetModel::refTypeName            = ModelBase::REFTYPE_NAME_ASSET;
 const wxString StockModel::refTypeName            = ModelBase::REFTYPE_NAME_STOCK;
 const wxString PayeeModel::refTypeName            = ModelBase::REFTYPE_NAME_PAYEE;
-const wxString TransactionModel::refTypeName      = ModelBase::REFTYPE_NAME_TRANSACTION;
-const wxString TransactionSplitModel::refTypeName = ModelBase::REFTYPE_NAME_TRANSACTIONSPLIT;
-const wxString ScheduledModel::refTypeName        = ModelBase::REFTYPE_NAME_BILLSDEPOSIT;
-const wxString ScheduledSplitModel::refTypeName   = ModelBase::REFTYPE_NAME_BILLSDEPOSITSPLIT;
+const wxString TrxModel::refTypeName      = ModelBase::REFTYPE_NAME_TRANSACTION;
+const wxString TrxSplitModel::refTypeName = ModelBase::REFTYPE_NAME_TRANSACTIONSPLIT;
+const wxString SchedModel::refTypeName        = ModelBase::REFTYPE_NAME_BILLSDEPOSIT;
+const wxString SchedSplitModel::refTypeName   = ModelBase::REFTYPE_NAME_BILLSDEPOSITSPLIT;
 

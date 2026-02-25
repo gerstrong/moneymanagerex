@@ -25,7 +25,7 @@
 #include "util/_util.h"
 
 #include "model/_all.h"
-#include "model/PreferencesModel.h"
+#include "model/PrefModel.h"
 
 #include "CategoryManager.h"
 #include "PayeeManager.h"
@@ -92,7 +92,7 @@ void PayeeManager::CreateControls()
     fgSizer1->Add(m_hidden, g_flagsExpand);
 
     // Category
-    const wxString title = (PreferencesModel::instance().getTransCategoryNone() == PreferencesModel::LASTUSED) ?
+    const wxString title = (PrefModel::instance().getTransCategoryNone() == PrefModel::LASTUSED) ?
                                 _t("Last Used Category") : _t("Default Category");
     fgSizer1->Add(new wxStaticText(this, wxID_STATIC, title), g_flagsH);
     m_category = new mmComboBoxCategory(this, mmID_CATEGORY, wxDefaultSize, -1, true);
@@ -535,12 +535,12 @@ void mmPayeeDialog::Create(wxWindow* parent, const wxString &name)
     SetIcon(mmex::getProgramIcon());
 
     // Calculate payee usage
-    for (const auto& txn : TransactionModel::instance().find_all()) {
+    for (const auto& txn : TrxModel::instance().find_all()) {
         if (txn.DELETEDTIME.IsEmpty()) {
             m_payeeUsage[txn.PAYEEID]++;
         }
     }
-    for (const auto &bills : ScheduledModel::instance().find_all()) {
+    for (const auto &bills : SchedModel::instance().find_all()) {
         m_payeeUsage[bills.PAYEEID]++;
     }
     fillControls();
@@ -558,7 +558,7 @@ void mmPayeeDialog::CreateControls()
 
     payeeListBox_->InsertColumn(PAYEE_NAME, _t("Name"), wxLIST_FORMAT_LEFT, 150);
     payeeListBox_->InsertColumn(PAYEE_HIDDEN, _t("Hidden"), wxLIST_FORMAT_CENTER, 50);
-    wxString cn = (PreferencesModel::instance().getTransCategoryNone() == PreferencesModel::LASTUSED) ? _t("Last Used Category") : _t("Default Category");
+    wxString cn = (PrefModel::instance().getTransCategoryNone() == PrefModel::LASTUSED) ? _t("Last Used Category") : _t("Default Category");
     payeeListBox_->InsertColumn(PAYEE_CATEGORY, cn, wxLIST_FORMAT_LEFT, 150);
     payeeListBox_->InsertColumn(PAYEE_NUMBER, _t("Reference"), wxLIST_FORMAT_LEFT, 150);
     payeeListBox_->InsertColumn(PAYEE_WEBSITE, _t("Website"), wxLIST_FORMAT_LEFT, 150);
@@ -769,8 +769,8 @@ void mmPayeeDialog::DeletePayee()
             wxMessageBox(deletePayeeErrMsg, _t("Payee Manager: Delete Error"), wxOK | wxICON_ERROR);
             continue;
         }
-        TransactionModel::DataA deletedTrans = TransactionModel::instance().find(
-            TransactionCol::PAYEEID(rdata->payeeId)
+        TrxModel::DataA deletedTrans = TrxModel::instance().find(
+            TrxCol::PAYEEID(rdata->payeeId)
         );
         wxMessageDialog msgDlg(this
             , _t("Deleted transactions exist which use this payee.")
@@ -781,20 +781,20 @@ void mmPayeeDialog::DeletePayee()
         if (deletedTrans.empty() || msgDlg.ShowModal() == wxID_YES)
         {
             if (!deletedTrans.empty()) {
-                TransactionModel::instance().Savepoint();
-                TransactionSplitModel::instance().Savepoint();
+                TrxModel::instance().Savepoint();
+                TrxSplitModel::instance().Savepoint();
                 AttachmentModel::instance().Savepoint();
                 FieldValueModel::instance().Savepoint();
-                const wxString& RefType = TransactionModel::refTypeName;
+                const wxString& RefType = TrxModel::refTypeName;
 
                 for (auto& tran : deletedTrans) {
-                    TransactionModel::instance().purge_id(tran.TRANSID);
+                    TrxModel::instance().purge_id(tran.TRANSID);
                     mmAttachmentManage::DeleteAllAttachments(RefType, tran.TRANSID);
                     FieldValueModel::DeleteAllData(RefType, tran.TRANSID);
                 }
 
-                TransactionModel::instance().ReleaseSavepoint();
-                TransactionSplitModel::instance().ReleaseSavepoint();
+                TrxModel::instance().ReleaseSavepoint();
+                TrxSplitModel::instance().ReleaseSavepoint();
                 AttachmentModel::instance().ReleaseSavepoint();
                 FieldValueModel::instance().ReleaseSavepoint();
             }

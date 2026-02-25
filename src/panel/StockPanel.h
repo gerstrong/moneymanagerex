@@ -21,13 +21,13 @@
 
 #pragma once
 
-#include "model/TransactionShareModel.h"
+#include "model/TrxShareModel.h"
 #include "mmframe.h"
 #include "_PanelBase.h"
 #include "StockList.h"
 
 class wxListEvent;
-class TransactionShareModel;
+class TrxShareModel;
 
 class StockPanel : public PanelBase
 {
@@ -68,7 +68,7 @@ public:
     void ViewStockTransactions(int selectedIndex);
     wxListCtrl* InitStockTxnListCtrl(wxWindow* parent);
     void LoadStockTransactions(wxListCtrl* listCtrl, wxString symbol, int64 stockId);
-    void FillListRow(wxListCtrl* listCtrl, long index, const TransactionData& txn, const TransactionShareData& share_entry);
+    void FillListRow(wxListCtrl* listCtrl, long index, const TrxData& txn, const TrxShareData& share_entry);
     void BindListEvents(wxListCtrl* listCtrl);
     void CopySelectedRowsToClipboard(wxListCtrl* listCtrl);
 

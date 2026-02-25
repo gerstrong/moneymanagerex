@@ -73,14 +73,14 @@ CurrencyChoiceDialog::CurrencyChoiceDialog(
     bEnableSelect_(bEnableSelect)
     , m_maskStr("")
 {
-    bHistoryEnabled_ = PreferencesModel::instance().getUseCurrencyHistory();
+    bHistoryEnabled_ = PrefModel::instance().getUseCurrencyHistory();
 
     ColName_[CURR_BASE]   = " ";
     ColName_[CURR_SYMBOL] = _t("Code");
     ColName_[CURR_NAME]   = _t("Name");
     ColName_[BASE_RATE]   = bHistoryEnabled_ ? _t("Last Rate") : _t("Fixed Rate");
 
-    m_currency_id = currencyID == -1 ? PreferencesModel::instance().getBaseCurrencyID() : currencyID;
+    m_currency_id = currencyID == -1 ? PrefModel::instance().getBaseCurrencyID() : currencyID;
     this->SetFont(parent->GetFont());
     Create(parent);
     bEnableSelect_ ? SetMinSize(wxSize(200, 350)) : SetMinSize(wxSize(500, 350));
@@ -423,7 +423,7 @@ void CurrencyChoiceDialog::OnListItemSelected(wxDataViewEvent& event)
 
             // prevent user deleting currencies when editing accounts.
             if (!bEnableSelect_) {
-                int64 baseCurrencyID = PreferencesModel::instance().getBaseCurrencyID();
+                int64 baseCurrencyID = PrefModel::instance().getBaseCurrencyID();
                 if (bHistoryEnabled_) {
                     buttonDownloadHistory_->Enable(m_currency_id != baseCurrencyID);
                     buttonDelUnusedHistory_->Enable(m_currency_id != baseCurrencyID);
@@ -556,7 +556,7 @@ void CurrencyChoiceDialog::OnItemRightClick(wxDataViewEvent& event)
 
     bool is_selected = currencyListBox_->GetSelectedRow() > -1;
     m_select_btn->Enable(is_selected);
-    int64 baseCurrencyID = PreferencesModel::instance().getBaseCurrencyID();
+    int64 baseCurrencyID = PrefModel::instance().getBaseCurrencyID();
     mainMenu->Enable(MENU_ITEM1, baseCurrencyID != m_currency_id && is_selected);
     mainMenu->Enable(MENU_ITEM2, baseCurrencyID != m_currency_id && is_selected);
 
@@ -586,7 +586,7 @@ void CurrencyChoiceDialog::ShowCurrencyHistory()
     if (m_static_dialog) return;    //Abort when trying to set base currency
     valueListBox_->DeleteAllItems();
 
-    int64 baseCurrencyID = PreferencesModel::instance().getBaseCurrencyID();
+    int64 baseCurrencyID = PrefModel::instance().getBaseCurrencyID();
     if (!bHistoryEnabled_ || m_currency_id <= 0 || m_currency_id == baseCurrencyID) {
         historyButtonAdd_->Disable();
         historyButtonDelete_->Disable();
@@ -789,7 +789,7 @@ void CurrencyChoiceDialog::OnHistoryDeselected(wxListEvent& WXUNUSED(event))
 
 bool CurrencyChoiceDialog::SetBaseCurrency(int64& baseCurrencyID)
 {
-    int64 baseCurrencyOLD = PreferencesModel::instance().getBaseCurrencyID();
+    int64 baseCurrencyOLD = PrefModel::instance().getBaseCurrencyID();
     if (baseCurrencyID == baseCurrencyOLD)
         return true;
 
@@ -801,7 +801,7 @@ bool CurrencyChoiceDialog::SetBaseCurrency(int64& baseCurrencyID)
             return true;
     }
 
-    PreferencesModel::instance().setBaseCurrencyID(baseCurrencyID);
+    PrefModel::instance().setBaseCurrencyID(baseCurrencyID);
 
     // Update baseconvrate
     CurrencyModel::instance().Savepoint();

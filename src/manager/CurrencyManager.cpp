@@ -33,7 +33,7 @@
 
 #include "model/CurrencyModel.h"
 #include "model/CurrencyHistoryModel.h"
-#include "model/PreferencesModel.h"
+#include "model/PrefModel.h"
 
 #include "CurrencyManager.h"
 
@@ -171,7 +171,7 @@ void CurrencyManager::fillControls()
     w_scale->ChangeValue(scale_value);
     w_code->ChangeValue(m_currency_n->CURRENCY_SYMBOL);
 
-    bool baseCurrency = (PreferencesModel::instance().getBaseCurrencyID() == m_currency_n->CURRENCYID);
+    bool baseCurrency = (PrefModel::instance().getBaseCurrencyID() == m_currency_n->CURRENCYID);
     w_baseConvRate->SetValue((baseCurrency ? 1.00 : m_currency_n->BASECONVRATE), SCALE);
     w_baseConvRate->Enable(!baseCurrency);
 }
@@ -237,7 +237,7 @@ void CurrencyManager::CreateControls()
         , wxCommandEventHandler(CurrencyManager::OnTextEntered), nullptr, this);
     w_baseConvRate->SetAltPrecision(SCALE);
     wxString ConvRateTooltip = wxEmptyString;
-    if (PreferencesModel::instance().getUseCurrencyHistory())
+    if (PrefModel::instance().getUseCurrencyHistory())
         ConvRateTooltip = _t("Conversion rate will be used in case no currency history has been found for the currency");
     else
         ConvRateTooltip = _t("Fixed conversion rate");

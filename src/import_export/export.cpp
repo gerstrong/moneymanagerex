@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "model/AccountModel.h"
 #include "model/AttachmentModel.h"
 #include "model/CategoryModel.h"
-#include "model/TransactionModel.h"
+#include "model/TrxModel.h"
 #include "model/CurrencyModel.h"
 #include "model/FieldModel.h"
 #include "model/PayeeModel.h"
@@ -39,12 +39,12 @@ mmExportTransaction::mmExportTransaction()
 mmExportTransaction::~mmExportTransaction()
 {}
 
-const wxString mmExportTransaction::getTransactionCSV(const TransactionModel::Full_Data& full_tran
+const wxString mmExportTransaction::getTransactionCSV(const TrxModel::Full_Data& full_tran
     , const wxString& dateMask, bool reverce)
 {
     auto account_id = full_tran.ACCOUNTID;
     wxString buffer = "";
-    bool is_transfer = TransactionModel::is_transfer(full_tran.TRANSCODE);
+    bool is_transfer = TrxModel::is_transfer(full_tran.TRANSCODE);
     const wxString delimiter = InfoModel::instance().getString("DELIMITER", mmex::DEFDELIMTER);
 
     wxString categ = full_tran.m_splits.empty() ? CategoryModel::full_name(full_tran.CATEGID, ":") : "";
@@ -79,7 +79,7 @@ const wxString mmExportTransaction::getTransactionCSV(const TransactionModel::Fu
         for (const auto &split_entry : full_tran.m_splits)
         {
             double valueSplit = split_entry.SPLITTRANSAMOUNT;
-            if (TransactionModel::type_id(full_tran) == TransactionModel::TYPE_ID_WITHDRAWAL)
+            if (TrxModel::type_id(full_tran) == TrxModel::TYPE_ID_WITHDRAWAL)
                 valueSplit = -valueSplit;
             const wxString split_amount = wxString::FromCDouble(valueSplit, 2);
             const wxString split_categ = CategoryModel::full_name(split_entry.CATEGID, ":");
@@ -113,7 +113,7 @@ const wxString mmExportTransaction::getTransactionCSV(const TransactionModel::Fu
 
         buffer << inQuotes(payee, delimiter) << delimiter;
         buffer << inQuotes(categ, delimiter) << delimiter;
-        double value = TransactionModel::account_flow(full_tran, account_id);
+        double value = TrxModel::account_flow(full_tran, account_id);
         const wxString& s = wxString::FromCDouble(value, 2);
         buffer << inQuotes(s, delimiter) << delimiter;
         buffer << inQuotes(currency, delimiter) << delimiter;
@@ -126,10 +126,10 @@ const wxString mmExportTransaction::getTransactionCSV(const TransactionModel::Fu
     return buffer;
 }
 
-const wxString mmExportTransaction::getTransactionQIF(const TransactionModel::Full_Data& full_tran
+const wxString mmExportTransaction::getTransactionQIF(const TrxModel::Full_Data& full_tran
     , const wxString& dateMask, bool reverce)
 {
-    bool transfer = TransactionModel::is_transfer(full_tran.TRANSCODE);
+    bool transfer = TrxModel::is_transfer(full_tran.TRANSCODE);
 
     wxString buffer = "";
     wxString categ = full_tran.m_splits.empty() ? CategoryModel::full_name(full_tran.CATEGID, ":") : "";
@@ -168,8 +168,8 @@ const wxString mmExportTransaction::getTransactionQIF(const TransactionModel::Fu
     }
 
     buffer << "D" << mmGetDateTimeForDisplay(full_tran.TRANSDATE, dateMask) << "\n";
-    buffer << "C" << (full_tran.STATUS == TransactionModel::STATUS_KEY_RECONCILED ? "R" : "") << "\n";
-    double value = TransactionModel::account_flow(full_tran
+    buffer << "C" << (full_tran.STATUS == TrxModel::STATUS_KEY_RECONCILED ? "R" : "") << "\n";
+    double value = TrxModel::account_flow(full_tran
         , (reverce ? full_tran.TOACCOUNTID : full_tran.ACCOUNTID));
     const wxString& s = wxString::FromCDouble(value, 2);
     buffer << "T" << s << "\n";
@@ -186,10 +186,10 @@ const wxString mmExportTransaction::getTransactionQIF(const TransactionModel::Fu
         buffer << "M" << notes << "\n";
     }
 
-    wxString reftype = TransactionSplitModel::refTypeName;
+    wxString reftype = TrxSplitModel::refTypeName;
     for (const auto &split_entry : full_tran.m_splits) {
         double valueSplit = split_entry.SPLITTRANSAMOUNT;
-        if (TransactionModel::type_id(full_tran) == TransactionModel::TYPE_ID_WITHDRAWAL)
+        if (TrxModel::type_id(full_tran) == TrxModel::TYPE_ID_WITHDRAWAL)
             valueSplit = -valueSplit;
         const wxString split_amount = wxString::FromCDouble(valueSplit, 2);
         wxString split_categ = CategoryModel::full_name(split_entry.CATEGID, ":");
@@ -405,7 +405,7 @@ void mmExportTransaction::getUsedCategoriesJSON(PrettyWriter<StringBuffer>& json
     json_writer.EndArray();
 }
 
-void mmExportTransaction::getTransactionJSON(PrettyWriter<StringBuffer>& json_writer, const TransactionModel::Full_Data& full_tran)
+void mmExportTransaction::getTransactionJSON(PrettyWriter<StringBuffer>& json_writer, const TrxModel::Full_Data& full_tran)
 {
     json_writer.StartObject();
     full_tran.as_json(json_writer);
@@ -422,7 +422,7 @@ void mmExportTransaction::getTransactionJSON(PrettyWriter<StringBuffer>& json_wr
         for (const auto &split_entry : full_tran.m_splits)
         {
             double valueSplit = split_entry.SPLITTRANSAMOUNT;
-            if (TransactionModel::type_id(full_tran) == TransactionModel::TYPE_ID_WITHDRAWAL) {
+            if (TrxModel::type_id(full_tran) == TrxModel::TYPE_ID_WITHDRAWAL) {
                 valueSplit = -valueSplit;
             }
 
@@ -434,7 +434,7 @@ void mmExportTransaction::getTransactionJSON(PrettyWriter<StringBuffer>& json_wr
             json_writer.Key("TAGS");
             json_writer.StartArray();
             for (const auto& tag : TagLinkModel::instance().get_ref(
-                TransactionSplitModel::refTypeName, split_entry.SPLITTRANSID)
+                TrxSplitModel::refTypeName, split_entry.SPLITTRANSID)
             )
                 json_writer.Int64(tag.second.GetValue());
             json_writer.EndArray();
@@ -444,7 +444,7 @@ void mmExportTransaction::getTransactionJSON(PrettyWriter<StringBuffer>& json_wr
         json_writer.EndArray();
     }
 
-    const wxString RefType = TransactionModel::refTypeName;
+    const wxString RefType = TrxModel::refTypeName;
     AttachmentModel::DataA attachments = AttachmentModel::instance().FilterAttachments(RefType, full_tran.id());
 
     if (!attachments.empty()) {
@@ -486,7 +486,7 @@ void mmExportTransaction::getAttachmentsJSON(PrettyWriter<StringBuffer>& json_wr
 
     if (!allAttachment4Export.empty())
     {
-        const wxString RefType = TransactionModel::refTypeName;
+        const wxString RefType = TrxModel::refTypeName;
         const wxString folder = InfoModel::instance().getString("ATTACHMENTSFOLDER:" + mmPlatformType(), "");
         const wxString AttachmentsFolder = mmex::getPathAttachment(folder);
 
@@ -523,7 +523,7 @@ void mmExportTransaction::getCustomFieldsJSON(PrettyWriter<StringBuffer>& json_w
 
     if (!allCustomFields4Export.empty())
     {
-        const wxString RefType = TransactionModel::refTypeName;
+        const wxString RefType = TrxModel::refTypeName;
 
         json_writer.Key("CUSTOM_FIELDS");
         json_writer.StartObject();

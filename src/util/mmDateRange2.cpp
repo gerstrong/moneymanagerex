@@ -19,7 +19,7 @@
 #include "base/constants.h"
 #include "mmDateRange2.h"
 
-#include "model/PreferencesModel.h"
+#include "model/PrefModel.h"
 
 const mmDatePeriod::MapIdLabel mmDatePeriod::mapIdLabel[] =
 {
@@ -427,15 +427,15 @@ mmDateRange2::mmDateRange2(
     mmDateDayN defEndDateN_new
 ) :
     firstDay{
-        PreferencesModel::instance().getReportingFirstDay(),
-        PreferencesModel::instance().getFinancialFirstDay()
+        PrefModel::instance().getReportingFirstDay(),
+        PrefModel::instance().getFinancialFirstDay()
     },
     firstMonth{
         wxDateTime::Jan,
-        PreferencesModel::instance().getFinancialFirstMonth()
+        PrefModel::instance().getFinancialFirstMonth()
     },
     firstWeekday(
-        PreferencesModel::instance().getReportingFirstWeekday()
+        PrefModel::instance().getReportingFirstWeekday()
     ),
     sDateN(sDateN_new),
     tDate(tDate_new),

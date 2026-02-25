@@ -90,7 +90,7 @@ bool mmGUIApp::setGUILanguage(wxLanguage lang)
     {
         wxTranslations::Set(trans);
         this->m_lang = lang;
-        PreferencesModel::instance().setLanguage(lang);
+        PrefModel::instance().setLanguage(lang);
         return true;
     }
     else
@@ -136,7 +136,7 @@ bool mmGUIApp::setGUILanguage(wxLanguage lang)
                                     "View menu to select one of the following available languages:\n\n%s",
                                     languages_list);
             m_lang = wxLANGUAGE_DEFAULT;
-            PreferencesModel::instance().setLanguage(m_lang);
+            PrefModel::instance().setLanguage(m_lang);
         }
 
         wxDELETE(trans);
@@ -256,7 +256,7 @@ bool OnInitImpl(mmGUIApp* app)
     UsageModel::instance(app->GetSettingDB());
 
     /* Load general MMEX Custom Settings */
-    PreferencesModel::instance().load(false);
+    PrefModel::instance().load(false);
 
     // checks (only in Debug build)
 #ifndef NDEBUG
@@ -351,7 +351,7 @@ bool OnInitImpl(mmGUIApp* app)
     wxInitAllImageHandlers();
 
     /* set preffered GUI language */
-    app->setGUILanguage(PreferencesModel::instance().getLanguageID());
+    app->setGUILanguage(PrefModel::instance().getLanguageID());
 
     wxRect rect = GetDefaultMonitorRect();
     int defValX = rect.GetX() + 50;

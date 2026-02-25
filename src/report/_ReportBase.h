@@ -24,9 +24,9 @@
 #include "util/mmDateRange.h"
 #include "util/mmDateRange2.h"
 
-#include "model/PreferencesModel.h"
+#include "model/PrefModel.h"
 #include "model/ReportModel.h"
-#include "model/TransactionFilter.h"
+#include "model/TrxFilter.h"
 
 class wxString;
 class wxArrayString;
@@ -88,7 +88,7 @@ protected:
     int m_chart_selection = 0;
 
 public:
-    TransactionFilter m_filter;
+    TrxFilter m_filter;
     static const char * m_template;
 
 public:

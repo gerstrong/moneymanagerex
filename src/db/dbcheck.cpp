@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 #include "model/AccountModel.h"
 #include "model/AttachmentModel.h"
-#include "model/ScheduledModel.h"
+#include "model/SchedModel.h"
 #include "model/CategoryModel.h"
 #include "model/PayeeModel.h"
 #include "model/StockModel.h"
@@ -39,20 +39,20 @@ bool dbCheck::checkAccounts()
     bool result = true;
 
     // Transactions
-    const auto& trx_a = TransactionModel::instance().find_all();
+    const auto& trx_a = TrxModel::instance().find_all();
     for (const auto& trx_d : trx_a)
         if (!AccountModel::instance().get_data_n(trx_d.ACCOUNTID) || (
-            TransactionModel::type_id(trx_d) == TransactionModel::TYPE_ID_TRANSFER &&
+            TrxModel::type_id(trx_d) == TrxModel::TYPE_ID_TRANSFER &&
             !AccountModel::instance().get_data_n(trx_d.TOACCOUNTID)
         )) {
             result = false;
         }
 
     // BillsDeposits
-    const auto& sched_a = ScheduledModel::instance().find_all();
+    const auto& sched_a = SchedModel::instance().find_all();
     for (const auto& sched_d : sched_a)
         if (!AccountModel::instance().get_data_n(sched_d.ACCOUNTID) || (
-            ScheduledModel::type_id(sched_d) == TransactionModel::TYPE_ID_TRANSFER &&
+            SchedModel::type_id(sched_d) == TrxModel::TYPE_ID_TRANSFER &&
             !AccountModel::instance().get_data_n(sched_d.TOACCOUNTID)
         )) {
             result = false;

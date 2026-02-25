@@ -38,7 +38,7 @@
 #include "AttachmentDialog.h"
 #include "AccountDialog.h"
 #include "StockDialog.h"
-#include "TransactionShareDialog.h"
+#include "TrxShareDialog.h"
 
 using namespace rapidjson;
 
@@ -116,15 +116,15 @@ void StockDialog::DataToControls()
 
     int precision = m_stock_n->NUMSHARES == floor(m_stock_n->NUMSHARES)
         ? 0
-        : PreferencesModel::instance().getSharePrecision();
+        : PrefModel::instance().getSharePrecision();
     m_num_shares_ctrl->SetValue(m_stock_n->NUMSHARES, precision);
     const AccountData* account_n = AccountModel::instance().get_data_n(m_stock_n->HELDAT);
     const CurrencyData *currency = CurrencyModel::GetBaseCurrency();
     if (account_n)
         currency = AccountModel::currency(account_n);
     int currency_precision = CurrencyModel::precision(currency);
-    if (currency_precision < PreferencesModel::instance().getSharePrecision())
-        currency_precision = PreferencesModel::instance().getSharePrecision();
+    if (currency_precision < PrefModel::instance().getSharePrecision())
+        currency_precision = PrefModel::instance().getSharePrecision();
     m_purchase_price_ctrl->SetValue(m_stock_n->PURCHASEPRICE, account_n, currency_precision);
     m_history_price_ctrl->SetValue(m_stock_n->CURRENTPRICE, account_n, currency_precision);
     m_commission_ctrl->SetValue(m_stock_n->COMMISSION, account_n, currency_precision);
@@ -162,7 +162,7 @@ void StockDialog::UpdateControls()
     wxBitmapButton* buttonAdd = static_cast<wxBitmapButton*>(FindWindow(wxID_ADD));
     buttonAdd->Enable(m_edit);
 
-    bool initial_shares = !TransactionLinkModel::HasShares(m_stock_id);
+    bool initial_shares = !TrxLinkModel::HasShares(m_stock_id);
     m_num_shares_ctrl->Enable(!m_edit || initial_shares);
     m_purchase_date_ctrl->Enable(!m_edit || initial_shares);
     m_purchase_price_ctrl->Enable(!m_edit || initial_shares);
@@ -187,7 +187,7 @@ void StockDialog::CreateControls()
 {
     bool initial_stock_transaction = true;
     if (m_stock_n) {
-        if (!TransactionLinkModel::TranslinkList<StockModel>(m_stock_n->STOCKID).empty()) {
+        if (!TrxLinkModel::TranslinkList<StockModel>(m_stock_n->STOCKID).empty()) {
             initial_stock_transaction = false;
         }
     }
@@ -240,7 +240,7 @@ void StockDialog::CreateControls()
     m_num_shares_ctrl = new mmTextCtrl(itemPanel5, ID_TEXTCTRL_NUMBER_SHARES, ""
         , wxDefaultPosition, wxSize(150, -1), wxALIGN_RIGHT | wxTE_PROCESS_ENTER, mmCalcValidator());
     itemFlexGridSizer6->Add(m_num_shares_ctrl, g_flagsExpand);
-    m_num_shares_ctrl->SetAltPrecision(PreferencesModel::instance().getSharePrecision());
+    m_num_shares_ctrl->SetAltPrecision(PrefModel::instance().getSharePrecision());
     mmToolTip(m_num_shares_ctrl, _t("Enter number of shares.\nUsed when creating the initial Share transaction."));
     m_num_shares_ctrl->Enable(initial_stock_transaction);
 
@@ -251,7 +251,7 @@ void StockDialog::CreateControls()
     m_purchase_price_ctrl = new mmTextCtrl(itemPanel5, ID_TEXTCTRL_STOCK_PP, ""
         , wxDefaultPosition, wxSize(150, -1), wxALIGN_RIGHT | wxTE_PROCESS_ENTER, mmCalcValidator());
     itemFlexGridSizer6->Add(m_purchase_price_ctrl, g_flagsExpand);
-    m_purchase_price_ctrl->SetAltPrecision(PreferencesModel::instance().getSharePrecision());
+    m_purchase_price_ctrl->SetAltPrecision(PrefModel::instance().getSharePrecision());
     mmToolTip(m_purchase_price_ctrl, _t("Enter the initial price per share.\nUsed when creating the initial Share transaction."));
     m_purchase_price_ctrl->Enable(initial_stock_transaction);
 
@@ -259,14 +259,14 @@ void StockDialog::CreateControls()
     m_commission_ctrl = new mmTextCtrl(itemPanel5, ID_TEXTCTRL_STOCK_COMMISSION, "0"
         , wxDefaultPosition, wxSize(150, -1), wxALIGN_RIGHT | wxTE_PROCESS_ENTER, mmCalcValidator());
     itemFlexGridSizer6->Add(m_commission_ctrl, g_flagsExpand);
-    m_commission_ctrl->SetAltPrecision(PreferencesModel::instance().getSharePrecision());
+    m_commission_ctrl->SetAltPrecision(PrefModel::instance().getSharePrecision());
     mmToolTip(m_commission_ctrl, _t("Enter any commission paid.\nUsed when creating the initial Share transaction."));
     m_commission_ctrl->Enable(initial_stock_transaction);
 
     itemFlexGridSizer6->Add(new wxStaticText(itemPanel5, wxID_STATIC, _t("Curr. Share Price")), g_flagsH);
     m_current_price_ctrl = new mmTextCtrl(itemPanel5, ID_TEXTCTRL_STOCK_CURR_PRICE, ""
         , wxDefaultPosition, wxSize(150, -1), wxALIGN_RIGHT | wxTE_PROCESS_ENTER, mmCalcValidator());
-    m_current_price_ctrl->SetAltPrecision(PreferencesModel::instance().getSharePrecision());
+    m_current_price_ctrl->SetAltPrecision(PrefModel::instance().getSharePrecision());
     mmToolTip(m_current_price_ctrl, _t("Enter current stock/share price."));
     itemFlexGridSizer6->Add(m_current_price_ctrl, g_flagsExpand);
 
@@ -339,7 +339,7 @@ void StockDialog::CreateControls()
     date_price->Add(new wxStaticText(buttons_panel, wxID_STATIC, _t("Price")), g_flagsH);
     m_history_price_ctrl = new mmTextCtrl(buttons_panel, ID_TEXTCTRL_STOCK_CP, ""
         , wxDefaultPosition, wxSize(150, -1), wxALIGN_RIGHT | wxTE_PROCESS_ENTER, mmCalcValidator());
-    m_history_price_ctrl->SetAltPrecision(PreferencesModel::instance().getSharePrecision());
+    m_history_price_ctrl->SetAltPrecision(PrefModel::instance().getSharePrecision());
     date_price->Add(m_history_price_ctrl, g_flagsH);
     buttons_sizer->Add(date_price);
 
@@ -499,7 +499,7 @@ void StockDialog::OnSave(wxCommandEvent & /*event*/)
     if (!m_edit) {
         const wxString RefType = StockModel::refTypeName;
         mmAttachmentManage::RelocateAllAttachments(RefType, 0, RefType, m_stock_n->STOCKID);
-        TransactionShareDialog share_dialog(this, m_stock_n);
+        TrxShareDialog share_dialog(this, m_stock_n);
         share_dialog.ShowModal();
     }
 
@@ -533,7 +533,7 @@ void StockDialog::CreateShareAccount(
     new_account_d.CURRENCYID   = stock_account->CURRENCYID;
     AccountModel::instance().add_data_n(new_account_d);
 
-    TransactionShareDialog share_dialog(this, m_stock_n);
+    TrxShareDialog share_dialog(this, m_stock_n);
     share_dialog.ShowModal();
 }
 
@@ -549,7 +549,7 @@ void StockDialog::OnListItemSelected(wxListEvent& event)
         m_history_price_ctrl->SetValue(AccountModel::toString(
             histData->VALUE,
             account,
-            PreferencesModel::instance().getSharePrecision()
+            PrefModel::instance().getSharePrecision()
         ));
     }
 }
@@ -620,7 +620,7 @@ void StockDialog::OnHistoryImportButton(wxCommandEvent& /*event*/)
             // date
             wxDateTime dt;
             dateStr = tokens[0];
-            mmParseDisplayStringToDate(dt, dateStr, PreferencesModel::instance().getDateFormat());
+            mmParseDisplayStringToDate(dt, dateStr, PrefModel::instance().getDateFormat());
             dateStr = dt.FormatISODate();
             // price
             priceStr = tokens[1];
@@ -888,7 +888,7 @@ void StockDialog::OnHistoryAddButton(wxCommandEvent& /*event*/)
     long i;
     for (i = 0; i < m_price_listbox->GetItemCount(); i++) {
         listStr = m_price_listbox->GetItemText(i, 0);
-        mmParseDisplayStringToDate(dt, listStr, PreferencesModel::instance().getDateFormat());
+        mmParseDisplayStringToDate(dt, listStr, PrefModel::instance().getDateFormat());
         if (dt.IsSameDate(m_history_date_ctrl->GetValue()))
             break;
     }
@@ -897,7 +897,7 @@ void StockDialog::OnHistoryAddButton(wxCommandEvent& /*event*/)
         for (i = 0; i < m_price_listbox->GetItemCount(); i++)
         {
             listStr = m_price_listbox->GetItemText(i, 0);
-            mmParseDisplayStringToDate(dt, listStr, PreferencesModel::instance().getDateFormat());
+            mmParseDisplayStringToDate(dt, listStr, PrefModel::instance().getDateFormat());
             if (dt.GetDateOnly() < m_history_date_ctrl->GetValue().GetDateOnly())
                 break;
         }
@@ -907,7 +907,7 @@ void StockDialog::OnHistoryAddButton(wxCommandEvent& /*event*/)
         m_price_listbox->InsertItem(item);
     }
     if (i != m_price_listbox->GetItemCount()) {
-        listStr = AccountModel::toString(dPrice, account, PreferencesModel::instance().getSharePrecision());
+        listStr = AccountModel::toString(dPrice, account, PrefModel::instance().getSharePrecision());
         m_price_listbox->SetItem(i, 0, mmGetDateTimeForDisplay(m_history_date_ctrl->GetValue().FormatISODate()));
         m_price_listbox->SetItem(i, 1, listStr);
     }
@@ -916,7 +916,7 @@ void StockDialog::OnHistoryAddButton(wxCommandEvent& /*event*/)
         // refresh m_stock_n to get updated attributes
         m_stock_n = StockModel::instance().unsafe_get_data_n(m_stock_n->STOCKID);
         m_current_price_ctrl->SetValue(AccountModel::toString(
-            m_stock_n->CURRENTPRICE, account, PreferencesModel::instance().getSharePrecision()
+            m_stock_n->CURRENTPRICE, account, PrefModel::instance().getSharePrecision()
         ));
         m_value_investment->SetLabelText(AccountModel::toCurrency(
             StockModel::instance().CurrentValue(m_stock_n), account
@@ -966,7 +966,7 @@ void StockDialog::ShowStockHistory()
             item.SetData(reinterpret_cast<void*>(histData.at(idx).HISTID.GetValue()));
             m_price_listbox->InsertItem(item);
             const wxDate dtdt = StockHistoryModel::DATE(histData.at(idx));
-            const wxString dispAmount = AccountModel::toString(histData.at(idx).VALUE, account, PreferencesModel::instance().getSharePrecision());
+            const wxString dispAmount = AccountModel::toString(histData.at(idx).VALUE, account, PrefModel::instance().getSharePrecision());
             m_price_listbox->SetItem(static_cast<long>(idx), 0, mmGetDateTimeForDisplay(histData.at(idx).DATE));
             m_price_listbox->SetItem(static_cast<long>(idx), 1, dispAmount);
             if (idx == 0)

@@ -46,7 +46,7 @@ wxEND_EVENT_TABLE()
 
 FieldDialog::FieldDialog(wxWindow* parent, FieldData* field) :
     m_field_n(field),
-    m_fieldRefType(TransactionModel::refTypeName)
+    m_fieldRefType(TrxModel::refTypeName)
 {
     this->SetFont(parent->GetFont());
     Create(parent);

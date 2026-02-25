@@ -26,9 +26,9 @@
 #include "AccountModel.h"
 #include "CurrencyHistoryModel.h"
 #include "CurrencyModel.h"
-#include "PreferencesModel.h"
+#include "PrefModel.h"
 #include "StockModel.h"
-#include "TransactionModel.h"
+#include "TrxModel.h"
 
 #include "uicontrols/navigatortypes.h"
 
@@ -111,7 +111,7 @@ const wxArrayString CurrencyModel::all_currency_symbols()
 // Getter
 const CurrencyData* CurrencyModel::GetBaseCurrency()
 {
-    int64 currency_id = PreferencesModel::instance().getBaseCurrencyID();
+    int64 currency_id = PrefModel::instance().getBaseCurrencyID();
     const CurrencyData* currency = CurrencyModel::instance().get_data_n(currency_id);
     return currency;
 }
@@ -169,9 +169,9 @@ std::map<wxDateTime, int> CurrencyModel::DateUsed(int64 CurrencyID)
             }
         }
         else {
-            for (const auto& tran : TransactionModel::instance().find_or(
-                TransactionCol::ACCOUNTID(account.ACCOUNTID),
-                TransactionCol::TOACCOUNTID(account.ACCOUNTID)
+            for (const auto& tran : TrxModel::instance().find_or(
+                TrxCol::ACCOUNTID(account.ACCOUNTID),
+                TrxCol::TOACCOUNTID(account.ACCOUNTID)
             )) {
                 dt.ParseDate(tran.TRANSDATE);
                 datesList[dt] = 1;

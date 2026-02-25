@@ -21,10 +21,10 @@
 #include <unordered_set>
 
 #include "AccountModel.h"
-#include "PreferencesModel.h"
+#include "PrefModel.h"
 #include "StockModel.h"
-#include "TransactionLinkModel.h"
-#include "TransactionShareModel.h"
+#include "TrxLinkModel.h"
+#include "TrxShareModel.h"
 
 mmChoiceNameA AccountModel::STATUS_CHOICES = mmChoiceNameA({
     { STATUS_ID_OPEN,   _n("Open") },
@@ -138,26 +138,26 @@ bool AccountModel::purge_id(int64 id)
 
     Savepoint();
 
-    for (const auto& r: TransactionModel::instance().find_or(
-        TransactionCol::ACCOUNTID(id),
-        TransactionCol::TOACCOUNTID(id)
+    for (const auto& r: TrxModel::instance().find_or(
+        TrxCol::ACCOUNTID(id),
+        TrxCol::TOACCOUNTID(id)
     )) {
-        if (TransactionModel::is_foreign(r)) {
-            TransactionShareModel::RemoveShareEntry(r.TRANSID);
-            TransactionLinkData tr = TransactionLinkModel::TranslinkRecord(r.TRANSID);
-            TransactionLinkModel::instance().purge_id(tr.TRANSLINKID);
+        if (TrxModel::is_foreign(r)) {
+            TrxShareModel::instance().remove_trx_share(r.TRANSID);
+            TrxLinkData tr = TrxLinkModel::TranslinkRecord(r.TRANSID);
+            TrxLinkModel::instance().purge_id(tr.TRANSLINKID);
         }
-        TransactionModel::instance().purge_id(r.TRANSID);
+        TrxModel::instance().purge_id(r.TRANSID);
     }
 
-    for (const auto& r: ScheduledModel::instance().find_or(
-        ScheduledCol::ACCOUNTID(id),
-        ScheduledCol::TOACCOUNTID(id)
+    for (const auto& r: SchedModel::instance().find_or(
+        SchedCol::ACCOUNTID(id),
+        SchedCol::TOACCOUNTID(id)
     ))
-        ScheduledModel::instance().purge_id(r.BDID);
+        SchedModel::instance().purge_id(r.BDID);
 
     for (const auto& r : StockModel::instance().find(StockCol::HELDAT(id))) {
-        TransactionLinkModel::RemoveTransLinkRecords<StockModel>(r.STOCKID);
+        TrxLinkModel::RemoveTransLinkRecords<StockModel>(r.STOCKID);
         StockModel::instance().purge_id(r.STOCKID);
     }
 
@@ -185,34 +185,34 @@ const CurrencyData* AccountModel::currency(const Data& r)
     return currency(&r);
 }
 
-const TransactionModel::DataA AccountModel::transactionsByDateTimeId(const Data*r)
+const TrxModel::DataA AccountModel::transactionsByDateTimeId(const Data*r)
 {
-    auto trans = TransactionModel::instance().find_or(
-        TransactionCol::ACCOUNTID(r->ACCOUNTID),
-        TransactionCol::TOACCOUNTID(r->ACCOUNTID)
+    auto trans = TrxModel::instance().find_or(
+        TrxCol::ACCOUNTID(r->ACCOUNTID),
+        TrxCol::TOACCOUNTID(r->ACCOUNTID)
     );
     std::sort(trans.begin(), trans.end());
-    if (PreferencesModel::instance().UseTransDateTime())
-        std::stable_sort(trans.begin(), trans.end(), TransactionData::SorterByTRANSDATE());
+    if (PrefModel::instance().UseTransDateTime())
+        std::stable_sort(trans.begin(), trans.end(), TrxData::SorterByTRANSDATE());
     else
-        std::stable_sort(trans.begin(), trans.end(), TransactionModel::SorterByTRANSDATE_DATE());
+        std::stable_sort(trans.begin(), trans.end(), TrxModel::SorterByTRANSDATE_DATE());
     return trans;
 }
 
-const TransactionModel::DataA AccountModel::transactionsByDateTimeId(const Data& r)
+const TrxModel::DataA AccountModel::transactionsByDateTimeId(const Data& r)
 {
     return transactionsByDateTimeId(&r);
 }
 
-const ScheduledModel::DataA AccountModel::billsdeposits(const Data* r)
+const SchedModel::DataA AccountModel::billsdeposits(const Data* r)
 {
-    return ScheduledModel::instance().find_or(
-        ScheduledCol::ACCOUNTID(r->ACCOUNTID),
-        ScheduledCol::TOACCOUNTID(r->ACCOUNTID)
+    return SchedModel::instance().find_or(
+        SchedCol::ACCOUNTID(r->ACCOUNTID),
+        SchedCol::TOACCOUNTID(r->ACCOUNTID)
     );
 }
 
-const ScheduledModel::DataA AccountModel::billsdeposits(const Data& r)
+const SchedModel::DataA AccountModel::billsdeposits(const Data& r)
 {
     return billsdeposits(&r);
 }
@@ -222,7 +222,7 @@ double AccountModel::balance(const Data* r)
     double sum = r->INITIALBAL;
     for (const auto& tran: transactionsByDateTimeId(r))
     {
-        sum += TransactionModel::account_flow(tran, r->ACCOUNTID);
+        sum += TrxModel::account_flow(tran, r->ACCOUNTID);
     }
 
     return sum;

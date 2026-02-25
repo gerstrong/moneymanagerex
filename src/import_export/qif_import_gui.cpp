@@ -32,7 +32,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "model/PayeeModel.h"
 #include "model/SettingModel.h"
 #include "model/TagModel.h"
-#include "model/PreferencesModel.h"
+#include "model/PrefModel.h"
 
 #include "manager/CategoryManager.h"
 #include "manager/PayeeManager.h"
@@ -349,7 +349,7 @@ void mmQIFImportDialog::CreateControls()
     payeeMatchAddNotes_->Disable();
 
     // Date Format Settings
-    m_dateFormatStr = PreferencesModel::instance().getDateFormat();
+    m_dateFormatStr = PrefModel::instance().getDateFormat();
 
     wxStaticText* dateFormat = new wxStaticText(this, wxID_STATIC, _t("Date Format"));
     choiceDateFormat_ = new wxComboBox(this, wxID_ANY);
@@ -664,7 +664,7 @@ bool mmQIFImportDialog::completeTransaction(std::unordered_map<int, wxString> &t
             {
                 isTransfer = true;
                 trx[Category] = _t("Transfer") + (!tags.IsEmpty() ? "/" + tags : "");
-                trx[TrxType] = TransactionModel::TYPE_NAME_TRANSFER;
+                trx[TrxType] = TrxModel::TYPE_NAME_TRANSFER;
                 trx[ToAccountName] = toAccName;
                 trx[Memo] += (trx[Memo].empty() ? "" : "\n") + trx[Payee];
                 if (m_QIFaccounts.find(toAccName) == m_QIFaccounts.end())
@@ -710,9 +710,9 @@ bool mmQIFImportDialog::completeTransaction(std::unordered_map<int, wxString> &t
     wxString amtStr = (trx.find(Amount) == trx.end() ? "" : trx[Amount]);
     if (!isTransfer) {
         if (amtStr.Mid(0, 1) == "-")
-            trx[TrxType] = TransactionModel::TYPE_NAME_WITHDRAWAL;
+            trx[TrxType] = TrxModel::TYPE_NAME_WITHDRAWAL;
         else if (!amtStr.empty())
-            trx[TrxType] = TransactionModel::TYPE_NAME_DEPOSIT;
+            trx[TrxType] = TrxModel::TYPE_NAME_DEPOSIT;
     }
 
     return !amtStr.empty();
@@ -756,7 +756,7 @@ void mmQIFImportDialog::refreshTabs(int tabs)
             data.push_back(wxVariant(dateStr));
             data.push_back(wxVariant(trx.find(TransNumber) != trx.end() ? trx.at(TransNumber) : ""));
             const wxString type = (trx.find(TrxType) != trx.end() ? trx.at(TrxType) : "");
-            if (type == TransactionModel::TYPE_NAME_TRANSFER)
+            if (type == TrxModel::TYPE_NAME_TRANSFER)
                 data.push_back(wxVariant(trx.find(ToAccountName) != trx.end() ? trx.at(ToAccountName) : ""));
             else
                 data.push_back(wxVariant(trx.find(Payee) != trx.end() ? trx.at(Payee) : ""));
@@ -1122,11 +1122,11 @@ void mmQIFImportDialog::OnOk(wxCommandEvent& WXUNUSED(event))
         if (is_webbapp_enabled)
             mmWebApp::MMEX_WebApp_UpdateCategory();
 
-        TransactionModel::DataA trx_a;
-        TransactionModel::DataA trx_to_a;
-        TransactionModel::DataA trx_from_a;
+        TrxModel::DataA trx_a;
+        TrxModel::DataA trx_to_a;
+        TrxModel::DataA trx_from_a;
         int count = 0;
-        const wxString& transferStr = TransactionModel::TYPE_NAME_TRANSFER;
+        const wxString& transferStr = TrxModel::TYPE_NAME_TRANSFER;
 
         const auto begin_date = toDateCtrl_->GetValue().FormatISODate();
         const auto end_date = fromDateCtrl_->GetValue().FormatISODate();
@@ -1141,10 +1141,10 @@ void mmQIFImportDialog::OnOk(wxCommandEvent& WXUNUSED(event))
                     break; // abort processing
             }
             //
-            TransactionData trx = TransactionData();
+            TrxData trx = TrxData();
             wxString msg;
             if (completeTransaction(entry, &trx, msg)) {
-                wxString strDate = TransactionModel::getTransDateTime(trx).FormatISODate();
+                wxString strDate = TrxModel::getTransDateTime(trx).FormatISODate();
                 if (dateFromCheckBox_->IsChecked() && strDate < begin_date)
                     continue;
                 if (dateToCheckBox_->IsChecked() && strDate > end_date)
@@ -1170,7 +1170,7 @@ void mmQIFImportDialog::OnOk(wxCommandEvent& WXUNUSED(event))
                 wxString tagStr = (entry.find(Category) != entry.end() ? entry.at(Category).AfterFirst('/') : "");
                 TagLinkModel::DataA gl_a;
                 if (!tagStr.IsEmpty()) {
-                    wxString reftype = TransactionModel::refTypeName;
+                    wxString reftype = TrxModel::refTypeName;
                     wxStringTokenizer tagTokens = wxStringTokenizer(tagStr, ":");
                     while (tagTokens.HasMoreTokens()) {
                         wxString tagname = tagTokens.GetNextToken().Trim(false).Trim();
@@ -1228,28 +1228,28 @@ void mmQIFImportDialog::OnOk(wxCommandEvent& WXUNUSED(event))
 
         //Search for duplicates for transfers
         for (auto& trx : trx_a) {
-            if (!TransactionModel::is_transfer(trx))
+            if (!TrxModel::is_transfer(trx))
                 continue;
             wxDate dt;
             dt.ParseISODate(trx.TRANSDATE);
-            const auto data = TransactionModel::instance().find(
-                TransactionModel::TRANSDATE(OP_EQ, dt),
-                TransactionCol::ACCOUNTID(OP_EQ, trx.ACCOUNTID),
-                TransactionCol::TOACCOUNTID(OP_EQ, trx.TOACCOUNTID),
-                TransactionCol::NOTES(OP_EQ, trx.NOTES),
-                TransactionCol::TRANSACTIONNUMBER(OP_EQ, trx.TRANSACTIONNUMBER),
-                TransactionModel::TRANSCODE(OP_EQ, TransactionModel::TYPE_ID_TRANSFER),
-                TransactionCol::TRANSAMOUNT(OP_EQ, trx.TRANSAMOUNT)
+            const auto data = TrxModel::instance().find(
+                TrxModel::TRANSDATE(OP_EQ, dt),
+                TrxCol::ACCOUNTID(OP_EQ, trx.ACCOUNTID),
+                TrxCol::TOACCOUNTID(OP_EQ, trx.TOACCOUNTID),
+                TrxCol::NOTES(OP_EQ, trx.NOTES),
+                TrxCol::TRANSACTIONNUMBER(OP_EQ, trx.TRANSACTIONNUMBER),
+                TrxModel::TRANSCODE(OP_EQ, TrxModel::TYPE_ID_TRANSFER),
+                TrxCol::TRANSAMOUNT(OP_EQ, trx.TRANSAMOUNT)
             );
             if (data.size() > 0)
-                trx.STATUS = TransactionModel::STATUS_KEY_DUPLICATE;
+                trx.STATUS = TrxModel::STATUS_KEY_DUPLICATE;
         }
         // At this point all transactions and tags have been merged into single sets
         TagLinkModel::instance().Savepoint();
         for (int i = 0; i < static_cast<int>(trx_a.size()); i++) {
             if (!m_txnTaglinks[std::make_pair(0, i)].empty()) {
                 // we need to know the transid for the taglink, so save the transaction first
-                TransactionModel::instance().save_trx(trx_a[i]);
+                TrxModel::instance().save_trx(trx_a[i]);
                 int64 transid = trx_a[i].id();
                 // apply that transid to all associated tags
                 for (auto& taglink : m_txnTaglinks[std::make_pair(0, i)])
@@ -1259,7 +1259,7 @@ void mmQIFImportDialog::OnOk(wxCommandEvent& WXUNUSED(event))
             }
         }
         TagLinkModel::instance().ReleaseSavepoint();
-        TransactionModel::instance().save_trx_a(trx_a);
+        TrxModel::instance().save_trx_a(trx_a);
         progressDlg.Update(count, _t("Importing Split transactions"));
         joinSplit(trx_a, m_splitDataSets);
         saveSplit();
@@ -1288,14 +1288,14 @@ void mmQIFImportDialog::saveSplit()
     if (m_splitDataSets.empty())
         return;
 
-    TransactionSplitModel::instance().Savepoint();
+    TrxSplitModel::instance().Savepoint();
     TagLinkModel::instance().Savepoint();
     // Work through each group of splits
     for (int i = 0; i < static_cast<int>(m_splitDataSets.size()); i++) {
         // and each split in the group
         for (int j = 0; j < static_cast<int>(m_splitDataSets[i].size()); j++) {
             // save the split
-            TransactionSplitModel::instance().save_data_n(m_splitDataSets[i][j]);
+            TrxSplitModel::instance().save_data_n(m_splitDataSets[i][j]);
             int64 splitTransID = m_splitDataSets[i][j].id();
             // check if there are any taglinks for this split index in this group
             if (!m_splitTaglinks[i][j].empty()) {
@@ -1307,13 +1307,13 @@ void mmQIFImportDialog::saveSplit()
             }
         }
     }
-    TransactionSplitModel::instance().ReleaseSavepoint();
+    TrxSplitModel::instance().ReleaseSavepoint();
     TagLinkModel::instance().ReleaseSavepoint();
 }
 
 void mmQIFImportDialog::joinSplit(
-    TransactionModel::DataA& destination,
-    std::vector<TransactionSplitModel::DataA> &ts_a
+    TrxModel::DataA& destination,
+    std::vector<TrxSplitModel::DataA> &ts_a
 ) {
     // no splits in the file
     if (ts_a.empty())
@@ -1328,8 +1328,8 @@ void mmQIFImportDialog::joinSplit(
 }
 
 void mmQIFImportDialog::appendTransfers(
-    TransactionModel::DataA& destination,
-    TransactionModel::DataA& target
+    TrxModel::DataA& destination,
+    TrxModel::DataA& target
 ) {
     // Here we are moving all the 'to' transfers into the normal transactions, so we also
     // need to keep track of the new index for the taglinks
@@ -1340,8 +1340,8 @@ void mmQIFImportDialog::appendTransfers(
 }
 
 bool mmQIFImportDialog::mergeTransferPair(
-    TransactionModel::DataA& to_a,
-    TransactionModel::DataA& from_a
+    TrxModel::DataA& to_a,
+    TrxModel::DataA& from_a
 ) {
     if (to_a.empty() && from_a.empty()) return false; //Nothing to merge
 
@@ -1381,7 +1381,7 @@ bool mmQIFImportDialog::mergeTransferPair(
 
 bool mmQIFImportDialog::completeTransaction(
     /*in*/ const std::unordered_map <int, wxString> &i,
-    /*out*/ TransactionData* trx,
+    /*out*/ TrxData* trx,
     wxString& msg
 ) {
     auto t = i;
@@ -1390,7 +1390,7 @@ bool mmQIFImportDialog::completeTransaction(
         msg = _t("Transaction code is missing");
         return false;
     }
-    bool transfer = TransactionModel::is_transfer(trx->TRANSCODE);
+    bool transfer = TrxModel::is_transfer(trx->TRANSCODE);
 
     if (!transfer) {
         wxString payee_name = t.find(Payee) != t.end() ? t.at(Payee) : "";
@@ -1451,11 +1451,11 @@ bool mmQIFImportDialog::completeTransaction(
 
     trx->TRANSACTIONNUMBER = (t.find(TransNumber) != t.end() ? t[TransNumber] : "");
     trx->NOTES.Prepend(!trx->NOTES.IsEmpty() ? "\n" : "").Prepend(t.find(Memo) != t.end() ? t[Memo] : ""); // add the actual NOTES before the payee match details
-    wxString status = TransactionModel::STATUS_KEY_NONE;
+    wxString status = TrxModel::STATUS_KEY_NONE;
     if (t.find(Status) != t.end()) {
         wxString s = t[Status];
         if (s == "X" || s == "R")
-            status = TransactionModel::STATUS_KEY_RECONCILED;
+            status = TrxModel::STATUS_KEY_RECONCILED;
         /*else if (s == "*" || s == "c") {
             TODO: What does 'cleared' status mean?
             status = "c";
@@ -1483,7 +1483,7 @@ bool mmQIFImportDialog::completeTransaction(
     wxString tagStr;
     wxRegEx regex(" ?: ?");
     if (t.find(CategorySplit) != t.end()) {
-        TransactionSplitModel::DataA split;
+        TrxSplitModel::DataA split;
         wxStringTokenizer categToken(t[CategorySplit], "\n");
         wxStringTokenizer amtToken((t.find(AmountSplit) != t.end() ? t[AmountSplit] : ""), "\n");
         wxString notes = t.find(MemoSplit) != t.end() ? t[MemoSplit] : "";
@@ -1497,7 +1497,7 @@ bool mmQIFImportDialog::completeTransaction(
                 msg = _t("Transaction Category is incorrect");
                 return false;
             }
-            TransactionSplitData ts_data = TransactionSplitData();
+            TrxSplitData ts_data = TrxSplitData();
             ts_data.CATEGID = categID;
 
             wxString amtSplit = amtToken.GetNextToken();
@@ -1517,7 +1517,7 @@ bool mmQIFImportDialog::completeTransaction(
                     break;
             }
 
-            ts_data.SPLITTRANSAMOUNT = (TransactionModel::is_deposit(*trx) ? amount : -amount);
+            ts_data.SPLITTRANSAMOUNT = (TrxModel::is_deposit(*trx) ? amount : -amount);
             ts_data.TRANSID = trx->TRANSID;
             ts_data.NOTES = memo;
             split.push_back(ts_data);
@@ -1525,7 +1525,7 @@ bool mmQIFImportDialog::completeTransaction(
             // Save split tags
             if (!tagStr.IsEmpty()) {
                 TagLinkModel::DataA splitTaglinks;
-                wxString reftype = TransactionSplitModel::refTypeName;
+                wxString reftype = TrxSplitModel::refTypeName;
                 wxStringTokenizer tagTokens = wxStringTokenizer(tagStr, ":");
                 while (tagTokens.HasMoreTokens()) {
                     wxString tagname = tagTokens.GetNextToken().Trim(false).Trim();
@@ -1583,9 +1583,9 @@ bool mmQIFImportDialog::completeTransaction(
         // By transaction number
         if (dupMethod == 0) {
             if (!trx->TRANSACTIONNUMBER.empty()) {
-                const auto existing_transactions = TransactionModel::instance().find(
-                    TransactionCol::TRANSACTIONNUMBER(OP_EQ, trx->TRANSACTIONNUMBER),
-                    TransactionCol::DELETEDTIME(OP_EQ, wxEmptyString)
+                const auto existing_transactions = TrxModel::instance().find(
+                    TrxCol::TRANSACTIONNUMBER(OP_EQ, trx->TRANSACTIONNUMBER),
+                    TrxCol::DELETEDTIME(OP_EQ, wxEmptyString)
                 );
 
                 isDuplicate = !existing_transactions.empty();
@@ -1615,11 +1615,11 @@ bool mmQIFImportDialog::completeTransaction(
             wxString startDateStr = startDate.FormatISODate() + "T00:00:00";
             wxString endDateStr = mmDateRange::getDayEnd(endDate).FormatISOCombined();
 
-            const auto potential_matches = TransactionModel::instance().find(
-                TransactionCol::TRANSAMOUNT(trx->TRANSAMOUNT),
-                TransactionCol::TRANSDATE(OP_GE, startDateStr),
-                TransactionCol::TRANSDATE(OP_LE, endDateStr),
-                TransactionCol::DELETEDTIME(OP_EQ, wxEmptyString)
+            const auto potential_matches = TrxModel::instance().find(
+                TrxCol::TRANSAMOUNT(trx->TRANSAMOUNT),
+                TrxCol::TRANSDATE(OP_GE, startDateStr),
+                TrxCol::TRANSDATE(OP_LE, endDateStr),
+                TrxCol::DELETEDTIME(OP_EQ, wxEmptyString)
             );
 
             for (const auto& existingTrx : potential_matches) {
@@ -1639,7 +1639,7 @@ bool mmQIFImportDialog::completeTransaction(
                 return false;
             }
             else if (dupAction == 1) // Flag as duplicate
-                trx->STATUS = TransactionModel::STATUS_KEY_DUPLICATE;
+                trx->STATUS = TrxModel::STATUS_KEY_DUPLICATE;
         }
     }
 

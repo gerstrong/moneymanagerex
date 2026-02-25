@@ -28,7 +28,7 @@
 
 #include "model/CurrencyModel.h"
 #include "model/InfoModel.h"
-#include "model/PreferencesModel.h"
+#include "model/PrefModel.h"
 
 #include "htmlbuilder.h"
 
@@ -171,7 +171,7 @@ void mmHTMLBuilder::init(bool simple, const wxString& extra_style)
     {
         html_ = wxString::Format(tags::HTML
             , mmex::getProgramName()
-            , wxString::Format("%d", PreferencesModel::instance().getHtmlScale())
+            , wxString::Format("%d", PrefModel::instance().getHtmlScale())
             , extra_style);
     }
     formatHTML(html_);
@@ -180,8 +180,8 @@ void mmHTMLBuilder::init(bool simple, const wxString& extra_style)
 void mmHTMLBuilder::showUserName()
 {
     //Show user name if provided
-    if (PreferencesModel::instance().getUserName() != "")
-        addHeader(2, PreferencesModel::instance().getUserName());
+    if (PrefModel::instance().getUserName() != "")
+        addHeader(2, PrefModel::instance().getUserName());
 }
 
 void mmHTMLBuilder::addReportHeader(const wxString& name, int startDay, bool futureIgnored)

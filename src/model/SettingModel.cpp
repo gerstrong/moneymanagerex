@@ -22,7 +22,7 @@
 #include "base/paths.h"
 
 #include "SettingModel.h"
-#include "PreferencesModel.h"
+#include "PrefModel.h"
 
 #include "panel/JournalPanel.h"
 

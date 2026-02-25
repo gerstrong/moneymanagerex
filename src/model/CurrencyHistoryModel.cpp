@@ -18,7 +18,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "CurrencyModel.h"
 #include "CurrencyHistoryModel.h"
-#include "PreferencesModel.h"
+#include "PrefModel.h"
 
 CurrencyHistoryModel::CurrencyHistoryModel() :
     TableFactory<CurrencyHistoryTable, CurrencyHistoryData>()
@@ -96,7 +96,7 @@ int64 CurrencyHistoryModel::addUpdate(
 /** Return the rate for a specific currency in a specific day*/
 double CurrencyHistoryModel::getDayRate(int64 currencyID, const wxString& DateISO)
 {
-    if (!PreferencesModel::instance().getUseCurrencyHistory()) {
+    if (!PrefModel::instance().getUseCurrencyHistory()) {
         const CurrencyData* c = CurrencyModel::instance().get_data_n(currencyID);
         return c ? c->BASECONVRATE : 1.0;
     }
@@ -114,7 +114,7 @@ double CurrencyHistoryModel::getDayRate(int64 currencyID, const wxDate& Date)
     if (currencyID == CurrencyModel::GetBaseCurrency()->CURRENCYID || currencyID == -1)
         return 1;
 
-    if (!PreferencesModel::instance().getUseCurrencyHistory())
+    if (!PrefModel::instance().getUseCurrencyHistory())
         return CurrencyModel::instance().get_data_n(currencyID)->BASECONVRATE;
 
     CurrencyHistoryModel::DataA Data = CurrencyHistoryModel::instance().find(
@@ -162,7 +162,7 @@ double CurrencyHistoryModel::getDayRate(int64 currencyID, const wxDate& Date)
 /** Return the last rate for specified currency */
 double CurrencyHistoryModel::getLastRate(const int64& currencyID)
 {
-    if (!PreferencesModel::instance().getUseCurrencyHistory())
+    if (!PrefModel::instance().getUseCurrencyHistory())
         return CurrencyModel::instance().get_data_n(currencyID)->BASECONVRATE;
 
     CurrencyHistoryModel::DataA histData = CurrencyHistoryModel::instance().find(

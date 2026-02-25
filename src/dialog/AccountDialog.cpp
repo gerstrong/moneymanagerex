@@ -30,7 +30,7 @@
 
 #include "model/CurrencyModel.h"
 #include "model/InfoModel.h"
-#include "model/PreferencesModel.h"
+#include "model/PrefModel.h"
 #include "model/StockModel.h"
 
 #include "AccountDialog.h"
@@ -345,7 +345,7 @@ void AccountDialog::fillControls()
         m_initdate_ctrl->SetValue(parseDateTime(m_account_n->INITIALDATE));
     }
 
-    int selectedImage = PreferencesModel::instance().AccountImageId(
+    int selectedImage = PrefModel::instance().AccountImageId(
         m_account_n->ACCOUNTID, false, true
     );
     m_bitmapButtons->SetBitmap(m_images.at(selectedImage));
@@ -438,7 +438,7 @@ void AccountDialog::OnImageButton(wxCommandEvent& /*event*/)
     wxMenuItem* menuItem = new wxMenuItem(&mainMenu, wxID_HIGHEST + static_cast<int>(acc_img::ACC_ICON_MONEY) - 1, _t("Default Image"));
 
     menuItem->SetBitmap(m_images.at(
-        PreferencesModel::instance().AccountImageId(m_account_n->ACCOUNTID, true)
+        PrefModel::instance().AccountImageId(m_account_n->ACCOUNTID, true)
     ));
     mainMenu.Append(menuItem);
 
@@ -456,7 +456,7 @@ void AccountDialog::OnImageButton(wxCommandEvent& /*event*/)
 void AccountDialog::OnCustonImage(wxCommandEvent& event)
 {
     int selectedImage = (event.GetId() - wxID_HIGHEST) - img::LAST_NAVTREE_PNG + 1;
-    int image_id = PreferencesModel::instance().AccountImageId(m_account_n->ACCOUNTID, true);
+    int image_id = PrefModel::instance().AccountImageId(m_account_n->ACCOUNTID, true);
 
     InfoModel::instance().setInt(
         wxString::Format("ACC_IMAGE_ID_%lld", m_account_n->ACCOUNTID),
@@ -523,13 +523,13 @@ void AccountDialog::OnOk(wxCommandEvent& /*event*/)
         return mmErrorDialogs::ToolTip4Object(m_initdate_ctrl, _t("Opening date is unable to be in the future"), _t("Invalid Date"));
 
     if (m_account_n) {
-        const TransactionModel::DataA all_trans_check1 = TransactionModel::instance().find(
-            TransactionCol::TRANSDATE(OP_LT, openingDate),
-            TransactionCol::ACCOUNTID(OP_EQ, m_account_n->ACCOUNTID)
+        const TrxModel::DataA all_trans_check1 = TrxModel::instance().find(
+            TrxCol::TRANSDATE(OP_LT, openingDate),
+            TrxCol::ACCOUNTID(OP_EQ, m_account_n->ACCOUNTID)
         );
-        const TransactionModel::DataA all_trans_check2 = TransactionModel::instance().find(
-            TransactionCol::TRANSDATE(OP_LT, openingDate),
-            TransactionCol::TOACCOUNTID(OP_EQ, m_account_n->ACCOUNTID)
+        const TrxModel::DataA all_trans_check2 = TrxModel::instance().find(
+            TrxCol::TRANSDATE(OP_LT, openingDate),
+            TrxCol::TOACCOUNTID(OP_EQ, m_account_n->ACCOUNTID)
         );
         if (!all_trans_check1.empty() || !all_trans_check2.empty())
             return mmErrorDialogs::ToolTip4Object(m_initdate_ctrl, _t("Transactions for this account already exist before this date"), _t("Invalid Date"));
@@ -541,13 +541,13 @@ void AccountDialog::OnOk(wxCommandEvent& /*event*/)
         if (!all_trans_stock.empty())
             return mmErrorDialogs::ToolTip4Object(m_initdate_ctrl, _t("Stock purchases for this account already exist before this date"), _t("Invalid Date"));
 
-        const ScheduledModel::DataA all_trans_bd1 = ScheduledModel::instance().find(
-            ScheduledCol::TRANSDATE(OP_LT, openingDate),
-            ScheduledCol::ACCOUNTID(OP_EQ, m_account_n->ACCOUNTID)
+        const SchedModel::DataA all_trans_bd1 = SchedModel::instance().find(
+            SchedCol::TRANSDATE(OP_LT, openingDate),
+            SchedCol::ACCOUNTID(OP_EQ, m_account_n->ACCOUNTID)
         );
-        const ScheduledModel::DataA all_trans_bd2 = ScheduledModel::instance().find(
-            ScheduledCol::TRANSDATE(OP_LT, openingDate),
-            ScheduledCol::TOACCOUNTID(OP_EQ, m_account_n->ACCOUNTID)
+        const SchedModel::DataA all_trans_bd2 = SchedModel::instance().find(
+            SchedCol::TRANSDATE(OP_LT, openingDate),
+            SchedCol::TOACCOUNTID(OP_EQ, m_account_n->ACCOUNTID)
         );
         if (!all_trans_bd1.empty() || !all_trans_bd2.empty())
             return mmErrorDialogs::ToolTip4Object(m_initdate_ctrl, _t("Scheduled transactions for this account are scheduled before this date."), _t("Invalid Date"));

@@ -29,8 +29,8 @@
 
 #include "_ModelBase.h"
 #include "CurrencyModel.h"
-#include "TransactionModel.h"
-#include "ScheduledModel.h"
+#include "TrxModel.h"
+#include "SchedModel.h"
 
 #include "uicontrols/navigatortypes.h"  // remove later
 
@@ -87,11 +87,11 @@ public:
     static const CurrencyData* currency(const Data* r);
     static const CurrencyData* currency(const Data& r);
 
-    static const TransactionModel::DataA transactionsByDateTimeId(const Data* r);
-    static const TransactionModel::DataA transactionsByDateTimeId(const Data& r);
+    static const TrxModel::DataA transactionsByDateTimeId(const Data* r);
+    static const TrxModel::DataA transactionsByDateTimeId(const Data& r);
 
-    static const ScheduledModel::DataA billsdeposits(const Data* r);
-    static const ScheduledModel::DataA billsdeposits(const Data& r);
+    static const SchedModel::DataA billsdeposits(const Data* r);
+    static const SchedModel::DataA billsdeposits(const Data& r);
 
     static double balance(const Data* r);
     static double balance(const Data& r);

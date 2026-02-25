@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "htmlbuilder.h"
 
 #include "model/AccountModel.h"
-#include "model/ScheduledModel.h"
+#include "model/SchedModel.h"
 #include "model/CurrencyHistoryModel.h"
 #include "mmframe.h"
 #include "FlowReport.h"
@@ -41,7 +41,7 @@ FlowReport::~FlowReport()
 {
 }
 
-double FlowReport::trueAmount(const TransactionData& trx)
+double FlowReport::trueAmount(const TrxData& trx)
 {
     double amount = 0.0;
     bool isAccountFound = std::find(m_account_id.begin(), m_account_id.end(),
@@ -55,14 +55,14 @@ double FlowReport::trueAmount(const TransactionData& trx)
             AccountModel::instance().get_data_n(trx.ACCOUNTID)->CURRENCYID,
             trx.TRANSDATE
         );
-        switch (TransactionModel::type_id(trx.TRANSCODE)) {
-        case TransactionModel::TYPE_ID_WITHDRAWAL:
+        switch (TrxModel::type_id(trx.TRANSCODE)) {
+        case TrxModel::TYPE_ID_WITHDRAWAL:
             amount = -trx.TRANSAMOUNT * convRate;
             break;
-        case TransactionModel::TYPE_ID_DEPOSIT:
+        case TrxModel::TYPE_ID_DEPOSIT:
             amount = +trx.TRANSAMOUNT * convRate;
             break;
-        case TransactionModel::TYPE_ID_TRANSFER:
+        case TrxModel::TYPE_ID_TRANSFER:
             if (isAccountFound)
                 amount = -trx.TRANSAMOUNT * convRate;
             else {
@@ -105,19 +105,19 @@ void FlowReport::getTransactions()
         m_account_id.push_back(account.ACCOUNTID);
 
         for (const auto& tran : AccountModel::transactionsByDateTimeId(account)) {
-            wxString strDate = TransactionModel::getTransDateTime(tran).FormatISOCombined();
+            wxString strDate = TrxModel::getTransDateTime(tran).FormatISOCombined();
             // Do not include asset or stock transfers in income expense calculations.
-            if (TransactionModel::is_foreignAsTransfer(tran) || (strDate > todayString))
+            if (TrxModel::is_foreignAsTransfer(tran) || (strDate > todayString))
                 continue;
-            m_balance += TransactionModel::account_flow(tran, account.ACCOUNTID) * convRate;
+            m_balance += TrxModel::account_flow(tran, account.ACCOUNTID) * convRate;
         }
     }
 
     // Now gather all transations posted after today
-    TransactionModel::DataA transactions = TransactionModel::instance().find(
-        TransactionModel::TRANSDATE(OP_GT, endOfToday),
-        TransactionModel::TRANSDATE(OP_LT, endDate),
-        TransactionModel::STATUS(OP_NE, TransactionModel::STATUS_ID_VOID)
+    TrxModel::DataA transactions = TrxModel::instance().find(
+        TrxModel::TRANSDATE(OP_GT, endOfToday),
+        TrxModel::TRANSDATE(OP_LT, endDate),
+        TrxModel::STATUS(OP_NE, TrxModel::STATUS_ID_VOID)
     );
     for (auto& trx_d : transactions) {
         if (!trx_d.DELETEDTIME.IsEmpty())
@@ -130,7 +130,7 @@ void FlowReport::getTransactions()
         ) != m_account_id.end();
         if (!isAccountFound && !isToAccountFound)
             continue; // skip account
-        const auto& split_a = TransactionModel::find_split(trx_d);
+        const auto& split_a = TrxModel::find_split(trx_d);
         if (split_a.empty()) {
             trx_d.TRANSAMOUNT = trueAmount(trx_d);
             m_forecastVector.push_back(trx_d);
@@ -146,15 +146,15 @@ void FlowReport::getTransactions()
     }
 
     // Now we gather the recurring transaction list
-    for (const auto& sched_d : ScheduledModel::instance().find(
-        ScheduledModel::STATUS(OP_NE, TransactionModel::STATUS_ID_VOID)
+    for (const auto& sched_d : SchedModel::instance().find(
+        SchedModel::STATUS(OP_NE, TrxModel::STATUS_ID_VOID)
     )) {
-        wxDateTime next_date = ScheduledModel::NEXTOCCURRENCEDATE(sched_d);
+        wxDateTime next_date = SchedModel::NEXTOCCURRENCEDATE(sched_d);
         if (next_date > endDate)
             continue;
 
-        ScheduledModel::RepeatNum rn;
-        if (!ScheduledModel::decode_repeat_num(sched_d, rn))
+        SchedModel::RepeatNum rn;
+        if (!SchedModel::decode_repeat_num(sched_d, rn))
             continue;
 
         bool isAccountFound = std::find(m_account_id.begin(), m_account_id.end(),
@@ -171,7 +171,7 @@ void FlowReport::getTransactions()
             if (next_date > endDate)
                 break;
 
-            TransactionData trx;
+            TrxData trx;
             trx.TRANSDATE     = next_date.FormatISODate();
             trx.ACCOUNTID     = sched_d.ACCOUNTID;
             trx.TOACCOUNTID   = sched_d.TOACCOUNTID;
@@ -179,8 +179,8 @@ void FlowReport::getTransactions()
             trx.TRANSCODE     = sched_d.TRANSCODE;
             trx.TRANSAMOUNT   = sched_d.TRANSAMOUNT;
             trx.TOTRANSAMOUNT = sched_d.TOTRANSAMOUNT;
-            if (!ScheduledModel::split(sched_d).empty()) {
-                for (const auto& split_item : ScheduledModel::split(sched_d)) {
+            if (!SchedModel::split(sched_d).empty()) {
+                for (const auto& split_item : SchedModel::split(sched_d)) {
                     trx.CATEGID     = split_item.CATEGID;
                     trx.TRANSAMOUNT = split_item.SPLITTRANSAMOUNT;
                     trx.TRANSAMOUNT = trueAmount(trx);
@@ -196,15 +196,15 @@ void FlowReport::getTransactions()
             if (rn.num == 1)
                 break;
 
-            next_date = ScheduledModel::nextOccurDate(next_date, rn);
-            ScheduledModel::next_repeat_num(rn);
+            next_date = SchedModel::nextOccurDate(next_date, rn);
+            SchedModel::next_repeat_num(rn);
         }
     }
 
     // Sort by transaction date
     sort(
         m_forecastVector.begin(), m_forecastVector.end(),
-        [] (TransactionData const& a, TransactionData const& b) {
+        [] (TrxData const& a, TrxData const& b) {
             return a.TRANSDATE < b.TRANSDATE;
         }
     );
@@ -236,7 +236,7 @@ wxString FlowReport::getHTMLText_DayOrMonth(bool monthly)
     // squash the data by month or day
     for (const auto& trx : m_forecastVector)
     {
-        dt = TransactionModel::getTransDateTime(trx);
+        dt = TrxModel::getTransDateTime(trx);
         wxString date = dt.FormatISODate();
         if (monthly)
         {

@@ -19,7 +19,7 @@
 #include "ReportModel.h"
 #include "base/constants.h"
 #include "base/paths.h"
-#include "PreferencesModel.h"
+#include "PrefModel.h"
 #include "base/platfdep.h"
 #include "dialog/AttachmentDialog.h"
 #include "panel/ReportPanel.h"
@@ -397,8 +397,8 @@ int ReportModel::get_html(const Data* r, wxString& out)
         auto s = wxString(wxFileName::GetPathSeparator());
         s.Replace("\\", "\\\\");
         report(L"FILESEPARATOR") = s;
-        report(L"LANGUAGE") = PreferencesModel::instance().getLanguageCode();
-        report(L"HTMLSCALE") = wxString::Format("%d", PreferencesModel::instance().getHtmlScale());
+        report(L"LANGUAGE") = PrefModel::instance().getLanguageCode();
+        report(L"HTMLSCALE") = wxString::Format("%d", PrefModel::instance().getHtmlScale());
     }
     report(L"ERRORS") = errors;
 

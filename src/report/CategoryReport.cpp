@@ -23,7 +23,7 @@
 #include "util/mmDateRange.h"
 
 #include "model/CategoryModel.h"
-#include "model/PreferencesModel.h"
+#include "model/PrefModel.h"
 
 #include "CategoryReport.h"
 #include "budget.h"
@@ -68,7 +68,7 @@ void  CategoryReport::refreshData()
         categoryStats,
         m_account_a,
         m_date_range,
-        PreferencesModel::instance().getIgnoreFutureTransactions(),
+        PrefModel::instance().getIgnoreFutureTransactions(),
         false
     );
 
@@ -353,7 +353,7 @@ wxString mmReportCategoryOverTimePerformance::getHTMLText()
         categoryStats,
         m_account_a,
         date_range,
-        PreferencesModel::instance().getIgnoreFutureTransactions()
+        PrefModel::instance().getIgnoreFutureTransactions()
     );
 
     //Init totals

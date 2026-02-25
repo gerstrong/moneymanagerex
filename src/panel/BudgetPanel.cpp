@@ -25,7 +25,7 @@
 #include "util/mmDateRange.h"
 
 #include "model/_all.h"
-#include "model/PreferencesModel.h"
+#include "model/PrefModel.h"
 
 #include "BudgetPanel.h"
 #include "dialog/BudgetEntryDialog.h"
@@ -168,7 +168,7 @@ wxString BudgetPanel::GetPanelTitle() const
     wxString yearStr = BudgetPeriodModel::instance().Get(budgetYearID_);
     if ((yearStr.length() < 5))
     {
-        if (PreferencesModel::instance().getBudgetFinancialYears())
+        if (PrefModel::instance().getBudgetFinancialYears())
         {
             long year;
             yearStr.ToLong(&year);
@@ -186,7 +186,7 @@ wxString BudgetPanel::GetPanelTitle() const
         yearStr += wxString::Format(" (%s)", m_monthName);
     }
 
-    if (PreferencesModel::instance().getBudgetDaysOffset() != 0)
+    if (PrefModel::instance().getBudgetDaysOffset() != 0)
     {
         yearStr = wxString::Format(_t("%1$s    Start Date of: %2$s"), yearStr, mmGetDateTimeForDisplay(m_budget_offset_date));
     }
@@ -354,7 +354,7 @@ void BudgetPanel::initVirtualListControl()
     mmReportBudget budgetDetails;
 
     bool evaluateTransfer = false;
-    if (PreferencesModel::instance().getBudgetIncludeTransfers())
+    if (PrefModel::instance().getBudgetIncludeTransfers())
     {
         evaluateTransfer = true;
     }
@@ -366,7 +366,7 @@ void BudgetPanel::initVirtualListControl()
 
     int startDay = 1;
     wxDate::Month startMonth = wxDateTime::Jan;
-    if (PreferencesModel::instance().getBudgetFinancialYears())
+    if (PrefModel::instance().getBudgetFinancialYears())
         budgetDetails.GetFinancialYearValues(startDay, startMonth);
     wxDateTime dtBegin(startDay, startMonth, year);
     wxDateTime dtEnd = dtBegin;
@@ -381,9 +381,9 @@ void BudgetPanel::initVirtualListControl()
     }
 
     // Readjust dates by the Budget Offset Option
-    PreferencesModel::instance().addBudgetDateOffset(dtBegin);
+    PrefModel::instance().addBudgetDateOffset(dtBegin);
     m_budget_offset_date = dtBegin.FormatISODate();   
-    PreferencesModel::instance().addBudgetDateOffset(dtEnd);
+    PrefModel::instance().addBudgetDateOffset(dtEnd);
     mmDateRange date_range;
     date_range.start_date(dtBegin.ResetTime()); // Start of Day
     date_range.end_date(dtEnd.ResetTime().Add(wxTimeSpan(23,59,59,999))); // End of Day
@@ -392,7 +392,7 @@ void BudgetPanel::initVirtualListControl()
     BudgetModel::instance().getBudgetEntry(budgetYearID_, budgetPeriod_, budgetAmt_, budgetNotes_);
     CategoryModel::instance().getCategoryStats(categoryStats_
         , static_cast<wxSharedPtr<wxArrayString>>(nullptr)
-        , &date_range, PreferencesModel::instance().getIgnoreFutureTransactions()
+        , &date_range, PrefModel::instance().getIgnoreFutureTransactions()
         , false, (evaluateTransfer ? &budgetAmt_ : 0));
 
     //start with only the root categories

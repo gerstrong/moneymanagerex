@@ -44,13 +44,13 @@
 
 #include "manager/DateRangeManager.h"
 #include "dialog/SplitDialog.h"
-#include "dialog/TransactionDialog.h"
+#include "dialog/TrxDialog.h"
 #include "dialog/AttachmentDialog.h"
 #include "dialog/AssetDialog.h"
-#include "dialog/ScheduledDialog.h"
-#include "dialog/TransactionFilterDialog.h"
-#include "dialog/TransactionShareDialog.h"
-#include "dialog/TransactionUpdateDialog.h"
+#include "dialog/SchedDialog.h"
+#include "dialog/TrxFilterDialog.h"
+#include "dialog/TrxShareDialog.h"
+#include "dialog/TrxUpdateDialog.h"
 #include "uicontrols/reconciledialog.h"
 #include "uicontrols/navigatortypes.h"
 
@@ -84,8 +84,8 @@ wxBEGIN_EVENT_TABLE(JournalPanel, wxPanel)
         ID_DATE_RANGE_MAX,
         JournalPanel::onFilterDate)
     EVT_MENU_RANGE(
-        TransactionModel::TYPE_ID_WITHDRAWAL,
-        TransactionModel::TYPE_ID_TRANSFER,
+        TrxModel::TYPE_ID_WITHDRAWAL,
+        TrxModel::TYPE_ID_TRANSFER,
         JournalPanel::onNewTransaction
     )
     EVT_SEARCHCTRL_SEARCH_BTN(wxID_FIND,  JournalPanel::onSearchTxtEntered)
@@ -116,7 +116,7 @@ JournalPanel::JournalPanel(
     else {
         m_currency = CurrencyModel::GetBaseCurrency();
     }
-    m_use_account_specific_filter = PreferencesModel::instance().getUsePerAccountFilter();
+    m_use_account_specific_filter = PrefModel::instance().getUsePerAccountFilter();
     loadDateRanges(&m_date_range_a, &m_date_range_m, isAccount());
 
     create(parent);
@@ -161,7 +161,7 @@ void JournalPanel::loadAccount(int64 account_id)
     m_group_ids = {};
     m_account = AccountModel::instance().get_data_n(m_account_id);
     m_currency = AccountModel::currency(*m_account);
-    m_use_account_specific_filter = PreferencesModel::instance().getUsePerAccountFilter();
+    m_use_account_specific_filter = PrefModel::instance().getUsePerAccountFilter();
 
     loadFilterSettings();
     updateFilter();
@@ -201,7 +201,7 @@ void JournalPanel::createControls()
     m_bitmapTransFilter->SetBitmap(mmBitmapBundle(png::TRANSFILTER, mmBitmapButtonSize));
     sizerHCtrl->Add(m_bitmapTransFilter, g_flagsH);
 
-    m_bitmapTransFilter->SetMinSize(wxSize(200 + PreferencesModel::instance().getIconSize() * 2, -1));
+    m_bitmapTransFilter->SetMinSize(wxSize(200 + PrefModel::instance().getIconSize() * 2, -1));
 
     mmDateRange2 tmprange = mmDateRange2();
     tmprange.setRange(m_date_range_a[0]);  // set to all
@@ -222,7 +222,7 @@ void JournalPanel::createControls()
     // Filter for transaction details
     m_btnTransDetailFilter = new wxButton(this, ID_FILTER_TRANS, _tu("Filter…"));
     m_btnTransDetailFilter->SetBitmap(mmBitmapBundle(png::TRANSFILTER, mmBitmapButtonSize));
-    m_btnTransDetailFilter->SetMinSize(wxSize(150 + PreferencesModel::instance().getIconSize() * 2, -1));
+    m_btnTransDetailFilter->SetMinSize(wxSize(150 + PrefModel::instance().getIconSize() * 2, -1));
     sizerHCtrl->Add(m_btnTransDetailFilter, g_flagsH);
 
     if (!isDeletedTrans()) {
@@ -575,7 +575,7 @@ void JournalPanel::loadFilterSettings()
 
     wxString j_str = InfoModel::instance().getString(
             wxString::Format("CHECK_FILTER_ID_ADV_%lld", m_checking_id),"{}");
-    m_trans_filter_dlg.reset(new TransactionFilterDialog(this, m_account_id, false, j_str));
+    m_trans_filter_dlg.reset(new TrxFilterDialog(this, m_account_id, false, j_str));
     m_filter_advanced = m_trans_filter_dlg->mmIsSomethingChecked() ? true : false;
     updateScheduledEnable();
 }
@@ -626,10 +626,10 @@ void JournalPanel::filterList()
     m_reconciled_balance = m_today_reconciled_balance = m_balance;
     m_show_reconciled = false;
 
-    const wxString tranRefType = TransactionModel::refTypeName;
-    const wxString billRefType = ScheduledModel::refTypeName;
-    const wxString tranSplitRefType = TransactionSplitModel::refTypeName;
-    const wxString billSplitRefType = ScheduledSplitModel::refTypeName;
+    const wxString tranRefType = TrxModel::refTypeName;
+    const wxString billRefType = SchedModel::refTypeName;
+    const wxString tranSplitRefType = TrxSplitModel::refTypeName;
+    const wxString billSplitRefType = SchedSplitModel::refTypeName;
 
     static wxArrayString udfc_fields = FieldModel::UDFC_FIELDS();
     int64 udfc_id[5];
@@ -645,19 +645,19 @@ void JournalPanel::filterList()
         );
     }
 
-    auto tranFieldData = FieldValueModel::instance().get_all_id(TransactionModel::refTypeName);
+    auto tranFieldData = FieldValueModel::instance().get_all_id(TrxModel::refTypeName);
 
-    bool ignore_future = PreferencesModel::instance().getIgnoreFutureTransactions();
-    const wxString today_date = PreferencesModel::instance().UseTransDateTime() ?
+    bool ignore_future = PrefModel::instance().getIgnoreFutureTransactions();
+    const wxString today_date = PrefModel::instance().UseTransDateTime() ?
         wxDateTime::Now().FormatISOCombined() :
         wxDateTime(23, 59, 59, 999).FormatISOCombined();
 
     const auto trans = m_account
         ? AccountModel::transactionsByDateTimeId(m_account)
-        : TransactionModel::instance().find_allByDateTimeId();
-    const auto trans_splits = TransactionSplitModel::instance().get_all_id();
+        : TrxModel::instance().find_allByDateTimeId();
+    const auto trans_splits = TrxSplitModel::instance().get_all_id();
     const auto trans_tags = TagLinkModel::instance().get_all_id(tranRefType);
-    const auto trans_attachments = AttachmentModel::instance().get_reftype(TransactionModel::refTypeName);
+    const auto trans_attachments = AttachmentModel::instance().get_reftype(TrxModel::refTypeName);
 
     wxString date_start_str, date_end_str;
     wxDateTime date_end = wxDateTime::Now() + wxTimeSpan::Days(30);
@@ -670,10 +670,10 @@ void JournalPanel::filterList()
         date_start_str = m_current_date_range.rangeStartIsoStartN();
         // find last un-deleted transaction and use that if later than current date + 30 days
         for (auto it = trans.rbegin(); it != trans.rend(); ++it) {
-            const TransactionData* tran = &(*it);
+            const TrxData* tran = &(*it);
             if (tran && (isDeletedTrans() || tran->DELETEDTIME.IsEmpty())) {
-                if (date_end < TransactionModel::getTransDateTime(*tran))
-                    date_end = TransactionModel::getTransDateTime(*tran);
+                if (date_end < TrxModel::getTransDateTime(*tran))
+                    date_end = TrxModel::getTransDateTime(*tran);
                 // FIXME: early break
                 break;
             }
@@ -681,10 +681,10 @@ void JournalPanel::filterList()
         date_end_str = m_current_date_range.rangeEnd()
             .value_or(mmDateDay(date_end)).isoEnd();
     }
-    std::map<int64, ScheduledSplitModel::DataA> bills_splits;
+    std::map<int64, SchedSplitModel::DataA> bills_splits;
     std::map<int64, TagLinkModel::DataA> bills_tags;
     std::map<int64, AttachmentModel::DataA> bills_attachments;
-    ScheduledModel::DataA bills;
+    SchedModel::DataA bills;
     typedef std::tuple<
         int /* i */,
         wxString /* date */,
@@ -692,15 +692,15 @@ void JournalPanel::filterList()
     > bills_index_t;
     std::vector<bills_index_t> bills_index;
     if (m_scheduled_enable && m_scheduled_selected) {
-        bills_splits = ScheduledSplitModel::instance().get_all_id();
+        bills_splits = SchedSplitModel::instance().get_all_id();
         bills_tags = TagLinkModel::instance().get_all_id(billRefType);
-        bills_attachments = AttachmentModel::instance().get_reftype(ScheduledModel::refTypeName);
+        bills_attachments = AttachmentModel::instance().get_reftype(SchedModel::refTypeName);
         bills = m_account
             ? AccountModel::billsdeposits(m_account)
-            : ScheduledModel::instance().find_all();
+            : SchedModel::instance().find_all();
         for (unsigned int i = 0; i < bills.size(); ++i) {
             int limit = 1000;  // this is enough for daily repetitions for one year
-            auto dates = ScheduledModel::unroll(bills[i], date_end_str, limit);
+            auto dates = SchedModel::unroll(bills[i], date_end_str, limit);
             for (unsigned int repeat_num = 1; repeat_num <= dates.size(); ++repeat_num)
                 bills_index.push_back({i, dates[repeat_num-1], repeat_num});
         }
@@ -718,11 +718,11 @@ void JournalPanel::filterList()
         int bill_i = 0;
         wxString tran_date;
         int repeat_num = 0;
-        TransactionData bill_tran;
-        const TransactionData* tran = nullptr;
+        TrxData bill_tran;
+        const TrxData* tran = nullptr;
 
         if (trans_it != trans.end())
-            tran_date = TransactionModel::getTransDateTime(*trans_it).FormatISOCombined();
+            tran_date = TrxModel::getTransDateTime(*trans_it).FormatISOCombined();
         if (trans_it != trans.end() &&
             (bills_it == bills_index.end() || tran_date.Left(10) <= std::get<1>(*bills_it).Left(10))
         ) {
@@ -752,9 +752,9 @@ void JournalPanel::filterList()
         double account_flow = 0.0;
         if (isAccount()) {
             // assertion: tran->DELETEDTIME.IsEmpty()
-            account_flow = TransactionModel::account_flow(*tran, m_account_id);
+            account_flow = TrxModel::account_flow(*tran, m_account_id);
             m_balance += account_flow;
-            if (TransactionModel::status_id(tran->STATUS) == TransactionModel::STATUS_ID_RECONCILED) {
+            if (TrxModel::status_id(tran->STATUS) == TrxModel::STATUS_ID_RECONCILED) {
                 m_reconciled_balance += account_flow;
                 if (tran_date <= today_date)
                     m_today_reconciled_balance += account_flow;
@@ -855,7 +855,7 @@ void JournalPanel::filterList()
         wxString tranDisplayID = full_tran.displayID;
         for (const auto& split : full_tran.m_splits) {
             if (m_filter_advanced) {
-              if (!m_trans_filter_dlg->mmIsSplitRecordMatches<TransactionSplitModel>(split))
+              if (!m_trans_filter_dlg->mmIsSplitRecordMatches<TrxSplitModel>(split))
                   continue;
             }
             full_tran.displaySN = tranDisplaySN + "." + wxString::Format("%i", splitIndex);
@@ -866,19 +866,19 @@ void JournalPanel::filterList()
             full_tran.TRANSAMOUNT = split.SPLITTRANSAMOUNT;
             full_tran.NOTES = tran->NOTES;
             full_tran.TAGNAMES = tranTagnames;
-            TransactionData splitWithTxnNotes = full_tran;
-            TransactionData splitWithSplitNotes = full_tran;
+            TrxData splitWithTxnNotes = full_tran;
+            TrxData splitWithSplitNotes = full_tran;
             splitWithSplitNotes.NOTES = split.NOTES;
             if (m_filter_advanced) {
               if (
-                  !m_trans_filter_dlg->mmIsRecordMatches<TransactionModel>(splitWithSplitNotes, true) &&
-                  !m_trans_filter_dlg->mmIsRecordMatches<TransactionModel>(splitWithTxnNotes, true)
+                  !m_trans_filter_dlg->mmIsRecordMatches<TrxModel>(splitWithSplitNotes, true) &&
+                  !m_trans_filter_dlg->mmIsRecordMatches<TrxModel>(splitWithTxnNotes, true)
               ) {
                 continue;
               }
             }
             if (isAccount()) {
-                full_tran.ACCOUNT_FLOW = TransactionModel::account_flow(splitWithTxnNotes, m_account_id);
+                full_tran.ACCOUNT_FLOW = TrxModel::account_flow(splitWithTxnNotes, m_account_id);
                 m_flow += full_tran.ACCOUNT_FLOW;
             }
             full_tran.NOTES.Append((tran->NOTES.IsEmpty() ? "" : " ") + split.NOTES);
@@ -934,8 +934,8 @@ void JournalPanel::updateExtraTransactionData(bool single, int repeat_num, bool 
 
         wxString notesStr = full_tran.NOTES;
         if (!full_tran.m_repeat_num) {
-            auto splits = TransactionSplitModel::instance().find(
-                TransactionSplitCol::TRANSID(full_tran.TRANSID)
+            auto splits = TrxSplitModel::instance().find(
+                TrxSplitCol::TRANSID(full_tran.TRANSID)
             );
             for (const auto& split : splits)
                 if (!split.NOTES.IsEmpty()) {
@@ -943,7 +943,7 @@ void JournalPanel::updateExtraTransactionData(bool single, int repeat_num, bool 
                     notesStr += split.NOTES;
                 }
             if (full_tran.has_attachment()) {
-                const wxString& refType = TransactionModel::refTypeName;
+                const wxString& refType = TrxModel::refTypeName;
                 AttachmentModel::DataA attachments = AttachmentModel::instance().FilterAttachments(refType, full_tran.TRANSID);
                 for (const auto& i : attachments) {
                     notesStr += notesStr.empty() ? "" : "\n";
@@ -952,8 +952,8 @@ void JournalPanel::updateExtraTransactionData(bool single, int repeat_num, bool 
             }
         }
         else {
-            auto splits = ScheduledSplitModel::instance().find(
-                ScheduledSplitCol::TRANSID(full_tran.m_bdid)
+            auto splits = SchedSplitModel::instance().find(
+                SchedSplitCol::TRANSID(full_tran.m_bdid)
             );
             for (const auto& split : splits)
                 if (!split.NOTES.IsEmpty()) {
@@ -961,7 +961,7 @@ void JournalPanel::updateExtraTransactionData(bool single, int repeat_num, bool 
                     notesStr += split.NOTES;
                 }
             if (full_tran.has_attachment()) {
-                const wxString& refType = ScheduledModel::refTypeName;
+                const wxString& refType = SchedModel::refTypeName;
                 AttachmentModel::DataA attachments = AttachmentModel::instance().FilterAttachments(refType, full_tran.m_bdid);
                 for (const auto& i : attachments) {
                     notesStr += notesStr.empty() ? "" : "\n";
@@ -999,12 +999,12 @@ void JournalPanel::updateExtraTransactionData(bool single, int repeat_num, bool 
                 const CurrencyData* curr = AccountModel::currency(
                     AccountModel::instance().get_data_n(m_lc->m_trans[item].ACCOUNTID)
                 );
-                if ((m_account_id < 0) && TransactionModel::is_transfer(m_lc->m_trans[item].TRANSCODE))
+                if ((m_account_id < 0) && TrxModel::is_transfer(m_lc->m_trans[item].TRANSCODE))
                     continue;
                 double convrate = (curr != m_currency)
                     ? CurrencyHistoryModel::getDayRate(curr->CURRENCYID, m_lc->m_trans[item].TRANSDATE)
                     : 1.0;
-                flow += convrate * TransactionModel::account_flow(m_lc->m_trans[item], (m_account_id < 0) ? m_lc->m_trans[item].ACCOUNTID : m_account_id);
+                flow += convrate * TrxModel::account_flow(m_lc->m_trans[item], (m_account_id < 0) ? m_lc->m_trans[item].ACCOUNTID : m_account_id);
                 wxString transdate = m_lc->m_trans[item].TRANSDATE;
                 if (minDate > transdate || minDate.empty()) minDate = transdate;
                 if (maxDate < transdate || maxDate.empty()) maxDate = transdate;
@@ -1068,7 +1068,7 @@ void JournalPanel::showTips()
         return;
     }
 
-    if (PreferencesModel::instance().getShowMoneyTips())
+    if (PrefModel::instance().getShowMoneyTips())
         m_info_panel->SetLabelText(
             wxGetTranslation(wxString::FromUTF8(
                 mmTips[rand() % (sizeof(mmTips) / sizeof(wxString))]
@@ -1082,7 +1082,7 @@ void JournalPanel::showTips()
 void JournalPanel::showTips(const wxString& tip)
 {
     m_info_panel_selectedbal.clear(); // Not displaying any selected transactions in m_info_panel, clear selected transaction balance var
-    if (PreferencesModel::instance().getShowMoneyTips())
+    if (PrefModel::instance().getShowMoneyTips())
         m_info_panel->SetLabelText(tip);
     else
         m_info_panel->SetLabelText("");
@@ -1201,7 +1201,7 @@ void JournalPanel::onFilterAdvanced(wxCommandEvent& WXUNUSED(event))
             "{}"
         );
         m_trans_filter_dlg.reset(
-            new TransactionFilterDialog(this, m_checking_id, false, j_str)
+            new TrxFilterDialog(this, m_checking_id, false, j_str)
         );
     m_trans_filter_dlg->ShowModal();
     loadFilterSettings();
@@ -1314,8 +1314,8 @@ void JournalPanel::onButtonRightDown(wxMouseEvent& event)
         auto selected_id = m_lc->getSelectedId();
         if (selected_id.size() == 1) {
             const wxString refType = !selected_id[0].second ?
-                TransactionModel::refTypeName :
-                ScheduledModel::refTypeName;
+                TrxModel::refTypeName :
+                SchedModel::refTypeName;
             AttachmentDialog dlg(this, refType, selected_id[0].first);
             dlg.ShowModal();
             refreshList();
@@ -1324,9 +1324,9 @@ void JournalPanel::onButtonRightDown(wxMouseEvent& event)
     }
     case wxID_NEW: {
         wxMenu menu;
-        menu.Append(TransactionModel::TYPE_ID_WITHDRAWAL, _tu("&New Withdrawal…"));
-        menu.Append(TransactionModel::TYPE_ID_DEPOSIT, _tu("&New Deposit…"));
-        menu.Append(TransactionModel::TYPE_ID_TRANSFER, _tu("&New Transfer…"));
+        menu.Append(TrxModel::TYPE_ID_WITHDRAWAL, _tu("&New Withdrawal…"));
+        menu.Append(TrxModel::TYPE_ID_DEPOSIT, _tu("&New Deposit…"));
+        menu.Append(TrxModel::TYPE_ID_TRANSFER, _tu("&New Transfer…"));
         PopupMenu(&menu);
     }
     default:
@@ -1416,8 +1416,8 @@ void JournalPanel::setSelectedTransaction(Journal::IdRepeat journal_id)
 void JournalPanel::displaySplitCategories(Journal::IdB journal_id)
 {
     Journal::Data journal = !journal_id.second
-        ? Journal::Data(*TransactionModel::instance().get_data_n(journal_id.first))
-        : Journal::Data(*ScheduledModel::instance().get_data_n(journal_id.first));
+        ? Journal::Data(*TrxModel::instance().get_data_n(journal_id.first))
+        : Journal::Data(*SchedModel::instance().get_data_n(journal_id.first));
     std::vector<Split> splits;
     for (const auto& split : Journal::split(journal)) {
         Split s;
@@ -1462,8 +1462,8 @@ void JournalPanel::loadDateRanges(
     date_range_a->clear();
     *date_range_m = -1;
     int src_i = 0;
-    int src_m = PreferencesModel::instance().getCheckingRangeM();
-    for (const auto& range : PreferencesModel::instance().getCheckingRangeA()) {
+    int src_m = PrefModel::instance().getCheckingRangeM();
+    for (const auto& range : PrefModel::instance().getCheckingRangeA()) {
         if (date_range_a->size() > ID_DATE_RANGE_MAX - ID_DATE_RANGE_MIN) {
             break;
         }

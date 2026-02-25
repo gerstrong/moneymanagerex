@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "htmlbuilder.h"
 
 #include "model/AccountModel.h"
-#include "model/TransactionModel.h"
+#include "model/TrxModel.h"
 #include "model/CurrencyHistoryModel.h"
 #include "model/CategoryModel.h"
 
@@ -44,14 +44,14 @@ wxString InExReport::getHTMLText()
 {
     // Grab the data
     std::pair<double, double> income_expenses_pair;
-    for (const auto& transaction : TransactionModel::instance().find(
-        TransactionModel::TRANSDATE(OP_GE, mmDateDay(m_date_range->start_date())),
-        TransactionModel::TRANSDATE(OP_LE, mmDateDay(m_date_range->end_date())),
-        TransactionCol::DELETEDTIME(OP_EQ, wxEmptyString),
-        TransactionModel::STATUS(OP_NE, TransactionModel::STATUS_ID_VOID)
+    for (const auto& transaction : TrxModel::instance().find(
+        TrxModel::TRANSDATE(OP_GE, mmDateDay(m_date_range->start_date())),
+        TrxModel::TRANSDATE(OP_LE, mmDateDay(m_date_range->end_date())),
+        TrxCol::DELETEDTIME(OP_EQ, wxEmptyString),
+        TrxModel::STATUS(OP_NE, TrxModel::STATUS_ID_VOID)
     )) {
         // Do not include asset or stock transfers
-        if (TransactionModel::is_foreignAsTransfer(transaction))
+        if (TrxModel::is_foreignAsTransfer(transaction))
             continue;
 
         const AccountData *account = AccountModel::instance().get_data_n(transaction.ACCOUNTID);
@@ -67,9 +67,9 @@ wxString InExReport::getHTMLText()
             );
         }
 
-        if (TransactionModel::type_id(transaction) == TransactionModel::TYPE_ID_DEPOSIT)
+        if (TrxModel::type_id(transaction) == TrxModel::TYPE_ID_DEPOSIT)
             income_expenses_pair.first += transaction.TRANSAMOUNT * convRate;
-        else if (TransactionModel::type_id(transaction) == TransactionModel::TYPE_ID_WITHDRAWAL)
+        else if (TrxModel::type_id(transaction) == TrxModel::TYPE_ID_WITHDRAWAL)
             income_expenses_pair.second += transaction.TRANSAMOUNT * convRate;
     }
 
@@ -148,14 +148,14 @@ wxString mmReportIncomeExpensesMonthly::getHTMLText()
     const wxDateTime start_date = m_date_range->start_date();
     std::map<int, std::pair<double, double> > incomeExpensesStats;
     // TODO: init all the map values with 0.0
-    for (const auto& transaction : TransactionModel::instance().find(
-        TransactionModel::TRANSDATE(OP_GE, mmDateDay(start_date)),
-        TransactionModel::TRANSDATE(OP_LE, mmDateDay(m_date_range->end_date())),
-        TransactionCol::DELETEDTIME(OP_EQ, wxEmptyString),
-        TransactionModel::STATUS(OP_NE, TransactionModel::STATUS_ID_VOID)
+    for (const auto& transaction : TrxModel::instance().find(
+        TrxModel::TRANSDATE(OP_GE, mmDateDay(start_date)),
+        TrxModel::TRANSDATE(OP_LE, mmDateDay(m_date_range->end_date())),
+        TrxCol::DELETEDTIME(OP_EQ, wxEmptyString),
+        TrxModel::STATUS(OP_NE, TrxModel::STATUS_ID_VOID)
     )) {
         // Do not include asset or stock transfers
-        if (TransactionModel::is_foreignAsTransfer(transaction))
+        if (TrxModel::is_foreignAsTransfer(transaction))
             continue;
 
         const AccountData *account = AccountModel::instance().get_data_n(transaction.ACCOUNTID);
@@ -170,14 +170,14 @@ wxString mmReportIncomeExpensesMonthly::getHTMLText()
                 AccountModel::currency(account)->CURRENCYID, transaction.TRANSDATE
             );
         }
-        int year = TransactionModel::getTransDateTime(transaction).GetYear();
+        int year = TrxModel::getTransDateTime(transaction).GetYear();
 
-        int idx = year * 100 + TransactionModel::getTransDateTime(transaction).GetMonth();
+        int idx = year * 100 + TrxModel::getTransDateTime(transaction).GetMonth();
 
-        if (TransactionModel::type_id(transaction) == TransactionModel::TYPE_ID_DEPOSIT) {
+        if (TrxModel::type_id(transaction) == TrxModel::TYPE_ID_DEPOSIT) {
             incomeExpensesStats[idx].first += transaction.TRANSAMOUNT * convRate;
         }
-        else if (TransactionModel::type_id(transaction) == TransactionModel::TYPE_ID_WITHDRAWAL) {
+        else if (TrxModel::type_id(transaction) == TrxModel::TYPE_ID_WITHDRAWAL) {
             incomeExpensesStats[idx].second += transaction.TRANSAMOUNT * convRate;
         }
     }

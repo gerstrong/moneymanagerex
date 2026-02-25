@@ -31,7 +31,7 @@
 
 #include "dialog/AttachmentDialog.h"
 #include "dialog/StockDialog.h"
-#include "dialog/TransactionShareDialog.h"
+#include "dialog/TrxShareDialog.h"
 
 enum {
     IDC_PANEL_STOCKS_LISTCTRL = wxID_HIGHEST + 1900,
@@ -308,7 +308,7 @@ void StockList::OnDeleteStocks(wxCommandEvent& /*event*/)
     {
         StockModel::instance().purge_id(m_stocks[m_selected_row].STOCKID);
         mmAttachmentManage::DeleteAllAttachments(StockModel::refTypeName, m_stocks[m_selected_row].STOCKID);
-        TransactionLinkModel::RemoveTransLinkRecords<StockModel>(m_stocks[m_selected_row].STOCKID);
+        TrxLinkModel::RemoveTransLinkRecords<StockModel>(m_stocks[m_selected_row].STOCKID);
         DeleteItem(m_selected_row);
         doRefreshItems(-1);
         m_stock_panel->m_frame->RefreshNavigationTree();
@@ -431,7 +431,7 @@ void StockList::OnColClick(wxListEvent& event)
     else if (event.GetId() != MENU_HEADER_SORT)
         m_sort_asc[0] = !m_sort_asc[0];
     updateSortIcon();
-    savePreferences();
+    savePref();
 
     int64 trx_id = -1;
     if (m_selected_row>=0) trx_id = m_stocks[m_selected_row].STOCKID;

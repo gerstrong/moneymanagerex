@@ -51,8 +51,8 @@ std::map<wxDate, double> BalanceReport::loadCheckingDateBalance(const AccountDat
     double balance = account.INITIALBAL;
 
     for (const auto& tran : AccountModel::transactionsByDateTimeId(account)) {
-        wxDate date = TransactionModel::getTransDateTime(tran);
-        balance += TransactionModel::account_flow(tran, account.ACCOUNTID);
+        wxDate date = TrxModel::getTransDateTime(tran);
+        balance += TrxModel::account_flow(tran, account.ACCOUNTID);
         date_balance[date] = balance;
     }
     return date_balance;

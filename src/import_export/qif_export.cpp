@@ -26,7 +26,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "model/CategoryModel.h"
 #include "model/FieldValueModel.h"
 #include "model/InfoModel.h"
-#include "model/PreferencesModel.h"
+#include "model/PrefModel.h"
 
 #include "qif_export.h"
 #include "export.h"
@@ -185,7 +185,7 @@ void mmQIFExportDialog::CreateControls()
     // Encoding --------------------------------------------
 
     // Date Format Settings --------------------------------
-    wxString dateFormatStr = PreferencesModel::instance().getDateFormat();
+    wxString dateFormatStr = PrefModel::instance().getDateFormat();
 
     choiceDateFormat_label_ = new wxStaticText(main_tab, wxID_STATIC, _t("Date Format"));
     m_choiceDateFormat = new wxComboBox(main_tab, wxID_ANY);
@@ -467,12 +467,12 @@ void mmQIFExportDialog::mmExportQIF()
 
     std::map<int64 /*account ID*/, wxString> allAccounts4Export;
     wxArrayInt64 allPayees4Export;
-    const wxString RefType = TransactionModel::refTypeName;
+    const wxString RefType = TrxModel::refTypeName;
     wxArrayInt64 allAttachments4Export;
     wxArrayInt64 allCustomFields4Export;
     wxArrayInt64 allTags4Export;
-    const auto transactions = TransactionModel::instance().find(
-        TransactionModel::STATUS(OP_NE, TransactionModel::STATUS_ID_VOID));
+    const auto transactions = TrxModel::instance().find(
+        TrxModel::STATUS(OP_NE, TrxModel::STATUS_ID_VOID));
 
     if (exp_transactions && !transactions.empty())
     {
@@ -485,8 +485,8 @@ void mmQIFExportDialog::mmExportQIF()
         wxProgressDialog progressDlg(_tu("Please wait…"), _t("Exporting")
             , 100, this, wxPD_APP_MODAL | wxPD_CAN_ABORT);
 
-        const auto splits = TransactionSplitModel::instance().get_all_id();
-        const auto tags = TagLinkModel::instance().get_all_id(TransactionModel::refTypeName);
+        const auto splits = TrxSplitModel::instance().get_all_id();
+        const auto tags = TagLinkModel::instance().get_all_id(TrxModel::refTypeName);
 
         const wxString begin_date = fromDateCtrl_->GetValue().FormatISODate();
         const wxString end_date = toDateCtrl_->GetValue().FormatISODate();
@@ -494,16 +494,16 @@ void mmQIFExportDialog::mmExportQIF()
         for (const auto& transaction : transactions)
         {
             if (!transaction.DELETEDTIME.IsEmpty()) continue;
-            wxString strDate = TransactionModel::getTransDateTime(transaction).FormatISODate();
+            wxString strDate = TrxModel::getTransDateTime(transaction).FormatISODate();
             //Filtering
             if (dateFromCheckBox_->IsChecked() && strDate < begin_date)
                 continue;
             if (dateToCheckBox_->IsChecked() && strDate > end_date)
                 continue;
-            if (!TransactionModel::is_transfer(transaction.TRANSCODE)
+            if (!TrxModel::is_transfer(transaction.TRANSCODE)
                 && (std::find(selected_accounts_id_.begin(), selected_accounts_id_.end(), transaction.ACCOUNTID) == selected_accounts_id_.end()))
                 continue;
-            if (TransactionModel::is_transfer(transaction.TRANSCODE)
+            if (TrxModel::is_transfer(transaction.TRANSCODE)
                 && (std::find(selected_accounts_id_.begin(), selected_accounts_id_.end(), transaction.ACCOUNTID) == selected_accounts_id_.end())
                 && (std::find(selected_accounts_id_.begin(), selected_accounts_id_.end(), transaction.TOACCOUNTID) == selected_accounts_id_.end()))
                 continue;
@@ -515,7 +515,7 @@ void mmQIFExportDialog::mmExportQIF()
 
             bool is_reverce = false;
             wxString trx_str;
-            TransactionModel::Full_Data full_tran(transaction, splits, tags);
+            TrxModel::Full_Data full_tran(transaction, splits, tags);
             int64 account_id = transaction.ACCOUNTID;
 
             switch (m_type)
@@ -524,7 +524,7 @@ void mmQIFExportDialog::mmExportQIF()
                 mmExportTransaction::getTransactionJSON(json_writer, full_tran);
                 allAccounts4Export[account_id] = "";
                 if (std::find(allPayees4Export.begin(), allPayees4Export.begin(), full_tran.PAYEEID) == allPayees4Export.end()
-                    && full_tran.TRANSCODE != TransactionModel::TYPE_NAME_TRANSFER) {
+                    && full_tran.TRANSCODE != TrxModel::TYPE_NAME_TRANSFER) {
                     allPayees4Export.push_back(full_tran.PAYEEID);
                 }
 
@@ -550,7 +550,7 @@ void mmQIFExportDialog::mmExportQIF()
                 // store tags from the splits
                 for (const auto& split : full_tran.m_splits)
                 {
-                    for (const auto& taglink : TagLinkModel::instance().get_ref(TransactionSplitModel::refTypeName, split.SPLITTRANSID))
+                    for (const auto& taglink : TagLinkModel::instance().get_ref(TrxSplitModel::refTypeName, split.SPLITTRANSID))
                     {
                         if (std::find(allTags4Export.begin(), allTags4Export.end(), taglink.second) == allTags4Export.end())
                             allTags4Export.push_back(taglink.second);
@@ -561,7 +561,7 @@ void mmQIFExportDialog::mmExportQIF()
 
             case QIF:
 
-                if (TransactionModel::is_transfer(transaction.TRANSCODE))
+                if (TrxModel::is_transfer(transaction.TRANSCODE))
                 {
                     if (std::find(selected_accounts_id_.begin(), selected_accounts_id_.end(), transaction.ACCOUNTID) == selected_accounts_id_.end()) {
                         is_reverce = true;
@@ -580,7 +580,7 @@ void mmQIFExportDialog::mmExportQIF()
 
             case CSV:
 
-                if (TransactionModel::is_transfer(transaction.TRANSCODE))
+                if (TrxModel::is_transfer(transaction.TRANSCODE))
                 {
                     if (std::find(selected_accounts_id_.begin(), selected_accounts_id_.end(), transaction.ACCOUNTID) == selected_accounts_id_.end()) {
                         is_reverce = true;

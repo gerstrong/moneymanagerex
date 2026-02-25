@@ -45,7 +45,7 @@ wxString mmReportBudgetingPerformance::getHTMLText()
 
     int startDay;
     wxDate::Month startMonth;
-    if (PreferencesModel::instance().getBudgetFinancialYears())
+    if (PrefModel::instance().getBudgetFinancialYears())
     {
         GetFinancialYearValues(startDay, startMonth);
     } else
@@ -78,12 +78,12 @@ wxString mmReportBudgetingPerformance::getHTMLText()
     yearEnd.Add(wxDateSpan::Year()).Subtract(wxDateSpan::Day());
 
     // Readjust dates by the Budget Offset Option
-    PreferencesModel::instance().addBudgetDateOffset(yearBegin);
-    PreferencesModel::instance().addBudgetDateOffset(yearEnd);
+    PrefModel::instance().addBudgetDateOffset(yearBegin);
+    PrefModel::instance().addBudgetDateOffset(yearEnd);
     mmSpecifiedRange date_range(yearBegin, yearEnd);
 
     bool evaluateTransfer = false;
-    if (PreferencesModel::instance().getBudgetIncludeTransfers())
+    if (PrefModel::instance().getBudgetIncludeTransfers())
     {
         evaluateTransfer = true;
     }
@@ -97,10 +97,10 @@ wxString mmReportBudgetingPerformance::getHTMLText()
     CategoryModel::instance().getCategoryStats(categoryStats
         , m_account_a
         , &date_range
-        , PreferencesModel::instance().getIgnoreFutureTransactions()
+        , PrefModel::instance().getIgnoreFutureTransactions()
         , true
         , (evaluateTransfer ? &budgetAmt : nullptr)
-        , PreferencesModel::instance().getBudgetFinancialYears());
+        , PrefModel::instance().getBudgetFinancialYears());
 
     std::map<int64, std::map<int, double> > budgetStats;
     BudgetModel::instance().getBudgetStats(budgetStats, &date_range, true);
@@ -116,7 +116,7 @@ wxString mmReportBudgetingPerformance::getHTMLText()
     mmHTMLBuilder hb;
     hb.init();
 
-    hb.addReportHeader(headingStr, 1, PreferencesModel::instance().getIgnoreFutureTransactions());
+    hb.addReportHeader(headingStr, 1, PrefModel::instance().getIgnoreFutureTransactions());
     hb.displayDateHeading(yearBegin, yearEnd);
     // Prime the filter
     m_filter.clear();
@@ -164,7 +164,7 @@ wxString mmReportBudgetingPerformance::getHTMLText()
                 std::map<int64, wxString> formattedNames;
                 std::map<int64, std::vector<CategoryData>> categ_children;
 
-                bool budgetDeductMonthly = PreferencesModel::instance().getBudgetDeductMonthly();
+                bool budgetDeductMonthly = PrefModel::instance().getBudgetDeductMonthly();
                 // pull categories from DB and store
                 for (CategoryData category : CategoryModel::instance().find_all(CategoryCol::COL_ID_CATEGNAME, false)) {
                     categ_children[category.PARENTID].push_back(category);

@@ -50,7 +50,7 @@
 #include "panel/JournalList.h"
 #include "panel/JournalPanel.h"
 #include "panel/ReportPanel.h"
-#include "panel/ScheduledPanel.h"
+#include "panel/SchedPanel.h"
 #include "panel/StockPanel.h"
 
 #include "manager/CategoryManager.h"
@@ -58,7 +58,7 @@
 #include "manager/FieldManager.h"
 #include "manager/GeneralReportManager.h"
 #include "manager/PayeeManager.h"
-#include "manager/PreferencesManager.h"
+#include "manager/PrefManager.h"
 #include "manager/TagManager.h"
 #include "manager/ThemeManager.h"
 
@@ -71,10 +71,10 @@
 #include "dialog/MergeCategoryDialog.h"
 #include "dialog/MergePayeeDialog.h"
 #include "dialog/MergeTagDialog.h"
-#include "dialog/ScheduledDialog.h"
+#include "dialog/SchedDialog.h"
 #include "dialog/StartupDialog.h"
-#include "dialog/TransactionDialog.h"
-#include "dialog/TransactionFilterDialog.h"
+#include "dialog/TrxDialog.h"
+#include "dialog/TrxFilterDialog.h"
 
 #include "report/_all.h"
 #include "report/bugreport.h"
@@ -300,7 +300,7 @@ mmGUIFrame::mmGUIFrame(
     }
 
     //Read news, if checking enabled
-    if (PreferencesModel::instance().getCheckNews())
+    if (PrefModel::instance().getCheckNews())
         getNewsRSS(websiteNewsArray_);
 
     /* Create the Controls for the frame */
@@ -442,7 +442,7 @@ void mmGUIFrame::cleanup()
     CloseTheme();
 
     // Backup the database according to user requirements
-    if (PreferencesModel::instance().getDatabaseUpdated() &&
+    if (PrefModel::instance().getDatabaseUpdated() &&
         SettingModel::instance().getBool("BACKUPDB_UPDATE", false)
     ) {
         dbUpgrade::BackupDB(
@@ -598,20 +598,20 @@ void mmGUIFrame::OnAutoRepeatTransactionsTimer(wxTimerEvent& /*event*/)
     //Auto scheduled transaction
     bool continueExecution = false;
 
-    ScheduledModel& bills = ScheduledModel::instance();
+    SchedModel& bills = SchedModel::instance();
     for (const auto& q1 : bills.find_all()) {
         if (!bills.requires_execution(q1))
             continue;
 
-        ScheduledModel::RepeatNum rn;
+        SchedModel::RepeatNum rn;
         if (!bills.decode_repeat_num(q1, rn))
             continue;
 
         bool allow = bills.AllowTransaction(q1);
-        if (rn.exec == ScheduledModel::REPEAT_EXEC_MANUAL) {
+        if (rn.exec == SchedModel::REPEAT_EXEC_MANUAL) {
             if (allow) {
                 continueExecution = true;
-                ScheduledDialog repeatTransactionsDlg(this, q1.BDID, false, true);
+                SchedDialog repeatTransactionsDlg(this, q1.BDID, false, true);
                 repeatTransactionsDlg.SetDialogHeader(_t("Auto Repeat Transactions"));
                 if (repeatTransactionsDlg.ShowModal() == wxID_OK) {
                     refreshPanelData();
@@ -622,10 +622,10 @@ void mmGUIFrame::OnAutoRepeatTransactionsTimer(wxTimerEvent& /*event*/)
                 }
             }
         }
-        else if (rn.exec == ScheduledModel::REPEAT_EXEC_SILENT) {
+        else if (rn.exec == SchedModel::REPEAT_EXEC_SILENT) {
             if (allow) {
                 continueExecution = true;
-                TransactionData new_trx_d = TransactionData();
+                TrxData new_trx_d = TrxData();
                 const wxDateTime payment_date = bills.getTransDateTime(q1);
                 new_trx_d.ACCOUNTID         = q1.ACCOUNTID;
                 new_trx_d.TOACCOUNTID       = q1.TOACCOUNTID;
@@ -640,13 +640,13 @@ void mmGUIFrame::OnAutoRepeatTransactionsTimer(wxTimerEvent& /*event*/)
                 new_trx_d.FOLLOWUPID        = q1.FOLLOWUPID;
                 new_trx_d.TRANSDATE         = payment_date.FormatISOCombined();
                 new_trx_d.COLOR             = q1.COLOR;
-                TransactionModel::instance().save_trx(new_trx_d);
+                TrxModel::instance().save_trx(new_trx_d);
                 int64 transID = new_trx_d.id();
 
-                TransactionSplitModel::DataA split_a;
+                TrxSplitModel::DataA split_a;
                 std::vector<wxArrayInt64> splitTags;
-                for (const auto& item : ScheduledModel::split(q1)) {
-                    TransactionSplitData split_d = TransactionSplitData();
+                for (const auto& item : SchedModel::split(q1)) {
+                    TrxSplitData split_d = TrxSplitData();
                     split_d.TRANSID          = transID;
                     split_d.CATEGID          = item.CATEGID;
                     split_d.SPLITTRANSAMOUNT = item.SPLITTRANSAMOUNT;
@@ -655,17 +655,17 @@ void mmGUIFrame::OnAutoRepeatTransactionsTimer(wxTimerEvent& /*event*/)
 
                     wxArrayInt64 tags;
                     for (const auto& tag_d : TagLinkModel::instance().find(
-                        TagLinkCol::REFTYPE(ScheduledSplitModel::refTypeName),
+                        TagLinkCol::REFTYPE(SchedSplitModel::refTypeName),
                         TagLinkCol::REFID(item.SPLITTRANSID)
                     )) {
                         tags.push_back(tag_d.TAGID);
                     }
                     splitTags.push_back(tags);
                 }
-                TransactionSplitModel::instance().save_data_a(split_a);
+                TrxSplitModel::instance().save_data_a(split_a);
 
                 // Save split tags
-                const wxString& splitRefType = TransactionSplitModel::refTypeName;
+                const wxString& splitRefType = TrxSplitModel::refTypeName;
 
                 for (size_t i = 0; i < split_a.size(); i++) {
                     TagLinkModel::DataA splitTaglinks;
@@ -695,9 +695,9 @@ void mmGUIFrame::OnAutoRepeatTransactionsTimer(wxTimerEvent& /*event*/)
 
                 // Save base transaction tags
                 TagLinkModel::DataA taglinks;
-                const wxString& txnRefType = TransactionModel::refTypeName;
+                const wxString& txnRefType = TrxModel::refTypeName;
                 for (const auto& gl_d : TagLinkModel::instance().find(
-                    TagLinkCol::REFTYPE(ScheduledModel::refTypeName),
+                    TagLinkCol::REFTYPE(SchedModel::refTypeName),
                     TagLinkCol::REFID(q1.BDID)
                 )) {
                     TagLinkData new_gl_d = TagLinkData();
@@ -708,7 +708,7 @@ void mmGUIFrame::OnAutoRepeatTransactionsTimer(wxTimerEvent& /*event*/)
                 }
                 TagLinkModel::instance().update(taglinks, txnRefType, transID);
             }
-            ScheduledModel::instance().completeBDInSeries(q1.BDID);
+            SchedModel::instance().completeBDInSeries(q1.BDID);
         }
     }
 
@@ -840,7 +840,7 @@ void mmGUIFrame::createControls()
     mmThemeMetaColour(m_nav_tree_ctrl, meta::COLOR_NAVPANEL);
     mmThemeMetaColour(m_nav_tree_ctrl, meta::COLOR_NAVPANEL_FONT, true);
 
-    const auto navIconSize = PreferencesModel::instance().getNavigationIconSize();
+    const auto navIconSize = PrefModel::instance().getNavigationIconSize();
     m_nav_tree_ctrl->SetImages(navtree_images_list(navIconSize));
     m_nav_tree_ctrl->SetIndent(10);
 
@@ -993,7 +993,7 @@ void mmGUIFrame::DoRecreateNavTreeControl(bool home_page)
 
     ///////////////////////////////////////////////////////////////////
 
-    bool hideShareAccounts = PreferencesModel::instance().getHideShareAccounts();
+    bool hideShareAccounts = PrefModel::instance().getHideShareAccounts();
 
     if (m_db) {
         /* Start Populating the dynamic data */
@@ -1020,7 +1020,7 @@ void mmGUIFrame::DoRecreateNavTreeControl(bool home_page)
             if (account_type == NavigatorTypes::TYPE_ID_SHARES && hideShareAccounts)
                 continue;
 
-            accountImg = PreferencesModel::instance().AccountImageId(account.ACCOUNTID, false);
+            accountImg = PrefModel::instance().AccountImageId(account.ACCOUNTID, false);
 
             if (favorites &&
                 account_type != NavigatorTypes::TYPE_ID_INVESTMENT &&
@@ -1049,7 +1049,7 @@ void mmGUIFrame::DoRecreateNavTreeControl(bool home_page)
                     accountItem = addNavTreeItem(accountSection[account_type], account.ACCOUNTNAME, accountImg, mmTreeItemData::INVESTMENT, account.ACCOUNTID);
 
                     // Cash Ledger
-                    if (PreferencesModel::instance().getShowNavigatorCashLedger()) {
+                    if (PrefModel::instance().getShowNavigatorCashLedger()) {
                         wxTreeItemId stockItem = m_nav_tree_ctrl->AppendItem(accountItem, _n("Cash Ledger"), accountImg, accountImg);
                         m_nav_tree_ctrl->SetItemData(stockItem, new mmTreeItemData(mmTreeItemData::CHECKING, account.ACCOUNTID));
                         // find all the accounts associated with this stock portfolio
@@ -1108,9 +1108,9 @@ void mmGUIFrame::DoRecreateNavTreeControl(bool home_page)
             }
         }
 
-        if (TransactionModel::instance().find(
-            TransactionCol::DELETEDTIME(OP_NE, wxEmptyString)
-            ).empty() || PreferencesModel::instance().getHideDeletedTransactions()
+        if (TrxModel::instance().find(
+            TrxCol::DELETEDTIME(OP_NE, wxEmptyString)
+            ).empty() || PrefModel::instance().getHideDeletedTransactions()
         ) {
             if (trash) {
                 m_nav_tree_ctrl->Delete(trash);
@@ -1365,11 +1365,11 @@ void mmGUIFrame::navTreeSelection(wxTreeItemId selectedItem)
         return OnTransactionReport(e);
     case mmTreeItemData::FILTER_REPORT: {
         activeReport_ = true;
-        wxSharedPtr<TransactionFilterDialog> dlg(
-            new TransactionFilterDialog(this, iData->getString())
+        wxSharedPtr<TrxFilterDialog> dlg(
+            new TrxFilterDialog(this, iData->getString())
         );
         /// FIXME memory leak
-        TransactionsReport* rs = new TransactionsReport(dlg);
+        TrxReport* rs = new TrxReport(dlg);
         return createReportsPage(rs, true);
     }
     case mmTreeItemData::BUDGET:
@@ -1556,7 +1556,7 @@ void mmGUIFrame::OnPopupEditFilter(wxCommandEvent& /*event*/)
 
     const auto filter_settings = InfoModel::instance().getArrayString("TRANSACTIONS_FILTER");
 
-    wxSharedPtr<TransactionFilterDialog> dlg(new TransactionFilterDialog(this, -1, true, data));
+    wxSharedPtr<TrxFilterDialog> dlg(new TrxFilterDialog(this, -1, true, data));
     bool is_ok = (dlg->ShowModal() == wxID_OK);
     if (filter_settings != InfoModel::instance().getArrayString("TRANSACTIONS_FILTER")) {
         DoRecreateNavTreeControl();
@@ -1564,7 +1564,7 @@ void mmGUIFrame::OnPopupEditFilter(wxCommandEvent& /*event*/)
     }
 
     if (is_ok) {
-        TransactionsReport* rs = new TransactionsReport(dlg);
+        TrxReport* rs = new TrxReport(dlg);
         createReportsPage(rs, true);
     }
 }
@@ -2235,14 +2235,14 @@ void mmGUIFrame::createMenu()
     menuBar_->Append(menuHelp, _t("&Help"));
     SetMenuBar(menuBar_);
 
-    menuBar_->Check(MENU_VIEW_HIDE_SHARE_ACCOUNTS, !PreferencesModel::instance().getHideShareAccounts());
-    menuBar_->Check(MENU_VIEW_HIDE_DELETED_TRANSACTIONS, !PreferencesModel::instance().getHideDeletedTransactions());
-    menuBar_->Check(MENU_VIEW_BUDGET_FINANCIAL_YEARS, PreferencesModel::instance().getBudgetFinancialYears());
-    menuBar_->Check(MENU_VIEW_BUDGET_TRANSFER_TOTAL, PreferencesModel::instance().getBudgetIncludeTransfers());
-    menuBar_->Check(MENU_VIEW_BUDGET_CATEGORY_SUMMARY, PreferencesModel::instance().getBudgetSummaryWithoutCategories());
-    menuBar_->Check(MENU_VIEW_IGNORE_FUTURE_TRANSACTIONS, PreferencesModel::instance().getIgnoreFutureTransactions());
-    menuBar_->Check(MENU_VIEW_SHOW_TOOLTIPS, PreferencesModel::instance().getShowToolTips());
-    menuBar_->Check(MENU_VIEW_SHOW_MONEYTIPS, PreferencesModel::instance().getShowMoneyTips());
+    menuBar_->Check(MENU_VIEW_HIDE_SHARE_ACCOUNTS, !PrefModel::instance().getHideShareAccounts());
+    menuBar_->Check(MENU_VIEW_HIDE_DELETED_TRANSACTIONS, !PrefModel::instance().getHideDeletedTransactions());
+    menuBar_->Check(MENU_VIEW_BUDGET_FINANCIAL_YEARS, PrefModel::instance().getBudgetFinancialYears());
+    menuBar_->Check(MENU_VIEW_BUDGET_TRANSFER_TOTAL, PrefModel::instance().getBudgetIncludeTransfers());
+    menuBar_->Check(MENU_VIEW_BUDGET_CATEGORY_SUMMARY, PrefModel::instance().getBudgetSummaryWithoutCategories());
+    menuBar_->Check(MENU_VIEW_IGNORE_FUTURE_TRANSACTIONS, PrefModel::instance().getIgnoreFutureTransactions());
+    menuBar_->Check(MENU_VIEW_SHOW_TOOLTIPS, PrefModel::instance().getShowToolTips());
+    menuBar_->Check(MENU_VIEW_SHOW_MONEYTIPS, PrefModel::instance().getShowMoneyTips());
 }
 //----------------------------------------------------------------------------
 
@@ -2260,7 +2260,7 @@ void mmGUIFrame::createToolBar()
 
 void  mmGUIFrame::PopulateToolBar(bool update)
 {
-    const int toolbar_icon_size = PreferencesModel::instance().getToolbarIconSize();
+    const int toolbar_icon_size = PrefModel::instance().getToolbarIconSize();
     toolBar_->ClearTools();
     ToolBarEntries::ToolBarEntry* ainfo = ToolBarEntries::instance().getFirstEntry();
     while (ainfo != nullptr) {
@@ -2325,14 +2325,14 @@ void mmGUIFrame::InitializeModelTables()
     m_all_models.push_back(&StockHistoryModel::instance(m_db.get()));
     m_all_models.push_back(&AccountModel::instance(m_db.get()));
     m_all_models.push_back(&PayeeModel::instance(m_db.get()));
-    m_all_models.push_back(&TransactionModel::instance(m_db.get()));
+    m_all_models.push_back(&TrxModel::instance(m_db.get()));
     m_all_models.push_back(&CurrencyModel::instance(m_db.get()));
     m_all_models.push_back(&CurrencyHistoryModel::instance(m_db.get()));
     m_all_models.push_back(&BudgetPeriodModel::instance(m_db.get()));
     m_all_models.push_back(&CategoryModel::instance(m_db.get()));
-    m_all_models.push_back(&ScheduledModel::instance(m_db.get()));
-    m_all_models.push_back(&TransactionSplitModel::instance(m_db.get()));
-    m_all_models.push_back(&ScheduledSplitModel::instance(m_db.get()));
+    m_all_models.push_back(&SchedModel::instance(m_db.get()));
+    m_all_models.push_back(&TrxSplitModel::instance(m_db.get()));
+    m_all_models.push_back(&SchedSplitModel::instance(m_db.get()));
     m_all_models.push_back(&BudgetModel::instance(m_db.get()));
     m_all_models.push_back(&ReportModel::instance(m_db.get()));
     m_all_models.push_back(&AttachmentModel::instance(m_db.get()));
@@ -2340,8 +2340,8 @@ void mmGUIFrame::InitializeModelTables()
     m_all_models.push_back(&FieldModel::instance(m_db.get()));
     m_all_models.push_back(&TagModel::instance(m_db.get()));
     m_all_models.push_back(&TagLinkModel::instance(m_db.get()));
-    m_all_models.push_back(&TransactionLinkModel::instance(m_db.get()));
-    m_all_models.push_back(&TransactionShareModel::instance(m_db.get()));
+    m_all_models.push_back(&TrxLinkModel::instance(m_db.get()));
+    m_all_models.push_back(&TrxShareModel::instance(m_db.get()));
 }
 
 bool mmGUIFrame::createDataStore(const wxString& fileName, const wxString& pwd, bool openingNew)
@@ -2349,7 +2349,7 @@ bool mmGUIFrame::createDataStore(const wxString& fileName, const wxString& pwd, 
     if (m_db) {
         ShutdownDatabase();
         // Backup the database according to user requirements
-        if (PreferencesModel::instance().getDatabaseUpdated() &&
+        if (PrefModel::instance().getDatabaseUpdated() &&
             SettingModel::instance().getBool("BACKUPDB_UPDATE", false)
         ) {
             dbUpgrade::BackupDB(
@@ -2357,7 +2357,7 @@ bool mmGUIFrame::createDataStore(const wxString& fileName, const wxString& pwd, 
                 dbUpgrade::BACKUPTYPE::CLOSE,
                 SettingModel::instance().getInt("MAX_BACKUP_FILES", 4)
             );
-            PreferencesModel::instance().setDatabaseUpdated(false);
+            PrefModel::instance().setDatabaseUpdated(false);
         }
     }
 
@@ -2548,7 +2548,7 @@ void mmGUIFrame::SetDataBaseParameters(const wxString& fileName)
     if (m_db) {
         m_filename = fileName;
         /* Set Info Options into memory */
-        PreferencesModel::instance().load();
+        PrefModel::instance().load();
     }
     else {
         m_filename.Clear();
@@ -3106,7 +3106,7 @@ void mmGUIFrame::refreshPanelData()
         wxDynamicCast(panelCurrent_, AssetPanel)->RefreshList();
         break;
     case mmID_BILLS:
-        wxDynamicCast(panelCurrent_, ScheduledPanel)->RefreshList();
+        wxDynamicCast(panelCurrent_, SchedPanel)->RefreshList();
         break;
     case mmID_BUDGET:
         wxDynamicCast(panelCurrent_, BudgetPanel)->RefreshList();
@@ -3153,9 +3153,9 @@ void mmGUIFrame::OnOrgPayees(wxCommandEvent& /*event*/)
             _t("Transactions per payee"),
             payee->PAYEENAME
         );
-        wxSharedPtr<TransactionFilterDialog> pdlg(new TransactionFilterDialog(this, filter));
+        wxSharedPtr<TrxFilterDialog> pdlg(new TrxFilterDialog(this, filter));
         if (pdlg->ShowModal() == wxID_OK) {
-            TransactionsReport* rs = new TransactionsReport(pdlg);
+            TrxReport* rs = new TrxReport(pdlg);
             createReportsPage(rs, true);
         }
     }
@@ -3186,7 +3186,7 @@ void mmGUIFrame::OnNewTransaction(wxCommandEvent& event)
         return;
 
     if (AccountModel::instance().all_checking_account_names().empty()) return;
-    TransactionDialog dlg(this, gotoAccountID_, {0, false});
+    TrxDialog dlg(this, gotoAccountID_, {0, false});
 
     int i = dlg.ShowModal();
     if (i == wxID_CANCEL)
@@ -3212,13 +3212,13 @@ void mmGUIFrame::OnTransactionReport(wxCommandEvent& WXUNUSED(event))
 
     const auto filter_settings = InfoModel::instance().getArrayString("TRANSACTIONS_FILTER");
 
-    wxSharedPtr<TransactionFilterDialog> dlg(new TransactionFilterDialog(this, -1, true));
+    wxSharedPtr<TrxFilterDialog> dlg(new TrxFilterDialog(this, -1, true));
     bool is_ok = (dlg->ShowModal() == wxID_OK);
     if (filter_settings != InfoModel::instance().getArrayString("TRANSACTIONS_FILTER")) {
         DoRecreateNavTreeControl();
     }
     if (is_ok) {
-        TransactionsReport* rs = new TransactionsReport(dlg);
+        TrxReport* rs = new TrxReport(dlg);
         setNavTreeSection(_t("Transaction Report"));
         createReportsPage(rs, true);
     }
@@ -3265,15 +3265,15 @@ void mmGUIFrame::OnOptions(wxCommandEvent& /*event*/)
     if (!m_db.get())
         return;
 
-    PreferencesManager systemOptions(this, this->m_app);
+    PrefManager systemOptions(this, this->m_app);
     if (systemOptions.ShowModal() == wxID_OK) {
         //set the View Menu Option items the same as the options saved.
-        menuBar_->FindItem(MENU_VIEW_BUDGET_FINANCIAL_YEARS)->Check(PreferencesModel::instance().getBudgetFinancialYears());
-        menuBar_->FindItem(MENU_VIEW_BUDGET_TRANSFER_TOTAL)->Check(PreferencesModel::instance().getBudgetIncludeTransfers());
-        menuBar_->FindItem(MENU_VIEW_BUDGET_CATEGORY_SUMMARY)->Check(PreferencesModel::instance().getBudgetSummaryWithoutCategories());
-        menuBar_->FindItem(MENU_VIEW_IGNORE_FUTURE_TRANSACTIONS)->Check(PreferencesModel::instance().getIgnoreFutureTransactions());
-        menuBar_->FindItem(MENU_VIEW_SHOW_TOOLTIPS)->Check(PreferencesModel::instance().getShowToolTips());
-        menuBar_->FindItem(MENU_VIEW_SHOW_MONEYTIPS)->Check(PreferencesModel::instance().getShowMoneyTips());
+        menuBar_->FindItem(MENU_VIEW_BUDGET_FINANCIAL_YEARS)->Check(PrefModel::instance().getBudgetFinancialYears());
+        menuBar_->FindItem(MENU_VIEW_BUDGET_TRANSFER_TOTAL)->Check(PrefModel::instance().getBudgetIncludeTransfers());
+        menuBar_->FindItem(MENU_VIEW_BUDGET_CATEGORY_SUMMARY)->Check(PrefModel::instance().getBudgetSummaryWithoutCategories());
+        menuBar_->FindItem(MENU_VIEW_IGNORE_FUTURE_TRANSACTIONS)->Check(PrefModel::instance().getIgnoreFutureTransactions());
+        menuBar_->FindItem(MENU_VIEW_SHOW_TOOLTIPS)->Check(PrefModel::instance().getShowToolTips());
+        menuBar_->FindItem(MENU_VIEW_SHOW_MONEYTIPS)->Check(PrefModel::instance().getShowMoneyTips());
         menuBar_->Refresh();
         menuBar_->Update();
         refreshPanelData();
@@ -3405,7 +3405,7 @@ void mmGUIFrame::OnBeNotified(wxCommandEvent& /*event*/)
     SettingModel::instance().setString(INIDB_NEWS_LAST_READ_DATE, wxDate::Today().FormatISODate());
     wxLaunchDefaultBrowser(mmex::weblink::News);
 
-    int toolbar_icon_size = PreferencesModel::instance().getToolbarIconSize();
+    int toolbar_icon_size = PrefModel::instance().getToolbarIconSize();
     //toolBar_->SetToolBitmapSize(wxSize(toolbar_icon_size, toolbar_icon_size));
     toolBar_->SetToolBitmap(MENU_ANNOUNCEMENTMAILING, mmBitmapBundle(png::NEWS, toolbar_icon_size));
 
@@ -3467,7 +3467,7 @@ void mmGUIFrame::showBeginAppDialog(bool fromScratch)
         break;
     }
     case wxID_SETUP: {
-        // auto language = PreferencesModel::instance().getLanguageID(true);
+        // auto language = PrefModel::instance().getLanguageID(true);
         break;
     }
     case wxID_EXIT:
@@ -3607,13 +3607,13 @@ void mmGUIFrame::createBillsDeposits()
 
     m_nav_tree_ctrl->SetEvtHandlerEnabled(false);
     if (panelCurrent_->GetId() == mmID_BILLS) {
-        ScheduledPanel* billsDepositsPanel = wxDynamicCast(panelCurrent_, ScheduledPanel);
+        SchedPanel* billsDepositsPanel = wxDynamicCast(panelCurrent_, SchedPanel);
         billsDepositsPanel->RefreshList();
     }
     else {
         DoWindowsFreezeThaw(homePanel_);
         wxSizer *sizer = cleanupHomePanel();
-        panelCurrent_ = new ScheduledPanel(homePanel_, mmID_BILLS);
+        panelCurrent_ = new SchedPanel(homePanel_, mmID_BILLS);
 
         sizer->Add(panelCurrent_, 1, wxGROW | wxALL, 1);
 
@@ -4039,15 +4039,15 @@ void mmGUIFrame::OnViewLinksUpdateUI(wxUpdateUIEvent &event)
 
 void mmGUIFrame::OnHideShareAccounts(wxCommandEvent &WXUNUSED(event))
 {
-    PreferencesModel::instance().setHideShareAccounts(!PreferencesModel::instance().getHideShareAccounts());
-    NavigatorTypes::instance().SetShareAccountStatus(!PreferencesModel::instance().getHideShareAccounts());
+    PrefModel::instance().setHideShareAccounts(!PrefModel::instance().getHideShareAccounts());
+    NavigatorTypes::instance().SetShareAccountStatus(!PrefModel::instance().getHideShareAccounts());
     RefreshNavigationTree();
 }
 
 void mmGUIFrame::OnHideDeletedTransactions(wxCommandEvent& WXUNUSED(event))
 {
-    PreferencesModel::instance().setHideDeletedTransactions(!PreferencesModel::instance().getHideDeletedTransactions());
-    NavigatorTypes::instance().SetTrashStatus(!PreferencesModel::instance().getHideDeletedTransactions());
+    PrefModel::instance().setHideDeletedTransactions(!PrefModel::instance().getHideDeletedTransactions());
+    NavigatorTypes::instance().SetTrashStatus(!PrefModel::instance().getHideDeletedTransactions());
     RefreshNavigationTree();
 }
 
@@ -4113,37 +4113,37 @@ wxTreeItemId mmGUIFrame::findItemByData(wxTreeItemId itemId, mmTreeItemData& sea
 
 void mmGUIFrame::OnViewBudgetFinancialYears(wxCommandEvent& WXUNUSED(event))
 {
-    PreferencesModel::instance().setBudgetFinancialYears(!PreferencesModel::instance().getBudgetFinancialYears());
+    PrefModel::instance().setBudgetFinancialYears(!PrefModel::instance().getBudgetFinancialYears());
     refreshPanelData();
 }
 
 void mmGUIFrame::OnViewBudgetTransferTotal(wxCommandEvent& WXUNUSED(event))
 {
-    PreferencesModel::instance().setBudgetIncludeTransfers(!PreferencesModel::instance().getBudgetIncludeTransfers());
+    PrefModel::instance().setBudgetIncludeTransfers(!PrefModel::instance().getBudgetIncludeTransfers());
     refreshPanelData();
 }
 
 void mmGUIFrame::OnViewBudgetCategorySummary(wxCommandEvent& WXUNUSED(event))
 {
-    PreferencesModel::instance().setBudgetSummaryWithoutCategories(!PreferencesModel::instance().getBudgetSummaryWithoutCategories());
+    PrefModel::instance().setBudgetSummaryWithoutCategories(!PrefModel::instance().getBudgetSummaryWithoutCategories());
     refreshPanelData();
 }
 
 void mmGUIFrame::OnViewIgnoreFutureTransactions(wxCommandEvent& WXUNUSED(event))
 {
-    PreferencesModel::instance().setIgnoreFutureTransactions(!PreferencesModel::instance().getIgnoreFutureTransactions());
+    PrefModel::instance().setIgnoreFutureTransactions(!PrefModel::instance().getIgnoreFutureTransactions());
     RefreshNavigationTree();
 }
 
 void mmGUIFrame::OnViewShowToolTips(wxCommandEvent& WXUNUSED(event))
 {
-    PreferencesModel::instance().setShowToolTips(!PreferencesModel::instance().getShowToolTips());
+    PrefModel::instance().setShowToolTips(!PrefModel::instance().getShowToolTips());
     RefreshNavigationTree();
 }
 
 void mmGUIFrame::OnViewShowMoneyTips(wxCommandEvent& WXUNUSED(event))
 {
-    PreferencesModel::instance().setShowMoneyTips(!PreferencesModel::instance().getShowMoneyTips());
+    PrefModel::instance().setShowMoneyTips(!PrefModel::instance().getShowMoneyTips());
     RefreshNavigationTree();
 }
 //----------------------------------------------------------------------------
@@ -4206,30 +4206,30 @@ wxSizer* mmGUIFrame::cleanupHomePanel(bool new_sizer)
 void mmGUIFrame::autocleanDeletedTransactions() {
     wxDateSpan days = wxDateSpan::Days(SettingModel::instance().getInt("DELETED_TRANS_RETAIN_DAYS", 30));
     wxDateTime earliestDate = wxDateTime().Now().ToUTC().Subtract(days);
-    TransactionModel::DataA deletedTransactions = TransactionModel::instance().find(
-        TransactionCol::DELETEDTIME(OP_LE, earliestDate.FormatISOCombined()),
-        TransactionCol::DELETEDTIME(OP_NE, wxEmptyString)
+    TrxModel::DataA deletedTransactions = TrxModel::instance().find(
+        TrxCol::DELETEDTIME(OP_LE, earliestDate.FormatISOCombined()),
+        TrxCol::DELETEDTIME(OP_NE, wxEmptyString)
     );
     if (!deletedTransactions.empty()) {
-        TransactionModel::instance().Savepoint();
+        TrxModel::instance().Savepoint();
         AttachmentModel::instance().Savepoint();
-        TransactionSplitModel::instance().Savepoint();
+        TrxSplitModel::instance().Savepoint();
         FieldValueModel::instance().Savepoint();
         for (const auto& transaction : deletedTransactions) {
             // removing the checking transaction also removes split, translink, and share entries
-            TransactionModel::instance().purge_id(transaction.TRANSID);
+            TrxModel::instance().purge_id(transaction.TRANSID);
 
             // remove also any attachments for the transaction
-            const wxString& RefType = TransactionModel::refTypeName;
+            const wxString& RefType = TrxModel::refTypeName;
             mmAttachmentManage::DeleteAllAttachments(RefType, transaction.TRANSID);
 
             // remove also any custom fields for the transaction
             FieldValueModel::DeleteAllData(RefType, transaction.TRANSID);
         }
         FieldValueModel::instance().ReleaseSavepoint();
-        TransactionSplitModel::instance().ReleaseSavepoint();
+        TrxSplitModel::instance().ReleaseSavepoint();
         AttachmentModel::instance().ReleaseSavepoint();
-        TransactionModel::instance().ReleaseSavepoint();
+        TrxModel::instance().ReleaseSavepoint();
     }
 }
 

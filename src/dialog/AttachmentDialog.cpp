@@ -227,8 +227,8 @@ void AttachmentDialog::AddAttachment(wxString FilePath)
         AttachmentModel::instance().add_data_n(new_att_d);
         m_attachment_id = new_att_d.id();
 
-        if (m_RefType == TransactionModel::refTypeName)
-            TransactionModel::instance().save_timestamp(m_RefId);
+        if (m_RefType == TrxModel::refTypeName)
+            TrxModel::instance().save_timestamp(m_RefId);
     }
 
     fillControls();
@@ -267,8 +267,8 @@ void AttachmentDialog::EditAttachment()
     AttachmentModel::instance().unsafe_update_data_n(att_n);
     m_attachment_id = att_n->id();
 
-    if (att_n->REFTYPE == TransactionModel::refTypeName)
-        TransactionModel::instance().save_timestamp(att_n->REFID);
+    if (att_n->REFTYPE == TrxModel::refTypeName)
+        TrxModel::instance().save_timestamp(att_n->REFID);
 
     fillControls();
 }
@@ -291,8 +291,8 @@ void AttachmentDialog::DeleteAttachment()
         if (mmAttachmentManage::DeleteAttachment(
             AttachmentsFolder + m_PathSep + data_n->FILENAME
         )) {
-            if (data_n->REFTYPE == TransactionModel::refTypeName)
-                TransactionModel::instance().save_timestamp(data_n->REFID);
+            if (data_n->REFTYPE == TrxModel::refTypeName)
+                TrxModel::instance().save_timestamp(data_n->REFID);
             AttachmentModel::instance().purge_id(m_attachment_id);
         }
         m_attachment_id = -1;
@@ -554,8 +554,8 @@ bool mmAttachmentManage::DeleteAllAttachments(const wxString& RefType, int64 Ref
         AttachmentModel::instance().purge_id(entry.ATTACHMENTID);
     }
 
-    if (RefType == TransactionModel::refTypeName)
-        TransactionModel::instance().save_timestamp(RefId);
+    if (RefType == TrxModel::refTypeName)
+        TrxModel::instance().save_timestamp(RefId);
 
     return true;
 }
@@ -597,10 +597,10 @@ bool mmAttachmentManage::RelocateAllAttachments(
     }
     AttachmentModel::instance().save_data_a(attachment_a);
 
-    if (OldRefType == TransactionModel::refTypeName)
-        TransactionModel::instance().save_timestamp(OldRefId);
-    if (NewRefType == TransactionModel::refTypeName)
-        TransactionModel::instance().save_timestamp(NewRefId);
+    if (OldRefType == TrxModel::refTypeName)
+        TrxModel::instance().save_timestamp(OldRefId);
+    if (NewRefType == TrxModel::refTypeName)
+        TrxModel::instance().save_timestamp(NewRefId);
 
     return true;
 }
@@ -633,8 +633,8 @@ bool mmAttachmentManage::CloneAllAttachments(
         AttachmentModel::instance().add_data_n(dst_d);
     }
 
-    if (refType == TransactionModel::refTypeName)
-        TransactionModel::instance().save_timestamp(dstRefId);
+    if (refType == TrxModel::refTypeName)
+        TrxModel::instance().save_timestamp(dstRefId);
 
     return true;
 }

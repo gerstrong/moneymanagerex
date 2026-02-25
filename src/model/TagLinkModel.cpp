@@ -18,7 +18,7 @@
 
 #include "TagLinkModel.h"
 #include "AttachmentModel.h"
-#include "TransactionModel.h"
+#include "TrxModel.h"
 #include "TagModel.h"
 
 TagLinkModel::TagLinkModel() :
@@ -126,11 +126,11 @@ int TagLinkModel::update(const DataA& rows, const wxString& refType, int64 refId
     }
 
     if (save_timestamp) {
-        if (refType == TransactionModel::refTypeName)
-            TransactionModel::instance().save_timestamp(refId);
-        else if (refType == TransactionSplitModel::refTypeName)
-            TransactionModel::instance().save_timestamp(
-                TransactionSplitModel::instance().get_data_n(refId)->TRANSID
+        if (refType == TrxModel::refTypeName)
+            TrxModel::instance().save_timestamp(refId);
+        else if (refType == TrxSplitModel::refTypeName)
+            TrxModel::instance().save_timestamp(
+                TrxSplitModel::instance().get_data_n(refId)->TRANSID
             );
     }
 

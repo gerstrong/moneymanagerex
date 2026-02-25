@@ -25,7 +25,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "util/_util.h"
 #include "util/_simple.h"
 
-#include "dialog/TransactionDialog.h"
+#include "dialog/TrxDialog.h"
 #include "webappdialog.h"
 #include "webapp.h"
 
@@ -306,7 +306,7 @@ bool mmWebAppDialog::ImportWebTr(int64 WebTrID, bool open)
                 if (open)
                 {
                     //fillControls(); //TODO: Delete transaction from view
-                    TransactionDialog EditTransactionDialog(this, 1, {InsertedTransactionID, false});
+                    TrxDialog EditTransactionDialog(this, 1, {InsertedTransactionID, false});
                     EditTransactionDialog.ShowModal();
                 }
                 refreshRequested_ = true;

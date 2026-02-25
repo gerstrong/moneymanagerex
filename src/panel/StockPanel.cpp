@@ -29,7 +29,7 @@
 
 #include "StockPanel.h"
 #include "dialog/StockDialog.h"
-#include "dialog/TransactionShareDialog.h"
+#include "dialog/TrxShareDialog.h"
 
 class StockPanel;
 
@@ -202,7 +202,7 @@ void StockPanel::CreateControls()
 int StockPanel::AddStockTransaction(int selectedIndex)
 {
     StockData* stock = &m_lc->m_stocks[selectedIndex];
-    TransactionShareDialog dlg(this, stock);
+    TrxShareDialog dlg(this, stock);
     int result = dlg.ShowModal();
     if (result == wxID_OK)
     {
@@ -277,27 +277,26 @@ wxListCtrl* StockPanel::InitStockTxnListCtrl(wxWindow* parent)
 // Load stock transactions into the list control
 void StockPanel::LoadStockTransactions(wxListCtrl* listCtrl, wxString symbol, int64 stockId)
 {
-    TransactionLinkModel::DataA stock_list;
-    TransactionModel::DataA checking_list;
+    TrxLinkModel::DataA stock_list;
+    TrxModel::DataA checking_list;
     if (symbol.IsEmpty()) {
-        stock_list = TransactionLinkModel::TranslinkList<StockModel>(stockId);
+        stock_list = TrxLinkModel::TranslinkList<StockModel>(stockId);
     }
     else {  // search for all
-        stock_list = TransactionLinkModel::TranslinkListBySymbol(symbol);
+        stock_list = TrxLinkModel::TranslinkListBySymbol(symbol);
     }
 
     for (const auto& trans : stock_list) {
-        const TransactionData* checking_entry = TransactionModel::instance().get_data_n(trans.CHECKINGACCOUNTID);
+        const TrxData* checking_entry = TrxModel::instance().get_data_n(trans.CHECKINGACCOUNTID);
         if (checking_entry && checking_entry->DELETEDTIME.IsEmpty()) {
             checking_list.push_back(*checking_entry);
         }
     }
-    std::stable_sort(checking_list.begin(), checking_list.end(), TransactionData::SorterByTRANSDATE());
+    std::stable_sort(checking_list.begin(), checking_list.end(), TrxData::SorterByTRANSDATE());
 
     int row = 0;
-    for (const auto& stock_trans : checking_list)
-    {
-        auto* share_entry = TransactionShareModel::ShareEntry(stock_trans.TRANSID);
+    for (const auto& stock_trans : checking_list) {
+        auto* share_entry = TrxShareModel::instance().unsafe_get_trx_share_n(stock_trans.TRANSID);
         if (!share_entry || (share_entry->SHARENUMBER <= 0 && share_entry->SHAREPRICE <= 0))
             continue;
 
@@ -308,15 +307,15 @@ void StockPanel::LoadStockTransactions(wxListCtrl* listCtrl, wxString symbol, in
 }
 
 // Fill list row with stock transaction data
-void StockPanel::FillListRow(wxListCtrl* listCtrl, long index, const TransactionData& txn, const TransactionShareData& share_entry)
+void StockPanel::FillListRow(wxListCtrl* listCtrl, long index, const TrxData& txn, const TrxShareData& share_entry)
 {
     listCtrl->SetItem(index, 0, mmGetDateTimeForDisplay(txn.TRANSDATE));
     listCtrl->SetItem(index, 1, share_entry.SHARELOT);
 
-    int precision = share_entry.SHARENUMBER == floor(share_entry.SHARENUMBER) ? 0 : PreferencesModel::instance().getSharePrecision();
+    int precision = share_entry.SHARENUMBER == floor(share_entry.SHARENUMBER) ? 0 : PrefModel::instance().getSharePrecision();
     listCtrl->SetItem(index, 2, wxString::FromDouble(share_entry.SHARENUMBER, precision));
-    listCtrl->SetItem(index, 3, wxGetTranslation(TransactionModel::trade_type_name(TransactionModel::type_id(txn.TRANSCODE))));
-    listCtrl->SetItem(index, 4, wxString::FromDouble(share_entry.SHAREPRICE, PreferencesModel::instance().getSharePrecision()));
+    listCtrl->SetItem(index, 3, wxGetTranslation(TrxModel::trade_type_name(TrxModel::type_id(txn.TRANSCODE))));
+    listCtrl->SetItem(index, 4, wxString::FromDouble(share_entry.SHAREPRICE, PrefModel::instance().getSharePrecision()));
     listCtrl->SetItem(index, 5, wxString::FromDouble(share_entry.SHARECOMMISSION, 2));
     double total = share_entry.SHARENUMBER * share_entry.SHAREPRICE + share_entry.SHARECOMMISSION;
     listCtrl->SetItem(index, 6, wxString::FromDouble(total, 2));
@@ -327,27 +326,27 @@ void StockPanel::BindListEvents(wxListCtrl* listCtrl)
 {
     listCtrl->Bind(wxEVT_LIST_ITEM_ACTIVATED, [listCtrl, this](wxListEvent& event) {
         long index = event.GetIndex();
-        TransactionData* txn = TransactionModel::instance().unsafe_get_data_n(event.GetData());
+        TrxData* txn = TrxModel::instance().unsafe_get_data_n(event.GetData());
         if (!txn)
             return;
 
-        auto link = TransactionLinkModel::TranslinkRecord(txn->TRANSID);
-        TransactionShareDialog dlg(listCtrl, &link, txn);
+        auto link = TrxLinkModel::TranslinkRecord(txn->TRANSID);
+        TrxShareDialog dlg(listCtrl, &link, txn);
         dlg.ShowModal();
 
         // Update the modified row
-        auto* share_entry = TransactionShareModel::ShareEntry(txn->TRANSID);
+        auto* share_entry = TrxShareModel::instance().unsafe_get_trx_share_n(txn->TRANSID);
         if (share_entry) {
             this->FillListRow(listCtrl, index, *txn, *share_entry);
         }
 
         // Re-sort the list
         listCtrl->SortItems([](wxIntPtr item1, wxIntPtr item2, wxIntPtr) -> int {
-            auto date1 = TransactionModel::getTransDateTime(
-                *TransactionModel::instance().get_data_n(item1)
+            auto date1 = TrxModel::getTransDateTime(
+                *TrxModel::instance().get_data_n(item1)
             );
-            auto date2 = TransactionModel::getTransDateTime(
-                *TransactionModel::instance().get_data_n(item2)
+            auto date2 = TrxModel::getTransDateTime(
+                *TrxModel::instance().get_data_n(item2)
             );
             return date1.IsEarlierThan(date2) ? -1 : (date1.IsLaterThan(date2) ? 1 : 0);
         }, 0);
@@ -668,7 +667,7 @@ void StockPanel::enableEditDeleteButtons(bool en)
     attachment_button_->Enable(en);
     if (!en)
     {
-        if (PreferencesModel::instance().getShowMoneyTips())
+        if (PrefModel::instance().getShowMoneyTips())
             stock_details_->SetLabelText(wxGetTranslation(mmStockTips[rand() % (sizeof(mmStockTips) / sizeof(wxString))]));
         stock_details_short_->SetLabelText(wxString::Format(_t("Last updated %s"), strLastUpdate_));
     }

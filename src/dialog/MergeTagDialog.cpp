@@ -25,9 +25,9 @@
 
 #include "model/AttachmentModel.h"
 #include "model/PayeeModel.h"
-#include "model/ScheduledModel.h"
+#include "model/SchedModel.h"
 #include "model/TagModel.h"
-#include "model/TransactionModel.h"
+#include "model/TrxModel.h"
 
 #include "AttachmentDialog.h"
 #include "MergeTagDialog.h"
@@ -194,19 +194,19 @@ void MergeTagDialog::IsOkOk()
     if (dest) destTagID_ = dest->TAGID;
     if (source) sourceTagID_ = source->TAGID;
     int trxs_size = (sourceTagID_ < 0) ? 0 : TagLinkModel::instance().find(
-        TagLinkCol::REFTYPE(TransactionModel::refTypeName),
+        TagLinkCol::REFTYPE(TrxModel::refTypeName),
         TagLinkCol::TAGID(sourceTagID_)
     ).size();
     int split_size = (sourceTagID_ < 0) ? 0 : TagLinkModel::instance().find(
-        TagLinkCol::REFTYPE(TransactionSplitModel::refTypeName),
+        TagLinkCol::REFTYPE(TrxSplitModel::refTypeName),
         TagLinkCol::TAGID(sourceTagID_)
     ).size();
     int bills_size = (sourceTagID_ < 0) ? 0 : TagLinkModel::instance().find(
-        TagLinkCol::REFTYPE(ScheduledModel::refTypeName),
+        TagLinkCol::REFTYPE(SchedModel::refTypeName),
         TagLinkCol::TAGID(sourceTagID_)
     ).size();
     int bill_split_size = (sourceTagID_ < 0) ? 0 : TagLinkModel::instance().find(
-        TagLinkCol::REFTYPE(ScheduledSplitModel::refTypeName),
+        TagLinkCol::REFTYPE(SchedSplitModel::refTypeName),
         TagLinkCol::TAGID(sourceTagID_)
     ).size();
 

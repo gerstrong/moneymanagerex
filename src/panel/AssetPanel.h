@@ -133,7 +133,7 @@ public:
     void ViewAssetTrans(const int selected_index);
     wxListCtrl* InitAssetTxnListCtrl(wxWindow* parent);
     void LoadAssetTransactions(wxListCtrl* listCtrl, int64 assetId);
-    void FillAssetListRow(wxListCtrl* listCtrl, long index, const TransactionData& txn);
+    void FillAssetListRow(wxListCtrl* listCtrl, long index, const TrxData& txn);
     void BindAssetListEvents(wxListCtrl* listCtrl);
     void CopySelectedRowsToClipboard(wxListCtrl* listCtrl);
     void GotoAssetAccount(const int selected_index);

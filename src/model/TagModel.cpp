@@ -19,7 +19,7 @@
 #include "TagModel.h"
 #include "TagLinkModel.h"
 #include "AttachmentModel.h"
-#include "TransactionModel.h"
+#include "TrxModel.h"
 
 TagModel::TagModel() :
     TableFactory<TagTable, TagData>()
@@ -72,15 +72,15 @@ int TagModel::is_used(int64 id)
 
     for (const auto& link : taglink) {
         // FIXME: do not exclude deleted transactions
-        if (link.REFTYPE == TransactionModel::refTypeName) {
-            const TransactionData* t = TransactionModel::instance().get_data_n(link.REFID);
+        if (link.REFTYPE == TrxModel::refTypeName) {
+            const TrxData* t = TrxModel::instance().get_data_n(link.REFID);
             if (t && t->DELETEDTIME.IsEmpty())
                 return 1;
         }
-        else if (link.REFTYPE == TransactionSplitModel::refTypeName) {
-            const TransactionSplitData* s = TransactionSplitModel::instance().get_data_n(link.REFID);
+        else if (link.REFTYPE == TrxSplitModel::refTypeName) {
+            const TrxSplitData* s = TrxSplitModel::instance().get_data_n(link.REFID);
             if (s) {
-                const TransactionData* t = TransactionModel::instance().get_data_n(s->TRANSID);
+                const TrxData* t = TrxModel::instance().get_data_n(s->TRANSID);
                 if (t && t->DELETEDTIME.IsEmpty())
                     return 1;
             }

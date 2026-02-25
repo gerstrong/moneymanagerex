@@ -30,15 +30,15 @@ Copyright (C) 2025 Klaus Wich
 #include "model/CurrencyHistoryModel.h"
 #include "model/CurrencyModel.h"
 #include "model/PayeeModel.h"
-#include "model/PreferencesModel.h"
+#include "model/PrefModel.h"
 #include "model/SettingModel.h"
 #include "model/StockHistoryModel.h"
 #include "model/StockModel.h"
 
 #include "DashboardWidget.h"
-#include "ScheduledPanel.h"
+#include "SchedPanel.h"
 
-#include "preferences/DashboardPreferences.h"
+#include "pref/DashboardPref.h"
 #include "report/_ReportBase.h"
 #include "uicontrols/navigatortypes.h"
 
@@ -203,20 +203,20 @@ void htmlWidgetTop7Categories::getTopCategoryStats(
     //Temporary map
     std::map<int64 /*category*/, double> stat;
 
-    const auto split = TransactionSplitModel::instance().get_all_id();
-    const auto &transactions = TransactionModel::instance().find(
-        TransactionModel::TRANSDATE(OP_GE, date_range->start_date()),
-        TransactionCol::TRANSDATE(OP_LE, date_range->end_date().FormatISOCombined()),
-        TransactionModel::STATUS(OP_NE, TransactionModel::STATUS_ID_VOID),
-        TransactionModel::TRANSCODE(OP_NE, TransactionModel::TYPE_ID_TRANSFER)
+    const auto split = TrxSplitModel::instance().get_all_id();
+    const auto &transactions = TrxModel::instance().find(
+        TrxModel::TRANSDATE(OP_GE, date_range->start_date()),
+        TrxCol::TRANSDATE(OP_LE, date_range->end_date().FormatISOCombined()),
+        TrxModel::STATUS(OP_NE, TrxModel::STATUS_ID_VOID),
+        TrxModel::TRANSCODE(OP_NE, TrxModel::TYPE_ID_TRANSFER)
     );
 
     for (const auto &trx : transactions) {
         // Do not include asset or stock transfers or deleted transactions in income expense calculations.
-        if (TransactionModel::is_foreignAsTransfer(trx) || !trx.DELETEDTIME.IsEmpty())
+        if (TrxModel::is_foreignAsTransfer(trx) || !trx.DELETEDTIME.IsEmpty())
             continue;
 
-        bool withdrawal = TransactionModel::type_id(trx) == TransactionModel::TYPE_ID_WITHDRAWAL;
+        bool withdrawal = TrxModel::type_id(trx) == TrxModel::TYPE_ID_WITHDRAWAL;
         double convRate = CurrencyHistoryModel::getDayRate(
             AccountModel::instance().get_data_n(trx.ACCOUNTID)->CURRENCYID,
             trx.TRANSDATE
@@ -289,19 +289,19 @@ const wxString htmlWidgetBillsAndDeposits::getHTMLText()
 
     //                    days, payee, description, amount, account, notes
     std::vector< std::tuple<int, wxString, wxString, double, const AccountData*, wxString> > bd_days;
-    for (const auto& entry : ScheduledModel::instance().find_all(ScheduledCol::COL_ID_TRANSDATE))
+    for (const auto& entry : SchedModel::instance().find_all(SchedCol::COL_ID_TRANSDATE))
     {
-        int daysPayment = ScheduledModel::getTransDateTime(entry)
+        int daysPayment = SchedModel::getTransDateTime(entry)
             .Subtract(today).GetDays();
         if (daysPayment > 14)
             break; // Done searching for all to include
 
         // ignore invalid entries
-        ScheduledModel::RepeatNum rn;
-        if (!ScheduledModel::decode_repeat_num(entry, rn))
+        SchedModel::RepeatNum rn;
+        if (!SchedModel::decode_repeat_num(entry, rn))
             continue;
 
-        int daysOverdue = ScheduledModel::NEXTOCCURRENCEDATE(entry)
+        int daysOverdue = SchedModel::NEXTOCCURRENCEDATE(entry)
             .Subtract(today).GetDays();
         wxString daysRemainingStr = (daysPayment > 0
             ? wxString::Format(wxPLURAL("%d day", "%d days", daysPayment), daysPayment)
@@ -314,7 +314,7 @@ const wxString htmlWidgetBillsAndDeposits::getHTMLText()
         if (account) accountStr = account->ACCOUNTNAME;
 
         wxString payeeStr = "";
-        if (ScheduledModel::type_id(entry) == TransactionModel::TYPE_ID_TRANSFER)
+        if (SchedModel::type_id(entry) == TrxModel::TYPE_ID_TRANSFER)
         {
             const AccountData *to_account = AccountModel::instance().get_data_n(entry.TOACCOUNTID);
             if (to_account) payeeStr = to_account->ACCOUNTNAME;
@@ -324,10 +324,10 @@ const wxString htmlWidgetBillsAndDeposits::getHTMLText()
         {
             const PayeeData* payee = PayeeModel::instance().get_data_n(entry.PAYEEID);
             payeeStr = accountStr;
-            payeeStr += (ScheduledModel::type_id(entry) == TransactionModel::TYPE_ID_WITHDRAWAL ? " &rarr; " : " &larr; ");
+            payeeStr += (SchedModel::type_id(entry) == TrxModel::TYPE_ID_WITHDRAWAL ? " &rarr; " : " &larr; ");
             if (payee) payeeStr += payee->PAYEENAME;
         }
-        double amount = (ScheduledModel::type_id(entry) == TransactionModel::TYPE_ID_WITHDRAWAL ? -entry.TRANSAMOUNT : entry.TRANSAMOUNT);
+        double amount = (SchedModel::type_id(entry) == TrxModel::TYPE_ID_WITHDRAWAL ? -entry.TRANSAMOUNT : entry.TRANSAMOUNT);
         wxString notes = HTMLEncode(entry.NOTES);
         bd_days.push_back(std::make_tuple(daysPayment, payeeStr, daysRemainingStr, amount, account, notes));
     }
@@ -377,25 +377,25 @@ const wxString htmlWidgetBillsAndDeposits::getHTMLText()
 //* Income vs Expenses *//
 const wxString htmlWidgetIncomeVsExpenses::getHTMLText()
 {
-    DashboardPreferences home_options;
+    DashboardPref home_options;
     wxSharedPtr<mmDateRange> date_range(home_options.get_inc_vs_exp_date_range());
 
     double tIncome = 0.0, tExpenses = 0.0;
     std::map<int64, std::pair<double, double> > incomeExpensesStats;
 
     //Calculations
-    const auto &transactions = TransactionModel::instance().find(
-        TransactionModel::TRANSDATE(OP_GE, date_range.get()->start_date()),
-        TransactionCol::TRANSDATE(OP_LE, date_range.get()->end_date().FormatISOCombined()),
-        TransactionModel::STATUS(OP_NE, TransactionModel::STATUS_ID_VOID),
-        TransactionModel::TRANSCODE(OP_NE, TransactionModel::TYPE_ID_TRANSFER)
+    const auto &transactions = TrxModel::instance().find(
+        TrxModel::TRANSDATE(OP_GE, date_range.get()->start_date()),
+        TrxCol::TRANSDATE(OP_LE, date_range.get()->end_date().FormatISOCombined()),
+        TrxModel::STATUS(OP_NE, TrxModel::STATUS_ID_VOID),
+        TrxModel::TRANSCODE(OP_NE, TrxModel::TYPE_ID_TRANSFER)
     );
 
     for (const auto& pBankTransaction : transactions)
     {
 
         // Do not include asset or stock transfers or deleted transactions in income expense calculations.
-        if (TransactionModel::is_foreignAsTransfer(pBankTransaction) || !pBankTransaction.DELETEDTIME.IsEmpty())
+        if (TrxModel::is_foreignAsTransfer(pBankTransaction) || !pBankTransaction.DELETEDTIME.IsEmpty())
             continue;
 
         double convRate = CurrencyHistoryModel::getDayRate(
@@ -404,7 +404,7 @@ const wxString htmlWidgetIncomeVsExpenses::getHTMLText()
         );
 
         int64 idx = pBankTransaction.ACCOUNTID;
-        if (TransactionModel::type_id(pBankTransaction) == TransactionModel::TYPE_ID_DEPOSIT)
+        if (TrxModel::type_id(pBankTransaction) == TrxModel::TYPE_ID_DEPOSIT)
             incomeExpensesStats[idx].first += pBankTransaction.TRANSAMOUNT * convRate;
         else
             incomeExpensesStats[idx].second += pBankTransaction.TRANSAMOUNT * convRate;
@@ -467,20 +467,20 @@ const wxString htmlWidgetStatistics::getHTMLText()
     json_writer.String(_t("Transaction Statistics").utf8_str());
 
     wxSharedPtr<mmDateRange> date_range;
-    /*if (PreferencesModel::instance().getIgnoreFutureTransactions())
+    /*if (PrefModel::instance().getIgnoreFutureTransactions())
         date_range = new mmCurrentMonthToDate;
     else
         date_range = new mmCurrentMonth;*/
 
-    TransactionModel::DataA all_trans;
-    if (PreferencesModel::instance().getIgnoreFutureTransactionsHomePage()) {
+    TrxModel::DataA all_trans;
+    if (PrefModel::instance().getIgnoreFutureTransactionsHomePage()) {
         date_range = new mmCurrentMonthToDate;
-        all_trans = TransactionModel::instance().find(
-            TransactionModel::TRANSDATE(OP_LE, mmDateDay::today()));
+        all_trans = TrxModel::instance().find(
+            TrxModel::TRANSDATE(OP_LE, mmDateDay::today()));
     }
     else {
         date_range = new mmCurrentMonth;
-        all_trans = TransactionModel::instance().find_all();
+        all_trans = TrxModel::instance().find_all();
     }
     int countFollowUp = 0;
     int total_transactions = 0;
@@ -494,19 +494,19 @@ const wxString htmlWidgetStatistics::getHTMLText()
         total_transactions++;
 
         // Do not include asset or stock transfers in income expense calculations.
-        if (TransactionModel::is_foreignAsTransfer(trx))
+        if (TrxModel::is_foreignAsTransfer(trx))
             continue;
 
-        if (TransactionModel::status_id(trx) == TransactionModel::STATUS_ID_FOLLOWUP)
+        if (TrxModel::status_id(trx) == TrxModel::STATUS_ID_FOLLOWUP)
             countFollowUp++;
 
-        accountStats[trx.ACCOUNTID].first += TransactionModel::account_recflow(trx, trx.ACCOUNTID);
-        accountStats[trx.ACCOUNTID].second += TransactionModel::account_flow(trx, trx.ACCOUNTID);
+        accountStats[trx.ACCOUNTID].first += TrxModel::account_recflow(trx, trx.ACCOUNTID);
+        accountStats[trx.ACCOUNTID].second += TrxModel::account_flow(trx, trx.ACCOUNTID);
 
-        if (TransactionModel::type_id(trx) == TransactionModel::TYPE_ID_TRANSFER)
+        if (TrxModel::type_id(trx) == TrxModel::TYPE_ID_TRANSFER)
         {
-            accountStats[trx.TOACCOUNTID].first += TransactionModel::account_recflow(trx, trx.TOACCOUNTID);
-            accountStats[trx.TOACCOUNTID].second += TransactionModel::account_flow(trx, trx.TOACCOUNTID);
+            accountStats[trx.TOACCOUNTID].first += TrxModel::account_recflow(trx, trx.TOACCOUNTID);
+            accountStats[trx.TOACCOUNTID].second += TrxModel::account_flow(trx, trx.TOACCOUNTID);
         }
     }
 
@@ -672,16 +672,16 @@ void htmlWidgetAccounts::get_account_stats()
 {
 
     wxSharedPtr<mmDateRange> date_range;
-    /*if (PreferencesModel::instance().getIgnoreFutureTransactions())
+    /*if (PrefModel::instance().getIgnoreFutureTransactions())
         date_range = new mmCurrentMonthToDate;
     else
         date_range = new mmCurrentMonth;*/
 
-    TransactionModel::DataA all_trans;
-    if (PreferencesModel::instance().getIgnoreFutureTransactionsHomePage()) {
+    TrxModel::DataA all_trans;
+    if (PrefModel::instance().getIgnoreFutureTransactionsHomePage()) {
         date_range = new mmCurrentMonthToDate;
-        all_trans = TransactionModel::instance().find(
-            TransactionModel::TRANSDATE(OP_LE, PreferencesModel::instance().UseTransDateTime()
+        all_trans = TrxModel::instance().find(
+            TrxModel::TRANSDATE(OP_LE, PrefModel::instance().UseTransDateTime()
                 ? wxDateTime::Now()
                 : wxDateTime(23, 59, 59, 999)
             )
@@ -689,18 +689,18 @@ void htmlWidgetAccounts::get_account_stats()
     }
     else {
         date_range = new mmCurrentMonth;
-        all_trans = TransactionModel::instance().find_all();
+        all_trans = TrxModel::instance().find_all();
     }
 
     for (const auto& trx : all_trans)
     {
-        accountStats_[trx.ACCOUNTID].first += TransactionModel::account_recflow(trx, trx.ACCOUNTID);
-        accountStats_[trx.ACCOUNTID].second += TransactionModel::account_flow(trx, trx.ACCOUNTID);
+        accountStats_[trx.ACCOUNTID].first += TrxModel::account_recflow(trx, trx.ACCOUNTID);
+        accountStats_[trx.ACCOUNTID].second += TrxModel::account_flow(trx, trx.ACCOUNTID);
 
-        if (TransactionModel::type_id(trx) == TransactionModel::TYPE_ID_TRANSFER)
+        if (TrxModel::type_id(trx) == TrxModel::TYPE_ID_TRANSFER)
         {
-            accountStats_[trx.TOACCOUNTID].first += TransactionModel::account_recflow(trx, trx.TOACCOUNTID);
-            accountStats_[trx.TOACCOUNTID].second += TransactionModel::account_flow(trx, trx.TOACCOUNTID);
+            accountStats_[trx.TOACCOUNTID].first += TrxModel::account_recflow(trx, trx.TOACCOUNTID);
+            accountStats_[trx.TOACCOUNTID].second += TrxModel::account_flow(trx, trx.TOACCOUNTID);
         }
     }
 

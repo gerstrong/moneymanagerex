@@ -27,9 +27,9 @@ Copyright (C) 2021 Mark Whalley (mark@ipx.co.uk)
 #include "model/AccountModel.h"
 #include "model/CategoryModel.h"
 #include "model/PayeeModel.h"
-#include "model/PreferencesModel.h"
+#include "model/PrefModel.h"
 #include "model/SettingModel.h"
-#include "model/TransactionModel.h"
+#include "model/TrxModel.h"
 
 #include "DiagnosticsDialog.h"
 #include "report/htmlbuilder.h"
@@ -120,7 +120,7 @@ void DiagnosticsDialog::RefreshView()
          << ", closed: " << all_accounts.size() - all_accounts_open.size()
          << "</td></tr>";
     // Transactions info
-    auto all_transactions = TransactionModel::instance().find_all();
+    auto all_transactions = TrxModel::instance().find_all();
     html << "<tr><td><b>Transactions</b></td><td>" << all_transactions.size() 
          << "</td></tr>";
     // Payee info

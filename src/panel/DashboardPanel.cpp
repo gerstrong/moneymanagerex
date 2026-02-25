@@ -30,12 +30,12 @@ Copyright (C) 2026 Klaus Wich
 #include "util/_util.h"
 
 #include "model/_all.h"
-#include "model/PreferencesModel.h"
+#include "model/PrefModel.h"
 
 #include "mmframe.h"
 #include "DashboardPanel.h"
 #include "DashboardWidget.h"
-#include "ScheduledPanel.h"
+#include "SchedPanel.h"
 
 wxBEGIN_EVENT_TABLE(DashboardPanel, wxPanel)
     EVT_WEBVIEW_NAVIGATING(wxID_ANY, DashboardPanel::OnLinkClicked)
@@ -132,10 +132,10 @@ void DashboardPanel::PrintPage()
 
 void DashboardPanel::insertDataIntoTemplate()
 {
-    m_frames["HTMLSCALE"] = wxString::Format("%d", PreferencesModel::instance().getHtmlScale());
+    m_frames["HTMLSCALE"] = wxString::Format("%d", PrefModel::instance().getHtmlScale());
 
     // Get curreny details to pass to report for Apexcharts
-    int64 baseCurrencyID = PreferencesModel::instance().getBaseCurrencyID();
+    int64 baseCurrencyID = PrefModel::instance().getBaseCurrencyID();
     const CurrencyData* baseCurrency = CurrencyModel::instance().get_data_n(baseCurrencyID);
 
     // Get locale to pass to reports for Apexcharts

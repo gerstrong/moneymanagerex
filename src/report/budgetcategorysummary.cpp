@@ -47,7 +47,7 @@ wxString mmReportBudgetCategorySummary::getHTMLText()
     // Grab the data 
     int startDay;
     wxDate::Month startMonth;
-    if (PreferencesModel::instance().getBudgetFinancialYears())
+    if (PrefModel::instance().getBudgetFinancialYears())
     {
         GetFinancialYearValues(startDay, startMonth);
     } else
@@ -95,12 +95,12 @@ wxString mmReportBudgetCategorySummary::getHTMLText()
         yearEnd.Add(wxDateSpan::Year()).Subtract(wxDateSpan::Day());
 
     // Readjust dates by the Budget Offset Option
-    PreferencesModel::instance().addBudgetDateOffset(yearBegin);
-    PreferencesModel::instance().addBudgetDateOffset(yearEnd);
+    PrefModel::instance().addBudgetDateOffset(yearBegin);
+    PrefModel::instance().addBudgetDateOffset(yearEnd);
     mmSpecifiedRange date_range(yearBegin, yearEnd);
 
     bool evaluateTransfer = false;
-    if (PreferencesModel::instance().getBudgetIncludeTransfers())
+    if (PrefModel::instance().getBudgetIncludeTransfers())
     {
         evaluateTransfer = true;
     }
@@ -113,7 +113,7 @@ wxString mmReportBudgetCategorySummary::getHTMLText()
     std::map<int64, std::map<int, double> > categoryStats;
     CategoryModel::instance().getCategoryStats(categoryStats
         , static_cast<wxSharedPtr<wxArrayString>>(nullptr)
-        , &date_range, PreferencesModel::instance().getIgnoreFutureTransactions()
+        , &date_range, PrefModel::instance().getIgnoreFutureTransactions()
         , false, (evaluateTransfer ? &budgetAmt : nullptr));
 
     std::map<int64, std::map<int, double> > budgetStats;
@@ -124,13 +124,13 @@ wxString mmReportBudgetCategorySummary::getHTMLText()
     mmHTMLBuilder hb;
     hb.init();
     wxString headingStr = AdjustYearValues(startDay, startMonth, startYear, budget_year);
-    bool amply = PreferencesModel::instance().getBudgetSummaryWithoutCategories();
+    bool amply = PrefModel::instance().getBudgetSummaryWithoutCategories();
     const wxString headerStartupMsg = amply
         ? _t("Budget Categories for %s") : _t("Budget Category Summary for %s");
 
     headingStr = wxString::Format(headerStartupMsg
         , headingStr + "<br>" + _t("(Estimated vs. Actual)"));
-    hb.addReportHeader(headingStr, 1, PreferencesModel::instance().getIgnoreFutureTransactions());
+    hb.addReportHeader(headingStr, 1, PrefModel::instance().getIgnoreFutureTransactions());
     hb.displayDateHeading(yearBegin, yearEnd);
     // Prime the filter
     m_filter.clear();

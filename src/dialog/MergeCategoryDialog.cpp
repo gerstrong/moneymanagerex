@@ -162,35 +162,35 @@ void MergeCategoryDialog::OnOk(wxCommandEvent& WXUNUSED(event))
         _t("Merge categories confirmation"),
         wxOK | wxCANCEL | wxICON_INFORMATION) == wxOK
     ) {
-        auto trx_a = TransactionModel::instance()
-            .find(TransactionCol::CATEGID(m_sourceCatID));
-        auto split_a = TransactionSplitModel::instance()
-            .find(TransactionSplitCol::CATEGID(m_sourceCatID));
-        auto sched_a = ScheduledModel::instance()
-            .find(ScheduledCol::CATEGID(m_sourceCatID));
+        auto trx_a = TrxModel::instance()
+            .find(TrxCol::CATEGID(m_sourceCatID));
+        auto split_a = TrxSplitModel::instance()
+            .find(TrxSplitCol::CATEGID(m_sourceCatID));
+        auto sched_a = SchedModel::instance()
+            .find(SchedCol::CATEGID(m_sourceCatID));
         auto budget_a = BudgetModel::instance()
             .find(BudgetCol::CATEGID(m_sourceCatID));
-        auto schedsplit_a = ScheduledSplitModel::instance()
-            .find(ScheduledSplitCol::CATEGID(m_sourceCatID));
+        auto schedsplit_a = SchedSplitModel::instance()
+            .find(SchedSplitCol::CATEGID(m_sourceCatID));
         auto payee_a = PayeeModel::instance()
             .find(PayeeCol::CATEGID(m_sourceCatID));
 
         for (auto& trx_d : trx_a) {
             trx_d.CATEGID = m_destCatID;
         }
-        TransactionModel::instance().save_trx_a(trx_a);
+        TrxModel::instance().save_trx_a(trx_a);
         m_changedRecords += trx_a.size();
 
         for (auto& sched_d : sched_a) {
             sched_d.CATEGID = m_destCatID;
         }
-        ScheduledModel::instance().save_data_a(sched_a);
+        SchedModel::instance().save_data_a(sched_a);
         m_changedRecords += sched_a.size();
 
         for (auto& split_d : split_a) {
             split_d.CATEGID = m_destCatID;
         }
-        TransactionSplitModel::instance().save_data_a(split_a);
+        TrxSplitModel::instance().save_data_a(split_a);
         m_changedRecords += split_a.size();
 
         for (auto& payee_d : payee_a) {
@@ -203,7 +203,7 @@ void MergeCategoryDialog::OnOk(wxCommandEvent& WXUNUSED(event))
         for (auto& schedsplit_d : schedsplit_a) {
             schedsplit_d.CATEGID = m_destCatID;
         }
-        ScheduledSplitModel::instance().save_data_a(schedsplit_a);
+        SchedSplitModel::instance().save_data_a(schedsplit_a);
         m_changedRecords += schedsplit_a.size();
 
         for (auto& budget_d : budget_a) {
@@ -231,16 +231,16 @@ void MergeCategoryDialog::IsOkOk()
     m_sourceCatID = cbSourceCategory_->mmGetCategoryId();
     int64 m_destCatID = cbDestCategory_->mmGetCategoryId();
 
-    auto transactions = TransactionModel::instance()
-        .find(TransactionCol::CATEGID(m_sourceCatID));
-    auto checking_split = TransactionSplitModel::instance()
-        .find(TransactionSplitCol::CATEGID(m_sourceCatID));
-    auto billsdeposits = ScheduledModel::instance()
-        .find(ScheduledCol::CATEGID(m_sourceCatID));
+    auto transactions = TrxModel::instance()
+        .find(TrxCol::CATEGID(m_sourceCatID));
+    auto checking_split = TrxSplitModel::instance()
+        .find(TrxSplitCol::CATEGID(m_sourceCatID));
+    auto billsdeposits = SchedModel::instance()
+        .find(SchedCol::CATEGID(m_sourceCatID));
     auto budget = BudgetModel::instance()
         .find(BudgetCol::CATEGID(m_sourceCatID));
-    auto budget_split = ScheduledSplitModel::instance()
-        .find(ScheduledSplitCol::CATEGID(m_sourceCatID));
+    auto budget_split = SchedSplitModel::instance()
+        .find(SchedSplitCol::CATEGID(m_sourceCatID));
     auto payees = PayeeModel::instance()
         .find(PayeeCol::CATEGID(m_sourceCatID));
 

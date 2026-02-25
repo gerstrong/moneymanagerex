@@ -25,8 +25,8 @@
 #include "model/InfoModel.h"
 #include "model/TagLinkModel.h"
 #include "model/TagModel.h"
-#include "model/TransactionModel.h"
-#include "model/TransactionSplitModel.h"
+#include "model/TrxModel.h"
+#include "model/TrxSplitModel.h"
 
 #include "TagManager.h"
 
@@ -294,8 +294,8 @@ void TagManager::OnDelete(wxCommandEvent& WXUNUSED(event))
 
     TagModel::instance().Savepoint();
     TagLinkModel::instance().Savepoint();
-    TransactionModel::instance().Savepoint();
-    TransactionSplitModel::instance().Savepoint();
+    TrxModel::instance().Savepoint();
+    TrxSplitModel::instance().Savepoint();
     for (const auto& selection : stringSelections)
     {
         const TagData* tag = TagModel::instance().get_key(selection);
@@ -318,10 +318,10 @@ void TagManager::OnDelete(wxCommandEvent& WXUNUSED(event))
             for (const auto& link : taglinks)
                 // Taglinks for deleted transactions are either TRANSACTION or TRANSACTIONSPLIT type.
                 // Remove the transactions which will delete all associated tags.
-                if (link.REFTYPE == TransactionModel::refTypeName)
-                    TransactionModel::instance().purge_id(link.REFID);
-                else if (link.REFTYPE == TransactionSplitModel::refTypeName)
-                    TransactionModel::instance().purge_id(TransactionSplitModel::instance().get_data_n(link.REFID)->TRANSID);
+                if (link.REFTYPE == TrxModel::refTypeName)
+                    TrxModel::instance().purge_id(link.REFID);
+                else if (link.REFTYPE == TrxSplitModel::refTypeName)
+                    TrxModel::instance().purge_id(TrxSplitModel::instance().get_data_n(link.REFID)->TRANSID);
             TagModel::instance().purge_id(tag->TAGID);
             tagList_.Remove(selection);
             int index = selectedTags_.Index(selection);
@@ -331,8 +331,8 @@ void TagManager::OnDelete(wxCommandEvent& WXUNUSED(event))
     }
     TagModel::instance().ReleaseSavepoint();
     TagLinkModel::instance().ReleaseSavepoint();
-    TransactionModel::instance().ReleaseSavepoint();
-    TransactionSplitModel::instance().ReleaseSavepoint();
+    TrxModel::instance().ReleaseSavepoint();
+    TrxSplitModel::instance().ReleaseSavepoint();
     refreshRequested_ = true;
     fillControls();
     int newIndex = std::min(selections[0], static_cast<int>(tagListBox_->GetCount()) - 1);

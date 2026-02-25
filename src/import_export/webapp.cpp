@@ -27,7 +27,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "model/InfoModel.h"
 
 #include "dialog/AttachmentDialog.h"
-#include "dialog/TransactionDialog.h"
+#include "dialog/TrxDialog.h"
 #include "uicontrols/navigatortypes.h"
 #include "webapp.h"
 
@@ -472,7 +472,7 @@ int64 mmWebApp::MMEX_InsertNewTransaction(webtran_holder& WebAppTrans)
         TrStatus = WebAppTrans.Status;
     }
     else {
-        TrStatus = TransactionModel::STATUS_KEY_FOLLOWUP;
+        TrStatus = TrxModel::STATUS_KEY_FOLLOWUP;
 
         //Search first bank account
         for (const auto &FirstAccount : AccountModel::instance().find_all(
@@ -548,7 +548,7 @@ int64 mmWebApp::MMEX_InsertNewTransaction(webtran_holder& WebAppTrans)
     }
 
     // Create New Transaction
-    TransactionData new_trx_d = TransactionData();
+    TrxData new_trx_d = TrxData();
     wxString trxDate = WebAppTrans.Date.FormatISOCombined();
     if ((trxDate < accountInitialDate) || (ToAccount && trxDate < ToAccount->INITIALDATE)) {
         wxString msgStr = wxString::Format("%s: %s / %s: %s\n\n%s\n%s",
@@ -573,7 +573,7 @@ int64 mmWebApp::MMEX_InsertNewTransaction(webtran_holder& WebAppTrans)
     new_trx_d.FOLLOWUPID        = -1;
     new_trx_d.TOTRANSAMOUNT     = WebAppTrans.Amount;
     new_trx_d.COLOR             = -1;
-    TransactionModel::instance().add_data_n(new_trx_d);
+    TrxModel::instance().add_data_n(new_trx_d);
     DeskNewTrID = new_trx_d.id();
 
     if (DeskNewTrID > 0)
@@ -583,7 +583,7 @@ int64 mmWebApp::MMEX_InsertNewTransaction(webtran_holder& WebAppTrans)
             const wxString AttachmentsFolder = mmex::getPathAttachment(mmAttachmentManage::InfotablePathSetting());
             if (AttachmentsFolder == wxEmptyString || !wxDirExists(AttachmentsFolder))
             {
-                TransactionModel::instance().purge_id(DeskNewTrID);
+                TrxModel::instance().purge_id(DeskNewTrID);
                 DeskNewTrID = -1;
 
                 wxString msgStr = wxString() << _t("Unable to download attachments from the WebApp.") << "\n"
@@ -608,14 +608,14 @@ int64 mmWebApp::MMEX_InsertNewTransaction(webtran_holder& WebAppTrans)
                     DesktopAttachmentName = WebApp_DownloadOneAttachment(WebAppAttachmentName, DeskNewTrID, AttachmentNr, CurlError);
                     if (DesktopAttachmentName != wxEmptyString) {
                         AttachmentData new_att_d = AttachmentData();
-                        new_att_d.REFTYPE     = TransactionModel::refTypeName;
+                        new_att_d.REFTYPE     = TrxModel::refTypeName;
                         new_att_d.REFID       = DeskNewTrID;
                         new_att_d.DESCRIPTION = _t("Attachment") + "_" << AttachmentNr;
                         new_att_d.FILENAME    = DesktopAttachmentName;
                         AttachmentModel::instance().add_data_n(new_att_d);
                     }
                     else {
-                        TransactionModel::instance().purge_id(DeskNewTrID);
+                        TrxModel::instance().purge_id(DeskNewTrID);
                         DeskNewTrID = -1;
 
                         wxString msgStr = wxString() << _t("Unable to download attachments from the WebApp.") << "\n"
@@ -657,10 +657,10 @@ bool mmWebApp::WebApp_DeleteOneTransaction(int64 WebAppTransactionId)
 wxString mmWebApp::WebApp_DownloadOneAttachment(const wxString& AttachmentName, int64 DesktopTransactionID, int AttachmentNr, wxString& Error)
 {
     wxString FileExtension = wxFileName(AttachmentName).GetExt().MakeLower();
-    wxString FileName = TransactionModel::refTypeName + "_" + wxString::Format("%lld", DesktopTransactionID)
+    wxString FileName = TrxModel::refTypeName + "_" + wxString::Format("%lld", DesktopTransactionID)
         + "_Attach" + wxString::Format("%i", AttachmentNr) + "." + FileExtension;
     const wxString FilePath = mmex::getPathAttachment(mmAttachmentManage::InfotablePathSetting())
-        + TransactionModel::refTypeName + wxFileName::GetPathSeparator() + FileName;
+        + TrxModel::refTypeName + wxFileName::GetPathSeparator() + FileName;
     wxString URL = mmWebApp::getServicesPageURL() + "&" + WebAppParam::DownloadAttachments + "=" + AttachmentName;
     CURLcode CurlStatus = http_download_file(URL, FilePath);
     if (CurlStatus == CURLE_OK)

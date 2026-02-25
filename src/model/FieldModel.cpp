@@ -21,7 +21,7 @@
 
 #include "FieldModel.h"
 #include "FieldValueModel.h"
-#include "TransactionModel.h"
+#include "TrxModel.h"
 
 mmChoiceNameA FieldModel::TYPE_CHOICES = mmChoiceNameA({
     { TYPE_ID_STRING,       _n("String") },
@@ -278,7 +278,7 @@ const wxArrayString FieldModel::UDFC_FIELDS()
 
 const wxArrayString FieldModel::getUDFCList(const FieldData* r)
 {
-    const wxString& ref_type = TransactionModel::refTypeName;
+    const wxString& ref_type = TrxModel::refTypeName;
     const auto& a = FieldModel::instance().find(FieldCol::REFTYPE(ref_type));
 
     wxArrayString choices = UDFC_FIELDS();

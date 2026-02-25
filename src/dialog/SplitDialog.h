@@ -26,7 +26,7 @@
 
 #include "util/_simple.h"
 #include "util/mmTextCtrl.h"
-#include "model/TransactionModel.h"
+#include "model/TrxModel.h"
 
 class wxListCtrl;
 class wxStaticText;

@@ -49,7 +49,7 @@
 #include "model/CurrencyHistoryModel.h"
 #include "model/CurrencyModel.h"
 #include "model/InfoModel.h"
-#include "model/PreferencesModel.h"
+#include "model/PrefModel.h"
 #include "model/SettingModel.h"
 
 #ifdef __WXMSW__
@@ -612,8 +612,8 @@ bool mmParseDisplayStringToDate(wxDateTime& date, const wxString& str_date, cons
 
 const wxDateTime getUserDefinedFinancialYear(const bool prevDayRequired)
 {
-    int day = PreferencesModel::instance().getFinancialFirstDay();
-    wxDateTime::Month month = PreferencesModel::instance().getFinancialFirstMonth();
+    int day = PrefModel::instance().getFinancialFirstDay();
+    wxDateTime::Month month = PrefModel::instance().getFinancialFirstMonth();
     int year = wxDate::GetCurrentYear();
 
     if (wxDate::GetCurrentMonth() < month) year--;
@@ -903,7 +903,7 @@ bool getOnlineCurrencyRates(wxString& msg,const int64 curr_id, const bool used_o
         ) {
             double new_rate = currency_data[currency_symbol];
             if (new_rate > 0) {
-                if(PreferencesModel::instance().getUseCurrencyHistory())
+                if(PrefModel::instance().getUseCurrencyHistory())
                     CurrencyHistoryModel::instance().addUpdate(
                         currency_d.CURRENCYID, today, new_rate, CurrencyHistoryModel::ONLINE
                     );
@@ -1909,7 +1909,7 @@ const wxString md2html(const wxString& md)
 
 wxImageList* createImageList(const int size)
 {
-    int x = (size > 0) ? size : PreferencesModel::instance().getIconSize();
+    int x = (size > 0) ? size : PrefModel::instance().getIconSize();
     return(new wxImageList(x, x, false));   // No mask creation, not needed and causes image correuption on Mac
 
 }
@@ -1918,7 +1918,7 @@ wxImageList* createImageList(const int size)
 // but this only works on some platforms!
 void mmToolTip(wxWindow* widget, const wxString& tip)
 {
-    if (PreferencesModel::instance().getShowToolTips()) widget->SetToolTip(tip);
+    if (PrefModel::instance().getShowToolTips()) widget->SetToolTip(tip);
 }
 
 wxString HTMLEncode(const wxString& input)
@@ -2013,7 +2013,7 @@ void mmSetSize(wxWindow* w)
 
 void mmFontSize(wxWindow* widget)
 {
-    int x = PreferencesModel::instance().getFontSize();
+    int x = PrefModel::instance().getFontSize();
     for (int i = 0; i < x; i++)
     {
         widget->SetFont(widget->GetFont().Larger());

@@ -25,7 +25,7 @@
 #include "BudgetModel.h"
 #include "BudgetPeriodModel.h"
 #include "CategoryModel.h"
-#include "PreferencesModel.h"
+#include "PrefModel.h"
 
 mmChoiceNameA BudgetModel::PERIOD_CHOICES = mmChoiceNameA({
     { PERIOD_ID_NONE,       _n("None") },
@@ -130,8 +130,8 @@ void BudgetModel::getBudgetStats(
         // Store the yearly budget to use in reporting. Monthly budgets are stored in index 0-11, so use index 12 for year
         budgetStats[budget.CATEGID][12] = yearlyBudgetValue[budget.CATEGID];
     }
-    bool budgetOverride = PreferencesModel::instance().getBudgetOverride();
-    bool budgetDeductMonthly = PreferencesModel::instance().getBudgetDeductMonthly();
+    bool budgetOverride = PrefModel::instance().getBudgetOverride();
+    bool budgetDeductMonthly = PrefModel::instance().getBudgetDeductMonthly();
     for (int month = 0; month < 12; month++)
     {
         const wxString budgetYearMonth = wxString::Format("%s-%02d", year, month + 1);
@@ -199,7 +199,7 @@ void BudgetModel::copyBudgetYear(int64 newYearID, int64 baseYearID)
 {
     std::map<int64, double> yearDeduction;
     int budgetedMonths = 0;
-    bool optionDeductMonthly = PreferencesModel::instance().getBudgetDeductMonthly();
+    bool optionDeductMonthly = PrefModel::instance().getBudgetDeductMonthly();
     const wxString baseBudgetYearName = BudgetPeriodModel::instance().get_data_n(baseYearID)->BUDGETYEARNAME;
     const wxString newBudgetYearName = BudgetPeriodModel::instance().get_data_n(newYearID)->BUDGETYEARNAME;
 

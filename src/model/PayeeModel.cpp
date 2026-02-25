@@ -19,8 +19,8 @@
  ********************************************************/
 
 #include "PayeeModel.h"
-#include "TransactionModel.h" // detect whether the payee is used or not
-#include "ScheduledModel.h"
+#include "TrxModel.h" // detect whether the payee is used or not
+#include "SchedModel.h"
 
 PayeeModel::PayeeModel() :
     TableFactory<PayeeTable, PayeeData>()
@@ -123,12 +123,12 @@ const std::map<wxString, int64> PayeeModel::used_payee()
         cache[p.PAYEEID] = p.PAYEENAME;
 
     std::map<wxString, int64> payees;
-    for (const auto &t : TransactionModel::instance().find_all())
+    for (const auto &t : TrxModel::instance().find_all())
     {
         if (cache.count(t.PAYEEID) > 0)
             payees[cache[t.PAYEEID]] = t.PAYEEID;
     }
-    for (const auto& b : ScheduledModel::instance().find_all())
+    for (const auto& b : SchedModel::instance().find_all())
     {
         if (cache.count(b.PAYEEID) > 0)
             payees[cache[b.PAYEEID]] = b.PAYEEID;
@@ -147,8 +147,8 @@ bool PayeeModel::is_hidden(const Data& this_d)
 
 bool PayeeModel::is_used(int64 id)
 {
-    const auto& trans = TransactionModel::instance().find(
-        TransactionCol::PAYEEID(id)
+    const auto& trans = TrxModel::instance().find(
+        TrxCol::PAYEEID(id)
     );
     // FIXME: do not exclude deleted transactions; the payee is still used.
     // deleted transactions are shown in a panel and must have a valid payee id.
@@ -156,8 +156,8 @@ bool PayeeModel::is_used(int64 id)
         if (txn.DELETEDTIME.IsEmpty())
             return true;
 
-    const auto& bills = ScheduledModel::instance().find(
-        ScheduledCol::PAYEEID(id)
+    const auto& bills = SchedModel::instance().find(
+        SchedCol::PAYEEID(id)
     );
     if (!bills.empty())
         return true;

@@ -36,7 +36,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "model/AccountModel.h"
 #include "model/CategoryModel.h"
-#include "model/TransactionModel.h"
+#include "model/TrxModel.h"
 #include "model/PayeeModel.h"
 
 #include "ofx_import_gui.h"
@@ -1470,9 +1470,9 @@ bool mmOFXImportDialog::ImportTransactions(wxXmlNode* banktranlist, wxLongLong a
                 }
             }
             // Check if this FITID exists in the current account first
-            if (!TransactionModel::instance().find(
-                TransactionCol::TRANSACTIONNUMBER(OP_EQ, fitid),
-                TransactionCol::ACCOUNTID(OP_EQ, account->ACCOUNTID.GetValue())
+            if (!TrxModel::instance().find(
+                TrxCol::TRANSACTIONNUMBER(OP_EQ, fitid),
+                TrxCol::ACCOUNTID(OP_EQ, account->ACCOUNTID.GetValue())
             ).empty())
                 continue; // Skip if duplicate in current account
             newTransactions++;
@@ -1527,7 +1527,7 @@ bool mmOFXImportDialog::ImportTransactions(wxXmlNode* banktranlist, wxLongLong a
             continue;
         }
 
-        TransactionData transaction = TransactionData();
+        TrxData transaction = TrxData();
         transaction.ACCOUNTID = account->ACCOUNTID;
         transaction.TRANSACTIONNUMBER = result.fitid;
         transaction.TRANSDATE = date.FormatISODate();
@@ -1536,10 +1536,10 @@ bool mmOFXImportDialog::ImportTransactions(wxXmlNode* banktranlist, wxLongLong a
 
         bool isTransfer = false;
         // Check for existing transaction in the current account first
-        TransactionModel::DataA sameAccountTrans =
-            TransactionModel::instance().find(
-                TransactionCol::TRANSACTIONNUMBER(OP_EQ, fitid),
-                TransactionCol::ACCOUNTID(OP_EQ, account->ACCOUNTID)
+        TrxModel::DataA sameAccountTrans =
+            TrxModel::instance().find(
+                TrxCol::TRANSACTIONNUMBER(OP_EQ, fitid),
+                TrxCol::ACCOUNTID(OP_EQ, account->ACCOUNTID)
             );
         if (!sameAccountTrans.empty()) {
             result.imported = false;
@@ -1551,8 +1551,8 @@ bool mmOFXImportDialog::ImportTransactions(wxXmlNode* banktranlist, wxLongLong a
         }
 
         // Only check other accounts if no duplicate in current account
-        TransactionModel::DataA allExistingTrans = TransactionModel::instance().find(
-            TransactionCol::TRANSACTIONNUMBER(OP_EQ, fitid)
+        TrxModel::DataA allExistingTrans = TrxModel::instance().find(
+            TrxCol::TRANSACTIONNUMBER(OP_EQ, fitid)
         );
         if (!allExistingTrans.empty()) {
             for (auto& existing : allExistingTrans) {
@@ -1619,7 +1619,7 @@ bool mmOFXImportDialog::ImportTransactions(wxXmlNode* banktranlist, wxLongLong a
                             existing.NOTES = "Existing: " + existing.NOTES + "\nUpdated: " + memo;
 
                             try {
-                                TransactionModel::instance().save_trx(existing);
+                                TrxModel::instance().save_trx(existing);
                                 result.imported = true;
                                 result.transType = "Transfer";
                                 result.importedPayee = AccountModel::instance().get_data_n(existing.ACCOUNTID)->ACCOUNTNAME;
@@ -1757,7 +1757,7 @@ bool mmOFXImportDialog::ImportTransactions(wxXmlNode* banktranlist, wxLongLong a
 
         if (result.imported) {
             try {
-                TransactionModel::instance().save_trx(transaction);
+                TrxModel::instance().save_trx(transaction);
                 stats.importedTransactions++;
                 wxLogDebug("Imported: FITID='%s', Type='%s', Payee='%s', Mode='%s'",
                     fitid, result.transType, result.importedPayee, result.matchMode

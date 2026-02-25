@@ -19,12 +19,12 @@
 #pragma once
 
 #include "model/AssetModel.h"
-#include "model/PreferencesModel.h"
-#include "model/TransactionLinkModel.h"
+#include "model/PrefModel.h"
+#include "model/TrxLinkModel.h"
 
 class mmDatePickerCtrl;
 class mmTextCtrl;
-class TransactionLinkDialog;
+class TrxLinkDialog;
 class mmGUIFrame;
 
 class AssetDialog : public wxDialog
@@ -46,9 +46,9 @@ private:
 private:
     AssetData* m_asset_n = nullptr;
     AssetData m_asset_d;
-    const TransactionLinkData* m_transfer_entry = nullptr;
-    TransactionData* m_checking_entry = nullptr;
-    PreferencesModel::COMPOUNDING_ID m_compounding = PreferencesModel::COMPOUNDING_ID_DAY;
+    const TrxLinkData* m_transfer_entry = nullptr;
+    TrxData* m_checking_entry = nullptr;
+    PrefModel::COMPOUNDING_ID m_compounding = PrefModel::COMPOUNDING_ID_DAY;
     wxString m_dialog_heading = _t("New Asset");
     bool m_hidden_trans_entry = true;
     bool m_asset_rich_text = true;
@@ -66,7 +66,7 @@ private:
     mmTextCtrl*       w_valueChangeRate      = nullptr;
     wxBitmapButton*   w_attachments          = nullptr;
     wxStaticBox*      w_transaction_frame    = nullptr;
-    TransactionLinkDialog* w_transaction_panel = nullptr;
+    TrxLinkDialog* w_transaction_panel = nullptr;
 
 public:
     AssetDialog() {};
@@ -77,8 +77,8 @@ public:
     );
     AssetDialog(
         wxWindow *parent,
-        const TransactionLinkData* transfer_entry,
-        TransactionData* checking_entry
+        const TrxLinkData* transfer_entry,
+        TrxData* checking_entry
     );
 
     void SetTransactionAccountName(const wxString& account_name);
@@ -104,7 +104,7 @@ private:
         int changeType,
         double xRate,
         int xCompounding,
-        int yCompounding = PreferencesModel::COMPOUNDING_ID_DAY
+        int yCompounding = PrefModel::COMPOUNDING_ID_DAY
     );
     void OnChangeAppreciationType(wxCommandEvent& event);
     void OnChangeCompounding(wxCommandEvent& event);

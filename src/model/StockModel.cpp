@@ -19,8 +19,8 @@
 
 #include "StockModel.h"
 #include "StockHistoryModel.h"
-#include "TransactionLinkModel.h"
-#include "TransactionShareModel.h"
+#include "TrxLinkModel.h"
+#include "TrxShareModel.h"
 #include "CurrencyHistoryModel.h"
 
 StockModel::StockModel() :
@@ -197,12 +197,12 @@ double StockModel::getDailyBalanceAt(const AccountData *account, const wxDate& d
 
         double numShares = 0.0;
 
-        TransactionLinkModel::DataA linkrecords = TransactionLinkModel::TranslinkList<StockModel>(stock.STOCKID);
+        TrxLinkModel::DataA linkrecords = TrxLinkModel::TranslinkList<StockModel>(stock.STOCKID);
         for (const auto& linkrecord : linkrecords)
         {
-            const TransactionData* txn = TransactionModel::instance().get_data_n(linkrecord.CHECKINGACCOUNTID);
-            if (txn->TRANSID > -1 && txn->DELETEDTIME.IsEmpty() && TransactionModel::getTransDateTime(*txn).FormatISODate() <= strDate) {
-                numShares += TransactionShareModel::instance().ShareEntry(linkrecord.CHECKINGACCOUNTID)->SHARENUMBER;
+            const TrxData* txn = TrxModel::instance().get_data_n(linkrecord.CHECKINGACCOUNTID);
+            if (txn->TRANSID > -1 && txn->DELETEDTIME.IsEmpty() && TrxModel::getTransDateTime(*txn).FormatISODate() <= strDate) {
+                numShares += TrxShareModel::instance().unsafe_get_trx_share_n(linkrecord.CHECKINGACCOUNTID)->SHARENUMBER;
             }
         }
 
@@ -229,24 +229,24 @@ double StockModel::RealGainLoss(const Data* r, bool to_base_curr)
     const CurrencyData* currency = AccountModel::currency(
         AccountModel::instance().get_data_n(r->HELDAT)
     );
-    TransactionLinkModel::DataA trans_list = TransactionLinkModel::TranslinkList<StockModel>(r->STOCKID);
+    TrxLinkModel::DataA trans_list = TrxLinkModel::TranslinkList<StockModel>(r->STOCKID);
     double real_gain_loss = 0;
     double total_shares = 0;
     double total_initial_value = 0;
     double avg_share_price = 0;
     double conv_rate = 1;
 
-    TransactionModel::DataA checking_list;
+    TrxModel::DataA checking_list;
     for (const auto &trans : trans_list)
     {
-        const TransactionData* checking_entry = TransactionModel::instance().get_data_n(trans.CHECKINGACCOUNTID);
+        const TrxData* checking_entry = TrxModel::instance().get_data_n(trans.CHECKINGACCOUNTID);
         if (checking_entry->TRANSID > -1 && checking_entry->DELETEDTIME.IsEmpty()) checking_list.push_back(*checking_entry);
     }
-    std::stable_sort(checking_list.begin(), checking_list.end(), TransactionData::SorterByTRANSDATE());
+    std::stable_sort(checking_list.begin(), checking_list.end(), TrxData::SorterByTRANSDATE());
 
     for (const auto &trans : checking_list)
     {
-        const TransactionShareData* share_entry = TransactionShareModel::ShareEntry(trans.TRANSID);
+        const TrxShareData* share_entry = TrxShareModel::instance().unsafe_get_trx_share_n(trans.TRANSID);
         conv_rate = to_base_curr ? CurrencyHistoryModel::getDayRate(currency->CURRENCYID, trans.TRANSDATE) : 1;
         total_shares += share_entry->SHARENUMBER;
 
@@ -301,24 +301,24 @@ double StockModel::UnrealGainLoss(const Data* r, bool to_base_curr)
         AccountModel::instance().get_data_n(r->HELDAT)
     );
     double conv_rate = CurrencyHistoryModel::getDayRate(currency->CURRENCYID);
-    TransactionLinkModel::DataA trans_list = TransactionLinkModel::TranslinkList<StockModel>(r->STOCKID);
+    TrxLinkModel::DataA trans_list = TrxLinkModel::TranslinkList<StockModel>(r->STOCKID);
     if (!trans_list.empty()) {
         double total_shares = 0;
         double total_initial_value = 0;
         double avg_share_price = 0;
 
-        TransactionModel::DataA checking_list;
+        TrxModel::DataA checking_list;
         for (const auto &trans : trans_list) {
-            const TransactionData* checking_entry = TransactionModel::instance().get_data_n(trans.CHECKINGACCOUNTID);
+            const TrxData* checking_entry = TrxModel::instance().get_data_n(trans.CHECKINGACCOUNTID);
             if (checking_entry->TRANSID > -1 && checking_entry->DELETEDTIME.IsEmpty())
                 checking_list.push_back(*checking_entry);
         }
         std::stable_sort(checking_list.begin(), checking_list.end(),
-            TransactionData::SorterByTRANSDATE()
+            TrxData::SorterByTRANSDATE()
         );
 
         for (const auto &trans : checking_list) {
-            const TransactionShareData* share_entry = TransactionShareModel::ShareEntry(trans.TRANSID);
+            const TrxShareData* share_entry = TrxShareModel::instance().unsafe_get_trx_share_n(trans.TRANSID);
             conv_rate = CurrencyHistoryModel::getDayRate(currency->CURRENCYID, trans.TRANSDATE);
             total_shares += share_entry->SHARENUMBER;
             if (total_shares < 0) total_shares = 0;
@@ -369,21 +369,21 @@ void StockModel::UpdateCurrentPrice(const wxString& symbol, const double price)
 
 void StockModel::UpdatePosition(StockData* stock_n)
 {
-    TransactionLinkModel::DataA tl_a = TransactionLinkModel::TranslinkList<StockModel>(stock_n->STOCKID);
+    TrxLinkModel::DataA tl_a = TrxLinkModel::TranslinkList<StockModel>(stock_n->STOCKID);
     double total_shares = 0;
     double total_initial_value = 0;
     double total_commission = 0;
     double avg_share_price = 0;
     wxString earliest_date = wxDate::Today().FormatISODate();
-    TransactionModel::DataA trx_a;
+    TrxModel::DataA trx_a;
     for (const auto& tl_d : tl_a) {
-        const TransactionData* trx_n = TransactionModel::instance().get_data_n(tl_d.CHECKINGACCOUNTID);
-        if (trx_n->TRANSID > -1 && trx_n->DELETEDTIME.IsEmpty() && TransactionModel::status_id(trx_n->STATUS) != TransactionModel::STATUS_ID_VOID)
+        const TrxData* trx_n = TrxModel::instance().get_data_n(tl_d.CHECKINGACCOUNTID);
+        if (trx_n->TRANSID > -1 && trx_n->DELETEDTIME.IsEmpty() && TrxModel::status_id(trx_n->STATUS) != TrxModel::STATUS_ID_VOID)
             trx_a.push_back(*trx_n);
     }
-    std::stable_sort(trx_a.begin(), trx_a.end(), TransactionData::SorterByTRANSDATE());
+    std::stable_sort(trx_a.begin(), trx_a.end(), TrxData::SorterByTRANSDATE());
     for (const auto& trx_d : trx_a) {
-        const TransactionShareData* ts_n = TransactionShareModel::ShareEntry(trx_d.TRANSID);
+        const TrxShareData* ts_n = TrxShareModel::instance().unsafe_get_trx_share_n(trx_d.TRANSID);
 
         total_shares += ts_n->SHARENUMBER;
         if (total_shares < 0)

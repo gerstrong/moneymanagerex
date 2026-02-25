@@ -25,10 +25,10 @@
 #include "model/AccountModel.h"
 #include "model/InfoModel.h"
 #include "model/PayeeModel.h"
-#include "model/PreferencesModel.h"
-#include "model/TransactionModel.h"
+#include "model/PrefModel.h"
+#include "model/TrxModel.h"
 
-#include "dialog/TransactionDialog.h"
+#include "dialog/TrxDialog.h"
 #include "reconciledialog.h"
 
 wxIMPLEMENT_DYNAMIC_CLASS(mmReconcileDialog, wxDialog);
@@ -268,21 +268,21 @@ void mmReconcileDialog::FillControls(bool init)
     // get not reconciled transactions
     wxSharedPtr<mmDateRange> date_range;
     date_range = new mmCurrentMonthToDate;
-    TransactionModel::DataA all_trans = TransactionModel::instance().find(
-        TransactionCol::ACCOUNTID(m_account->ACCOUNTID),
-        TransactionModel::STATUS(OP_NE, TransactionModel::STATUS_ID_RECONCILED),
-        TransactionCol::DELETEDTIME(OP_EQ, wxEmptyString),
-        TransactionModel::TRANSDATE(OP_LE, mmDateDay::today())
+    TrxModel::DataA all_trans = TrxModel::instance().find(
+        TrxCol::ACCOUNTID(m_account->ACCOUNTID),
+        TrxModel::STATUS(OP_NE, TrxModel::STATUS_ID_RECONCILED),
+        TrxCol::DELETEDTIME(OP_EQ, wxEmptyString),
+        TrxModel::TRANSDATE(OP_LE, mmDateDay::today())
     );
-    TransactionModel::DataA all_trans2 = TransactionModel::instance().find(  // get transfers
-        TransactionCol::TOACCOUNTID(m_account->ACCOUNTID),
-        TransactionModel::STATUS(OP_NE, TransactionModel::STATUS_ID_RECONCILED),
-        TransactionCol::DELETEDTIME(OP_EQ, wxEmptyString),
-        TransactionModel::TRANSDATE(OP_LE, mmDateDay::today())
+    TrxModel::DataA all_trans2 = TrxModel::instance().find(  // get transfers
+        TrxCol::TOACCOUNTID(m_account->ACCOUNTID),
+        TrxModel::STATUS(OP_NE, TrxModel::STATUS_ID_RECONCILED),
+        TrxCol::DELETEDTIME(OP_EQ, wxEmptyString),
+        TrxModel::TRANSDATE(OP_LE, mmDateDay::today())
     );
 
     all_trans.insert(all_trans.end(), all_trans2.begin(), all_trans2.end());
-    std::stable_sort(all_trans.begin(), all_trans.end(), TransactionData::SorterByTRANSDATE());
+    std::stable_sort(all_trans.begin(), all_trans.end(), TrxData::SorterByTRANSDATE());
 
     long ritemIndex = -1;
     long litemIndex = -1;
@@ -571,20 +571,20 @@ void mmReconcileDialog::showHideColumn(bool show, int col, int cs) {
 
 void mmReconcileDialog::newTransaction()
 {
-    TransactionDialog dlg(this, m_account->ACCOUNTID, {0, false}, false, TransactionModel::TYPE_ID_WITHDRAWAL);
+    TrxDialog dlg(this, m_account->ACCOUNTID, {0, false}, false, TrxModel::TYPE_ID_WITHDRAWAL);
     int i = wxID_CANCEL;
     do {
         i = dlg.ShowModal();
         if (i != wxID_CANCEL) {
             m_checkingPanel->refreshList();
             int64 transid = dlg.GetTransactionID();
-            const TransactionData* trx = TransactionModel::instance().get_data_n(transid);
+            const TrxData* trx = TrxModel::instance().get_data_n(transid);
             addTransaction2List(trx);
         }
     } while (i == wxID_NEW);
 }
 
-void mmReconcileDialog::addTransaction2List(const TransactionData* trx)
+void mmReconcileDialog::addTransaction2List(const TrxData* trx)
 {
     wxListCtrl* list = (trx->TRANSCODE == "Deposit" || (trx->TRANSCODE == "Transfer" && trx->TOACCOUNTID == m_account->ACCOUNTID)) ? m_listRight : m_listLeft;
     long idx = getListIndexByDate(trx, list);
@@ -615,10 +615,10 @@ void mmReconcileDialog::OnEdit(wxCommandEvent& WXUNUSED(event))
 void mmReconcileDialog::editTransaction(wxListCtrl* list, long item)
 {
     int64 transid = m_itemDataMap[list->GetItemData(item)];
-    TransactionDialog dlg(this, transid, {transid, false});
+    TrxDialog dlg(this, transid, {transid, false});
     if (dlg.ShowModal() == wxID_OK) {
         m_checkingPanel->refreshList();
-        const TransactionData* trx = TransactionModel::instance().get_data_n(transid);
+        const TrxData* trx = TrxModel::instance().get_data_n(transid);
         setListItemData(trx, list, item);
         long idx = getListIndexByDate(trx, list);
         if (idx != item) {
@@ -627,12 +627,12 @@ void mmReconcileDialog::editTransaction(wxListCtrl* list, long item)
     }
 }
 
-long mmReconcileDialog::getListIndexByDate(const TransactionData* trx, wxListCtrl* list)
+long mmReconcileDialog::getListIndexByDate(const TrxData* trx, wxListCtrl* list)
 {
     long idx = -1;
     for (long i = 0; i < list->GetItemCount(); ++i) {
         int64 other_id = m_itemDataMap[list->GetItemData(i)];
-        const TransactionData* other_trx_n = TransactionModel::instance().get_data_n(other_id);
+        const TrxData* other_trx_n = TrxModel::instance().get_data_n(other_id);
         if (trx->TRANSDATE.Left(10) < other_trx_n->TRANSDATE.Left(10)) {
             idx = i;
             break;
@@ -666,7 +666,7 @@ void mmReconcileDialog::moveItemData(wxListCtrl* list, int row1, int row2)
     list->SetItemState(item, wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
 }
 
-void mmReconcileDialog::setListItemData(const TransactionData* trx, wxListCtrl* list, long item)
+void mmReconcileDialog::setListItemData(const TrxData* trx, wxListCtrl* list, long item)
 {
     wxString prefix = trx->TRANSCODE == "Transfer" ? (trx->TOACCOUNTID == m_account->ACCOUNTID ? "< " : "> ") : "";
     wxString payeeName = (trx->TRANSCODE == "Transfer") ? AccountModel::get_id_name(trx->TOACCOUNTID == m_account->ACCOUNTID ? trx->ACCOUNTID : trx->TOACCOUNTID): PayeeModel::get_payee_name(trx->PAYEEID);
@@ -773,7 +773,7 @@ void mmReconcileDialog::applyColumnSettings()
 void mmReconcileDialog::OnClose(wxCommandEvent& event)
 {
     auto saveItem = [](int64 id, bool state, bool final) {
-        TransactionData* trx_n = TransactionModel::instance().unsafe_get_data_n(id);
+        TrxData* trx_n = TrxModel::instance().unsafe_get_data_n(id);
         if (state) {
             trx_n->STATUS = final ? "R" : "F";
         }
@@ -782,7 +782,7 @@ void mmReconcileDialog::OnClose(wxCommandEvent& event)
                 trx_n->STATUS = "";
             }
         }
-        TransactionModel::instance().unsafe_save_trx(trx_n);
+        TrxModel::instance().unsafe_save_trx(trx_n);
     };
 
     if (event.GetId() != wxID_CANCEL) {

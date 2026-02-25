@@ -24,9 +24,9 @@
 #include "AccountModel.h"
 #include "CategoryModel.h"
 #include "CurrencyHistoryModel.h"
-#include "PreferencesModel.h"
-#include "ScheduledModel.h"
-#include "TransactionModel.h"
+#include "PrefModel.h"
+#include "SchedModel.h"
+#include "TrxModel.h"
 
 CategoryModel::CategoryModel() :
     TableFactory<CategoryTable, CategoryData>()
@@ -204,29 +204,29 @@ bool CategoryModel::is_used(int64 id)
     if (id <= 0)
         return false;
 
-    const auto& trx_a = TransactionModel::instance().find(
-        TransactionCol::CATEGID(id)
+    const auto& trx_a = TrxModel::instance().find(
+        TrxCol::CATEGID(id)
     );
     // FIXME: do not exclude deleted transactions
     for (const auto& trx_d : trx_a)
         if (trx_d.DELETEDTIME.IsEmpty())
             return true;
 
-    const auto& split_a = TransactionSplitModel::instance().find(
-        TransactionCol::CATEGID(id)
+    const auto& split_a = TrxSplitModel::instance().find(
+        TrxCol::CATEGID(id)
     );
     for (const auto& split_d : split_a)
-        if (TransactionModel::instance().get_data_n(split_d.TRANSID)->DELETEDTIME.IsEmpty())
+        if (TrxModel::instance().get_data_n(split_d.TRANSID)->DELETEDTIME.IsEmpty())
             return true;
 
-    const auto& sched_a = ScheduledModel::instance().find(
-        ScheduledCol::CATEGID(id)
+    const auto& sched_a = SchedModel::instance().find(
+        SchedCol::CATEGID(id)
     );
     if (!sched_a.empty())
         return true;
 
-    const auto& sched_split_a = ScheduledSplitModel::instance().find(
-        ScheduledCol::CATEGID(id)
+    const auto& sched_split_a = SchedSplitModel::instance().find(
+        SchedCol::CATEGID(id)
     );
     if (!sched_split_a.empty())
         return true;
@@ -249,33 +249,33 @@ bool CategoryModel::is_used(int64 id)
 bool CategoryModel::has_income(int64 id)
 {
     double sum = 0.0;
-    auto splits = TransactionSplitModel::instance().get_all_id();
-    for (const auto& tran: TransactionModel::instance().find(TransactionCol::CATEGID(id)))
+    auto splits = TrxSplitModel::instance().get_all_id();
+    for (const auto& tran: TrxModel::instance().find(TrxCol::CATEGID(id)))
     {
         if (!tran.DELETEDTIME.IsEmpty()) continue;
 
-        switch (TransactionModel::type_id(tran))
+        switch (TrxModel::type_id(tran))
         {
-        case TransactionModel::TYPE_ID_WITHDRAWAL:
+        case TrxModel::TYPE_ID_WITHDRAWAL:
             sum -= tran.TRANSAMOUNT;
             break;
-        case TransactionModel::TYPE_ID_DEPOSIT:
+        case TrxModel::TYPE_ID_DEPOSIT:
             sum += tran.TRANSAMOUNT;
-        case TransactionModel::TYPE_ID_TRANSFER:
+        case TrxModel::TYPE_ID_TRANSFER:
         default:
             break;
         }
 
         for (const auto& split: splits[tran.id()])
         {
-            switch (TransactionModel::type_id(tran))
+            switch (TrxModel::type_id(tran))
             {
-            case TransactionModel::TYPE_ID_WITHDRAWAL:
+            case TrxModel::TYPE_ID_WITHDRAWAL:
                 sum -= split.SPLITTRANSAMOUNT;
                 break;
-            case TransactionModel::TYPE_ID_DEPOSIT:
+            case TrxModel::TYPE_ID_DEPOSIT:
                 sum += split.SPLITTRANSAMOUNT;
-            case TransactionModel::TYPE_ID_TRANSFER:
+            case TrxModel::TYPE_ID_TRANSFER:
             default:
                 break;
             }
@@ -318,11 +318,11 @@ void CategoryModel::getCategoryStats(
         }
     }
     //Calculations
-    auto splits = TransactionSplitModel::instance().get_all_id();
-    for (const auto& transaction : TransactionModel::instance().find(
-        TransactionModel::STATUS(OP_NE, TransactionModel::STATUS_ID_VOID),
-        TransactionModel::TRANSDATE(OP_GE, date_range->start_date()),
-        TransactionCol::TRANSDATE(OP_LE, date_range->end_date().FormatISOCombined())
+    auto splits = TrxSplitModel::instance().get_all_id();
+    for (const auto& transaction : TrxModel::instance().find(
+        TrxModel::STATUS(OP_NE, TrxModel::STATUS_ID_VOID),
+        TrxModel::TRANSDATE(OP_GE, date_range->start_date()),
+        TrxCol::TRANSDATE(OP_LE, date_range->end_date().FormatISOCombined())
     )) {
         if (!transaction.DELETEDTIME.IsEmpty()) continue;
 
@@ -338,7 +338,7 @@ void CategoryModel::getCategoryStats(
             AccountModel::instance().get_data_n(transaction.ACCOUNTID)->CURRENCYID,
             transaction.TRANSDATE
         );
-        wxDateTime d = TransactionModel::getTransDateTime(transaction);
+        wxDateTime d = TrxModel::getTransDateTime(transaction);
 
         int month = 0;
         if (group_by_month)
@@ -352,12 +352,12 @@ void CategoryModel::getCategoryStats(
 
         if (splits[transaction.id()].empty())
         {
-            if (TransactionModel::type_id(transaction) != TransactionModel::TYPE_ID_TRANSFER)
+            if (TrxModel::type_id(transaction) != TrxModel::TYPE_ID_TRANSFER)
             {
                 // Do not include asset or stock transfers in income expense calculations.
-                if (TransactionModel::is_foreignAsTransfer(transaction))
+                if (TrxModel::is_foreignAsTransfer(transaction))
                     continue;
-                categoryStats[categID][month] += TransactionModel::account_flow(transaction, transaction.ACCOUNTID) * convRate;
+                categoryStats[categID][month] += TrxModel::account_flow(transaction, transaction.ACCOUNTID) * convRate;
             }
             else if (budgetAmt != 0)
             {
@@ -373,7 +373,7 @@ void CategoryModel::getCategoryStats(
             for (const auto& entry : splits[transaction.id()])
             {
                 categoryStats[entry.CATEGID][month] += entry.SPLITTRANSAMOUNT
-                    * convRate * ((TransactionModel::type_id(transaction) == TransactionModel::TYPE_ID_WITHDRAWAL) ? -1 : 1);
+                    * convRate * ((TrxModel::type_id(transaction) == TrxModel::TYPE_ID_WITHDRAWAL) ? -1 : 1);
             }
         }
     }

@@ -29,7 +29,7 @@
 #include "model/InfoModel.h"
 #include "model/PayeeModel.h"
 #include "model/SettingModel.h"
-#include "model/PreferencesModel.h"
+#include "model/PrefModel.h"
 
 #include "CategoryManager.h"
 #include "dialog/AttachmentDialog.h"
@@ -507,26 +507,26 @@ void CategoryManager::showCategDialogDeleteError(bool category)
 void CategoryManager::mmDoDeleteSelectedCategory()
 {
     wxTreeItemId PreviousItem = m_treeCtrl->GetPrevVisible(m_selectedItemId);
-    TransactionModel::DataA deletedTrans;
-    TransactionSplitModel::DataA splits;
+    TrxModel::DataA deletedTrans;
+    TrxSplitModel::DataA splits;
     if (CategoryModel::is_used(m_categ_id) || m_categ_id == m_init_selected_categ_id)
         return showCategDialogDeleteError();
     else {
-        deletedTrans = TransactionModel::instance().find(
-            TransactionCol::CATEGID(m_categ_id)
+        deletedTrans = TrxModel::instance().find(
+            TrxCol::CATEGID(m_categ_id)
         );
         for (const auto& subcat : CategoryModel::sub_tree(CategoryModel::instance().get_data_n(m_categ_id))) {
-            TransactionModel::DataA trans = TransactionModel::instance().find(
-                TransactionCol::CATEGID(subcat.CATEGID)
+            TrxModel::DataA trans = TrxModel::instance().find(
+                TrxCol::CATEGID(subcat.CATEGID)
             );
             deletedTrans.insert(deletedTrans.end(), trans.begin(), trans.end());
         }
-        splits = TransactionSplitModel::instance().find(
-            TransactionSplitCol::CATEGID(m_categ_id)
+        splits = TrxSplitModel::instance().find(
+            TrxSplitCol::CATEGID(m_categ_id)
         );
         for (const auto& subcat : CategoryModel::sub_tree(CategoryModel::instance().get_data_n(m_categ_id))) {
-            TransactionSplitModel::DataA trans = TransactionSplitModel::instance().find(
-                TransactionSplitCol::CATEGID(subcat.CATEGID)
+            TrxSplitModel::DataA trans = TrxSplitModel::instance().find(
+                TrxSplitCol::CATEGID(subcat.CATEGID)
             );
             splits.insert(splits.end(), trans.begin(), trans.end());
         }
@@ -539,25 +539,25 @@ void CategoryManager::mmDoDeleteSelectedCategory()
     if ((deletedTrans.empty() && splits.empty()) || msgDlg.ShowModal() == wxID_YES)
     {
         if(!(deletedTrans.empty() && splits.empty())){
-            TransactionModel::instance().Savepoint();
-            TransactionSplitModel::instance().Savepoint();
+            TrxModel::instance().Savepoint();
+            TrxSplitModel::instance().Savepoint();
             AttachmentModel::instance().Savepoint();
             FieldValueModel::instance().Savepoint();
-            const wxString& RefType = TransactionModel::refTypeName;
+            const wxString& RefType = TrxModel::refTypeName;
             for (auto& split : splits) {
-                TransactionModel::instance().purge_id(split.TRANSID);
+                TrxModel::instance().purge_id(split.TRANSID);
                 mmAttachmentManage::DeleteAllAttachments(RefType, split.TRANSID);
                 FieldValueModel::DeleteAllData(RefType, split.TRANSID);
             }
 
             for (auto& tran : deletedTrans) {
-                TransactionModel::instance().purge_id(tran.TRANSID);
+                TrxModel::instance().purge_id(tran.TRANSID);
                 mmAttachmentManage::DeleteAllAttachments(RefType, tran.TRANSID);
                 FieldValueModel::DeleteAllData(RefType, tran.TRANSID);
             }
 
-            TransactionModel::instance().ReleaseSavepoint();
-            TransactionSplitModel::instance().ReleaseSavepoint();
+            TrxModel::instance().ReleaseSavepoint();
+            TrxSplitModel::instance().ReleaseSavepoint();
             AttachmentModel::instance().ReleaseSavepoint();
             FieldValueModel::instance().ReleaseSavepoint();
         }

@@ -31,7 +31,7 @@
 #include "AssetDialog.h"
 #include "AccountDialog.h"
 #include "AttachmentDialog.h"
-#include "TransactionLinkDialog.h"
+#include "TrxLinkDialog.h"
 #include "uicontrols/navigatortypes.h"
 
 wxIMPLEMENT_DYNAMIC_CLASS(AssetDialog, wxDialog);
@@ -66,8 +66,8 @@ AssetDialog::AssetDialog(
 
 AssetDialog::AssetDialog(
     wxWindow* parent,
-    const TransactionLinkData* transfer_entry,
-    TransactionData* checking_entry
+    const TrxLinkData* transfer_entry,
+    TrxData* checking_entry
 ) :
     m_transfer_entry(transfer_entry),
     m_checking_entry(checking_entry),
@@ -129,16 +129,16 @@ void AssetDialog::dataToControls()
     // m_asset_n->VALUECHANGERATE is the rate with daily compounding
     double valueChangeRate = m_asset_n->VALUECHANGERATE;
     if (valueChangeType != AssetModel::CHANGE_ID_NONE &&
-        m_compounding != PreferencesModel::COMPOUNDING_ID_DAY
+        m_compounding != PrefModel::COMPOUNDING_ID_DAY
     ) {
-        valueChangeRate = convertRate(valueChangeType, valueChangeRate, PreferencesModel::COMPOUNDING_ID_DAY, m_compounding);
+        valueChangeRate = convertRate(valueChangeType, valueChangeRate, PrefModel::COMPOUNDING_ID_DAY, m_compounding);
     }
     w_valueChangeRate->SetValue(valueChangeRate, 3);
     enableDisableRate(valueChangeType != AssetModel::CHANGE_ID_NONE);
 
     w_notes->SetValue(m_asset_n->NOTES);
 
-    TransactionLinkModel::DataA translink = TransactionLinkModel::TranslinkList<AssetModel>(m_asset_n->ASSETID);
+    TrxLinkModel::DataA translink = TrxLinkModel::TranslinkList<AssetModel>(m_asset_n->ASSETID);
     if (!translink.empty())
         w_value->Enable(false);
 
@@ -255,10 +255,10 @@ void AssetDialog::CreateControls()
     w_compoundingLabel = new wxStaticText(asset_details_panel, wxID_STATIC, _t("Compounding Period"));
     itemFlexGridSizer6->Add(w_compoundingLabel, g_flagsH);
     w_compoundingChoice = new wxChoice(asset_details_panel, IDC_COMPOUNDING);
-    for(const auto& a : PreferencesModel::COMPOUNDING_NAME)
+    for(const auto& a : PrefModel::COMPOUNDING_NAME)
         w_compoundingChoice->Append(wxGetTranslation(a.second));
     mmToolTip(w_compoundingChoice, _t("Select the compounding period for the appreciation/depreciation rate"));
-    m_compounding = static_cast<PreferencesModel::COMPOUNDING_ID>(PreferencesModel::instance().getAssetCompounding());
+    m_compounding = static_cast<PrefModel::COMPOUNDING_ID>(PrefModel::instance().getAssetCompounding());
     w_compoundingChoice->SetSelection(m_compounding);
     itemFlexGridSizer6->Add(w_compoundingChoice, g_flagsExpand);
 
@@ -298,18 +298,18 @@ void AssetDialog::CreateControls()
     wxStaticBoxSizer* transaction_frame_sizer = new wxStaticBoxSizer(w_transaction_frame, wxVERTICAL);
     right_sizer->Add(transaction_frame_sizer, g_flagsV);
 
-    w_transaction_panel = new TransactionLinkDialog(this, m_checking_entry, true, wxID_STATIC);
+    w_transaction_panel = new TrxLinkDialog(this, m_checking_entry, true, wxID_STATIC);
     transaction_frame_sizer->Add(w_transaction_panel, g_flagsV);
     if (m_transfer_entry && m_checking_entry) {
         w_transaction_panel->CheckingType(
-            TransactionLinkModel::type_checking(m_checking_entry->TOACCOUNTID)
+            TrxLinkModel::type_checking(m_checking_entry->TOACCOUNTID)
         );
     }
     else if (m_asset_n) {
         w_transaction_panel->SetTransactionNumber(
             m_asset_n->ASSETID.ToString() + "_" + m_asset_n->ASSETNAME
         );
-        w_transaction_panel->CheckingType(TransactionLinkModel::AS_INCOME_EXPENSE);
+        w_transaction_panel->CheckingType(TrxLinkModel::AS_INCOME_EXPENSE);
     }
 
     if (m_hidden_trans_entry) HideTransactionPanel();
@@ -354,8 +354,8 @@ void AssetDialog::enableDisableRate(bool en)
 double AssetDialog::convertRate(int changeType, double xRate, int xCompounding, int yCompounding)
 {
     int sign = changeType == AssetModel::CHANGE_ID_DEPRECIATE ? -1 : 1;
-    int xN = PreferencesModel::COMPOUNDING_N[xCompounding].second;
-    int yN = PreferencesModel::COMPOUNDING_N[yCompounding].second;
+    int xN = PrefModel::COMPOUNDING_N[xCompounding].second;
+    int yN = PrefModel::COMPOUNDING_N[yCompounding].second;
     // solve (1.0 + sign*xRate/(xN*100.0))^xN = (1.0 + sign*yRate/(yN*100.0))^yN
     double xMult = 1.0 + sign * xRate / (xN * 100.0);
     double yMult = (xMult > 0.0) ? pow(xMult, double(xN)/double(yN)) : 0.0;
@@ -385,7 +385,7 @@ void AssetDialog::OnChangeCompounding(wxCommandEvent& /*event*/)
         w_valueChangeRate->SetValue(valueChangeRate, 3);
     }
 
-    m_compounding = static_cast<PreferencesModel::COMPOUNDING_ID>(selection);
+    m_compounding = static_cast<PrefModel::COMPOUNDING_ID>(selection);
 }
 
 void AssetDialog::OnOk(wxCommandEvent& /*event*/)
@@ -405,7 +405,7 @@ void AssetDialog::OnOk(wxCommandEvent& /*event*/)
     if (valueChangeType != AssetModel::CHANGE_ID_NONE) {
         if (!w_valueChangeRate->checkValue(valueChangeRate))
             return;
-        if (m_compounding != PreferencesModel::COMPOUNDING_ID_DAY) {
+        if (m_compounding != PrefModel::COMPOUNDING_ID_DAY) {
             valueChangeRate = convertRate(valueChangeType, valueChangeRate, m_compounding);
         }
     }
@@ -447,11 +447,11 @@ void AssetDialog::OnOk(wxCommandEvent& /*event*/)
             return;
 
         if (!m_transfer_entry) {
-            TransactionLinkModel::SetAssetTranslink(
+            TrxLinkModel::SetAssetTranslink(
                 new_asset_id, checking_id, w_transaction_panel->CheckingType()
             );
         }
-        TransactionLinkModel::UpdateAssetValue(m_asset_n);
+        TrxLinkModel::UpdateAssetValue(m_asset_n);
     }
     else if (!m_hidden_trans_entry) {
         mmErrorDialogs::MessageWarning(this, _t("Invalid Transaction"), m_dialog_heading);

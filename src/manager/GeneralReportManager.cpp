@@ -37,7 +37,7 @@
 #include "util/mmMiniEditor.h"
 
 #include "model/InfoModel.h"
-#include "model/PreferencesModel.h"
+#include "model/PrefModel.h"
 #include "model/ReportModel.h"
 
 #include "panel/_PanelBase.h"

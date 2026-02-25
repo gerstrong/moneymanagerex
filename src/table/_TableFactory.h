@@ -35,7 +35,7 @@ protected:
     Row* fake_ = nullptr; // in case the entity not found
 
 public:
-    TableFactory(): fake_(new Row()) {};
+    TableFactory(): fake_(new Row()) {}
 
     bool cache_empty() const { return m_cache.empty(); }
     void destroy_cache();

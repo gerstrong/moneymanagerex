@@ -39,9 +39,9 @@ mmChoiceNameA TrxModel::TYPE_CHOICES = mmChoiceNameA({
 });
 
 mmChoiceNameA TrxModel::TRADE_TYPE_CHOICES = mmChoiceNameA({
-    { TYPE_ID_WITHDRAWAL,  _n("Buy") },
-    { TYPE_ID_DEPOSIT, _n("Sell") },
-    { TYPE_ID_TRANSFER, _n("Revalue") }
+    { TYPE_ID_WITHDRAWAL, _n("Buy") },
+    { TYPE_ID_DEPOSIT,    _n("Sell") },
+    { TYPE_ID_TRANSFER,   _n("Revalue") }
 });
 
 mmChoiceKeyNameA TrxModel::STATUS_CHOICES = mmChoiceKeyNameA({

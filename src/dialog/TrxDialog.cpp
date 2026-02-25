@@ -317,7 +317,7 @@ void TrxDialog::dataToControls()
 
                 if (!transactions.empty()) {
                     const PayeeData* payee_n = PayeeModel::instance().get_data_n(transactions.back().PAYEEID);
-                    cbPayee_->ChangeValue(payee_n->PAYEENAME);
+                    cbPayee_->ChangeValue(payee_n->m_name);
                 }
             }
             else if (m_mode == MODE_NEW
@@ -326,8 +326,7 @@ void TrxDialog::dataToControls()
                 const PayeeData* payee_n = PayeeModel::instance().get_key(_t("Unknown"));
                 if (!payee_n) {
                     PayeeData new_payee_d = PayeeData();
-                    new_payee_d.PAYEENAME = _t("Unknown");
-                    new_payee_d.ACTIVE    = 1;
+                    new_payee_d.m_name = _t("Unknown");
                     PayeeModel::instance().add_data_n(new_payee_d);
                     cbPayee_->mmDoReInitialize();
                 }
@@ -337,7 +336,7 @@ void TrxDialog::dataToControls()
             else {
                 const PayeeData* payee_n = PayeeModel::instance().get_data_n(m_journal_data.PAYEEID);
                 if (payee_n)
-                    cbPayee_->ChangeValue(payee_n->PAYEENAME);
+                    cbPayee_->ChangeValue(payee_n->m_name);
             }
 
             SetCategoryForPayee();
@@ -733,8 +732,7 @@ bool TrxDialog::ValidateData()
             );
             if (msgDlg.ShowModal() == wxID_YES) {
                 PayeeData new_payee_d = PayeeData();
-                new_payee_d.PAYEENAME = payee_name;
-                new_payee_d.ACTIVE    = 1;
+                new_payee_d.m_name = payee_name;
                 PayeeModel::instance().add_data_n(new_payee_d);
                 payee_n = PayeeModel::instance().get_data_n(new_payee_d.id());
                 mmWebApp::MMEX_WebApp_UpdatePayee();
@@ -743,7 +741,7 @@ bool TrxDialog::ValidateData()
                 return false;
         }
         m_journal_data.TOTRANSAMOUNT = m_journal_data.TRANSAMOUNT;
-        m_journal_data.PAYEEID = payee_n->PAYEEID;
+        m_journal_data.PAYEEID = payee_n->m_id;
         if (!TrxModel::is_foreign(m_journal_data)) {
             m_journal_data.TOACCOUNTID = -1;
         }
@@ -752,7 +750,7 @@ bool TrxDialog::ValidateData()
             && !CategoryModel::is_hidden(m_journal_data.CATEGID)
         ) {
             PayeeData payee_d = *payee_n;
-            payee_d.CATEGID = m_journal_data.CATEGID;
+            payee_d.m_category_id = m_journal_data.CATEGID;
             PayeeModel::instance().save_data_n(payee_d);
             mmWebApp::MMEX_WebApp_UpdatePayee();
         }
@@ -978,7 +976,7 @@ void TrxDialog::OnComboKey(wxKeyEvent& event)
                 int64 payee_id = dlg.getPayeeId();
                 const PayeeData* payee_n = PayeeModel::instance().get_data_n(payee_id);
                 if (payee_n) {
-                    cbPayee_->ChangeValue(payee_n->PAYEENAME);
+                    cbPayee_->ChangeValue(payee_n->m_name);
                     cbPayee_->SetInsertionPointEnd();
                     SetCategoryForPayee(payee_n);
                 }
@@ -1016,7 +1014,7 @@ void TrxDialog::OnComboKey(wxKeyEvent& event)
     event.Skip();
 }
 
-void TrxDialog::SetCategoryForPayee(const PayeeData *payee)
+void TrxDialog::SetCategoryForPayee(const PayeeData *payee_n)
 {
     // Only for new transactions: if user does not want to use categories.
     // If this is a Split Transaction, ignore displaying last category for payee
@@ -1039,9 +1037,9 @@ void TrxDialog::SetCategoryForPayee(const PayeeData *payee)
         return;
     }
 
-    if (!payee) {
-        payee = PayeeModel::instance().get_key(cbPayee_->GetValue());
-        if (!payee)
+    if (!payee_n) {
+        payee_n = PayeeModel::instance().get_key(cbPayee_->GetValue());
+        if (!payee_n)
             return;
     }
 
@@ -1050,13 +1048,13 @@ void TrxDialog::SetCategoryForPayee(const PayeeData *payee)
     if ((PrefModel::instance().getTransCategoryNone() == PrefModel::LASTUSED ||
             PrefModel::instance().getTransCategoryNone() == PrefModel::DEFAULT)
         && m_mode == MODE_NEW && m_local_splits.empty()
-        && (!CategoryModel::is_hidden(payee->CATEGID))
+        && (!CategoryModel::is_hidden(payee_n->m_category_id))
     ) {
         // if payee has memory of last category used then display last category for payee
-        const CategoryData* category_n = CategoryModel::instance().get_data_n(payee->CATEGID);
+        const CategoryData* category_n = CategoryModel::instance().get_data_n(payee_n->m_category_id);
         if (category_n) {
-            m_journal_data.CATEGID = payee->CATEGID;
-            cbCategory_->ChangeValue(CategoryModel::full_name(payee->CATEGID));
+            m_journal_data.CATEGID = payee_n->m_category_id;
+            cbCategory_->ChangeValue(CategoryModel::full_name(payee_n->m_category_id));
             wxLogDebug("Category: %s = %.2f", cbCategory_->GetLabel(), m_journal_data.TRANSAMOUNT);
         }
         else {

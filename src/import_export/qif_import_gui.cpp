@@ -1015,37 +1015,35 @@ void mmQIFImportDialog::OnCheckboxClick(wxCommandEvent& event)
 void mmQIFImportDialog::compilePayeeRegEx() {
 
     // pre-compile all payee match strings if not already done
-    if (payeeMatchCheckBox_->IsChecked() && !payeeRegExInitialized_)
-    {
-        // only look at payees that have a match pattern set
-        PayeeModel::DataA payees = PayeeModel::instance().find(
-            PayeeCol::PATTERN(OP_NE, wxEmptyString)
-        );
-        for (const auto& payee : payees)
-        {
-            Document json_doc;
-            if (json_doc.Parse(payee.PATTERN.utf8_str()).HasParseError()) {
-                continue;
-            }
-            int key = -1;
-            // loop over all keys in the pattern json data
-            for (const auto& member : json_doc.GetObject())
-            {
-                key++;
-                const auto pattern = wxString::FromUTF8(member.value.GetString());
-                // add the pattern string (for non-regex match, match notes, and the payee tab preview)
-                payeeMatchPatterns_[std::make_pair(payee.PAYEEID, payee.PAYEENAME)][key].first = pattern;
-                // complie the regex if necessary
-                if (pattern.StartsWith("regex:")) {
-                    payeeMatchPatterns_[std::make_pair(payee.PAYEEID, payee.PAYEENAME)][key].second
-                        .Compile(pattern.Right(pattern.length() - 6), wxRE_ICASE | wxRE_EXTENDED);
-                }
+    if (!payeeMatchCheckBox_->IsChecked() || payeeRegExInitialized_)
+        return;
+
+    // only look at payees that have a match pattern set
+    PayeeModel::DataA payee_a = PayeeModel::instance().find(
+        PayeeCol::PATTERN(OP_NE, wxEmptyString)
+    );
+    for (const auto& payee_d : payee_a) {
+        Document json_doc;
+        if (json_doc.Parse(payee_d.m_pattern.utf8_str()).HasParseError()) {
+            continue;
+        }
+        int key = -1;
+        // loop over all keys in the pattern json data
+        for (const auto& member : json_doc.GetObject()) {
+            key++;
+            const auto pattern = wxString::FromUTF8(member.value.GetString());
+            // add the pattern string (for non-regex match, match notes, and the payee tab preview)
+            payeeMatchPatterns_[std::make_pair(payee_d.m_id, payee_d.m_name)][key].first = pattern;
+            // complie the regex if necessary
+            if (pattern.StartsWith("regex:")) {
+                payeeMatchPatterns_[std::make_pair(payee_d.m_id, payee_d.m_name)][key].second
+                    .Compile(pattern.Right(pattern.length() - 6), wxRE_ICASE | wxRE_EXTENDED);
             }
         }
-        payeeRegExInitialized_ = true;
     }
-
+    payeeRegExInitialized_ = true;
 }
+
 void mmQIFImportDialog::validatePayees() {
     if (!payeeRegExInitialized_) compilePayeeRegEx();
 
@@ -1076,9 +1074,9 @@ void mmQIFImportDialog::validatePayees() {
             }
         }
         if (!payee_found) {
-            const PayeeData* payee = PayeeModel::instance().get_key(payee_name);
-            if (payee) {
-                m_QIFpayeeNames[payee_name] = std::make_tuple(payee->PAYEEID, payee->PAYEENAME, "");
+            const PayeeData* payee_n = PayeeModel::instance().get_key(payee_name);
+            if (payee_n) {
+                m_QIFpayeeNames[payee_name] = std::make_tuple(payee_n->m_id, payee_n->m_name, "");
             }
         }
     }
@@ -1560,7 +1558,7 @@ bool mmQIFImportDialog::completeTransaction(
         if (categStr.empty()) {
             const PayeeData* payee_n = PayeeModel::instance().get_data_n(trx->PAYEEID);
             if (payee_n) {
-                trx->CATEGID = payee_n->CATEGID;
+                trx->CATEGID = payee_n->m_category_id;
             }
             categStr = CategoryModel::full_name(trx->CATEGID, ":");
 
@@ -1712,20 +1710,20 @@ void mmQIFImportDialog::getOrCreatePayees()
 {
     PayeeModel::instance().Savepoint();
 
-    for (const auto& item : m_payee_names)
-    {
+    for (const auto& item : m_payee_names) {
         // check if this payee exists
-        if (m_QIFpayeeNames.find(item) != m_QIFpayeeNames.end() && std::get<0>(m_QIFpayeeNames[item]) != -1) continue;
+        if (m_QIFpayeeNames.find(item) != m_QIFpayeeNames.end() &&
+            std::get<0>(m_QIFpayeeNames[item]) != -1
+        )
+            continue;
 
         // the payee doesn't exist or match a pattern, so create one
         PayeeData new_payee_d = PayeeData();
-        new_payee_d.PAYEENAME = item;
-        new_payee_d.ACTIVE    = 1;
-        new_payee_d.CATEGID   = -1;
+        new_payee_d.m_name = item;
         PayeeModel::instance().save_data_n(new_payee_d);
         wxString sMsg = wxString::Format(_t("Added payee: %s"), item);
         log_field_->AppendText(wxString() << sMsg << "\n");
-        m_QIFpayeeNames[item] = std::make_tuple(new_payee_d.id(), new_payee_d.PAYEENAME, "");
+        m_QIFpayeeNames[item] = std::make_tuple(new_payee_d.id(), new_payee_d.m_name, "");
     }
 
     PayeeModel::instance().ReleaseSavepoint();

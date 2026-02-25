@@ -1347,26 +1347,24 @@ bool mmUnivCSVDialog::validateData(tran_holder & holder, wxString& message)
         for (auto& cfdata : holder.customFieldData)
             is_valid &= validateCustomFieldData(cfdata.first, cfdata.second, message);
 
-    const PayeeData* payee = PayeeModel::instance().get_data_n(holder.PayeeID);
-    if (!payee) {
+    const PayeeData* payee_n = PayeeModel::instance().get_data_n(holder.PayeeID);
+    if (!payee_n) {
         const PayeeData* unknown_n = PayeeModel::instance().get_key(_t("Unknown"));
         if (!unknown_n) {
             PayeeData new_payee_d = PayeeData();
-            new_payee_d.PAYEENAME = _t("Unknown");
-            new_payee_d.ACTIVE    = 1;
-            new_payee_d.CATEGID   = -1;
+            new_payee_d.m_name = _t("Unknown");
             PayeeModel::instance().add_data_n(new_payee_d);
             holder.PayeeID = new_payee_d.id();
-            const wxString& sMsg = wxString::Format(_t("Added payee: %s"), new_payee_d.PAYEENAME);
+            const wxString& sMsg = wxString::Format(_t("Added payee: %s"), new_payee_d.m_name);
             log_field_->AppendText(wxString() << sMsg << "\n");
         }
         else {
-            holder.PayeeID = unknown_n->PAYEEID;
+            holder.PayeeID = unknown_n->m_id;
         }
     }
     else {
         if (holder.CategoryID < 0) {
-            holder.CategoryID = payee->CATEGID;
+            holder.CategoryID = payee_n->m_category_id;
         }
     }
 
@@ -2644,12 +2642,12 @@ void mmUnivCSVDialog::compilePayeeRegEx() {
     if (payeeMatchCheckBox_->IsChecked() && !payeeRegExInitialized_) {
         payeeMatchPatterns_.clear();
         // only look at payees that have a match pattern set
-        PayeeModel::DataA payees = PayeeModel::instance().find(
+        PayeeModel::DataA payee_a = PayeeModel::instance().find(
             PayeeCol::PATTERN(OP_NE, wxEmptyString)
         );
-        for (const auto& payee : payees) {
+        for (const auto& payee_d : payee_a) {
             Document json_doc;
-            if (json_doc.Parse(payee.PATTERN.utf8_str()).HasParseError()) {
+            if (json_doc.Parse(payee_d.m_pattern.utf8_str()).HasParseError()) {
                 continue;
             }
             int key = -1;
@@ -2658,10 +2656,10 @@ void mmUnivCSVDialog::compilePayeeRegEx() {
                 key++;
                 wxString pattern = member.value.GetString();
                 // add the pattern string (for non-regex match, match notes, and the payee tab preview)
-                payeeMatchPatterns_[std::make_pair(payee.PAYEEID, payee.PAYEENAME)][key].first = pattern;
+                payeeMatchPatterns_[std::make_pair(payee_d.m_id, payee_d.m_name)][key].first = pattern;
                 // complie the regex if necessary
                 if (pattern.StartsWith("regex:")) {
-                    payeeMatchPatterns_[std::make_pair(payee.PAYEEID, payee.PAYEENAME)][key].second.Compile(pattern.Right(pattern.length() - 6), wxRE_ICASE | wxRE_EXTENDED);
+                    payeeMatchPatterns_[std::make_pair(payee_d.m_id, payee_d.m_name)][key].second.Compile(pattern.Right(pattern.length() - 6), wxRE_ICASE | wxRE_EXTENDED);
                 }
             }
         }
@@ -2699,9 +2697,9 @@ void mmUnivCSVDialog::validatePayees() {
             }
         }
         if (!payee_found) {
-            const PayeeData* payee = PayeeModel::instance().get_key(payee_name);
-            if (payee) {
-                m_CSVpayeeNames[payee_name] = std::make_tuple(payee->PAYEEID, payee->PAYEENAME, "");
+            const PayeeData* payee_n = PayeeModel::instance().get_key(payee_name);
+            if (payee_n) {
+                m_CSVpayeeNames[payee_name] = std::make_tuple(payee_n->m_id, payee_n->m_name, "");
             }
         }
     }
@@ -2757,8 +2755,7 @@ void mmUnivCSVDialog::parseToken(int index, const wxString& orig_token, tran_hol
         }
         else {
             PayeeData new_payee_d = PayeeData();
-            new_payee_d.PAYEENAME = token;
-            new_payee_d.ACTIVE    = 1;
+            new_payee_d.m_name = token;
             PayeeModel::instance().add_data_n(new_payee_d);
             holder.PayeeID = new_payee_d.id();
             m_CSVpayeeNames[token] = std::make_tuple(holder.PayeeID, token, wxEmptyString);

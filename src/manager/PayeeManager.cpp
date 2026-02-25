@@ -48,12 +48,14 @@ PayeeManager::PayeeManager()
 {
 }
 
-PayeeManager::PayeeManager(wxWindow *parent, PayeeData* payee, const wxString &name) :
-    m_payee_n(payee)
+PayeeManager::PayeeManager(wxWindow *parent, PayeeData* payee_n, const wxString &name) :
+    m_payee_n(payee_n)
 {
     long style = wxCAPTION | wxCLOSE_BOX | wxRESIZE_BORDER;
-    if (!wxDialog::Create(parent, wxID_ANY, _t("Edit Payee")
-        , wxDefaultPosition, wxDefaultSize, style, name))
+    if (!wxDialog::Create(
+        parent, wxID_ANY, _t("Edit Payee"),
+        wxDefaultPosition, wxDefaultSize, style, name
+    ))
         return;
 
     CreateControls();
@@ -171,15 +173,14 @@ void PayeeManager::fillControls()
     if (!m_payee_n)
         return;
 
-    m_payeeName->SetValue(m_payee_n->PAYEENAME);
-    m_hidden->SetValue(PayeeModel::is_hidden(*m_payee_n));
-    m_reference->SetValue(m_payee_n->NUMBER);
-    m_website->SetValue(m_payee_n->WEBSITE);
-    m_Notes->SetValue(m_payee_n->NOTES);
-    if (!m_payee_n->PATTERN.IsEmpty())
-    {
+    m_payeeName->SetValue(m_payee_n->m_name);
+    m_hidden->SetValue(!m_payee_n->m_active);
+    m_reference->SetValue(m_payee_n->m_number);
+    m_website->SetValue(m_payee_n->m_website);
+    m_Notes->SetValue(m_payee_n->m_notes);
+    if (!m_payee_n->m_pattern.IsEmpty()) {
         Document json_doc;
-        if (json_doc.Parse(m_payee_n->PATTERN.utf8_str()).HasParseError()) {
+        if (json_doc.Parse(m_payee_n->m_pattern.utf8_str()).HasParseError()) {
             json_doc.Parse("{}");
         }
         int row = 0;
@@ -187,9 +188,8 @@ void PayeeManager::fillControls()
             m_patternTable->AppendRows();
             m_patternTable->SetCellValue(row++, 0, wxString::FromUTF8(member.value.GetString()));
         }
-
     }
-    const wxString category = CategoryModel::full_name(m_payee_n->CATEGID);
+    const wxString category = CategoryModel::full_name(m_payee_n->m_category_id);
     m_category->ChangeValue(category);
     ResizeDialog();
 }
@@ -209,19 +209,19 @@ void PayeeManager::OnOk(wxCommandEvent& /*event*/)
 
     PayeeModel::DataA payees = PayeeModel::instance().find(PayeeCol::PAYEENAME(name));
     if ((!m_payee_n && payees.empty())
-        || (m_payee_n && (payees.empty() || name.CmpNoCase(m_payee_n->PAYEENAME) == 0))
+        || (m_payee_n && (payees.empty() || name.CmpNoCase(m_payee_n->m_name) == 0))
     ) {
         if (!m_payee_n) {
             m_payee_d = PayeeData();
             m_payee_n = &m_payee_d;
         }
 
-        m_payee_n->PAYEENAME = name;
-        m_payee_n->ACTIVE    = m_hidden->GetValue() ? 0 : 1;
-        m_payee_n->NUMBER    = m_reference->GetValue();
-        m_payee_n->WEBSITE   = m_website->GetValue();
-        m_payee_n->NOTES     = m_Notes->GetValue();
-        m_payee_n->CATEGID   = m_category->mmGetCategoryId();
+        m_payee_n->m_name        = name;
+        m_payee_n->m_category_id = m_category->mmGetCategoryId();
+        m_payee_n->m_number      = m_reference->GetValue();
+        m_payee_n->m_website     = m_website->GetValue();
+        m_payee_n->m_notes       = m_Notes->GetValue();
+        m_payee_n->m_active      = !m_hidden->GetValue();
 
         StringBuffer json_buffer;
         PrettyWriter<StringBuffer> json_writer(json_buffer);
@@ -238,7 +238,7 @@ void PayeeManager::OnOk(wxCommandEvent& /*event*/)
             json_writer.String(pattern.utf8_str());
         }
         json_writer.EndObject();
-        m_payee_n->PATTERN = wxString::FromUTF8(json_buffer.GetString());
+        m_payee_n->m_pattern = wxString::FromUTF8(json_buffer.GetString());
 
         PayeeModel::instance().unsafe_save_data_n(m_payee_n);
         mmWebApp::MMEX_WebApp_UpdatePayee();
@@ -616,13 +616,11 @@ void mmPayeeDialog::fillControls()
                 std::stable_sort(payees.begin(), payees.end(), PayeeData::SorterByACTIVE());
                 break;
             case PAYEE_CATEGORY:
-                std::stable_sort(payees.begin(), payees.end(), [] (PayeeData x, PayeeData y)
-                {
-                    return(
-                        CaseInsensitiveLocaleCmp(
-                            CategoryModel::instance().full_name(x.CATEGID)
-                            , CategoryModel::instance().full_name(y.CATEGID)) < 0
-                        );
+                std::stable_sort(payees.begin(), payees.end(), [] (PayeeData x, PayeeData y) {
+                    return CaseInsensitiveLocaleCmp(
+                        CategoryModel::instance().full_name(x.m_category_id),
+                        CategoryModel::instance().full_name(y.m_category_id)
+                    ) < 0;
                 });
                 break;
             case PAYEE_NUMBER:
@@ -646,18 +644,18 @@ void mmPayeeDialog::fillControls()
     }
 
     long idx = 0;
-    for (const auto& payee : payees) {
+    for (const auto& payee_d : payees) {
         wxListItem item;
         item.SetId(idx);
 
         RowData* rdata = new RowData;
-        rdata->payeeId = payee.PAYEEID;
-        rdata->active = payee.ACTIVE == 1;
-        rdata->count = m_payeeUsage[payee.PAYEEID];
+        rdata->payeeId = payee_d.m_id;
+        rdata->active  = payee_d.m_active;
+        rdata->count   = m_payeeUsage[payee_d.m_id];
         m_rowData.push_back(rdata);
 
         payeeListBox_->InsertItem(item);
-        addPayeeDataIntoItem(idx, &payee, rdata->count);
+        addPayeeDataIntoItem(idx, &payee_d, rdata->count);
         payeeListBox_->SetItemPtrData(idx, reinterpret_cast<wxIntPtr>(rdata));
 
         idx++;
@@ -673,23 +671,25 @@ void mmPayeeDialog::fillControls()
     this->Thaw();
 }
 
-void mmPayeeDialog::addPayeeDataIntoItem(long idx, const PayeeData* payee, int count)
+void mmPayeeDialog::addPayeeDataIntoItem(long idx, const PayeeData* payee_n, int count)
 {
-    payeeListBox_->SetItem(idx, 0, payee->PAYEENAME);
-    if (!m_init_selected_payee.IsEmpty() && payee->PAYEENAME.CmpNoCase(m_init_selected_payee) == 0) {
+    payeeListBox_->SetItem(idx, 0, payee_n->m_name);
+    if (!m_init_selected_payee.IsEmpty() &&
+        payee_n->m_name.CmpNoCase(m_init_selected_payee) == 0
+    ) {
         payeeListBox_->Select(idx);
     }
-    payeeListBox_->SetItem(idx, 1, payee->ACTIVE == 0 ? L"\u2713" : L"");
-    payeeListBox_->SetItem(idx, 2, CategoryModel::instance().full_name(payee->CATEGID));
-    payeeListBox_->SetItem(idx, 3, payee->NUMBER);
-    payeeListBox_->SetItem(idx, 4, payee->WEBSITE);
-    wxString value = payee->NOTES;
+    payeeListBox_->SetItem(idx, 1, !payee_n->m_active ? L"\u2713" : L"");
+    payeeListBox_->SetItem(idx, 2, CategoryModel::instance().full_name(payee_n->m_category_id));
+    payeeListBox_->SetItem(idx, 3, payee_n->m_number);
+    payeeListBox_->SetItem(idx, 4, payee_n->m_website);
+    wxString value = payee_n->m_notes;
     value.Replace("\n", " ");
     payeeListBox_->SetItem(idx, 5, value);
     value = "";
-    if (!payee->PATTERN.IsEmpty()) {
+    if (!payee_n->m_pattern.IsEmpty()) {
         Document json_doc;
-        if (json_doc.Parse(payee->PATTERN.utf8_str()).HasParseError()) {
+        if (json_doc.Parse(payee_n->m_pattern.utf8_str()).HasParseError()) {
             json_doc.Parse("{}");
         }
         for (auto& member : json_doc.GetObject()) {
@@ -698,7 +698,7 @@ void mmPayeeDialog::addPayeeDataIntoItem(long idx, const PayeeData* payee, int c
         }
     }
     payeeListBox_->SetItem(idx, 6, value);
-    payeeListBox_->SetItemTextColour(idx, payee->ACTIVE == 0 ? m_hiddenColor : m_normalColor);
+    payeeListBox_->SetItemTextColour(idx, payee_n->m_active ? m_normalColor : m_hiddenColor);
     payeeListBox_->SetItem(idx, 7, wxString::Format("%d", count));
 }
 
@@ -735,16 +735,16 @@ void mmPayeeDialog::EditPayee()
         return;
 
     RowData* rdata = reinterpret_cast<RowData*>(payeeListBox_->GetItemData(sel));
-    PayeeData* payee = PayeeModel::instance().unsafe_get_data_n(rdata->payeeId);
-    PayeeManager dlg(this, payee);
+    PayeeData* payee_n = PayeeModel::instance().unsafe_get_data_n(rdata->payeeId);
+    PayeeManager dlg(this, payee_n);
     if (dlg.ShowModal() == wxID_OK) {
-        rdata->active = payee->ACTIVE == 1;
+        rdata->active = payee_n->m_active;
         // is hidden, refresh to remove Item
         if (!m_showHiddenPayees && !rdata->active) {
             fillControls();
         }
         else {
-          addPayeeDataIntoItem(payeeListBox_->GetFocusedItem(), payee, rdata->count);
+          addPayeeDataIntoItem(payeeListBox_->GetFocusedItem(), payee_n, rdata->count);
         }
     }
     refreshRequested_ = true;
@@ -754,12 +754,12 @@ void mmPayeeDialog::DeletePayee()
 {
     FindSelectedPayees();
     for(RowData* rdata : m_selectedItems) {
-        const PayeeData* payee = PayeeModel::instance().get_data_n(rdata->payeeId);
+        const PayeeData* payee_n = PayeeModel::instance().get_data_n(rdata->payeeId);
         if (PayeeModel::instance().is_used(rdata->payeeId)) {
             wxString deletePayeeErrMsg = _t("Payee in use.");
             deletePayeeErrMsg
                 << "\n"
-                << payee->PAYEENAME
+                << payee_n->m_name
                 << "\n"
                 << _t("It will be not removed")
                 << "\n\n"
@@ -799,8 +799,8 @@ void mmPayeeDialog::DeletePayee()
                 FieldValueModel::instance().ReleaseSavepoint();
             }
 
-            PayeeModel::instance().purge_id(payee->PAYEEID);
-            mmAttachmentManage::DeleteAllAttachments(PayeeModel::refTypeName, payee->PAYEEID);
+            PayeeModel::instance().purge_id(payee_n->m_id);
+            mmAttachmentManage::DeleteAllAttachments(PayeeModel::refTypeName, payee_n->m_id);
             refreshRequested_ = true;
             fillControls();
         }
@@ -813,11 +813,11 @@ void mmPayeeDialog::DefineDefaultCategory()
     int nb = size(m_selectedItems);
     if (nb > 0) {
         const PayeeData* sel_payee_n = PayeeModel::instance().get_data_n(m_selectedItems.front()->payeeId);
-        CategoryManager dlg(this, true, nb == 1 ? sel_payee_n->CATEGID : -1);
+        CategoryManager dlg(this, true, nb == 1 ? sel_payee_n->m_category_id : -1);
         if (dlg.ShowModal() == wxID_OK) {
             for (RowData* rdata : m_selectedItems) {
                 PayeeData* payee_n = PayeeModel::instance().unsafe_get_data_n(rdata->payeeId);
-                payee_n->CATEGID = dlg.getCategId();
+                payee_n->m_category_id = dlg.getCategId();
                 PayeeModel::instance().unsafe_update_data_n(payee_n);
                 mmWebApp::MMEX_WebApp_UpdatePayee();
                 addPayeeDataIntoItem(rdata->tidx, payee_n, rdata->count);
@@ -835,7 +835,7 @@ void mmPayeeDialog::RemoveDefaultCategory()
     FindSelectedPayees();
     for (RowData* rdata : m_selectedItems) {
         PayeeData* payee_n = PayeeModel::instance().unsafe_get_data_n(rdata->payeeId);
-        payee_n->CATEGID = -1;
+        payee_n->m_category_id = -1;
         PayeeModel::instance().unsafe_update_data_n(payee_n);
         mmWebApp::MMEX_WebApp_UpdatePayee();
         addPayeeDataIntoItem(rdata->tidx, payee_n, rdata->count);
@@ -926,9 +926,9 @@ void mmPayeeDialog::ToggleHide(long idx, bool state) {
     RowData* rdata = reinterpret_cast<RowData*>(payeeListBox_->GetItemData(idx));
     if (rdata->payeeId > -1) {
         rdata->active = state;
-        PayeeData *payee = PayeeModel::instance().unsafe_get_data_n(rdata->payeeId);
-        payee->ACTIVE = state ? 1 : 0;
-        PayeeModel::instance().unsafe_update_data_n(payee);
+        PayeeData *payee_n = PayeeModel::instance().unsafe_get_data_n(rdata->payeeId);
+        payee_n->m_active = state;
+        PayeeModel::instance().unsafe_update_data_n(payee_n);
         payeeListBox_->SetItemTextColour(idx, state ? m_normalColor : m_hiddenColor);
         payeeListBox_->SetItem(idx, 1, state ? L"" : L"\u2713");
     }

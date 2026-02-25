@@ -55,12 +55,12 @@ PayeeModel& PayeeModel::instance()
 const PayeeModel::DataA PayeeModel::FilterPayees(const wxString& payee_pattern, bool includeInActive)
 {
     DataA payees;
-    for (auto &payee : this->find_all(PayeeCol::COL_ID_PAYEENAME))
-    {
-        if (payee.PAYEENAME.Lower().Matches(payee_pattern.Lower().Append("*")) &&
-            (includeInActive || payee.ACTIVE == 1)) {
-            payees.push_back(payee);
-            }
+    for (auto& payee_d : this->find_all(PayeeCol::COL_ID_PAYEENAME)) {
+        if (payee_d.m_name.Lower().Matches(payee_pattern.Lower().Append("*")) &&
+            (includeInActive || payee_d.m_active)
+        ) {
+            payees.push_back(payee_d);
+        }
     }
     return payees;
 }
@@ -71,9 +71,9 @@ const PayeeData* PayeeModel::get_key(const wxString& name)
     if (payee_n)
         return payee_n;
 
-    DataA items = this->find(PayeeCol::PAYEENAME(name));
-    if (!items.empty())
-        payee_n = get_data_n(items[0].PAYEEID);
+    DataA payee_a = this->find(PayeeCol::PAYEENAME(name));
+    if (!payee_a.empty())
+        payee_n = get_data_n(payee_a[0].m_id);
     return payee_n;
 }
 
@@ -81,7 +81,7 @@ wxString PayeeModel::get_payee_name(int64 payee_id)
 {
     const Data* payee_n = instance().get_data_n(payee_id);
     if (payee_n)
-        return payee_n->PAYEENAME;
+        return payee_n->m_name;
     else
         return _t("Payee Error");
 }
@@ -99,8 +99,8 @@ bool PayeeModel::purge_id(int64 id)
 const wxArrayString PayeeModel::all_payee_names()
 {
     wxArrayString payees;
-    for (const auto &payee: this->find_all(Col::COL_ID_PAYEENAME)) {
-        payees.Add(payee.PAYEENAME);
+    for (const auto& payee_d: this->find_all(Col::COL_ID_PAYEENAME)) {
+        payees.Add(payee_d.m_name);
     }
     return payees;
 }
@@ -108,10 +108,9 @@ const wxArrayString PayeeModel::all_payee_names()
 const std::map<wxString, int64> PayeeModel::all_payees(bool excludeHidden)
 {
     std::map<wxString, int64> payees;
-    for (const auto& payee : this->find_all())
-    {
-        if (!excludeHidden || (payee.ACTIVE == 1))
-            payees[payee.PAYEENAME] = payee.PAYEEID;
+    for (const auto& payee_d : this->find_all()) {
+        if (!excludeHidden || payee_d.m_active)
+            payees[payee_d.m_name] = payee_d.m_id;
     }
     return payees;
 }
@@ -119,28 +118,19 @@ const std::map<wxString, int64> PayeeModel::all_payees(bool excludeHidden)
 const std::map<wxString, int64> PayeeModel::used_payee()
 {
     std::map<int64, wxString> cache;
-    for (const auto& p : find_all())
-        cache[p.PAYEEID] = p.PAYEENAME;
+    for (const auto& payee_d : find_all())
+        cache[payee_d.m_id] = payee_d.m_name;
 
     std::map<wxString, int64> payees;
-    for (const auto &t : TrxModel::instance().find_all())
-    {
-        if (cache.count(t.PAYEEID) > 0)
-            payees[cache[t.PAYEEID]] = t.PAYEEID;
+    for (const auto& trx_d : TrxModel::instance().find_all()) {
+        if (cache.count(trx_d.PAYEEID) > 0)
+            payees[cache[trx_d.PAYEEID]] = trx_d.PAYEEID;
     }
-    for (const auto& b : SchedModel::instance().find_all())
-    {
-        if (cache.count(b.PAYEEID) > 0)
-            payees[cache[b.PAYEEID]] = b.PAYEEID;
+    for (const auto& sched_d : SchedModel::instance().find_all()) {
+        if (cache.count(sched_d.PAYEEID) > 0)
+            payees[cache[sched_d.PAYEEID]] = sched_d.PAYEEID;
     }
     return payees;
-}
-
-// -- Check if Payee should be made available for use
-
-bool PayeeModel::is_hidden(const Data& this_d)
-{
-    return this_d.ACTIVE == 0;
 }
 
 // -- Check if Payee if being used
@@ -156,10 +146,10 @@ bool PayeeModel::is_used(int64 id)
         if (txn.DELETEDTIME.IsEmpty())
             return true;
 
-    const auto& bills = SchedModel::instance().find(
+    const auto& sched_a = SchedModel::instance().find(
         SchedCol::PAYEEID(id)
     );
-    if (!bills.empty())
+    if (!sched_a.empty())
         return true;
 
     return false;

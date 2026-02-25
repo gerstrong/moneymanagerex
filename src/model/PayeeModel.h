@@ -30,29 +30,29 @@
 class PayeeModel : public TableFactory<PayeeTable, PayeeData>
 {
 public:
+    static const wxString refTypeName;
+
+public:
+    // Initialize the global PayeeModel table on initial call.
+    // Resets the global table on subsequent calls.
+    // Return the static instance address for PayeeModel table
+    // Note: Assigning the address to a local variable can destroy the instance.
+    static PayeeModel& instance(wxSQLite3Database* db);
+
+    // Return the static instance address for PayeeModel table
+    // Note: Assigning the address to a local variable can destroy the instance.
+    static PayeeModel& instance();
+
+public:
+    // TODO: move to PayeeData
+    static bool is_active(const Data& this_d);
+
+public:
     PayeeModel();
     ~PayeeModel();
 
 public:
-    /**
-    Initialize the global PayeeModel table on initial call.
-    Resets the global table on subsequent calls.
-    * Return the static instance address for PayeeModel table
-    * Note: Assigning the address to a local variable can destroy the instance.
-    */
-    static PayeeModel& instance(wxSQLite3Database* db);
-
-    /**
-    * Return the static instance address for PayeeModel table
-    * Note: Assigning the address to a local variable can destroy the instance.
-    */
-    static PayeeModel& instance();
-
-    // TODO: move to PayeeData
-    static bool is_hidden(const Data& this_d);
-
-public:
-    static bool is_used(int64 id);
+    bool is_used(int64 id);
     bool purge_id(int64 id) override;
 
     // Return the Data record pointer for the given payee name
@@ -63,8 +63,4 @@ public:
     const wxArrayString all_payee_names();
     const std::map<wxString, int64> used_payee();
     const DataA FilterPayees(const wxString& payee_pattern, bool includeInActive = true);
-
-public:
-    static const wxString refTypeName;
 };
-

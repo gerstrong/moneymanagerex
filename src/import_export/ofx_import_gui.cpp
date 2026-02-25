@@ -363,8 +363,8 @@ void mmPayeeSelectionDialog::OnOK(wxCommandEvent& WXUNUSED(event))
         && shouldUpdateCategory
         && payee_n && categoryManuallyChanged_
     ) {
-        if (selectedCategoryId != payee_n->CATEGID.GetValue()) {
-            payee_n->CATEGID = selectedCategoryId;
+        if (selectedCategoryId != payee_n->m_category_id.GetValue()) {
+            payee_n->m_category_id = selectedCategoryId;
             PayeeModel::instance().unsafe_update_data_n(payee_n);
             wxLogDebug("Updated payee '%s' category to ID=%lld",
                 selectedPayee_, selectedCategoryId
@@ -413,16 +413,15 @@ void mmPayeeSelectionDialog::OnOK(wxCommandEvent& WXUNUSED(event))
 
             if (!payee_n && createNewRadio_->GetValue()) {
                 PayeeData new_payee_d = PayeeData();
-                new_payee_d.PAYEENAME = selectedPayee_;
-                new_payee_d.CATEGID   = selectedCategoryId;
-                new_payee_d.ACTIVE    = 1;
-                new_payee_d.PATTERN   = regexPattern_;
+                new_payee_d.m_name        = selectedPayee_;
+                new_payee_d.m_category_id = selectedCategoryId;
+                new_payee_d.m_pattern     = regexPattern_;
                 PayeeModel::instance().add_data_n(new_payee_d);
                 payee_n = PayeeModel::instance().unsafe_get_data_n(new_payee_d.id());
                 wxLogDebug("Saved regex pattern for payee '%s'", selectedPayee_);
             }
             else if (payee_n) {
-                payee_n->PATTERN = regexPattern_;
+                payee_n->m_pattern = regexPattern_;
                 PayeeModel::instance().unsafe_update_data_n(payee_n);
                 wxLogDebug("Saved regex pattern for payee '%s'", selectedPayee_);
             }
@@ -430,16 +429,15 @@ void mmPayeeSelectionDialog::OnOK(wxCommandEvent& WXUNUSED(event))
         else {
             regexPattern_ = "{}";
             if (payee_n) {
-                payee_n->PATTERN = regexPattern_;
+                payee_n->m_pattern = regexPattern_;
                 PayeeModel::instance().unsafe_update_data_n(payee_n);
             }
         }
     }
     else if (createNewRadio_->GetValue() && !payee_n) {
         PayeeData new_payee_d = PayeeData();
-        new_payee_d.PAYEENAME = selectedPayee_;
-        new_payee_d.CATEGID   = selectedCategoryId;
-        new_payee_d.ACTIVE    = 1;
+        new_payee_d.m_name        = selectedPayee_;
+        new_payee_d.m_category_id = selectedCategoryId;
         PayeeModel::instance().add_data_n(new_payee_d);
         payee_n = PayeeModel::instance().unsafe_get_data_n(new_payee_d.id());
         wxLogDebug("Created new payee '%s' with category ID=%lld", selectedPayee_, selectedCategoryId);
@@ -499,9 +497,9 @@ void mmPayeeSelectionDialog::LoadRegexPatterns(wxInt64ClientData* payeeIdData)
     const PayeeData* payee_n = (payeeId >= 0)
         ? PayeeModel::instance().get_data_n(payeeId)
         : nullptr;
-    if (payee_n && !payee_n->PATTERN.IsEmpty()) {
+    if (payee_n && !payee_n->m_pattern.IsEmpty()) {
         rapidjson::Document j_doc;
-        j_doc.Parse(payee_n->PATTERN.mb_str());
+        j_doc.Parse(payee_n->m_pattern.mb_str());
         if (!j_doc.HasParseError() && j_doc.IsObject()) {
             int row = 0;
             for (rapidjson::Value::ConstMemberIterator itr = j_doc.MemberBegin(); itr != j_doc.MemberEnd(); ++itr) {
@@ -537,23 +535,18 @@ void mmPayeeSelectionDialog::LoadRegexPatterns(const wxString& payeeName)
     if (regexGrid_->GetNumberRows() > 0)
         regexGrid_->DeleteRows(0, regexGrid_->GetNumberRows());
 
-    const PayeeData* payee = PayeeModel::instance().search_cache_n(
+    const PayeeData* payee_n = PayeeModel::instance().search_cache_n(
         PayeeCol::PAYEENAME(payeeName)
     );
-    if (payee && !payee->PATTERN.IsEmpty())
-    {
+    if (payee_n && !payee_n->m_pattern.IsEmpty()) {
         rapidjson::Document j_doc;
-        j_doc.Parse(payee->PATTERN.mb_str());
-        if (!j_doc.HasParseError() && j_doc.IsObject())
-        {
+        j_doc.Parse(payee_n->m_pattern.mb_str());
+        if (!j_doc.HasParseError() && j_doc.IsObject()) {
             int row = 0;
-            for (rapidjson::Value::ConstMemberIterator itr = j_doc.MemberBegin(); itr != j_doc.MemberEnd(); ++itr)
-            {
-                if (itr->value.IsString())
-                {
+            for (rapidjson::Value::ConstMemberIterator itr = j_doc.MemberBegin(); itr != j_doc.MemberEnd(); ++itr) {
+                if (itr->value.IsString()) {
                     wxString pattern = wxString::FromUTF8(itr->value.GetString());
-                    if (!pattern.IsEmpty())
-                    {
+                    if (!pattern.IsEmpty()) {
                         regexGrid_->AppendRows(1);
                         regexGrid_->SetCellValue(row, 0, pattern);
                         row++;
@@ -658,14 +651,11 @@ mmPayeeSelectionDialog::mmPayeeSelectionDialog(wxWindow* parent, const wxString&
 
         // Load regex patterns for the suggested payee
         wxInt64ClientData* suggestedPayeeIdData = nullptr;
-        if (!suggestedPayeeName_.IsEmpty())
-        {
+        if (!suggestedPayeeName_.IsEmpty()) {
             PayeeModel::DataA payees = PayeeModel::instance().find_all(PayeeCol::COL_ID_PAYEENAME);
-            for (size_t i = 0; i < payees.size(); ++i)
-            {
-                if (payees[i].PAYEENAME == suggestedPayeeName_)
-                {
-                    suggestedPayeeIdData = new wxInt64ClientData(payees[i].PAYEEID.GetValue());
+            for (size_t i = 0; i < payees.size(); ++i) {
+                if (payees[i].m_name == suggestedPayeeName_) {
+                    suggestedPayeeIdData = new wxInt64ClientData(payees[i].m_id.GetValue());
                     break;
                 }
             }
@@ -695,9 +685,9 @@ mmPayeeSelectionDialog::mmPayeeSelectionDialog(wxWindow* parent, const wxString&
 
     for (size_t i = 0; i < payees.size(); ++i)
     {
-        int index = payeeChoice_->Append(payees[i].PAYEENAME, new wxInt64ClientData(payees[i].PAYEEID.GetValue()));
+        int index = payeeChoice_->Append(payees[i].m_name, new wxInt64ClientData(payees[i].m_id.GetValue()));
         // Only pre-select the suggested payee if confidence > 50%
-        if (matchConfidence_ > 50.0 && payees[i].PAYEENAME.IsSameAs(suggestedPayeeName_, false))
+        if (matchConfidence_ > 50.0 && payees[i].m_name.IsSameAs(suggestedPayeeName_, false))
             suggestedPayeeIndex = index;
     }
 
@@ -839,7 +829,7 @@ void mmPayeeSelectionDialog::OnPayeeChoice(wxCommandEvent& event)
     const PayeeData* payee_n = PayeeModel::instance().get_data_n(payeeId);
     if (payee_n) {
         // Always update the category to the payee's default, regardless of manual changes
-        long long payeeCategoryId = payee_n->CATEGID.GetValue();
+        long long payeeCategoryId = payee_n->m_category_id.GetValue();
         for (unsigned int i = 0; i < categoryChoice_->GetCount(); ++i) {
             wxStringClientData* data = dynamic_cast<wxStringClientData*>(categoryChoice_->GetClientObject(i));
             if (data) {
@@ -979,33 +969,30 @@ void mmOFXImportDialog::OnUseFuzzyMatchingToggled(wxCommandEvent& /*event*/)
 void mmOFXImportDialog::loadRegexMappings()
 {
     payeeRegexMap_.clear();
-    PayeeModel::DataA payees = PayeeModel::instance().find_all();
-    for (const auto& payee : payees)
-    {
-        if (!payee.PATTERN.IsEmpty())
-        {
-            rapidjson::Document j_doc;
-            j_doc.Parse(payee.PATTERN.mb_str());
-            if (!j_doc.HasParseError() && j_doc.IsObject())
-            {
-                for (rapidjson::Value::ConstMemberIterator itr = j_doc.MemberBegin(); itr != j_doc.MemberEnd(); ++itr)
-                {
-                    if (itr->value.IsString())
-                    {
-                        wxString pattern = wxString::FromUTF8(itr->value.GetString());
-                        if (!pattern.IsEmpty())
-                        {
-                            wxString normalizedPattern = pattern;
-                            if (normalizedPattern.Contains("*"))
-                            {
-                                normalizedPattern.Replace("*", ".*", true);
-                                normalizedPattern.Replace("..*", ".*", true);
-                            }
-                            payeeRegexMap_[normalizedPattern] = payee.PAYEENAME;
-                        }
-                    }
-                }
+    PayeeModel::DataA payee_a = PayeeModel::instance().find_all();
+    for (const auto& payee_d : payee_a) {
+        if (payee_d.m_pattern.IsEmpty())
+            continue;
+
+        rapidjson::Document j_doc;
+        j_doc.Parse(payee_d.m_pattern.mb_str());
+        if (j_doc.HasParseError() || !j_doc.IsObject())
+            continue;
+
+        for (rapidjson::Value::ConstMemberIterator itr = j_doc.MemberBegin(); itr != j_doc.MemberEnd(); ++itr) {
+            if (!itr->value.IsString())
+                continue;
+
+            wxString pattern = wxString::FromUTF8(itr->value.GetString());
+            if (pattern.IsEmpty())
+                continue;
+
+            wxString normalizedPattern = pattern;
+            if (normalizedPattern.Contains("*")) {
+                normalizedPattern.Replace("*", ".*", true);
+                normalizedPattern.Replace("..*", ".*", true);
             }
+            payeeRegexMap_[normalizedPattern] = payee_d.m_name;
         }
     }
 }
@@ -1372,8 +1359,8 @@ wxString mmOFXImportDialog::getPayeeName(const wxString& memo, bool& usedRegex, 
 
         // Validate the PayeeID and check if it's a true exact match
         const PayeeData* payee_n = PayeeModel::instance().get_data_n(candidatePayeeID);
-        if (payee_n && payee_n->PAYEEID.GetValue() == candidatePayeeID) {
-            wxString dbPayeeName = payee_n->PAYEENAME;
+        if (payee_n && payee_n->m_id.GetValue() == candidatePayeeID) {
+            wxString dbPayeeName = payee_n->m_name;
             if (matchMethod == "Exact" || memo.IsSameAs(dbPayeeName, false)) {
                 matchMethod = "Exact";
                 matchConfidence = 100.0;
@@ -1412,9 +1399,9 @@ wxString mmOFXImportDialog::getPayeeName(const wxString& memo, bool& usedRegex, 
             return memo;
         }
 
-        if (usedRegex && payee_n && !payee_n->PATTERN.IsEmpty()) {
+        if (usedRegex && payee_n && !payee_n->m_pattern.IsEmpty()) {
             rapidjson::Document doc;
-            doc.Parse(payee_n->PATTERN.mb_str());
+            doc.Parse(payee_n->m_pattern.mb_str());
             if (!doc.HasParseError() && doc.IsObject()) {
                 for (rapidjson::Value::ConstMemberIterator itr = doc.MemberBegin(); itr != doc.MemberEnd(); ++itr) {
                     if (itr->value.IsString()) {
@@ -1429,7 +1416,7 @@ wxString mmOFXImportDialog::getPayeeName(const wxString& memo, bool& usedRegex, 
             }
             if (regexPattern.IsEmpty()) {
                 wxLogWarning("No matching regex pattern found in '%s' for memo '%s'",
-                    payee_n->PATTERN, memo
+                    payee_n->m_pattern, memo
                 );
             }
         }
@@ -1692,17 +1679,16 @@ bool mmOFXImportDialog::ImportTransactions(wxXmlNode* banktranlist, wxLongLong a
                     );
                     if (payeeDlg.IsCreateNewPayee() && !payee_n) {
                         PayeeData new_payee_d = PayeeData();
-                        new_payee_d.PAYEENAME = payeeName;
-                        new_payee_d.CATEGID   = payeeDlg.GetSelectedCategoryID();
-                        new_payee_d.ACTIVE    = 1;
+                        new_payee_d.m_name        = payeeName;
+                        new_payee_d.m_category_id = payeeDlg.GetSelectedCategoryID();
                         PayeeModel::instance().add_data_n(new_payee_d);
-                        transaction.PAYEEID = new_payee_d.PAYEEID;
+                        transaction.PAYEEID = new_payee_d.m_id;
                         stats.newPayeesCreated++;
                     }
                     else if (payee_n) {
-                        transaction.PAYEEID = payee_n->PAYEEID;
+                        transaction.PAYEEID = payee_n->m_id;
                         if (payeeDlg.ShouldUpdatePayeeCategory()) {
-                            payee_n->CATEGID = payeeDlg.GetSelectedCategoryID();
+                            payee_n->m_category_id = payeeDlg.GetSelectedCategoryID();
                             PayeeModel::instance().unsafe_update_data_n(payee_n);
                         }
                     }
@@ -1710,9 +1696,9 @@ bool mmOFXImportDialog::ImportTransactions(wxXmlNode* banktranlist, wxLongLong a
                     const CategoryData* category_n = CategoryModel::instance().get_data_n(transaction.CATEGID);
                     result.category = category_n ? category_n->CATEGNAME : "Uncategorized";
                     if (payeeDlg.ShouldUpdateRegex() && payee_n) {
-                        payee_n->PATTERN = payeeDlg.GetRegexPattern();
+                        payee_n->m_pattern = payeeDlg.GetRegexPattern();
                         PayeeModel::instance().unsafe_update_data_n(payee_n);
-                        result.regexPattern = payee_n->PATTERN;
+                        result.regexPattern = payee_n->m_pattern;
                     }
                     stats.manuallyAllocated++;
                     result.imported = true;
@@ -1734,8 +1720,8 @@ bool mmOFXImportDialog::ImportTransactions(wxXmlNode* banktranlist, wxLongLong a
                 || (matchMethod == "Fuzzy" && matchConfidence >= minFuzzyConfidence)
             ) {
                 if (payee_n) {
-                    transaction.PAYEEID = payee_n->PAYEEID;
-                    transaction.CATEGID = payee_n->CATEGID;
+                    transaction.PAYEEID = payee_n->m_id;
+                    transaction.CATEGID = payee_n->m_category_id;
                     transaction.STATUS = (matchMethod == "Fuzzy" && markFuzzyFollowUp) ? "F" : "";
                     const CategoryData* category = CategoryModel::instance().get_data_n(transaction.CATEGID);
                     result.category = category ? category->CATEGNAME : "Uncategorized";

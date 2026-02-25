@@ -86,8 +86,8 @@ void PayeeReport::loadData()
         auto [it, new_payee] = m_id_data.try_emplace(trx.PAYEEID, Data{});
         Data& data = it->second;
         if (new_payee) {
-            const PayeeData* payee = PayeeModel::instance().get_data_n(payee_id);
-            data.payee_name = payee ? payee->PAYEENAME : "";
+            const PayeeData* payee_n = PayeeModel::instance().get_data_n(payee_id);
+            data.payee_name = payee_n ? payee_n->m_name : "";
             data.flow_pos = 0.0;
             data.flow_neg = 0.0;
             data.flow = 0.0;

@@ -16,16 +16,13 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  ********************************************************/
 
-// PLEASE EDIT!
-// This is only sample code re-used from "table/PayeeTable.cpp".
-
 #include "PayeeData.h"
 
 PayeeData::PayeeData()
 {
-    PAYEEID = -1;
-    CATEGID = -1;
-    ACTIVE = -1;
+    m_id          = -1;
+    m_category_id = -1;
+    m_active      = true;
 }
 
 // Convert PayeeData to PayeeRow
@@ -33,14 +30,14 @@ PayeeRow PayeeData::to_row() const
 {
     PayeeRow row;
 
-    row.PAYEEID = PAYEEID;
-    row.PAYEENAME = PAYEENAME;
-    row.CATEGID = CATEGID;
-    row.NUMBER = NUMBER;
-    row.WEBSITE = WEBSITE;
-    row.NOTES = NOTES;
-    row.ACTIVE = ACTIVE;
-    row.PATTERN = PATTERN;
+    row.PAYEEID   = m_id;
+    row.PAYEENAME = m_name;
+    row.CATEGID   = m_category_id;
+    row.NUMBER    = m_number;
+    row.WEBSITE   = m_website;
+    row.NOTES     = m_notes;
+    row.ACTIVE    = m_active ? 1 : 0;
+    row.PATTERN   = m_pattern;
 
     return row;
 }
@@ -48,28 +45,28 @@ PayeeRow PayeeData::to_row() const
 // Convert PayeeRow to PayeeData
 PayeeData& PayeeData::from_row(const PayeeRow& row)
 {
-    PAYEEID = row.PAYEEID; // int64
-    PAYEENAME = row.PAYEENAME; // wxString
-    CATEGID = row.CATEGID; // int64
-    NUMBER = row.NUMBER; // wxString
-    WEBSITE = row.WEBSITE; // wxString
-    NOTES = row.NOTES; // wxString
-    ACTIVE = row.ACTIVE; // int64
-    PATTERN = row.PATTERN; // wxString
+    m_id          = row.PAYEEID;       // int64
+    m_name        = row.PAYEENAME;     // wxString
+    m_category_id = row.CATEGID;       // int64
+    m_number      = row.NUMBER;        // wxString
+    m_website     = row.WEBSITE;       // wxString
+    m_notes       = row.NOTES;         // wxString
+    m_active      = (row.ACTIVE != 0); // int64
+    m_pattern     = row.PATTERN;       // wxString
 
     return *this;
 }
 
 bool PayeeData::equals(const PayeeData* other) const
 {
-    if ( PAYEEID != other->PAYEEID) return false;
-    if (!PAYEENAME.IsSameAs(other->PAYEENAME)) return false;
-    if ( CATEGID != other->CATEGID) return false;
-    if (!NUMBER.IsSameAs(other->NUMBER)) return false;
-    if (!WEBSITE.IsSameAs(other->WEBSITE)) return false;
-    if (!NOTES.IsSameAs(other->NOTES)) return false;
-    if ( ACTIVE != other->ACTIVE) return false;
-    if (!PATTERN.IsSameAs(other->PATTERN)) return false;
+    if ( m_id != other->m_id) return false;
+    if (!m_name.IsSameAs(other->m_name)) return false;
+    if ( m_category_id != other->m_category_id) return false;
+    if (!m_number.IsSameAs(other->m_number)) return false;
+    if (!m_website.IsSameAs(other->m_website)) return false;
+    if (!m_notes.IsSameAs(other->m_notes)) return false;
+    if ( m_active != other->m_active) return false;
+    if (!m_pattern.IsSameAs(other->m_pattern)) return false;
 
     return true;
 }

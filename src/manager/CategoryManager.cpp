@@ -575,7 +575,7 @@ void CategoryManager::mmDoDeleteSelectedCategory()
     // Clear categories associated with payees
     auto payee_a = PayeeModel::instance().find(PayeeCol::CATEGID(m_categ_id));
     for (auto& payee_d : payee_a) {
-        payee_d.CATEGID = -1;
+        payee_d.m_category_id = -1;
     }
     PayeeModel::instance().save_data_a(payee_a);
     mmWebApp::MMEX_WebApp_UpdatePayee();

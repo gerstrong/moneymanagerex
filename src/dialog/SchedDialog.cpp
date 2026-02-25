@@ -717,9 +717,9 @@ void SchedDialog::OnPayee(wxCommandEvent& WXUNUSED(event))
     if (m_sched_d.local_splits.empty()
         && (PrefModel::instance().getTransCategoryNone() == PrefModel::LASTUSED ||
             PrefModel::instance().getTransCategoryNone() == PrefModel::DEFAULT)
-        && (!CategoryModel::is_hidden(payee_n->CATEGID) && !CategoryModel::is_hidden(payee_n->CATEGID)))
+        && (!CategoryModel::is_hidden(payee_n->m_category_id) && !CategoryModel::is_hidden(payee_n->m_category_id)))
     {
-        m_sched_d.CATEGID = payee_n->CATEGID;
+        m_sched_d.CATEGID = payee_n->m_category_id;
 
         cbCategory_->ChangeValue(CategoryModel::full_name(m_sched_d.CATEGID));
     }
@@ -765,7 +765,7 @@ void SchedDialog::OnComboKey(wxKeyEvent& event)
                 int64 payee_id = dlg.getPayeeId();
                 const PayeeData* payee_n = PayeeModel::instance().get_data_n(payee_id);
                 if (payee_n) {
-                    cbPayee_->ChangeValue(payee_n->PAYEENAME);
+                    cbPayee_->ChangeValue(payee_n->m_name);
                     cbPayee_->SelectAll();
                     wxCommandEvent evt;
                     OnPayee(evt);
@@ -941,8 +941,7 @@ void SchedDialog::OnOk(wxCommandEvent& WXUNUSED(event))
             );
             if (msgDlg.ShowModal() == wxID_YES) {
                 PayeeData new_payee_d = PayeeData();
-                new_payee_d.PAYEENAME = payee_name;
-                new_payee_d.ACTIVE    = 1;
+                new_payee_d.m_name = payee_name;
                 PayeeModel::instance().add_data_n(new_payee_d);
                 payee_n = PayeeModel::instance().get_data_n(new_payee_d.id());
                 mmWebApp::MMEX_WebApp_UpdatePayee();

@@ -37,24 +37,31 @@ class mmComboBoxText : public wxTextCtrl
 public:
     using wxTextCtrl::Connect;
 
+private:
+    bool m_is_payee = false;
+
+public:
     mmComboBoxText() {}
-    mmComboBoxText(wxWindow *parent, wxWindowID id
-        , const wxString &value
-        , bool payee
-        , const wxPoint &pos = wxDefaultPosition
-        , const wxSize &size = wxDefaultSize
-        , long style = 0
-        , const wxValidator &validator = wxDefaultValidator
-        , const wxString &name = wxTextCtrlNameStr)
-        : wxTextCtrl(parent, id, value, pos, size, style, validator, name)
-        , m_payee(payee)
+    mmComboBoxText(
+        wxWindow *parent, wxWindowID id,
+        const wxString &value,
+        bool payee,
+        const wxPoint &pos = wxDefaultPosition,
+        const wxSize &size = wxDefaultSize,
+        long style = 0,
+        const wxValidator &validator = wxDefaultValidator,
+        const wxString &name = wxTextCtrlNameStr
+    ) :
+        wxTextCtrl(parent, id, value, pos, size, style, validator, name),
+        m_is_payee(payee)
     {
-        if (m_payee)
+        if (m_is_payee)
             this->AutoComplete(PayeeModel::instance().all_payee_names());
         else
             this->AutoComplete(AccountModel::instance().all_checking_account_names());
 
     }
+
     wxString GetValue() const
     {
         return wxTextCtrl::GetValue();
@@ -62,29 +69,35 @@ public:
 
     void setSelection(int &id)
     {
-        if (m_payee) {
-            for (const auto &payee : PayeeModel::instance().find_all(PayeeCol::COL_ID_PAYEENAME))
-                if (payee.PAYEEID == id) this->ChangeValue(payee.PAYEENAME);
+        if (m_is_payee) {
+            for (const auto& payee_d : PayeeModel::instance().find_all(
+                PayeeCol::COL_ID_PAYEENAME)
+            ) {
+                if (payee_d.m_id == id)
+                    this->ChangeValue(payee_d.m_name);
+            }
         }
-        else
-        {
-            for (const auto &acc : AccountModel::instance().find_all(AccountCol::COL_ID_ACCOUNTNAME))
-                if (acc.ACCOUNTID == id) this->ChangeValue(acc.ACCOUNTNAME);
+        else {
+            for (const auto &acc : AccountModel::instance().find_all(
+                AccountCol::COL_ID_ACCOUNTNAME)
+            ) {
+                if (acc.ACCOUNTID == id)
+                    this->ChangeValue(acc.ACCOUNTNAME);
+            }
         }
     }
 
     int64 getID()
     {
         int64 id = -1;
-        if (m_payee) {
+        if (m_is_payee) {
             const PayeeData* payee_n = PayeeModel::instance().get_key(this->GetValue());
             if (payee_n) {
-                id = payee_n->PAYEEID;
+                id = payee_n->m_id;
             }
             else {
                 PayeeData new_payee_d = PayeeData();
-                new_payee_d.PAYEENAME = this->GetValue();
-                new_payee_d.ACTIVE    = 1;
+                new_payee_d.m_name = this->GetValue();
                 PayeeModel::instance().add_data_n(new_payee_d);
                 mmWebApp::MMEX_WebApp_UpdatePayee();
             }
@@ -100,7 +113,4 @@ public:
         }
         return id;
     }
-
-private:
-    bool m_payee = false;
 };

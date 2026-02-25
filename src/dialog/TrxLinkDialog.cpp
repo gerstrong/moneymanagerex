@@ -331,13 +331,13 @@ void TrxLinkDialog::SetLastPayeeAndCategory(const int64 account_id)
                 trans_list.at(last_trans_pos).PAYEEID
             );
             if (last_payee_n) {
-                m_payee->SetLabelText(last_payee_n->PAYEENAME);
-                m_payee_id = last_payee_n->PAYEEID;
+                m_payee->SetLabelText(last_payee_n->m_name);
+                m_payee_id = last_payee_n->m_id;
                 if ((PrefModel::instance().getTransCategoryNone() == PrefModel::LASTUSED)
-                    && !CategoryModel::is_hidden(last_payee_n->CATEGID)
+                    && !CategoryModel::is_hidden(last_payee_n->m_category_id)
                 ) {
-                    m_category_id = last_payee_n->CATEGID;
-                    m_category->SetLabelText(CategoryModel::full_name(last_payee_n->CATEGID));
+                    m_category_id = last_payee_n->m_category_id;
+                    m_category->SetLabelText(CategoryModel::full_name(last_payee_n->m_category_id));
                 }
             }
         }
@@ -366,17 +366,17 @@ void TrxLinkDialog::OnTransPayeeButton(wxCommandEvent& WXUNUSED(event))
         m_payee_id = dlg.getPayeeId();
         const PayeeData* payee_n = PayeeModel::instance().get_data_n(m_payee_id);
         if (payee_n) {
-            m_payee->SetLabelText(payee_n->PAYEENAME);
+            m_payee->SetLabelText(payee_n->m_name);
 
             // Only for new transactions: if user want to autofill last category used for payee and category has not been set.
             if (PrefModel::instance().getTransCategoryNone() == PrefModel::LASTUSED
                 && m_category_id < 0
                 && m_subcategory_id < 0
-                && !CategoryModel::is_hidden(payee_n->CATEGID)
+                && !CategoryModel::is_hidden(payee_n->m_category_id)
             ) {
-                if (payee_n->CATEGID > 0)
+                if (payee_n->m_category_id > 0)
                 {
-                    m_category_id = payee_n->CATEGID;
+                    m_category_id = payee_n->m_category_id;
                     m_category->SetLabelText(CategoryModel::full_name(m_category_id));
                 }
             }
@@ -472,7 +472,7 @@ void TrxLinkDialog::SetTransactionPayee(const int64 payeeid)
     m_payee_id = payeeid;
     const PayeeData* payee_n = PayeeModel::instance().get_data_n(m_payee_id);
     if (payee_n)
-        m_payee->SetLabelText(payee_n->PAYEENAME);
+        m_payee->SetLabelText(payee_n->m_name);
 }
 
 void TrxLinkDialog::SetTransactionCategory(const int64 categid)

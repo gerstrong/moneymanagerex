@@ -54,7 +54,7 @@ public:
     PayeeManager();
     PayeeManager(
         wxWindow* parent,
-        PayeeData* payee,
+        PayeeData* payee_n,
         const wxString &name = "PayeeManager"
     );
     ~PayeeManager();
@@ -155,7 +155,7 @@ private:
     void Create(wxWindow* parent, const wxString &name);
     void CreateControls();
     void fillControls();
-    void addPayeeDataIntoItem(long idx, const PayeeData* payee, int count);
+    void addPayeeDataIntoItem(long idx, const PayeeData* payee_n, int count);
     bool isPayeeWithStateSelected(bool state);
 
     void AddPayee();

@@ -224,9 +224,8 @@ bool mmWebApp::WebApp_UpdatePayee()
     json_writer.StartArray();
 
     wxString def_category_name, def_subcategory_name;
-    for (const auto &payee : PayeeModel::instance().find_all(PayeeCol::COL_ID_PAYEENAME))
-    {
-        const CategoryData* def_category = CategoryModel::instance().get_data_n(payee.CATEGID);
+    for (const auto& payee_d : PayeeModel::instance().find_all(PayeeCol::COL_ID_PAYEENAME)) {
+        const CategoryData* def_category = CategoryModel::instance().get_data_n(payee_d.m_category_id);
         if (def_category) {
             if (def_category->PARENTID == -1) {
                 def_category_name = def_category->CATEGNAME;
@@ -251,7 +250,7 @@ bool mmWebApp::WebApp_UpdatePayee()
 
         json_writer.StartObject();
         json_writer.Key("PayeeName");
-        json_writer.String(payee.PAYEENAME.utf8_str());
+        json_writer.String(payee_d.m_name.utf8_str());
         json_writer.Key("DefCateg");
         json_writer.String(def_category_name.utf8_str());
         json_writer.Key("DefSubCateg");
@@ -536,13 +535,12 @@ int64 mmWebApp::MMEX_InsertNewTransaction(webtran_holder& WebAppTrans)
     // Search or insert Payee
     const PayeeData* payee_n = PayeeModel::instance().get_key(WebAppTrans.Payee);
     if (payee_n) {
-        payeeID = payee_n->PAYEEID;
+        payeeID = payee_n->m_id;
     }
     else {
         PayeeData new_payee_d = PayeeData();
-        new_payee_d.PAYEENAME = WebAppTrans.Payee;
-        new_payee_d.ACTIVE    = 1;
-        new_payee_d.CATEGID   = categoryID;
+        new_payee_d.m_name        = WebAppTrans.Payee;
+        new_payee_d.m_category_id = categoryID;
         PayeeModel::instance().add_data_n(new_payee_d);
         payeeID = new_payee_d.id();
     }

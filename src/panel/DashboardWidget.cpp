@@ -289,8 +289,7 @@ const wxString htmlWidgetBillsAndDeposits::getHTMLText()
 
     //                    days, payee, description, amount, account, notes
     std::vector< std::tuple<int, wxString, wxString, double, const AccountData*, wxString> > bd_days;
-    for (const auto& entry : SchedModel::instance().find_all(SchedCol::COL_ID_TRANSDATE))
-    {
+    for (const auto& entry : SchedModel::instance().find_all(SchedCol::COL_ID_TRANSDATE)) {
         int daysPayment = SchedModel::getTransDateTime(entry)
             .Subtract(today).GetDays();
         if (daysPayment > 14)
@@ -314,18 +313,17 @@ const wxString htmlWidgetBillsAndDeposits::getHTMLText()
         if (account) accountStr = account->ACCOUNTNAME;
 
         wxString payeeStr = "";
-        if (SchedModel::type_id(entry) == TrxModel::TYPE_ID_TRANSFER)
-        {
+        if (SchedModel::type_id(entry) == TrxModel::TYPE_ID_TRANSFER) {
             const AccountData *to_account = AccountModel::instance().get_data_n(entry.TOACCOUNTID);
             if (to_account) payeeStr = to_account->ACCOUNTNAME;
             payeeStr += " &larr; " + accountStr;
         }
-        else
-        {
-            const PayeeData* payee = PayeeModel::instance().get_data_n(entry.PAYEEID);
+        else {
+            const PayeeData* payee_n = PayeeModel::instance().get_data_n(entry.PAYEEID);
             payeeStr = accountStr;
             payeeStr += (SchedModel::type_id(entry) == TrxModel::TYPE_ID_WITHDRAWAL ? " &rarr; " : " &larr; ");
-            if (payee) payeeStr += payee->PAYEENAME;
+            if (payee_n)
+                payeeStr += payee_n->m_name;
         }
         double amount = (SchedModel::type_id(entry) == TrxModel::TYPE_ID_WITHDRAWAL ? -entry.TRANSAMOUNT : entry.TRANSAMOUNT);
         wxString notes = HTMLEncode(entry.NOTES);

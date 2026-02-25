@@ -999,37 +999,37 @@ bool TrxFilterDialog::mmIsValuesCorrect() const
         return false;
     }
 
-    if (mmIsPayeeChecked())
-    {
+    if (mmIsPayeeChecked()) {
         bool ok = false;
         const auto& value = cbPayee_->mmGetPattern();
 
-        if (value.empty())
-        {
-            mmErrorDialogs::ToolTip4Object(categoryComboBox_, _t("Empty value"), _t("Payee"), wxICON_ERROR);
+        if (value.empty()) {
+            mmErrorDialogs::ToolTip4Object(
+                categoryComboBox_, _t("Empty value"), _t("Payee"), wxICON_ERROR
+            );
             return false;
         }
 
         wxRegEx pattern(value);
-        if (pattern.IsValid())
-        {
+        if (pattern.IsValid()) {
             pattern.Compile("^(" + value + ")$", wxRE_ICASE | wxRE_ADVANCED);
-            PayeeModel::DataA payees = PayeeModel::instance().find_all();
-            for (const auto& payee : payees)
-            {
-                if (pattern.Matches(payee.PAYEENAME))
-                {
+            PayeeModel::DataA payee_a = PayeeModel::instance().find_all();
+            for (const auto& payee_d : payee_a) {
+                if (pattern.Matches(payee_d.m_name)) {
                     ok = true;
                     break;
                 }
             }
-            if (ok == false)
-            {
-                if (wxMessageBox(wxString::Format(_t("This name does not currently match any payees.\n"
-                                                    "Do you want to continue to use it?\n%s"),
-                                                  value),
-                                 _t("Invalid value"), wxYES_NO | wxICON_INFORMATION) == wxNO)
-                {
+            if (ok == false) {
+                if (wxMessageBox(
+                    wxString::Format(
+                        _t("This name does not currently match any payees.\n"
+                            "Do you want to continue to use it?\n%s"
+                        ), value
+                    ),
+                    _t("Invalid value"),
+                    wxYES_NO | wxICON_INFORMATION
+                ) == wxNO) {
                     return false;
                 }
             }
@@ -1038,77 +1038,63 @@ bool TrxFilterDialog::mmIsValuesCorrect() const
             return false;
     }
 
-    if (mmIsCategoryChecked())
-    {
+    if (mmIsCategoryChecked()) {
         const auto& value = categoryComboBox_->mmGetPattern();
-        if (value.empty())
-        {
+        if (value.empty()) {
             mmErrorDialogs::ToolTip4Object(categoryComboBox_, _t("Empty value"), _t("Category"), wxICON_ERROR);
             return false;
         }
         wxRegEx pattern(value, wxRE_ADVANCED);
-        if (!pattern.IsValid() || m_selected_categories_id.empty())
-        {
+        if (!pattern.IsValid() || m_selected_categories_id.empty()) {
             mmErrorDialogs::ToolTip4Object(categoryComboBox_, _t("Invalid value"), _t("Category"), wxICON_ERROR);
             return false;
         }
     }
 
-    if (mmIsStatusChecked() && choiceStatus_->GetSelection() == wxNOT_FOUND)
-    {
+    if (mmIsStatusChecked() && choiceStatus_->GetSelection() == wxNOT_FOUND) {
         mmErrorDialogs::ToolTip4Object(choiceStatus_, _t("Invalid value"), _t("Status"), wxICON_ERROR);
         return false;
     }
 
-    if (mmIsTypeChecked() && mmGetTypes().empty())
-    {
+    if (mmIsTypeChecked() && mmGetTypes().empty()) {
         mmErrorDialogs::ToolTip4Object(cbTypeWithdrawal_, _t("Invalid value"), _t("Type"), wxICON_ERROR);
         return false;
     }
 
-    if (mmIsTagsChecked())
-    {
-        if (!tagTextCtrl_->IsValid())
-        {
+    if (mmIsTagsChecked()) {
+        if (!tagTextCtrl_->IsValid()) {
             mmErrorDialogs::ToolTip4Object(tagTextCtrl_, _t("Invalid value"), _t("Tags"), wxICON_ERROR);
             return false;
         }
-        else if (tagTextCtrl_->GetTagIDs().empty())
-        {
+        else if (tagTextCtrl_->GetTagIDs().empty()) {
             mmErrorDialogs::ToolTip4Object(tagTextCtrl_, _t("Empty value"), _t("Tags"), wxICON_ERROR);
             return false;
         }
     }
 
-    if (amountRangeCheckBox_->IsChecked())
-    {
+    if (amountRangeCheckBox_->IsChecked()) {
         const CurrencyData* currency = CurrencyModel::GetBaseCurrency();
         int currency_precision = CurrencyModel::precision(currency);
         double min_amount = 0;
 
-        if (!amountMinEdit_->Calculate(currency_precision))
-        {
+        if (!amountMinEdit_->Calculate(currency_precision)) {
             amountMinEdit_->GetDouble(min_amount);
             mmErrorDialogs::ToolTip4Object(amountMinEdit_, _t("Invalid value"), _t("Amount"), wxICON_ERROR);
             return false;
         }
 
-        if (!amountMaxEdit_->Calculate(currency_precision))
-        {
+        if (!amountMaxEdit_->Calculate(currency_precision)) {
             double max_amount = 0;
             amountMaxEdit_->GetDouble(max_amount);
-            if (max_amount < min_amount)
-            {
+            if (max_amount < min_amount) {
                 mmErrorDialogs::ToolTip4Object(amountMaxEdit_, _t("Invalid value"), _t("Amount"), wxICON_ERROR);
                 return false;
             }
         }
     }
 
-    if (mmIsColorChecked())
-    {
-        if (m_color_value < 1 || m_color_value > 7)
-        {
+    if (mmIsColorChecked()) {
+        if (m_color_value < 1 || m_color_value > 7) {
             mmErrorDialogs::ToolTip4Object(colorButton_, _t("Invalid value"), _t("Color"), wxICON_ERROR);
             return false;
         }
@@ -1370,7 +1356,7 @@ bool TrxFilterDialog::mmIsPayeeMatches(int64 payeeID)
         const wxString value = cbPayee_->mmGetPattern();
         if (!value.empty()) {
             wxRegEx pattern("^(" + value + ")$", wxRE_ICASE | wxRE_ADVANCED);
-            if (pattern.IsValid() && pattern.Matches(payee_n->PAYEENAME)) {
+            if (pattern.IsValid() && pattern.Matches(payee_n->m_name)) {
                 return true;
             }
         }
@@ -2365,7 +2351,7 @@ void TrxFilterDialog::OnComboKey(wxKeyEvent& event)
                 int64 payee_id = dlg.getPayeeId();
                 const PayeeData* payee_n = PayeeModel::instance().get_data_n(payee_id);
                 if (payee_n) {
-                    cbPayee_->ChangeValue(payee_n->PAYEENAME);
+                    cbPayee_->ChangeValue(payee_n->m_name);
                     cbPayee_->SelectAll();
                 }
                 return;

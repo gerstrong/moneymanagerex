@@ -356,11 +356,10 @@ void TrxUpdateDialog::OnOk(wxCommandEvent& WXUNUSED(event))
                 , wxYES_NO | wxYES_DEFAULT | wxICON_WARNING);
             if (msgDlg.ShowModal() == wxID_YES) {
                 PayeeData new_payee_d = PayeeData();
-                new_payee_d.PAYEENAME = cbPayee_->GetValue();
-                new_payee_d.ACTIVE    = 1;
+                new_payee_d.m_name = cbPayee_->GetValue();
                 PayeeModel::instance().add_data_n(new_payee_d);
                 mmWebApp::MMEX_WebApp_UpdatePayee();
-                payee_id = new_payee_d.PAYEEID;
+                payee_id = new_payee_d.m_id;
             }
             else
                 return;
@@ -650,7 +649,7 @@ void TrxUpdateDialog::OnComboKey(wxKeyEvent& event)
                 int64 payee_id = dlg.getPayeeId();
                 const PayeeData* payee_n = PayeeModel::instance().get_data_n(payee_id);
                 if (payee_n) {
-                    cbPayee_->ChangeValue(payee_n->PAYEENAME);
+                    cbPayee_->ChangeValue(payee_n->m_name);
                     cbPayee_->SelectAll();
                 }
                 return;

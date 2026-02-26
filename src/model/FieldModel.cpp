@@ -32,7 +32,7 @@ mmChoiceNameA FieldModel::TYPE_CHOICES = mmChoiceNameA({
     { TYPE_ID_TIME,         _n("Time") },
     { TYPE_ID_SINGLECHOICE, _n("SingleChoice") },
     { TYPE_ID_MULTICHOICE,  _n("MultiChoice") }
-});
+}, -1, true);
 
 FieldModel::FieldModel() :
     TableFactory<FieldTable, FieldData>()

@@ -79,7 +79,7 @@ public:
     static const wxString REFTYPE_NAME_TRANSACTIONSPLIT;
     static const wxString REFTYPE_NAME_BILLSDEPOSITSPLIT;
     static const wxString reftype_name(int id);
-    static int reftype_id(const wxString& name, int default_id = -1);
+    static int reftype_id(const wxString& name);
 
 public:
     ModelBase() {};
@@ -88,10 +88,9 @@ public:
 
 inline const wxString ModelBase::reftype_name(int id)
 {
-    return REFTYPE_CHOICES.getName(id);
+    return REFTYPE_CHOICES.get_name(id);
 }
-
-inline int ModelBase::reftype_id(const wxString& name, int default_id)
+inline int ModelBase::reftype_id(const wxString& name)
 {
-    return REFTYPE_CHOICES.findName(name, default_id);
+    return REFTYPE_CHOICES.find_name_n(name);
 }

@@ -71,7 +71,7 @@ private:
 
 public:
     static const wxString period_name(int id);
-    static int period_id(const wxString& name, int default_id = PERIOD_ID_NONE);
+    static int period_id(const wxString& name);
     static PERIOD_ID period_id(const Data* r);
     static PERIOD_ID period_id(const Data& r);
 
@@ -93,19 +93,16 @@ public:
 
 inline const wxString BudgetModel::period_name(int id)
 {
-    return PERIOD_CHOICES.getName(id);
+    return PERIOD_CHOICES.get_name(id);
 }
-
-inline int BudgetModel::period_id(const wxString& name, int default_id)
+inline int BudgetModel::period_id(const wxString& name)
 {
-    return PERIOD_CHOICES.findName(name, default_id);
+    return PERIOD_CHOICES.find_name_n(name);
 }
-
 inline BudgetModel::PERIOD_ID BudgetModel::period_id(const Data* r)
 {
     return static_cast<PERIOD_ID>(period_id(r->PERIOD));
 }
-
 inline BudgetModel::PERIOD_ID BudgetModel::period_id(const Data& r)
 {
     return period_id(&r);

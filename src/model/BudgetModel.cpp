@@ -37,7 +37,7 @@ mmChoiceNameA BudgetModel::PERIOD_CHOICES = mmChoiceNameA({
     { PERIOD_ID_HALFYEARLY, _n("Half-Yearly") },
     { PERIOD_ID_YEARLY,     _n("Yearly") },
     { PERIOD_ID_DAILY,      _n("Daily") }
-});
+}, PERIOD_ID_NONE, true);
 
 BudgetModel::BudgetModel() :
     TableFactory<BudgetTable, BudgetData>()

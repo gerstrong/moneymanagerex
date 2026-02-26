@@ -107,7 +107,7 @@ public:
     static NavigatorTypes::TYPE_ID type_id(const Data& account);
 
     static const wxString status_name(int id);
-    static int status_id(const wxString& name, int default_id = STATUS_ID_CLOSED);
+    static int status_id(const wxString& name);
     static STATUS_ID status_id(const Data* account);
     static STATUS_ID status_id(const Data& account);
     static AccountCol::STATUS STATUS(OP op, STATUS_ID status);
@@ -148,22 +148,19 @@ inline NavigatorTypes::TYPE_ID AccountModel::type_id(const Data& account)
 
 inline const wxString AccountModel::status_name(int id)
 {
-    return STATUS_CHOICES.getName(id);
+    return STATUS_CHOICES.get_name(id);
 }
-
-inline int AccountModel::status_id(const wxString& name, int default_id)
+inline int AccountModel::status_id(const wxString& name)
 {
-    return STATUS_CHOICES.findName(name, default_id);
+    return STATUS_CHOICES.find_name_n(name);
 }
-
 inline AccountModel::STATUS_ID AccountModel::status_id(const Data* account)
 {
     return static_cast<STATUS_ID>(status_id(account->STATUS));
 }
-
 inline AccountModel::STATUS_ID AccountModel::status_id(const Data& account)
 {
-    return status_id(&account);
+    return static_cast<STATUS_ID>(status_id(account.STATUS));
 }
 
 inline bool AccountModel::is_positive(int value)

@@ -1,6 +1,6 @@
 /*******************************************************
- Copyright (C) 2025 George Ef (george.a.ef@gmail.com)
- Copyright (C) 2025 Klaus Wich
+ Copyright (C) 2025-2026 George Ef (george.a.ef@gmail.com)
+ Copyright (C) 2025      Klaus Wich
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -24,39 +24,57 @@
 
 class mmChoiceNameA {
 public:
-    struct Item {
-        int id;
-        wxString name;
-        Item(int i, wxString n) : id(i), name(n) {}
-    };
+    struct Choice { int id; wxString name; };
 
 private:
-    const std::vector<Item> array;
-    const bool nocase;
-    std::unordered_map<wxString, int> name_id; // cache for findName()
+    const std::vector<Choice> m_choice_a;
+    const int m_default_id_n;                    // -1 or 0 .. m_choice_a.size()-1
+    const bool m_nocase;                         // collate nocase
+    std::unordered_map<wxString, int> m_index_m; // name -> id_n
 
 public:
-    mmChoiceNameA(const std::vector<Item>& array_, bool nocase_ = true);
-    ~mmChoiceNameA();
+    mmChoiceNameA(
+        const std::vector<Choice>& choice_a,
+        int default_id_n = -1,
+        bool nocase = true
+    ) :
+        m_choice_a(choice_a),
+        m_default_id_n(default_id_n),
+        m_nocase(nocase)
+    {}
+    ~mmChoiceNameA() {}
 
-    const wxString getName(int id) const;
-    int findName(const wxString& name, int default_id);
+    int default_id_n() const { return m_default_id_n; }
+    int valid_id_n(int id_n) const;
+    const wxString get_name(int id) const;
+    int find_name_n(const wxString& name);
 };
 
 class mmChoiceKeyNameA {
 public:
-    struct Item { int id; wxString key; wxString name; };
+    struct Choice { int id; wxString key; wxString name; };
 
 private:
-    const std::vector<Item> array;
-    const bool nocase;
-    std::unordered_map<wxString, int> keyOrName_id;  // cache for findKeyName()
+    const std::vector<Choice> m_choice_a;
+    const int m_default_id_n;                    // -1 or 0 .. m_choice_a.size()-1
+    const bool m_nocase;                         // collate nocase (for both key and name)
+    std::unordered_map<wxString, int> m_index_m; // key or name -> id
 
 public:
-    mmChoiceKeyNameA(const std::vector<Item>& array_, bool nocase_ = true);
-    ~mmChoiceKeyNameA();
+    mmChoiceKeyNameA(
+        const std::vector<Choice>& choice_a,
+        int default_id_n = -1,
+        bool nocase = true
+    ) :
+        m_choice_a(choice_a),
+        m_default_id_n(default_id_n),
+        m_nocase(nocase)
+    {}
+    ~mmChoiceKeyNameA() {}
 
-    const wxString getKey(int id) const;
-    const wxString getName(int id) const;
-    int findKeyName(const wxString& keyOrName, int default_id);
+    int default_id_n() const { return m_default_id_n; }
+    int valid_id_n(int id_n) const;
+    const wxString get_key(int id) const;
+    const wxString get_name(int id) const;
+    int find_keyname_n(const wxString& keyname);
 };

@@ -39,7 +39,7 @@ static wxString s_use_locale;
 mmChoiceNameA CurrencyModel::TYPE_CHOICES = mmChoiceNameA({
     { TYPE_ID_FIAT,   _n("Fiat") },
     { TYPE_ID_CRYPTO, _n("Crypto") }
-});
+}, TYPE_ID_FIAT, true);
 
 const wxString CurrencyModel::TYPE_NAME_FIAT   = type_name(TYPE_ID_FIAT);
 const wxString CurrencyModel::TYPE_NAME_CRYPTO = type_name(TYPE_ID_CRYPTO);

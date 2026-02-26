@@ -107,7 +107,7 @@ public:
     // of the form: *Col::ColumnName(op, value) or *Col::ColumnName(value).
     // The conditions are combined with AND or OR, if op_and is true or false, resp.
     // Example:
-    //   true, AssetCol::ASSETID(2), AssetCol::ASSETTYPE(AssetModel::TYPE_ID_JEWELLERY)
+    //   true, AssetCol::ASSETID(2), AssetCol::ASSETTYPE(AssetType::e_jewellery)
     //   produces the SQL statement condition: ASSETID = 2 AND ASSETTYPE = "Jewellery"
     // Return an empty array if no records are found.
     // 

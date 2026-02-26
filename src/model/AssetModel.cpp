@@ -21,31 +21,21 @@
 #include "TrxLinkModel.h"
 #include "CurrencyHistoryModel.h"
 
-mmChoiceNameA AssetModel::TYPE_CHOICES = mmChoiceNameA({
-    { TYPE_ID_PROPERTY,  _n("Property") },
-    { TYPE_ID_AUTO,      _n("Automobile") },
-    { TYPE_ID_HOUSE,     _n("Household Object") },
-    { TYPE_ID_ART,       _n("Art") },
-    { TYPE_ID_JEWELLERY, _n("Jewellery") },
-    { TYPE_ID_CASH,      _n("Cash") },
-    { TYPE_ID_OTHER,     _n("Other") }
-});
-
 mmChoiceNameA AssetModel::STATUS_CHOICES = mmChoiceNameA({
     { STATUS_ID_CLOSED, _n("Closed") },
     { STATUS_ID_OPEN,   _n("Open") }
-});
+}, -1, true);
 
 mmChoiceNameA AssetModel::CHANGE_CHOICES = mmChoiceNameA({
     { CHANGE_ID_NONE,       _n("None") },
     { CHANGE_ID_APPRECIATE, _n("Appreciates") },
     { CHANGE_ID_DEPRECIATE, _n("Depreciates") }
-});
+}, -1, true);
 
 mmChoiceNameA AssetModel::CHANGEMODE_CHOICES = mmChoiceNameA({
     { CHANGEMODE_ID_PERCENTAGE, _n("Percentage") },
     { CHANGEMODE_ID_LINEAR,     _n("Linear") }
-});
+}, -1, true);
 
 AssetModel::AssetModel() :
     TableFactory<AssetTable, AssetData>()
@@ -95,9 +85,9 @@ double AssetModel::balance()
     return balance;
 }
 
-AssetCol::ASSETTYPE AssetModel::ASSETTYPE(OP op, TYPE_ID type)
+AssetCol::ASSETTYPE AssetModel::ASSETTYPE(OP op, AssetType type)
 {
-    return AssetCol::ASSETTYPE(op, type_name(type));
+    return AssetCol::ASSETTYPE(op, type.name());
 }
 
 AssetCol::STARTDATE AssetModel::STARTDATE(OP op, const wxDate& date)

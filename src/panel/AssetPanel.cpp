@@ -156,7 +156,7 @@ void AssetList::OnListItemSelected(wxListEvent& event)
 
 int AssetList::OnGetItemImage(long item) const
 {
-    return AssetModel::type_id(m_panel->m_assets[item]);
+    return AssetType(m_panel->m_assets[item].ASSETTYPE).id();
 }
 
 void AssetList::OnListKeyDown(wxListEvent& event)
@@ -360,22 +360,25 @@ BEGIN_EVENT_TABLE(AssetPanel, wxPanel)
     EVT_SEARCHCTRL_SEARCH_BTN(wxID_FIND, AssetPanel::OnSearchTxtEntered)
 END_EVENT_TABLE()
 
-AssetPanel::AssetPanel(mmGUIFrame* frame, wxWindow *parent, wxWindowID winid, const wxString& name)
-    : m_frame(frame)
-    , m_filter_type(AssetModel::TYPE_ID(-1))
-    , tips_()
+AssetPanel::AssetPanel(
+    mmGUIFrame* frame, wxWindow *parent, wxWindowID winid, const wxString& name
+) :
+    m_frame(frame),
+    m_filter_type(-1),
+    tips_()
 {
     Create(parent, winid, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL, name);
     mmThemeAutoColour(this);
 }
 
-bool AssetPanel::Create(wxWindow *parent
-    , wxWindowID winid
-    , const wxPoint &pos
-    , const wxSize &size
-    , long style
-    , const wxString &name)
-{
+bool AssetPanel::Create(
+    wxWindow *parent,
+    wxWindowID winid,
+    const wxPoint &pos,
+    const wxSize &size,
+    long style,
+    const wxString &name
+) {
     SetExtraStyle(GetExtraStyle() | wxWS_EX_BLOCK_EVENTS);
 
     if (!wxPanel::Create(parent, winid, pos, size, style, name)) return false;
@@ -564,11 +567,10 @@ int AssetPanel::initVirtualListControl(int64 id)
     /* Clear all the records */
     m_lc->DeleteAllItems();
 
-    if (this->m_filter_type == AssetModel::TYPE_ID(-1)) // ALL
-        this->m_assets = AssetModel::instance().find_all();
-    else
-        this->m_assets = AssetModel::instance().find(
-            AssetModel::ASSETTYPE(OP_EQ, m_filter_type)
+    m_assets = (m_filter_type == -1)
+        ? AssetModel::instance().find_all()
+        : AssetModel::instance().find(
+            AssetModel::ASSETTYPE(OP_EQ, AssetType(m_filter_type))
         );
     this->sortList();
 
@@ -703,8 +705,8 @@ void AssetPanel::OnMouseLeftDown (wxCommandEvent& event)
     wxMenu menu;
     menu.Append(++i, _t("All"));
 
-    for (int typeId = 0; typeId < AssetModel::TYPE_ID_size; ++typeId) {
-        wxString type = AssetModel::type_name(typeId);
+    for (int typeId = 0; typeId < AssetType::size; ++typeId) {
+        wxString type = AssetType(typeId).name();
         menu.Append(++i, wxGetTranslation(type));
     }
     PopupMenu(&menu);
@@ -715,18 +717,15 @@ void AssetPanel::OnMouseLeftDown (wxCommandEvent& event)
 void AssetPanel::OnViewPopupSelected(wxCommandEvent& event)
 {
     int evt = std::max(event.GetId() - 1, 0);
+    m_filter_type = evt - 1;
 
-    if (evt == 0)
-    {
+    if (m_filter_type == -1) {
         m_bitmapTransFilter->SetLabel(_t("All"));
         m_bitmapTransFilter->SetBitmap(mmBitmapBundle(png::TRANSFILTER, mmBitmapButtonSize));
-        this->m_filter_type = AssetModel::TYPE_ID(-1);
     }
-    else
-    {
-        this->m_filter_type = AssetModel::TYPE_ID(evt - 1);
+    else {
         m_bitmapTransFilter->SetBitmap(mmBitmapBundle(png::TRANSFILTER_ACTIVE, mmBitmapButtonSize));
-        m_bitmapTransFilter->SetLabel(wxGetTranslation(AssetModel::type_name(evt - 1)));
+        m_bitmapTransFilter->SetLabel(wxGetTranslation(AssetType(m_filter_type).name()));
     }
 
     int64 trx_id = -1;

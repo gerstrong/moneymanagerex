@@ -89,7 +89,7 @@ protected:
 
 public:
     TrxFilter m_filter;
-    static const char * m_template;
+    static const char* m_template;
 
 public:
     ReportBase(const wxString& title);

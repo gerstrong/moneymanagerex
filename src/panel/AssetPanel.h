@@ -125,7 +125,7 @@ public:
     wxString getItem(long item, int col_id);
 
     AssetModel::DataA m_assets;
-    AssetModel::TYPE_ID m_filter_type;
+    int m_filter_type; // -1 (All), AssetType
 
     wxString BuildPage() const { return m_lc->BuildPage(_t("Assets")); }
 

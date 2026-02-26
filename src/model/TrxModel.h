@@ -152,18 +152,21 @@ public:
     // Data properties (do not require access to Model)
     // TODO: move to TrxData
     static void copy_from_trx(Data* this_n, const Data& other_d);
-    static int type_id(const wxString& name, int default_id = TYPE_ID_WITHDRAWAL);
+
+    static int type_id(const wxString& name);
     static TYPE_ID type_id(const Data& this_d);
     static bool is_transfer(const wxString& r);
     static bool is_transfer(const Data& this_d);
     static bool is_deposit(const wxString& r);
     static bool is_deposit(const Data& this_d);
+
     static const wxString status_key(int id);
     static const wxString status_key(const wxString& keyOrName);
     static const wxString status_name(int id);
     static const wxString status_name(const wxString& keyOrName);
-    static int status_id(const wxString& keyOrName, int default_id = STATUS_ID_NONE);
+    static int status_id(const wxString& keyOrName);
     static STATUS_ID status_id(const Data& this_d);
+
     static wxDateTime getTransDateTime(const Data& this_d);
     static double account_flow(const Data& this_d, int64 account_id);
     static double account_outflow(const Data& this_d, int64 account_id);
@@ -296,19 +299,16 @@ public:
 
 inline const wxString TrxModel::type_name(int id)
 {
-    return TYPE_CHOICES.getName(id);
+    return TYPE_CHOICES.get_name(id);
 }
-
 inline const wxString TrxModel::trade_type_name(int id)
 {
-    return TRADE_TYPE_CHOICES.getName(id);
+    return TRADE_TYPE_CHOICES.get_name(id);
 }
-
-inline int TrxModel::type_id(const wxString& name, int default_id)
+inline int TrxModel::type_id(const wxString& name)
 {
-    return TYPE_CHOICES.findName(name, default_id);
+    return TYPE_CHOICES.find_name_n(name);
 }
-
 inline TrxModel::TYPE_ID TrxModel::type_id(const Data& trx_d)
 {
     return static_cast<TYPE_ID>(type_id(trx_d.TRANSCODE));
@@ -316,29 +316,24 @@ inline TrxModel::TYPE_ID TrxModel::type_id(const Data& trx_d)
 
 inline const wxString TrxModel::status_key(int id)
 {
-    return STATUS_CHOICES.getKey(id);
+    return STATUS_CHOICES.get_key(id);
 }
-
 inline const wxString TrxModel::status_key(const wxString& keyOrName)
 {
     return status_key(status_id(keyOrName));
 }
-
 inline const wxString TrxModel::status_name(int id)
 {
-    return STATUS_CHOICES.getName(id);
+    return STATUS_CHOICES.get_name(id);
 }
-
 inline const wxString TrxModel::status_name(const wxString& keyOrName)
 {
     return status_name(status_id(keyOrName));
 }
-
-inline int TrxModel::status_id(const wxString& keyOrName, int default_id)
+inline int TrxModel::status_id(const wxString& keyOrName)
 {
-    return STATUS_CHOICES.findKeyName(keyOrName, default_id);
+    return STATUS_CHOICES.find_keyname_n(keyOrName);
 }
-
 inline TrxModel::STATUS_ID TrxModel::status_id(const Data& trx_d)
 {
     return static_cast<STATUS_ID>(status_id(trx_d.STATUS));

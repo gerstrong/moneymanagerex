@@ -29,7 +29,7 @@
 mmChoiceNameA AccountModel::STATUS_CHOICES = mmChoiceNameA({
     { STATUS_ID_OPEN,   _n("Open") },
     { STATUS_ID_CLOSED, _n("Closed") }
-});
+}, STATUS_ID_CLOSED, true);
 
 const wxString AccountModel::STATUS_NAME_OPEN   = status_name(STATUS_ID_OPEN);
 const wxString AccountModel::STATUS_NAME_CLOSED = status_name(STATUS_ID_CLOSED);

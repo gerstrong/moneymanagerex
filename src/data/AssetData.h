@@ -16,40 +16,53 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  ********************************************************/
 
-// PLEASE EDIT!
-//
-// This is only sample code re-used from "table/AssetTable.h".
-//
-// The data structure can be refined by:
-// * using more user-frielndly filed name
-// * using stronger field types
-// * adding enumerations for fields with limited choices
-// * demultiplexing composite values in database columns
-//
-// See also an implementation in Swift:
-//   https://github.com/moneymanagerex/mmex-ios/tree/master/MMEX/Data
-// and an implementation in Java:
-//   https://github.com/moneymanagerex/android-money-manager-ex/tree/master/app/src/main/java/com/money/manager/ex/domainmodel
-
 #pragma once
 
 #include "table/_TableBase.h"
 #include "table/AssetTable.h"
+#include "util/mmChoiceNameA.h"
+
+struct AssetType
+{
+public:
+    enum
+    {
+        e_property = 0,
+        e_automobile,
+        e_household,
+        e_art,
+        e_jewellery,
+        e_cash,
+        e_other,
+        size
+    };
+    static mmChoiceNameA s_choice_a;
+
+private:
+    int m_id;
+
+public:
+    AssetType(int id = s_choice_a.default_id_n()) : m_id(s_choice_a.valid_id_n(id)) {}
+    AssetType(const wxString& name) : m_id(AssetType::s_choice_a.find_name_n(name)) {}
+
+    int id() const { return m_id; }
+    const wxString name() const { return AssetType::s_choice_a.get_name(m_id); }
+};
 
 // User-friendly representation of a record in table ASSETS_V1.
 struct AssetData
 {
-    int64 ASSETID; // primary key
-    wxString STARTDATE;
-    wxString ASSETNAME;
-    wxString ASSETSTATUS;
-    int64 CURRENCYID;
-    wxString VALUECHANGEMODE;
-    double VALUE;
-    wxString VALUECHANGE;
-    wxString NOTES;
-    double VALUECHANGERATE;
+    int64    ASSETID;
     wxString ASSETTYPE;
+    wxString ASSETSTATUS;
+    wxString ASSETNAME;
+    wxString STARTDATE;
+    int64    CURRENCYID;
+    double   VALUE;
+    wxString VALUECHANGE;
+    wxString VALUECHANGEMODE;
+    double   VALUECHANGERATE;
+    wxString NOTES;
 
     explicit AssetData();
     explicit AssetData(wxSQLite3ResultSet& q);

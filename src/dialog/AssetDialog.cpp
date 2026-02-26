@@ -115,7 +115,7 @@ void AssetDialog::dataToControls()
     if (AccountModel::instance().get_key(m_asset_n->ASSETNAME))
         w_assetName->Enable(false);
     w_dpc->SetValue(AssetModel::STARTDATE(*m_asset_n));
-    w_assetType->SetSelection(AssetModel::type_id(*m_asset_n));
+    w_assetType->SetSelection(AssetType(m_asset_n->ASSETTYPE).id());
     if (AccountModel::instance().get_key(m_asset_n->ASSETTYPE))
         w_assetType->Enable(false);
 
@@ -206,13 +206,13 @@ void AssetDialog::CreateControls()
     itemFlexGridSizer6->Add(new wxStaticText(asset_details_panel, wxID_STATIC, _t("Asset Type")), g_flagsH);
 
     w_assetType = new wxChoice(asset_details_panel, wxID_STATIC);
-    for (int i = 0; i < AssetModel::TYPE_ID_size; ++i) {
-        wxString type = AssetModel::type_name(i);
+    for (int i = 0; i < AssetType::size; ++i) {
+        wxString type = AssetType(i).name();
         w_assetType->Append(wxGetTranslation(type), new wxStringClientData(type));
     }
 
     mmToolTip(w_assetType, _t("Select type of asset"));
-    w_assetType->SetSelection(AssetModel::TYPE_ID_PROPERTY);
+    w_assetType->SetSelection(AssetType().id());
     itemFlexGridSizer6->Add(w_assetType, g_flagsExpand);
 
     wxStaticText* v = new wxStaticText(asset_details_panel, wxID_STATIC, _t("Initial Value"));

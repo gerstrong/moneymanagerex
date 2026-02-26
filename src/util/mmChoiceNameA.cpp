@@ -1,5 +1,5 @@
 /*******************************************************
- Copyright (C) 2025 George Ef (george.a.ef@gmail.com)
+ Copyright (C) 2025-2026 George Ef (george.a.ef@gmail.com)
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -18,76 +18,83 @@
 
 #include "mmChoiceNameA.h"
 
-mmChoiceNameA::mmChoiceNameA(const std::vector<Item>& array_, bool nocase_) :
-    array(array_),
-    nocase(nocase_)
+// -- mmChoiceNameA --
+
+int mmChoiceNameA::valid_id_n(int id_n) const
 {
+    wxASSERT(
+        (id_n >= 0 && id_n < static_cast<int>(m_choice_a.size())) ||
+        id_n == m_default_id_n
+    );
+    return id_n;
 }
 
-mmChoiceNameA::~mmChoiceNameA()
+const wxString mmChoiceNameA::get_name(int id) const
 {
+    wxASSERT(id >= 0 && id < static_cast<int>(m_choice_a.size()));
+    wxASSERT(m_choice_a[id].id == id);
+    return m_choice_a[id].name;
 }
 
-const wxString mmChoiceNameA::getName(int id) const
+int mmChoiceNameA::find_name_n(const wxString& name)
 {
-    wxASSERT(id >= 0 && id < static_cast<int>(array.size()));
-    wxASSERT(array[id].id == id);
-    return array[id].name;
-}
-
-int mmChoiceNameA::findName(const wxString& name, int default_id)
-{
-    if (const auto it = name_id.find(name); it != name_id.end())
+    if (const auto it = m_index_m.find(name); it != m_index_m.end())
         return it->second;
 
-    int id = default_id;
-    for (const Item& item : array) {
-        bool match = nocase ? (name.CmpNoCase(item.name) == 0) : (name == item.name);
-        if (match) { id = item.id; break; }
+    int id_n = m_default_id_n;
+    for (const Choice& choice : m_choice_a) {
+        bool match = m_nocase
+            ? (name.CmpNoCase(choice.name) == 0)
+            : (name == choice.name);
+        if (match) {
+            id_n = choice.id;
+            break;
+        }
     }
-    name_id.insert({name, id});
-    return id;
+    m_index_m.insert({name, id_n});
+    return id_n;
 }
 
-//----------------------------------------------------------------------------
+// -- mmChoiceKeyNameA --
 
-mmChoiceKeyNameA::mmChoiceKeyNameA(const std::vector<Item>& array_, bool nocase_) :
-    array(array_),
-    nocase(nocase_)
+int mmChoiceKeyNameA::valid_id_n(int id_n) const
 {
+    wxASSERT(
+        (id_n >= 0 && id_n < static_cast<int>(m_choice_a.size())) ||
+        id_n == m_default_id_n
+    );
+    return id_n;
 }
 
-mmChoiceKeyNameA::~mmChoiceKeyNameA()
+const wxString mmChoiceKeyNameA::get_key(int id) const
 {
+    wxASSERT(id >= 0 && id < static_cast<int>(m_choice_a.size()));
+    wxASSERT(m_choice_a[id].id == id);
+    return m_choice_a[id].key;
 }
 
-const wxString mmChoiceKeyNameA::getKey(int id) const
+const wxString mmChoiceKeyNameA::get_name(int id) const
 {
-    wxASSERT(id >= 0 && id < static_cast<int>(array.size()));
-    wxASSERT(array[id].id == id);
-    return array[id].key;
+    wxASSERT(id >= 0 && id < static_cast<int>(m_choice_a.size()));
+    wxASSERT(m_choice_a[id].id == id);
+    return m_choice_a[id].name;
 }
 
-const wxString mmChoiceKeyNameA::getName(int id) const
+int mmChoiceKeyNameA::find_keyname_n(const wxString& keyname)
 {
-    wxASSERT(id >= 0 && id < static_cast<int>(array.size()));
-    wxASSERT(array[id].id == id);
-    return array[id].name;
-}
-
-int mmChoiceKeyNameA::findKeyName(const wxString& keyOrName, int default_id)
-{
-    if (const auto it = keyOrName_id.find(keyOrName); it != keyOrName_id.end())
+    if (const auto it = m_index_m.find(keyname); it != m_index_m.end())
         return it->second;
 
-    int id = default_id;
-    for (const Item& item : array) {
-        bool match = nocase ?
-            (keyOrName.CmpNoCase(item.key) == 0 || keyOrName.CmpNoCase(item.name) == 0) :
-            (keyOrName == item.key || keyOrName == item.name);
-        if (match) { id = item.id; break; }
+    int id_n = m_default_id_n;
+    for (const Choice& choice : m_choice_a) {
+        bool match = m_nocase
+            ? (keyname.CmpNoCase(choice.key) == 0 || keyname.CmpNoCase(choice.name) == 0)
+            : (keyname == choice.key || keyname == choice.name);
+        if (match) {
+            id_n = choice.id;
+            break;
+        }
     }
-    keyOrName_id.insert({keyOrName, id});
-    return id;
+    m_index_m.insert({keyname, id_n});
+    return id_n;
 }
-

@@ -20,7 +20,6 @@
 
 #include "base/defs.h"
 #include "base/images_list.h"
-#include "util/mmChoiceNameA.h"
 #include "mmframe.h"
 
 class ToolBarEntries

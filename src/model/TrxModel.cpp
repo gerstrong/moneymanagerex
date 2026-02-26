@@ -36,13 +36,13 @@ mmChoiceNameA TrxModel::TYPE_CHOICES = mmChoiceNameA({
     { TYPE_ID_WITHDRAWAL, _n("Withdrawal") },
     { TYPE_ID_DEPOSIT,    _n("Deposit") },
     { TYPE_ID_TRANSFER,   _n("Transfer") }
-});
+}, TYPE_ID_WITHDRAWAL, true);
 
 mmChoiceNameA TrxModel::TRADE_TYPE_CHOICES = mmChoiceNameA({
     { TYPE_ID_WITHDRAWAL, _n("Buy") },
     { TYPE_ID_DEPOSIT,    _n("Sell") },
     { TYPE_ID_TRANSFER,   _n("Revalue") }
-});
+}, TYPE_ID_WITHDRAWAL, true);
 
 mmChoiceKeyNameA TrxModel::STATUS_CHOICES = mmChoiceKeyNameA({
     { STATUS_ID_NONE,       "",  _n("Unreconciled") },
@@ -50,7 +50,7 @@ mmChoiceKeyNameA TrxModel::STATUS_CHOICES = mmChoiceKeyNameA({
     { STATUS_ID_VOID,       "V", _n("Void") },
     { STATUS_ID_FOLLOWUP,   "F", _n("Follow Up") },
     { STATUS_ID_DUPLICATE,  "D", _n("Duplicate") }
-});
+}, STATUS_ID_NONE, true);
 
 const wxString TrxModel::TYPE_NAME_WITHDRAWAL = type_name(TYPE_ID_WITHDRAWAL);
 const wxString TrxModel::TYPE_NAME_DEPOSIT    = type_name(TYPE_ID_DEPOSIT);

@@ -66,7 +66,7 @@ private:
 
 public:
     static const wxString type_name(int id);
-    static int type_id(const wxString& name, int default_id = TYPE_ID_FIAT);
+    static int type_id(const wxString& name);
     static TYPE_ID type_id(const Data* r);
     static TYPE_ID type_id(const Data& r);
 
@@ -112,19 +112,16 @@ public:
 
 inline const wxString CurrencyModel::type_name(int id)
 {
-    return TYPE_CHOICES.getName(id);
+    return TYPE_CHOICES.get_name(id);
 }
-
-inline int CurrencyModel::type_id(const wxString& name, int default_id)
+inline int CurrencyModel::type_id(const wxString& name)
 {
-    return TYPE_CHOICES.findName(name, default_id);
+    return TYPE_CHOICES.find_name_n(name);
 }
-
 inline CurrencyModel::TYPE_ID CurrencyModel::type_id(const Data* r)
 {
     return static_cast<TYPE_ID>(type_id(r->CURRENCY_TYPE));
 }
-
 inline CurrencyModel::TYPE_ID CurrencyModel::type_id(const Data& r)
 {
     return type_id(&r);

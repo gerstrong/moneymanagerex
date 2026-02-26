@@ -481,8 +481,8 @@ void TrxModel::Full_Data::fill_data()
 
     if (!m_tags.empty()) {
         wxArrayString tagnames;
-        for (const auto& entry : m_tags)
-            tagnames.Add(TagModel::instance().get_data_n(entry.TAGID)->TAGNAME);
+        for (const auto& gl_d : m_tags)
+            tagnames.Add(TagModel::instance().get_data_n(gl_d.TAGID)->m_name);
         // Sort TAGNAMES
         tagnames.Sort(CaseInsensitiveCmp);
         for (const auto& name : tagnames)

@@ -93,8 +93,8 @@ void MergeTagDialog::CreateControls()
         , wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL);
 
     choices_.Clear();
-    for (const auto& tag : TagModel::instance().find_all())
-        choices_.Add(tag.TAGNAME);
+    for (const auto& tag_d : TagModel::instance().find_all())
+        choices_.Add(tag_d.m_name);
     cbSourceTag_ = new wxComboBox(this, wxID_REPLACE, "", wxDefaultPosition, wxDefaultSize, choices_);
     cbSourceTag_->SetMinSize(wxSize(200, -1));
 
@@ -189,10 +189,13 @@ void MergeTagDialog::OnOk(wxCommandEvent& WXUNUSED(event))
 void MergeTagDialog::IsOkOk()
 {
     bool e = true;
-    const TagData* source = TagModel::instance().get_key(cbSourceTag_->GetValue());
-    const TagData* dest = TagModel::instance().get_key(cbDestTag_->GetValue());
-    if (dest) destTagID_ = dest->TAGID;
-    if (source) sourceTagID_ = source->TAGID;
+    const TagData* src_tag_n = TagModel::instance().get_key(cbSourceTag_->GetValue());
+    const TagData* dst_tag_n = TagModel::instance().get_key(cbDestTag_->GetValue());
+    if (src_tag_n)
+        sourceTagID_ = src_tag_n->m_id;
+    if (dst_tag_n)
+        destTagID_ = dst_tag_n->m_id;
+
     int trxs_size = (sourceTagID_ < 0) ? 0 : TagLinkModel::instance().find(
         TagLinkCol::REFTYPE(TrxModel::refTypeName),
         TagLinkCol::TAGID(sourceTagID_)

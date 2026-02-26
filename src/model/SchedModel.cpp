@@ -367,27 +367,26 @@ SchedModel::Full_Data::Full_Data(const Data& r) :
     m_bill_splits(split(r)),
     m_tags(TagLinkModel::instance().find(
         TagLinkCol::REFTYPE(SchedModel::refTypeName),
-        TagLinkCol::REFID(r.BDID)))
+        TagLinkCol::REFID(r.BDID)
+    ))
 {
     if (!m_tags.empty()) {
         wxArrayString tagnames;
-        for (const auto& entry : m_tags)
-            tagnames.Add(TagModel::instance().get_data_n(entry.TAGID)->TAGNAME);
+        for (const auto& gl_d : m_tags)
+            tagnames.Add(TagModel::instance().get_data_n(gl_d.TAGID)->m_name);
         // Sort TAGNAMES
         tagnames.Sort();
         for (const auto& name : tagnames)
             this->TAGNAMES += (this->TAGNAMES.empty() ? "" : " ") + name;
     }
 
-    if (!m_bill_splits.empty())
-    {
-        for (const auto& entry : m_bill_splits)
-        {
+    if (!m_bill_splits.empty()) {
+        for (const auto& sched_split_d : m_bill_splits) {
             CATEGNAME += (CATEGNAME.empty() ? " + " : ", ")
-                + CategoryModel::full_name(entry.CATEGID);
+                + CategoryModel::full_name(sched_split_d.CATEGID);
 
             wxString splitTags;
-            for (const auto& tag : TagLinkModel::instance().get_ref(SchedSplitModel::refTypeName, entry.SPLITTRANSID))
+            for (const auto& tag : TagLinkModel::instance().get_ref(SchedSplitModel::refTypeName, sched_split_d.SPLITTRANSID))
                 splitTags.Append(tag.first + " ");
             if (!splitTags.IsEmpty())
                 TAGNAMES.Append((TAGNAMES.IsEmpty() ? "" : ", ") + splitTags.Trim());
@@ -399,8 +398,7 @@ SchedModel::Full_Data::Full_Data(const Data& r) :
     ACCOUNTNAME = AccountModel::get_id_name(r.ACCOUNTID);
 
     PAYEENAME = PayeeModel::get_payee_name(r.PAYEEID);
-    if (SchedModel::type_id(r) == TrxModel::TYPE_ID_TRANSFER)
-    {
+    if (SchedModel::type_id(r) == TrxModel::TYPE_ID_TRANSFER) {
         PAYEENAME = AccountModel::get_id_name(r.TOACCOUNTID);
     }
 

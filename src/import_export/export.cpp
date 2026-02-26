@@ -164,7 +164,7 @@ const wxString mmExportTransaction::getTransactionQIF(const TrxModel::Full_Data&
         categ.Append("/");
         auto numTags = full_tran.m_tags.size();
         for (decltype(numTags) i = 0; i < numTags; i++)
-            categ.Append((i > 0 ? ":" : "") + TagModel::instance().get_data_n(full_tran.m_tags[i].TAGID)->TAGNAME);
+            categ.Append((i > 0 ? ":" : "") + TagModel::instance().get_data_n(full_tran.m_tags[i].TAGID)->m_name);
     }
 
     buffer << "D" << mmGetDateTimeForDisplay(full_tran.TRANSDATE, dateMask) << "\n";
@@ -202,7 +202,7 @@ const wxString mmExportTransaction::getTransactionQIF(const TrxModel::Full_Data&
             split_categ.Append("/");
             auto numTags = splitTags.size();
             for (decltype(numTags) i = 0; i < numTags; i++) {
-                split_categ.Append((i > 0 ? ":" : "") + TagModel::instance().get_data_n(splitTags[i].TAGID)->TAGNAME);
+                split_categ.Append((i > 0 ? ":" : "") + TagModel::instance().get_data_n(splitTags[i].TAGID)->m_name);
             }
         }
         buffer << "S" << split_categ << "\n"
@@ -378,9 +378,9 @@ void mmExportTransaction::getTagsJSON(PrettyWriter<StringBuffer>& json_writer, w
         if (tag_n) {
             json_writer.StartObject();
             json_writer.Key("ID");
-            json_writer.Int64(tag_n->TAGID.GetValue());
+            json_writer.Int64(tag_n->m_id.GetValue());
             json_writer.Key("NAME");
-            json_writer.String(tag_n->TAGNAME.utf8_str());
+            json_writer.String(tag_n->m_name.utf8_str());
             json_writer.EndObject();
         }
     }

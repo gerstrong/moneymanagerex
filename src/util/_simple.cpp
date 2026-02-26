@@ -1537,10 +1537,9 @@ void mmTagTextCtrl::init()
     // Initialize the tag map and dropdown checkboxes
     tag_map_.clear();
     tagCheckListBox_->Clear();
-    for (const auto& tag : TagModel::instance().find_all(TagCol::COL_ID_TAGNAME))
-    {
-        tag_map_[tag.TAGNAME] = tag.TAGID;
-        tagCheckListBox_->Append(tag.TAGNAME);
+    for (const auto& tag_d : TagModel::instance().find_all(TagCol::COL_ID_TAGNAME)) {
+        tag_map_[tag_d.m_name] = tag_d.m_id;
+        tagCheckListBox_->Append(tag_d.m_name);
     }
 
     tagCheckListBox_->Fit();
@@ -1560,13 +1559,11 @@ void mmTagTextCtrl::OnTextChanged(wxKeyEvent& event)
         // Show autocomplete
         wxString pattern = textCtrl_->GetText().Mid(tag_start, std::min(ip, anchor) - tag_start).Append(event.GetUnicodeKey());
         autocomplete_string_.Clear();
-        for (const auto& tag : tag_map_)
-        {
-            if (tag.first.Lower().Matches(pattern.Lower().Prepend("*").Append("*")))
-                autocomplete_string_.Append(tag.first + " ");
+        for (const auto& tag_d : tag_map_) {
+            if (tag_d.first.Lower().Matches(pattern.Lower().Prepend("*").Append("*")))
+                autocomplete_string_.Append(tag_d.first + " ");
         }
-        if (!autocomplete_string_.IsEmpty())
-        {
+        if (!autocomplete_string_.IsEmpty()) {
             textCtrl_->AutoCompShow(tag_end - tag_start, autocomplete_string_);
         }
         else
@@ -1582,12 +1579,10 @@ void mmTagTextCtrl::OnPopupCheckboxSelected(wxCommandEvent& event)
     // If they checked a box, append to the string
     if (tagCheckListBox_->IsChecked(event.GetSelection()))
         textCtrl_->SetText(textCtrl_->GetText().Trim() + " " + selectedText +  " ");
-    else
-    {
+    else {
         // If they unchecked a box, remove the tag from the string.
         int pos = 0;
-        while (pos <= textCtrl_->GetLastPosition())
-        {
+        while (pos <= textCtrl_->GetLastPosition()) {
             pos = textCtrl_->FindText(pos, textCtrl_->GetLastPosition(), selectedText);
 
             if (pos == wxNOT_FOUND)
@@ -1595,8 +1590,7 @@ void mmTagTextCtrl::OnPopupCheckboxSelected(wxCommandEvent& event)
 
             pos = textCtrl_->WordStartPosition(pos, true);
             int end = textCtrl_->WordEndPosition(pos, true);
-            if (textCtrl_->GetTextRange(pos, end) == selectedText)
-            {
+            if (textCtrl_->GetTextRange(pos, end) == selectedText) {
                 textCtrl_->Remove(pos, end);
                 break;
             }
@@ -1638,14 +1632,12 @@ bool mmTagTextCtrl::Enable(bool enable)
     textCtrl_->Enable(enable);
     btn_dropdown_->Enable(enable);
 
-    if (enable)
-    {
+    if (enable) {
         textCtrl_->StyleSetBackground(wxSTC_STYLE_DEFAULT, bgColorEnabled_);
         SetBackgroundColour(bgColorEnabled_);
         btn_dropdown_->SetBitmap(dropArrow_);
     }
-    else
-    {
+    else {
         textCtrl_->StyleSetBackground(wxSTC_STYLE_DEFAULT, bgColorDisabled_);
         SetBackgroundColour(bgColorDisabled_);
         btn_dropdown_->SetBitmap(dropArrowInactive_);
@@ -1662,16 +1654,14 @@ void mmTagTextCtrl::OnPaint(wxPaintEvent& event)
     // Reset the text style
     textCtrl_->ClearDocumentStyle();
 
-    while (position < end)
-    {
+    while (position < end) {
         // Find start and end of word
         int wordStart = textCtrl_->WordStartPosition(position, true);
         int wordEnd = textCtrl_->WordEndPosition(position, true);
         wxString word = textCtrl_->GetTextRange(wordStart, wordEnd);
 
         // If the word is a valid tag, color it
-        if (auto it = tag_map_.find(word); it != tag_map_.end())
-        {
+        if (auto it = tag_map_.find(word); it != tag_map_.end()) {
             textCtrl_->StartStyling(wordStart);
             textCtrl_->SetStyling(wordEnd - wordStart, 1);
         }
@@ -1683,8 +1673,7 @@ void mmTagTextCtrl::OnPaint(wxPaintEvent& event)
     // paint a TextCtrl over the background -- not currently used on macOS due to dark mode bug
     wxPaintDC dc(this);
     wxRegion clipRegion(GetClientRect());
-    if (btn_dropdown_->GetClientRect().Contains(btn_dropdown_->ScreenToClient(wxGetMousePosition())))
-    {
+    if (btn_dropdown_->GetClientRect().Contains(btn_dropdown_->ScreenToClient(wxGetMousePosition()))) {
         wxRect btnRect(btn_dropdown_->GetRect());
         btnRect.y = 1;
         btnRect.height -= 2;
@@ -1720,8 +1709,7 @@ void mmTagTextCtrl::OnPaint(wxPaintEvent& event)
 
     dc.DrawLines(5, pt);
 
-    if (!initialRefreshDone_)
-    {
+    if (!initialRefreshDone_) {
         btn_dropdown_->Refresh();
         initialRefreshDone_ = true;
     }
@@ -1746,16 +1734,14 @@ void mmTagTextCtrl::OnPaintButton(wxPaintEvent& )
 
     if(style != wxCONTROL_NONE)
         wxRendererNative::Get().DrawComboBoxDropButton(this, dc, rect, style);
-    else
-    {
+    else {
         // If we aren't interacting with the button, draw the drop arrow
         // directly on the texctrl like the native combobox
         dc.DrawBitmap(btn_dropdown_->IsEnabled() ? dropArrow_ : dropArrowInactive_, wxPoint(0, 0));
     }
 
     // Redraw the top, right, and bottom borders to match the window border
-    if (style != wxCONTROL_CURRENT && style != wxCONTROL_PRESSED)
-    {
+    if (style != wxCONTROL_CURRENT && style != wxCONTROL_PRESSED) {
         dc.SetPen(borderColor_);
         dc.DrawLine(rect.x, 0, rect.x + rect.width, 0);
         dc.DrawLine(rect.x + rect.width - 1, 0, rect.x + rect.width - 1, rect.height);
@@ -1797,11 +1783,10 @@ bool mmTagTextCtrl::ValidateTagText(const wxString& tagText)
                 wxYES_NO
             ).ShowModal() == wxID_YES) {
                 TagData new_tag_d = TagData();
-                new_tag_d.TAGNAME = tag;
-                new_tag_d.ACTIVE  = 1;
+                new_tag_d.m_name = tag;
                 TagModel::instance().add_data_n(new_tag_d);
                 // Save the new tag to reference
-                tag_map_[tag] = new_tag_d.TAGID;
+                tag_map_[tag] = new_tag_d.m_id;
                 tagCheckListBox_->Append(tag);
 
                 // Generate an event to tell the parent that a new tag has been added

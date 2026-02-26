@@ -384,7 +384,7 @@ void TrxFilterDialog::mmDoDataToControls(const wxString& json)
                 // Retrieve TAGNAME from TAGID
                 const TagData* tag_n = TagModel::instance().get_data_n(int64(j_tags[i].GetInt64()));
                 if (tag_n) {
-                    s_tag.Append(tag_n->TAGNAME + " ");
+                    s_tag.Append(tag_n->m_name + " ");
                 }
             }
             else {
@@ -1633,7 +1633,7 @@ const wxString TrxFilterDialog::mmGetDescriptionToolTip() const
                 {
                     if (wxGetTranslation("Tags").IsSameAs(wxString::FromUTF8(itr->name.GetString())))
                     {
-                        value += (value.empty() ? "" : " ") + TagModel::instance().get_data_n(int64(valArray[i].GetInt64()))->TAGNAME;
+                        value += (value.empty() ? "" : " ") + TagModel::instance().get_data_n(int64(valArray[i].GetInt64()))->m_name;
                         // don't add a newline between tag operators
                         if (valArray.Size() > 1 && i < valArray.Size() - 2 && valArray[i + 1].GetType() == kStringType)
                             continue;
@@ -1737,7 +1737,7 @@ void TrxFilterDialog::mmGetDescription(mmHTMLBuilder& hb)
                     // wxLogDebug("%s", wxString::FromUTF8(itr->name.GetString()));
                     if (wxGetTranslation("Tags").IsSameAs(name))
                     {
-                        temp += (temp.empty() ? "" : (appendOperator ? " & " : " ")) + TagModel::instance().get_data_n(int64(a.GetInt64()))->TAGNAME;
+                        temp += (temp.empty() ? "" : (appendOperator ? " & " : " ")) + TagModel::instance().get_data_n(int64(a.GetInt64()))->m_name;
                         appendOperator = true;
                     }
                     else if (wxGetTranslation("Hide Columns").IsSameAs(name) &&
@@ -1925,7 +1925,7 @@ const wxString TrxFilterDialog::mmGetJsonSettings(bool i18n) const
             if (tag == "&" || tag == "|")
                 json_writer.String(tag.utf8_str());
             else
-                json_writer.Int64(TagModel::instance().get_key(tag)->TAGID.GetValue());
+                json_writer.Int64(TagModel::instance().get_key(tag)->m_id.GetValue());
         }
 
         json_writer.EndArray();

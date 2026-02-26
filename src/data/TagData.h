@@ -16,21 +16,6 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  ********************************************************/
 
-// PLEASE EDIT!
-//
-// This is only sample code re-used from "table/TagTable.h".
-//
-// The data structure can be refined by:
-// * using more user-frielndly filed name
-// * using stronger field types
-// * adding enumerations for fields with limited choices
-// * demultiplexing composite values in database columns
-//
-// See also an implementation in Swift:
-//   https://github.com/moneymanagerex/mmex-ios/tree/master/MMEX/Data
-// and an implementation in Java:
-//   https://github.com/moneymanagerex/android-money-manager-ex/tree/master/app/src/main/java/com/money/manager/ex/domainmodel
-
 #pragma once
 
 #include "table/_TableBase.h"
@@ -39,16 +24,16 @@
 // User-friendly representation of a record in table TAG_V1.
 struct TagData
 {
-    int64 TAGID; // primary key
-    wxString TAGNAME;
-    int64 ACTIVE;
+    int64    m_id;
+    wxString m_name;
+    bool     m_active;
 
     explicit TagData();
     explicit TagData(wxSQLite3ResultSet& q);
     TagData(const TagData& other) = default;
 
-    int64 id() const { return TAGID; }
-    void id(const int64 id) { TAGID = id; }
+    int64 id() const { return m_id; }
+    void id(const int64 id) { m_id = id; }
     TagRow to_row() const;
     TagData& from_row(const TagRow& row);
     void to_insert_stmt(wxSQLite3Statement& stmt, int64 id) const;
@@ -69,7 +54,7 @@ struct TagData
     {
         bool operator()(const TagData& x, const TagData& y)
         {
-            return x.TAGID < y.TAGID;
+            return x.m_id < y.m_id;
         }
     };
 
@@ -77,7 +62,7 @@ struct TagData
     {
         bool operator()(const TagData& x, const TagData& y)
         {
-            return x.TAGNAME < y.TAGNAME;
+            return x.m_name < y.m_name;
         }
     };
 
@@ -85,7 +70,7 @@ struct TagData
     {
         bool operator()(const TagData& x, const TagData& y)
         {
-            return x.ACTIVE < y.ACTIVE;
+            return (x.m_active ? 1 : 0) < (y.m_active ? 1 : 0);
         }
     };
 };

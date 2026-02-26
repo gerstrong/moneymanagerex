@@ -2842,14 +2842,13 @@ void mmUnivCSVDialog::parseToken(int index, const wxString& orig_token, tran_hol
             if (!tag_n) {
                 // create a new tag if we didn't find one
                 TagData new_tag_d = TagData();
-                new_tag_d.TAGNAME = tagname;
-                new_tag_d.ACTIVE  = 1;
+                new_tag_d.m_name = tagname;
                 TagModel::instance().save_data_n(new_tag_d);
                 tag_n = TagModel::instance().get_data_n(new_tag_d.id());
             }
             // add the tagID to the transaction if it isn't already there
-            if (std::find(holder.tagIDs.begin(), holder.tagIDs.end(), tag_n->TAGID) == holder.tagIDs.end())
-                holder.tagIDs.push_back(tag_n->TAGID);
+            if (std::find(holder.tagIDs.begin(), holder.tagIDs.end(), tag_n->m_id) == holder.tagIDs.end())
+                holder.tagIDs.push_back(tag_n->m_id);
         }
         break;
     }

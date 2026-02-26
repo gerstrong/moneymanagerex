@@ -72,7 +72,7 @@ std::map<wxString, int64> TagLinkModel::get_ref(const wxString& refType, int64 r
     for (const auto& gl_d : instance().find(
         TagLinkCol::REFTYPE(refType), TagLinkCol::REFID(refId)
     ))
-        tags[TagModel::instance().get_data_n(gl_d.TAGID)->TAGNAME] = gl_d.TAGID;
+        tags[TagModel::instance().get_data_n(gl_d.TAGID)->m_name] = gl_d.TAGID;
 
     return tags;
 }

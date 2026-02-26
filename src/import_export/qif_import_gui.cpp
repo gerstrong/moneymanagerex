@@ -1177,14 +1177,13 @@ void mmQIFImportDialog::OnOk(wxCommandEvent& WXUNUSED(event))
                         const TagData* tag_n = TagModel::instance().get_key(tagname);
                         if (!tag_n) {
                             TagData new_tag_d = TagData();
-                            new_tag_d.TAGNAME = tagname;
-                            new_tag_d.ACTIVE  = 1;
+                            new_tag_d.m_name = tagname;
                             TagModel::instance().add_data_n(new_tag_d);
                             tag_n = TagModel::instance().get_data_n(new_tag_d.id());
                         }
                         TagLinkData gl_d = TagLinkData();
                         gl_d.REFTYPE = reftype;
-                        gl_d.TAGID = tag_n->TAGID;
+                        gl_d.TAGID = tag_n->m_id;
                         // Just cache the new taglink since we don't know the TRANSID yet
                         gl_a.push_back(gl_d);
                     }
@@ -1532,14 +1531,13 @@ bool mmQIFImportDialog::completeTransaction(
                     const TagData* tag_n = TagModel::instance().get_key(tagname);
                     if (!tag_n) {
                         TagData new_tag_d = TagData();
-                        new_tag_d.TAGNAME = tagname;
-                        new_tag_d.ACTIVE  = 1;
+                        new_tag_d.m_name = tagname;
                         TagModel::instance().add_data_n(new_tag_d);
                         tag_n = TagModel::instance().get_data_n(new_tag_d.id());
                     }
                     TagLinkData gl_d = TagLinkData();
                     gl_d.REFTYPE = reftype;
-                    gl_d.TAGID   = tag_n->TAGID;
+                    gl_d.TAGID   = tag_n->m_id;
                     splitTaglinks.push_back(gl_d);
                 }
                 // Here we keep track of which block of splits and which split in the block

@@ -122,4 +122,3 @@ public:
     const wxString name() const { return AssetChangeMode::s_choice_a.get_name(m_id); }
 };
 
-

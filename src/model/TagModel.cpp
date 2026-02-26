@@ -55,9 +55,9 @@ const TagData* TagModel::get_key(const wxString& name)
     if (tag_n)
         return tag_n;
 
-    DataA items = this->find(TagCol::TAGNAME(name));
-    if (!items.empty())
-        tag_n = get_data_n(items[0].TAGID);
+    DataA tag_a = this->find(TagCol::TAGNAME(name));
+    if (!tag_a.empty())
+        tag_n = get_data_n(tag_a[0].m_id);
     return tag_n;
 }
 

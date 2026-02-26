@@ -39,16 +39,16 @@
 // User-friendly representation of a record in table USAGE_V1.
 struct UsageData
 {
-    int64 USAGEID; // primary key
-    wxString USAGEDATE;
-    wxString JSONCONTENT;
+    int64 m_id; // primary key
+    wxString m_date;
+    wxString m_json;
 
     explicit UsageData();
     explicit UsageData(wxSQLite3ResultSet& q);
     UsageData(const UsageData& other) = default;
 
-    int64 id() const { return USAGEID; }
-    void id(const int64 id) { USAGEID = id; }
+    int64 id() const { return m_id; }
+    void id(const int64 id) { m_id = id; }
     UsageRow to_row() const;
     UsageData& from_row(const UsageRow& row);
     void to_insert_stmt(wxSQLite3Statement& stmt, int64 id) const;
@@ -69,7 +69,7 @@ struct UsageData
     {
         bool operator()(const UsageData& x, const UsageData& y)
         {
-            return x.USAGEID < y.USAGEID;
+            return x.m_id < y.m_id;
         }
     };
 
@@ -77,7 +77,7 @@ struct UsageData
     {
         bool operator()(const UsageData& x, const UsageData& y)
         {
-            return x.USAGEDATE < y.USAGEDATE;
+            return x.m_date < y.m_date;
         }
     };
 
@@ -85,7 +85,7 @@ struct UsageData
     {
         bool operator()(const UsageData& x, const UsageData& y)
         {
-            return x.JSONCONTENT < y.JSONCONTENT;
+            return x.m_json < y.m_json;
         }
     };
 };

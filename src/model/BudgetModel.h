@@ -22,7 +22,7 @@
 #include "base/defs.h"
 #include <float.h>
 
-#include "util/mmChoiceNameA.h"
+#include "util/mmChoice.h"
 #include "util/mmDateRange.h"
 
 #include "table/BudgetTable.h"

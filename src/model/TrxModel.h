@@ -19,8 +19,8 @@
 #pragma once
 
 #include "base/defs.h"
-#include "util/mmChoiceNameA.h"
-#include "util/mmDateDay.h"
+#include "util/mmChoice.h"
+#include "util/mmDate.h"
 
 #include "table/TrxTable.h"
 #include "data/TrxData.h"
@@ -177,7 +177,7 @@ public:
 
 public:
     static TrxCol::TRANSDATE TRANSDATE(OP op, const wxString& date_iso_str);
-    static TrxCol::TRANSDATE TRANSDATE(OP op, const mmDateDay& date);
+    static TrxCol::TRANSDATE TRANSDATE(OP op, const mmDate& date);
     static TrxCol::TRANSDATE TRANSDATE(OP op, const wxDateTime& date);
     static TrxCol::DELETEDTIME DELETEDTIME(OP op, const wxString& date);
     static TrxCol::STATUS STATUS(OP op, STATUS_ID status);

@@ -23,7 +23,7 @@ Copyright (C) 2025 Klaus Wich
 #include <html_template.h>
 
 #include "base/constants.h"
-#include "util/mmDateDay.h"
+#include "util/mmDate.h"
 
 #include "model/AssetModel.h"
 #include "model/CategoryModel.h"
@@ -474,7 +474,7 @@ const wxString htmlWidgetStatistics::getHTMLText()
     if (PrefModel::instance().getIgnoreFutureTransactionsHomePage()) {
         date_range = new mmCurrentMonthToDate;
         all_trans = TrxModel::instance().find(
-            TrxModel::TRANSDATE(OP_LE, mmDateDay::today()));
+            TrxModel::TRANSDATE(OP_LE, mmDate::today()));
     }
     else {
         date_range = new mmCurrentMonth;

@@ -18,26 +18,26 @@
 
 #include "base/defs.h"
 #include <wx/log.h>
-#include "mmDateDay.h"
+#include "mmDate.h"
 
-mmDateDay::mmDateDay(wxDateTime dateTime_new) :
+mmDate::mmDate(wxDateTime dateTime_new) :
     dateTime{dateTime_new}
 {
     if (!dateTime.IsValid()) {
-        wxLogDebug("ERROR: mmDateDay::mmDateDay(): dateTime is invalid");
+        wxLogDebug("ERROR: mmDate::mmDate(): dateTime is invalid");
         dateTime = wxDateTime(12, 0, 0, 0);
     }
     // set time to noon (12:00)
     dateTime.SetHour(12).SetMinute(0).SetSecond(0).SetMillisecond(0);
 }
 
-const wxTimeSpan mmDateDay::htol = wxTimeSpan::Hours(12);
+const wxTimeSpan mmDate::htol = wxTimeSpan::Hours(12);
 
-mmDateDayN::mmDateDayN(mmDateDay dateDay_new) :
+mmDateN::mmDateN(mmDate dateDay_new) :
     dateTimeN(dateDay_new.dateTime)
 {
 }
-mmDateDayN::mmDateDayN(wxDateTime dateTimeN_new) :
+mmDateN::mmDateN(wxDateTime dateTimeN_new) :
     dateTimeN{dateTimeN_new}
 {
     if (dateTimeN.IsValid()) {
@@ -45,8 +45,8 @@ mmDateDayN::mmDateDayN(wxDateTime dateTimeN_new) :
         dateTimeN.SetHour(12).SetMinute(0).SetSecond(0).SetMillisecond(0);
     }
 }
-mmDateDayN::mmDateDayN(const wxString& isoDateN_new)
+mmDateN::mmDateN(const wxString& isoDateN_new)
 {
-    *this = mmDateDayN(parseDateTime(isoDateN_new));
+    *this = mmDateN(parseDateTime(isoDateN_new));
 }
 

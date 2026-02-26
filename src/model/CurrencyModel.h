@@ -22,7 +22,7 @@
 #include <map>
 
 #include "base/defs.h"
-#include "util/mmChoiceNameA.h"
+#include "util/mmChoice.h"
 
 #include "table/CurrencyTable.h"
 #include "data/CurrencyData.h"

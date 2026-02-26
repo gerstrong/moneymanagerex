@@ -21,8 +21,8 @@
 #pragma once
 
 #include "base/defs.h"
-#include "util/mmChoiceNameA.h"
-#include "util/mmDateDay.h"
+#include "util/mmChoice.h"
+#include "util/mmDate.h"
 
 #include "table/AccountTable.h"
 #include "data/AccountData.h"

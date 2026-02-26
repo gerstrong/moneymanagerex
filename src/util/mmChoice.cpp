@@ -16,32 +16,32 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  ********************************************************/
 
-#include "mmChoiceNameA.h"
+#include "mmChoice.h"
 
 // -- mmChoiceNameA --
 
-int mmChoiceNameA::valid_id_n(int id_n) const
+mmChoiceIdN mmChoiceNameA::valid_id_n(mmChoiceIdN id_n) const
 {
     wxASSERT(
-        (id_n >= 0 && id_n < static_cast<int>(m_choice_a.size())) ||
+        (id_n >= 0 && id_n < static_cast<mmChoiceId>(m_choice_a.size())) ||
         id_n == m_default_id_n
     );
     return id_n;
 }
 
-const wxString mmChoiceNameA::get_name(int id) const
+const wxString mmChoiceNameA::get_name(mmChoiceId id) const
 {
-    wxASSERT(id >= 0 && id < static_cast<int>(m_choice_a.size()));
+    wxASSERT(id >= 0 && id < static_cast<mmChoiceId>(m_choice_a.size()));
     wxASSERT(m_choice_a[id].id == id);
     return m_choice_a[id].name;
 }
 
-int mmChoiceNameA::find_name_n(const wxString& name)
+mmChoiceIdN mmChoiceNameA::find_name_n(const wxString& name)
 {
     if (const auto it = m_index_m.find(name); it != m_index_m.end())
         return it->second;
 
-    int id_n = m_default_id_n;
+    mmChoiceIdN id_n = m_default_id_n;
     for (const Choice& choice : m_choice_a) {
         bool match = m_nocase
             ? (name.CmpNoCase(choice.name) == 0)
@@ -57,35 +57,35 @@ int mmChoiceNameA::find_name_n(const wxString& name)
 
 // -- mmChoiceKeyNameA --
 
-int mmChoiceKeyNameA::valid_id_n(int id_n) const
+mmChoiceIdN mmChoiceKeyNameA::valid_id_n(mmChoiceIdN id_n) const
 {
     wxASSERT(
-        (id_n >= 0 && id_n < static_cast<int>(m_choice_a.size())) ||
+        (id_n >= 0 && id_n < static_cast<mmChoiceId>(m_choice_a.size())) ||
         id_n == m_default_id_n
     );
     return id_n;
 }
 
-const wxString mmChoiceKeyNameA::get_key(int id) const
+const wxString mmChoiceKeyNameA::get_key(mmChoiceId id) const
 {
-    wxASSERT(id >= 0 && id < static_cast<int>(m_choice_a.size()));
+    wxASSERT(id >= 0 && id < static_cast<mmChoiceId>(m_choice_a.size()));
     wxASSERT(m_choice_a[id].id == id);
     return m_choice_a[id].key;
 }
 
-const wxString mmChoiceKeyNameA::get_name(int id) const
+const wxString mmChoiceKeyNameA::get_name(mmChoiceId id) const
 {
-    wxASSERT(id >= 0 && id < static_cast<int>(m_choice_a.size()));
+    wxASSERT(id >= 0 && id < static_cast<mmChoiceId>(m_choice_a.size()));
     wxASSERT(m_choice_a[id].id == id);
     return m_choice_a[id].name;
 }
 
-int mmChoiceKeyNameA::find_keyname_n(const wxString& keyname)
+mmChoiceIdN mmChoiceKeyNameA::find_keyname_n(const wxString& keyname)
 {
     if (const auto it = m_index_m.find(keyname); it != m_index_m.end())
         return it->second;
 
-    int id_n = m_default_id_n;
+    mmChoiceIdN id_n = m_default_id_n;
     for (const Choice& choice : m_choice_a) {
         bool match = m_nocase
             ? (keyname.CmpNoCase(choice.key) == 0 || keyname.CmpNoCase(choice.name) == 0)

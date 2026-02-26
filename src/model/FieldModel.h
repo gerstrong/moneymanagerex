@@ -19,7 +19,7 @@
 #pragma once
 
 #include "base/defs.h"
-#include "util/mmChoiceNameA.h"
+#include "util/mmChoice.h"
 
 #include "table/FieldTable.h"
 #include "data/FieldData.h"

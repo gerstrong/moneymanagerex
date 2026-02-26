@@ -256,7 +256,7 @@ void ReportPanel::saveFilterSettings() {
     else if (m_filter_id == JournalPanel::FILTER_ID_DATE_PICKER) {
         if (w_start_date_picker) {
             InfoModel::saveFilterString(j_doc, "FILTER_DATE_BEGIN",
-                mmDateDayN(w_start_date_picker->GetValue()).isoDateN()
+                mmDateN(w_start_date_picker->GetValue()).isoDateN()
             );
         }
         else {
@@ -264,7 +264,7 @@ void ReportPanel::saveFilterSettings() {
         }
         if (w_end_date_picker) {
             InfoModel::saveFilterString(j_doc, "FILTER_DATE_END",
-                mmDateDayN(w_end_date_picker->GetValue()).isoDateN()
+                mmDateN(w_end_date_picker->GetValue()).isoDateN()
             );
         }
         else {
@@ -290,8 +290,8 @@ void ReportPanel::updateFilter()
             mmBitmapButtonSize
         ));
         // TODO: calculate default start/end dates from model
-        m_date_range.setDefStartDateN(mmDateDay::min());
-        m_date_range.setDefEndDateN(mmDateDay::max());
+        m_date_range.setDefStartDateN(mmDate::min());
+        m_date_range.setDefEndDateN(mmDate::max());
         // copy from date range to start/end pickers
         w_start_date_picker->SetValue(
             m_date_range.rangeStart().value().getDateTime()
@@ -311,8 +311,8 @@ void ReportPanel::updateFilter()
         mmDateRange2::Range range = m_date_range.getRange();
         range.setName(_t("Date range"));
         m_date_range.setRange(range);
-        m_date_range.setDefStartDateN(mmDateDayN(w_start_date_picker->GetValue()));
-        m_date_range.setDefEndDateN(mmDateDayN(w_end_date_picker->GetValue()));
+        m_date_range.setDefStartDateN(mmDateN(w_start_date_picker->GetValue()));
+        m_date_range.setDefEndDateN(mmDateN(w_end_date_picker->GetValue()));
     }
 }
 

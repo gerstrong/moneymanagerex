@@ -20,7 +20,7 @@
 
 #include "table/_TableBase.h"
 #include "table/AssetTable.h"
-#include "util/mmChoiceNameA.h"
+#include "util/mmChoice.h"
 
 struct AssetType
 {

@@ -27,7 +27,7 @@ Copyright (C) 2018 Stefano Giorgio (stef145g)
 #include <wx/log.h>
 
 #include "util/mmSingleton.h"
-#include "util/mmChoiceNameA.h"
+#include "util/mmChoice.h"
 
 #include "table/_TableFactory.h"
 

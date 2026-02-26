@@ -18,7 +18,7 @@
 
 #include "base/constants.h"
 #include "base/images_list.h"
-#include "util/mmDateDay.h"
+#include "util/mmDate.h"
 #include "util/mmDateRange.h"
 #include "util/mmCalcValidator.h"
 
@@ -272,13 +272,13 @@ void mmReconcileDialog::FillControls(bool init)
         TrxCol::ACCOUNTID(m_account->ACCOUNTID),
         TrxModel::STATUS(OP_NE, TrxModel::STATUS_ID_RECONCILED),
         TrxCol::DELETEDTIME(OP_EQ, wxEmptyString),
-        TrxModel::TRANSDATE(OP_LE, mmDateDay::today())
+        TrxModel::TRANSDATE(OP_LE, mmDate::today())
     );
     TrxModel::DataA all_trans2 = TrxModel::instance().find(  // get transfers
         TrxCol::TOACCOUNTID(m_account->ACCOUNTID),
         TrxModel::STATUS(OP_NE, TrxModel::STATUS_ID_RECONCILED),
         TrxCol::DELETEDTIME(OP_EQ, wxEmptyString),
-        TrxModel::TRANSDATE(OP_LE, mmDateDay::today())
+        TrxModel::TRANSDATE(OP_LE, mmDate::today())
     );
 
     all_trans.insert(all_trans.end(), all_trans2.begin(), all_trans2.end());

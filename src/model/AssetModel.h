@@ -20,7 +20,7 @@
 #pragma once
 
 #include "base/defs.h"
-#include "util/mmChoiceNameA.h"
+#include "util/mmChoice.h"
 
 #include "table/AssetTable.h"
 #include "data/AssetData.h"

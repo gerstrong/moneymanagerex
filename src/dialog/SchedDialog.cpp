@@ -29,7 +29,7 @@
 #include "base/images_list.h"
 #include "util/_util.h"
 #include "util/_simple.h"
-#include "util/mmDateDay.h"
+#include "util/mmDate.h"
 #include "util/mmTextCtrl.h"
 #include "util/mmCalcValidator.h"
 
@@ -1454,7 +1454,7 @@ void SchedDialog::setCategoryLabel()
     {
         TrxModel::DataA transactions = TrxModel::instance().find(
             TrxModel::TRANSCODE(OP_EQ, TrxModel::TYPE_ID_TRANSFER),
-            TrxModel::TRANSDATE(OP_LE, mmDateDay::today())
+            TrxModel::TRANSDATE(OP_LE, mmDate::today())
         );
 
         if (!transactions.empty())

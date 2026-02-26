@@ -45,8 +45,8 @@ wxString ForecastReport::getHTMLText()
     
     if (m_date_range && m_date_range->is_with_date()) {
         all_trans = TrxModel::instance().find(
-            TrxModel::TRANSDATE(OP_GE, mmDateDay(m_date_range->start_date())),
-            TrxModel::TRANSDATE(OP_LE, mmDateDay(m_date_range->end_date()))
+            TrxModel::TRANSDATE(OP_GE, mmDate(m_date_range->start_date())),
+            TrxModel::TRANSDATE(OP_LE, mmDate(m_date_range->end_date()))
         );
     }
     else {

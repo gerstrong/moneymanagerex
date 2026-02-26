@@ -193,7 +193,7 @@ TrxCol::TRANSDATE TrxModel::TRANSDATE(OP op, const wxString& date_iso_str)
     return TrxCol::TRANSDATE(op, date_iso_str);
 }
 
-TrxCol::TRANSDATE TrxModel::TRANSDATE(OP op, const mmDateDay& date)
+TrxCol::TRANSDATE TrxModel::TRANSDATE(OP op, const mmDate& date)
 {
     // OP_EQ and OP_NE should not be used for date comparisons.
     // if needed, create an equivalent AND/OR combination of two other operators.
@@ -207,7 +207,7 @@ TrxCol::TRANSDATE TrxModel::TRANSDATE(OP op, const mmDateDay& date)
 TrxCol::TRANSDATE TrxModel::TRANSDATE(OP op, const wxDateTime& date)
 {
     // the boundary has granularity of a day
-    return TrxModel::TRANSDATE(op, mmDateDay(date));
+    return TrxModel::TRANSDATE(op, mmDate(date));
 }
 
 TrxCol::DELETEDTIME TrxModel::DELETEDTIME(OP op, const wxString& date)

@@ -88,10 +88,10 @@ add_executable(${MMEX_EXE} WIN32 MACOSX_BUNDLE
     util/_util.h
     util/mmCache.h
     util/mmCache.tpp
-    util/mmChoiceNameA.cpp
-    util/mmChoiceNameA.h
-    util/mmDateDay.cpp
-    util/mmDateDay.h
+    util/mmChoice.cpp
+    util/mmChoice.h
+    util/mmDate.cpp
+    util/mmDate.h
     util/mmDateRange.cpp
     util/mmDateRange.h
     util/mmDateRange2.cpp

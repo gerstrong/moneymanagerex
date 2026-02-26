@@ -45,8 +45,8 @@ wxString InExReport::getHTMLText()
     // Grab the data
     std::pair<double, double> income_expenses_pair;
     for (const auto& transaction : TrxModel::instance().find(
-        TrxModel::TRANSDATE(OP_GE, mmDateDay(m_date_range->start_date())),
-        TrxModel::TRANSDATE(OP_LE, mmDateDay(m_date_range->end_date())),
+        TrxModel::TRANSDATE(OP_GE, mmDate(m_date_range->start_date())),
+        TrxModel::TRANSDATE(OP_LE, mmDate(m_date_range->end_date())),
         TrxCol::DELETEDTIME(OP_EQ, wxEmptyString),
         TrxModel::STATUS(OP_NE, TrxModel::STATUS_ID_VOID)
     )) {
@@ -149,8 +149,8 @@ wxString mmReportIncomeExpensesMonthly::getHTMLText()
     std::map<int, std::pair<double, double> > incomeExpensesStats;
     // TODO: init all the map values with 0.0
     for (const auto& transaction : TrxModel::instance().find(
-        TrxModel::TRANSDATE(OP_GE, mmDateDay(start_date)),
-        TrxModel::TRANSDATE(OP_LE, mmDateDay(m_date_range->end_date())),
+        TrxModel::TRANSDATE(OP_GE, mmDate(start_date)),
+        TrxModel::TRANSDATE(OP_LE, mmDate(m_date_range->end_date())),
         TrxCol::DELETEDTIME(OP_EQ, wxEmptyString),
         TrxModel::STATUS(OP_NE, TrxModel::STATUS_ID_VOID)
     )) {

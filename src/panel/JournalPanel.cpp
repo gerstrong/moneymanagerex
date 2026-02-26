@@ -208,14 +208,14 @@ void JournalPanel::createControls()
 
     fromDateCtrl = new wxDatePickerCtrl(this, ID_DATE_PICKER_LOW, wxDefaultDateTime, wxDefaultPosition, wxDefaultSize, wxDP_DROPDOWN|wxDP_ALLOWNONE);
     fromDateCtrl->SetValue(
-        tmprange.rangeStart().value_or(mmDateDay::min()).getDateTime()
+        tmprange.rangeStart().value_or(mmDate::min()).getDateTime()
     );
     fromDateCtrl->SetRange(wxInvalidDateTime, wxDateTime::Now());
     sizerHCtrl->Add(fromDateCtrl, g_flagsH);
 
     toDateCtrl = new wxDatePickerCtrl(this, ID_DATE_PICKER_HIGH, wxDefaultDateTime, wxDefaultPosition, wxDefaultSize, wxDP_DROPDOWN|wxDP_ALLOWNONE);
     toDateCtrl->SetValue(
-        tmprange.rangeEnd().value_or(mmDateDay::today()).getDateTime()
+        tmprange.rangeEnd().value_or(mmDate::today()).getDateTime()
     );
     sizerHCtrl->Add(toDateCtrl, g_flagsH);
 
@@ -444,10 +444,10 @@ void JournalPanel::updateFilter(bool firstinit)
             mmBitmapButtonSize
         ));
         fromDateCtrl->SetValue(
-            m_current_date_range.rangeStart().value_or(mmDateDay::min()).getDateTime()
+            m_current_date_range.rangeStart().value_or(mmDate::min()).getDateTime()
         );
         toDateCtrl->SetValue(
-            m_current_date_range.rangeEnd().value_or(mmDateDay::today()).getDateTime()
+            m_current_date_range.rangeEnd().value_or(mmDate::today()).getDateTime()
         );
     }
     else if (m_filter_id == FILTER_ID_DATE_PICKER) {
@@ -494,7 +494,7 @@ void JournalPanel::setFilterDate(mmDateRange2::Range& range)
     m_filter_id = FILTER_ID_DATE;
     m_current_date_range = mmDateRange2();
     if (isAccount()) {
-        m_current_date_range.setSDateN(mmDateDayN(m_account->STATEMENTDATE));
+        m_current_date_range.setSDateN(mmDateN(m_account->STATEMENTDATE));
     }
     m_current_date_range.setRange(range);
     m_scheduled_enable = !isDeletedTrans() && m_current_date_range.rangeEnd().has_value();
@@ -544,7 +544,7 @@ void JournalPanel::loadFilterSettings()
             }
         }
         if (isAccount()) {
-            m_current_date_range.setSDateN(mmDateDayN(m_account->STATEMENTDATE));
+            m_current_date_range.setSDateN(mmDateN(m_account->STATEMENTDATE));
         }
     }
     else if (m_filter_id == FILTER_ID_DATE_PICKER) {
@@ -555,16 +555,16 @@ void JournalPanel::loadFilterSettings()
             // FIXME: setSDateN is the account statement date, not the start date
             m_current_date_range.setSDateN(
                 newdate.ParseFormat(p_filter, "%Y-%m-%d", &end)
-                ? mmDateDay(newdate)
-                : mmDateDayN()
+                ? mmDate(newdate)
+                : mmDateN()
             );
         }
         if (JSON_GetStringValue(j_doc, "FILTER_DATE_END", p_filter)) {
             // FIXME: setTDate is the date of today, should not be changed here
             m_current_date_range.setTDate(
                 newdate.ParseFormat(p_filter, "%Y-%m-%d", &end)
-                ? mmDateDay(newdate)
-                : mmDateDay::today()
+                ? mmDate(newdate)
+                : mmDate::today()
             );
         }
     }
@@ -585,9 +585,9 @@ void  JournalPanel::updateScheduledEnable()
     // FIXME: get[ST]Date are not the start and end date
     m_scheduled_enable = !isDeletedTrans() && (
         m_filter_id == FILTER_ID_DATE_PICKER
-        ? m_current_date_range.getTDate() >= mmDateDay::today()
+        ? m_current_date_range.getTDate() >= mmDate::today()
         : !m_current_date_range.rangeEnd().has_value()
-            || m_current_date_range.rangeEnd().value() >= mmDateDay::today()
+            || m_current_date_range.rangeEnd().value() >= mmDate::today()
     );
 }
 
@@ -662,10 +662,10 @@ void JournalPanel::filterList()
     wxString date_start_str, date_end_str;
     wxDateTime date_end = wxDateTime::Now() + wxTimeSpan::Days(30);
     if (m_filter_id == FILTER_ID_DATE_PICKER) {
-        date_start_str = mmDateDayN(fromDateCtrl->GetValue())
-            .value_or(mmDateDay::min()).isoStart();
-        date_end_str = mmDateDayN(toDateCtrl->GetValue())
-            .value_or(mmDateDay(date_end)).isoEnd();
+        date_start_str = mmDateN(fromDateCtrl->GetValue())
+            .value_or(mmDate::min()).isoStart();
+        date_end_str = mmDateN(toDateCtrl->GetValue())
+            .value_or(mmDate(date_end)).isoEnd();
     } else {
         date_start_str = m_current_date_range.rangeStartIsoStartN();
         // find last un-deleted transaction and use that if later than current date + 30 days
@@ -679,7 +679,7 @@ void JournalPanel::filterList()
             }
         }
         date_end_str = m_current_date_range.rangeEnd()
-            .value_or(mmDateDay(date_end)).isoEnd();
+            .value_or(mmDate(date_end)).isoEnd();
     }
     std::map<int64, SchedSplitModel::DataA> bills_splits;
     std::map<int64, TagLinkModel::DataA> bills_tags;
@@ -1137,7 +1137,7 @@ void JournalPanel::onFilterDate(wxCommandEvent& event)
     m_filter_id = FILTER_ID_DATE_RANGE;
     m_current_date_range = mmDateRange2();
     if (isAccount()) {
-        m_current_date_range.setSDateN(mmDateDayN(m_account->STATEMENTDATE));
+        m_current_date_range.setSDateN(mmDateN(m_account->STATEMENTDATE));
     }
     m_current_date_range.setRange(m_date_range_a[i]);
     updateScheduledEnable();
@@ -1148,10 +1148,10 @@ void JournalPanel::onFilterDate(wxCommandEvent& event)
     m_bitmapTransFilter->SetBitmap(mmBitmapBundle((i > 0 ? png::TRANSFILTER_ACTIVE : png::TRANSFILTER), mmBitmapButtonSize));
 
     fromDateCtrl->SetValue(
-        m_current_date_range.rangeStart().value_or(mmDateDay::min()).getDateTime()
+        m_current_date_range.rangeStart().value_or(mmDate::min()).getDateTime()
     );
     toDateCtrl->SetValue(
-        m_current_date_range.rangeEnd().value_or(mmDateDay::today()).getDateTime()
+        m_current_date_range.rangeEnd().value_or(mmDate::today()).getDateTime()
     );
 
     refreshList();
@@ -1179,12 +1179,12 @@ void JournalPanel::datePickProceed() {
     m_filter_id = FILTER_ID_DATE_PICKER;
     // FIXME: setSDateN is the account statement date, not the start date
     m_current_date_range.setSDateN(
-        mmDateDayN(fromDateCtrl->GetValue()).value_or(mmDateDay::min())
+        mmDateN(fromDateCtrl->GetValue()).value_or(mmDate::min())
     );
     // FIXME: setTDate is the date of today, should not be changed here
     m_current_date_range.setTDate(
-        mmDateDayN(toDateCtrl->GetValue())
-            .value_or(mmDateDay(wxDateTime::Now().Add(wxDateSpan(0,0,0,30))))
+        mmDateN(toDateCtrl->GetValue())
+            .value_or(mmDate(wxDateTime::Now().Add(wxDateSpan(0,0,0,30))))
     );
 
     m_bitmapTransFilter->SetBitmap(mmBitmapBundle(png::TRANSFILTER_ACTIVE, mmBitmapButtonSize));

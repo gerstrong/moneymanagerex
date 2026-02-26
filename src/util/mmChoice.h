@@ -22,20 +22,23 @@
 #include <unordered_map>
 #include "base/defs.h"
 
+typedef int mmChoiceId;   // choice id (enum case), always >= 0
+typedef int mmChoiceIdN;  // nullable choice id, either -1 or >= 0
+
 class mmChoiceNameA {
 public:
-    struct Choice { int id; wxString name; };
+    struct Choice { mmChoiceId id; wxString name; };
 
 private:
     const std::vector<Choice> m_choice_a;
-    const int m_default_id_n;                    // -1 or 0 .. m_choice_a.size()-1
-    const bool m_nocase;                         // collate nocase
-    std::unordered_map<wxString, int> m_index_m; // name -> id_n
+    const mmChoiceIdN m_default_id_n;
+    const bool m_nocase;
+    std::unordered_map<wxString, mmChoiceIdN> m_index_m; // name -> id_n
 
 public:
     mmChoiceNameA(
         const std::vector<Choice>& choice_a,
-        int default_id_n = -1,
+        mmChoiceIdN default_id_n = -1,
         bool nocase = true
     ) :
         m_choice_a(choice_a),
@@ -44,26 +47,26 @@ public:
     {}
     ~mmChoiceNameA() {}
 
-    int default_id_n() const { return m_default_id_n; }
-    int valid_id_n(int id_n) const;
-    const wxString get_name(int id) const;
-    int find_name_n(const wxString& name);
+    mmChoiceIdN default_id_n() const { return m_default_id_n; }
+    mmChoiceIdN valid_id_n(mmChoiceIdN id_n) const;
+    const wxString get_name(mmChoiceId id) const;
+    mmChoiceIdN find_name_n(const wxString& name);
 };
 
 class mmChoiceKeyNameA {
 public:
-    struct Choice { int id; wxString key; wxString name; };
+    struct Choice { mmChoiceId id; wxString key; wxString name; };
 
 private:
     const std::vector<Choice> m_choice_a;
-    const int m_default_id_n;                    // -1 or 0 .. m_choice_a.size()-1
-    const bool m_nocase;                         // collate nocase (for both key and name)
-    std::unordered_map<wxString, int> m_index_m; // key or name -> id
+    const mmChoiceIdN m_default_id_n;
+    const bool m_nocase;
+    std::unordered_map<wxString, mmChoiceIdN> m_index_m; // key or name -> id_n
 
 public:
     mmChoiceKeyNameA(
         const std::vector<Choice>& choice_a,
-        int default_id_n = -1,
+        mmChoiceIdN default_id_n = -1,
         bool nocase = true
     ) :
         m_choice_a(choice_a),
@@ -72,9 +75,9 @@ public:
     {}
     ~mmChoiceKeyNameA() {}
 
-    int default_id_n() const { return m_default_id_n; }
-    int valid_id_n(int id_n) const;
-    const wxString get_key(int id) const;
-    const wxString get_name(int id) const;
-    int find_keyname_n(const wxString& keyname);
+    mmChoiceIdN default_id_n() const { return m_default_id_n; }
+    mmChoiceIdN valid_id_n(mmChoiceIdN id_n) const;
+    const wxString get_key(mmChoiceId id) const;
+    const wxString get_name(mmChoiceId id) const;
+    mmChoiceIdN find_keyname_n(const wxString& keyname);
 };

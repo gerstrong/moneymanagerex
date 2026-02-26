@@ -200,8 +200,8 @@ void BudgetModel::copyBudgetYear(int64 newYearID, int64 baseYearID)
     std::map<int64, double> yearDeduction;
     int budgetedMonths = 0;
     bool optionDeductMonthly = PrefModel::instance().getBudgetDeductMonthly();
-    const wxString baseBudgetYearName = BudgetPeriodModel::instance().get_data_n(baseYearID)->BUDGETYEARNAME;
-    const wxString newBudgetYearName = BudgetPeriodModel::instance().get_data_n(newYearID)->BUDGETYEARNAME;
+    const wxString baseBudgetYearName = BudgetPeriodModel::instance().get_data_n(baseYearID)->m_name;
+    const wxString newBudgetYearName = BudgetPeriodModel::instance().get_data_n(newYearID)->m_name;
 
     // Only deduct monthly amounts if a monthly budget is being created based on a yearly budget
     optionDeductMonthly &= (baseBudgetYearName.length() == 4 && newBudgetYearName.length() > 4);

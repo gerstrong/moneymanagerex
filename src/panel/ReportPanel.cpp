@@ -460,18 +460,18 @@ void ReportPanel::CreateControls()
 
             int64 sel_id = m_rb->getDateSelection();
             wxString sel_name;
-            for (const auto& e : BudgetPeriodModel::instance().find_all(
+            for (const auto& bp_d : BudgetPeriodModel::instance().find_all(
                 BudgetPeriodCol::COL_ID_BUDGETYEARNAME
             )) {
-                const wxString& name = e.BUDGETYEARNAME;
+                const wxString& name = bp_d.m_name;
 
                 // Only years for performance report
                 if (m_rb->getReportId() == ReportBase::REPORT_ID::BudgetCategorySummary ||
                     name.length() == 4
                 ) {
-                    w_year_choice->Append(name, new wxStringClientData(wxString::Format("%lld", e.BUDGETYEARID)));
-                    if (sel_id == e.BUDGETYEARID)
-                        sel_name = e.BUDGETYEARNAME;
+                    w_year_choice->Append(name, new wxStringClientData(wxString::Format("%lld", bp_d.m_id)));
+                    if (sel_id == bp_d.m_id)
+                        sel_name = bp_d.m_name;
                 }
             }
 

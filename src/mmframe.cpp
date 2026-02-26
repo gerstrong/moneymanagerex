@@ -4318,39 +4318,46 @@ void mmGUIFrame::OnChangeGUILanguage(wxCommandEvent& event)
 
 void mmGUIFrame::DoUpdateBudgetNavigation(wxTreeItemId& parent_item)
 {
-    const auto all_budgets = BudgetPeriodModel::instance().find_all(BudgetPeriodCol::COL_ID_BUDGETYEARNAME);
-    if (!all_budgets.empty()) {
-        std::map <wxString, int64> years;
+    const auto bp_a = BudgetPeriodModel::instance().find_all(BudgetPeriodCol::COL_ID_BUDGETYEARNAME);
+    if (bp_a.empty())
+        return;
 
-        wxRegEx pattern_year(R"(^([0-9]{4})$)");
-        wxRegEx pattern_month(R"(^([0-9]{4})-([0-9]{2})$)");
+    std::map <wxString, int64> years;
 
-        for (const auto& e : all_budgets) {
-            const wxString& name = e.BUDGETYEARNAME;
-            if (pattern_year.Matches(name)) {
-                years[name] = e.BUDGETYEARID;
-            }
-            else {
-                if (pattern_month.Matches(name)) {
-                    wxString root_year = pattern_month.GetMatch(name, 1);
-                    if (years.find(root_year) == years.end())
-                        years[root_year] = e.BUDGETYEARID;
-                }
-            }
+    wxRegEx pattern_year(R"(^([0-9]{4})$)");
+    wxRegEx pattern_month(R"(^([0-9]{4})-([0-9]{2})$)");
+
+    for (const auto& bp_d : bp_a) {
+        const wxString& name = bp_d.m_name;
+        if (pattern_year.Matches(name)) {
+            years[name] = bp_d.m_id;
         }
+        else if (pattern_month.Matches(name)) {
+            wxString root_year = pattern_month.GetMatch(name, 1);
+            if (years.find(root_year) == years.end())
+                years[root_year] = bp_d.m_id;
+        }
+    }
 
-        wxTreeItemId year_budget;
-        for (const auto& entry : years) {
-            for (const auto& e : all_budgets) {
-                if (entry.second == e.BUDGETYEARID) {
-                    year_budget = addNavTreeItem(parent_item, e.BUDGETYEARNAME, img::CALENDAR_PNG, mmTreeItemData::BUDGET, e.BUDGETYEARID);
-                }
-                else if (pattern_month.Matches(e.BUDGETYEARNAME) &&
-                    pattern_month.GetMatch(e.BUDGETYEARNAME, 1) == entry.first)
-                {
-                    addNavTreeItem(year_budget, e.BUDGETYEARNAME, img::CALENDAR_PNG, mmTreeItemData::BUDGET, e.BUDGETYEARID);
+    wxTreeItemId year_budget;
+    for (const auto& entry : years) {
+        for (const auto& bp_d : bp_a) {
+            if (entry.second == bp_d.m_id) {
+                year_budget = addNavTreeItem(
+                    parent_item, bp_d.m_name,
+                    img::CALENDAR_PNG, mmTreeItemData::BUDGET,
+                    bp_d.m_id
+                );
+            }
+            else if (pattern_month.Matches(bp_d.m_name) &&
+                pattern_month.GetMatch(bp_d.m_name, 1) == entry.first
+            ) {
+                addNavTreeItem(
+                    year_budget, bp_d.m_name,
+                    img::CALENDAR_PNG, mmTreeItemData::BUDGET,
+                    bp_d.m_id
+                );
 
-                }
             }
         }
     }

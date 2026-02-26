@@ -23,7 +23,7 @@
 
 BudgetPeriodData::BudgetPeriodData()
 {
-    BUDGETYEARID = -1;
+    m_id = -1;
 }
 
 // Convert BudgetPeriodData to BudgetPeriodRow
@@ -31,8 +31,8 @@ BudgetPeriodRow BudgetPeriodData::to_row() const
 {
     BudgetPeriodRow row;
 
-    row.BUDGETYEARID = BUDGETYEARID;
-    row.BUDGETYEARNAME = BUDGETYEARNAME;
+    row.BUDGETYEARID   = m_id;
+    row.BUDGETYEARNAME = m_name;
 
     return row;
 }
@@ -40,16 +40,16 @@ BudgetPeriodRow BudgetPeriodData::to_row() const
 // Convert BudgetPeriodRow to BudgetPeriodData
 BudgetPeriodData& BudgetPeriodData::from_row(const BudgetPeriodRow& row)
 {
-    BUDGETYEARID = row.BUDGETYEARID; // int64
-    BUDGETYEARNAME = row.BUDGETYEARNAME; // wxString
+    m_id   = row.BUDGETYEARID;   // int64
+    m_name = row.BUDGETYEARNAME; // wxString
 
     return *this;
 }
 
 bool BudgetPeriodData::equals(const BudgetPeriodData* other) const
 {
-    if ( BUDGETYEARID != other->BUDGETYEARID) return false;
-    if (!BUDGETYEARNAME.IsSameAs(other->BUDGETYEARNAME)) return false;
+    if ( m_id != other->m_id) return false;
+    if (!m_name.IsSameAs(other->m_name)) return false;
 
     return true;
 }

@@ -46,10 +46,9 @@ public:
     */
     static BudgetPeriodModel& instance();
 
+public:
     bool purge_id(int64 id) override;
 
-public:
-    void Set(int64 year_id, const wxString& value);
     int64 Add(const wxString& value);
 
     wxString Get(int64 year_id);

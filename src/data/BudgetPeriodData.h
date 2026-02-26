@@ -39,15 +39,15 @@
 // User-friendly representation of a record in table BUDGETYEAR_V1.
 struct BudgetPeriodData
 {
-    int64 BUDGETYEARID; // primary key
-    wxString BUDGETYEARNAME;
+    int64 m_id; // primary key
+    wxString m_name;
 
     explicit BudgetPeriodData();
     explicit BudgetPeriodData(wxSQLite3ResultSet& q);
     BudgetPeriodData(const BudgetPeriodData& other) = default;
 
-    int64 id() const { return BUDGETYEARID; }
-    void id(const int64 id) { BUDGETYEARID = id; }
+    int64 id() const { return m_id; }
+    void id(const int64 id) { m_id = id; }
     BudgetPeriodRow to_row() const;
     BudgetPeriodData& from_row(const BudgetPeriodRow& row);
     void to_insert_stmt(wxSQLite3Statement& stmt, int64 id) const;
@@ -68,7 +68,7 @@ struct BudgetPeriodData
     {
         bool operator()(const BudgetPeriodData& x, const BudgetPeriodData& y)
         {
-            return x.BUDGETYEARID < y.BUDGETYEARID;
+            return x.m_id < y.m_id;
         }
     };
 
@@ -76,7 +76,7 @@ struct BudgetPeriodData
     {
         bool operator()(const BudgetPeriodData& x, const BudgetPeriodData& y)
         {
-            return x.BUDGETYEARNAME < y.BUDGETYEARNAME;
+            return x.m_name < y.m_name;
         }
     };
 };

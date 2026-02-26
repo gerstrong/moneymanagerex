@@ -16,6 +16,9 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  ********************************************************/
 
+// The enumeration strings are written in the database.
+// DO NOT CHANGE THEM!
+
 #include "_DataEnum.h"
 
 mmChoiceNameA AssetType::s_choice_a = mmChoiceNameA({

@@ -57,28 +57,12 @@ bool BudgetPeriodModel::purge_id(int64 id)
     return unsafe_remove_data(id);
 }
 
-// Setter
-void BudgetPeriodModel::Set(int64 year_id, const wxString& value)
-{
-    Data* bp_n = unsafe_get_data_n(year_id);
-    if (bp_n) {
-        bp_n->BUDGETYEARNAME = value;
-        unsafe_update_data_n(bp_n);
-    }
-    else {
-        Data new_bp_d = Data();
-        new_bp_d.BUDGETYEARID = year_id;
-        new_bp_d.BUDGETYEARNAME = value;
-        add_data_n(new_bp_d);
-    }
-}
-
 int64 BudgetPeriodModel::Add(const wxString& value)
 {
     int64 year_id = this->Get(value);
     if (year_id < 0) {
         Data new_bp_d = Data();
-        new_bp_d.BUDGETYEARNAME = value;
+        new_bp_d.m_name = value;
         add_data_n(new_bp_d);
         year_id = new_bp_d.id();
     }
@@ -89,14 +73,14 @@ int64 BudgetPeriodModel::Add(const wxString& value)
 wxString BudgetPeriodModel::Get(int64 year_id)
 {
     const Data* bp_n = get_data_n(year_id);
-    return bp_n ? bp_n->BUDGETYEARNAME : "";
+    return bp_n ? bp_n->m_name : "";
 }
 
 int64 BudgetPeriodModel::Get(const wxString& year_name)
 {
-    for (const auto& record: this->find_all()) {
-        if (record.BUDGETYEARNAME == year_name)
-            return record.BUDGETYEARID;
+    for (const auto& bp_d: this->find_all()) {
+        if (bp_d.m_name == year_name)
+            return bp_d.m_id;
     }
 
     return -1;
@@ -109,8 +93,8 @@ bool BudgetPeriodModel::Exists(int64 year_id)
 
 bool BudgetPeriodModel::Exists(const wxString& year_name)
 {
-    for (const auto& record: this->find_all()) {
-        if (record.BUDGETYEARNAME == year_name) 
+    for (const auto& bp_d: this->find_all()) {
+        if (bp_d.m_name == year_name) 
             return true;
     }
     return false;

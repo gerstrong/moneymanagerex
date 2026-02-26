@@ -68,10 +68,11 @@ bool BudgetYearDialog::Create(wxWindow* parent, wxWindowID id,
 void BudgetYearDialog::fillControls()
 {
     int index = 0;
-    for (const auto& e: BudgetPeriodModel::instance().find_all(BudgetPeriodCol::COL_ID_BUDGETYEARNAME))
-    {
-        const wxString& payeeString = e.BUDGETYEARNAME;
-        int64 budgetYearID = e.BUDGETYEARID;
+    for (const auto& bp_d: BudgetPeriodModel::instance().find_all(
+        BudgetPeriodCol::COL_ID_BUDGETYEARNAME
+    )) {
+        const wxString& payeeString = bp_d.m_name;
+        int64 budgetYearID = bp_d.m_id;
         m_listBox->Insert(payeeString, index++, new mmListBoxItem(budgetYearID, payeeString));
     }
 }

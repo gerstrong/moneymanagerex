@@ -16,9 +16,6 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  ********************************************************/
 
-// PLEASE EDIT!
-// This is only sample code re-used from "table/BudgetPeriodTable.cpp".
-
 #include "BudgetPeriodData.h"
 
 BudgetPeriodData::BudgetPeriodData()

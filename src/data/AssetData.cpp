@@ -18,32 +18,6 @@
 
 #include "AssetData.h"
 
-mmChoiceNameA AssetType::s_choice_a = mmChoiceNameA({
-    { e_property,   _n("Property") },
-    { e_automobile, _n("Automobile") },
-    { e_household,  _n("Household Object") },
-    { e_art,        _n("Art") },
-    { e_jewellery,  _n("Jewellery") },
-    { e_cash,       _n("Cash") },
-    { e_other,      _n("Other") },
-}, e_property, true );
-
-mmChoiceNameA AssetStatus::s_choice_a = mmChoiceNameA({
-    { e_closed, _n("Closed") },
-    { e_open,   _n("Open") }
-}, e_open, true);
-
-mmChoiceNameA AssetChange::s_choice_a = mmChoiceNameA({
-    { e_none,        _n("None") },
-    { e_appreciates, _n("Appreciates") },
-    { e_depreciates, _n("Depreciates") }
-}, e_none, true);
-
-mmChoiceNameA AssetChangeMode::s_choice_a = mmChoiceNameA({
-    { e_percentage, _n("Percentage") },
-    { e_linear,     _n("Linear") }
-}, e_percentage, true);
-
 AssetData::AssetData()
 {
     m_id          = -1;

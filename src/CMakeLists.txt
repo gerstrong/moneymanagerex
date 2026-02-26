@@ -215,6 +215,8 @@ add_executable(${MMEX_EXE} WIN32 MACOSX_BUNDLE
     data/TrxSplitData.h
     data/UsageData.cpp
     data/UsageData.h
+    data/_DataEnum.cpp
+    data/_DataEnum.h
 
     model/AccountModel.cpp
     model/AccountModel.h

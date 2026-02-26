@@ -1,0 +1,125 @@
+/*******************************************************
+ Copyright (C) 2026 George Ef (george.a.ef@gmail.com)
+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ ********************************************************/
+
+#pragma once
+
+#include "util/mmChoice.h"
+
+struct AssetType
+{
+public:
+    enum
+    {
+        e_property = 0,
+        e_automobile,
+        e_household,
+        e_art,
+        e_jewellery,
+        e_cash,
+        e_other,
+        size
+    };
+    static mmChoiceNameA s_choice_a;
+
+private:
+    mmChoiceId m_id;
+
+public:
+    AssetType(mmChoiceId id = s_choice_a.default_id_n()) :
+        m_id(s_choice_a.valid_id_n(id)) {}
+    AssetType(const wxString& name) :
+        m_id(AssetType::s_choice_a.find_name_n(name)) {}
+
+    mmChoiceId id() const { return m_id; }
+    const wxString name() const { return AssetType::s_choice_a.get_name(m_id); }
+};
+
+struct AssetStatus
+{
+public:
+    enum
+    {
+        e_closed = 0,
+        e_open,
+        size
+    };
+    static mmChoiceNameA s_choice_a;
+
+private:
+    mmChoiceId m_id;
+
+public:
+    AssetStatus(mmChoiceId id = s_choice_a.default_id_n()) :
+        m_id(s_choice_a.valid_id_n(id)) {}
+    AssetStatus(const wxString& name) :
+        m_id(AssetStatus::s_choice_a.find_name_n(name)) {}
+
+    mmChoiceId id() const { return m_id; }
+    const wxString name() const { return AssetStatus::s_choice_a.get_name(m_id); }
+};
+
+struct AssetChange
+{
+public:
+    enum
+    {
+        e_none = 0,
+        e_appreciates,
+        e_depreciates,
+        size
+    };
+    static mmChoiceNameA s_choice_a;
+
+private:
+    mmChoiceId m_id;
+
+public:
+    AssetChange(mmChoiceId id = s_choice_a.default_id_n()) :
+        m_id(s_choice_a.valid_id_n(id)) {}
+    AssetChange(const wxString& name) :
+        m_id(AssetChange::s_choice_a.find_name_n(name)) {}
+
+    mmChoiceId id() const { return m_id; }
+    const wxString name() const { return AssetChange::s_choice_a.get_name(m_id); }
+};
+
+struct AssetChangeMode
+{
+public:
+    enum
+    {
+        e_percentage = 0,
+        e_linear,
+        size
+    };
+    static mmChoiceNameA s_choice_a;
+
+private:
+    mmChoiceId m_id;
+
+public:
+    AssetChangeMode(mmChoiceId id = s_choice_a.default_id_n()) :
+        m_id(s_choice_a.valid_id_n(id)) {}
+    AssetChangeMode(const wxString& name) :
+        m_id(AssetChangeMode::s_choice_a.find_name_n(name)) {}
+
+    mmChoiceId id() const { return m_id; }
+    const wxString name() const { return AssetChangeMode::s_choice_a.get_name(m_id); }
+};
+
+

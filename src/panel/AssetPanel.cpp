@@ -122,8 +122,8 @@ void AssetList::OnMouseRightClick(wxMouseEvent& event)
     }
     else
     {
-        auto asset_account = AccountModel::instance().get_key(m_panel->m_assets[m_selected_row].ASSETNAME);  // ASSETNAME <=> ACCOUNTNAME
-        if (!asset_account) asset_account = AccountModel::instance().get_key(m_panel->m_assets[m_selected_row].ASSETTYPE);  // ASSETTYPE <=> ACCOUNTNAME
+        auto asset_account = AccountModel::instance().get_key(m_panel->m_assets[m_selected_row].m_name);  // ASSETNAME <=> ACCOUNTNAME
+        if (!asset_account) asset_account = AccountModel::instance().get_key(m_panel->m_assets[m_selected_row].m_type.name());  // ASSETTYPE <=> ACCOUNTNAME
         menu.Enable(MENU_TREEPOPUP_GOTOACCOUNT, asset_account);
         menu.Enable(MENU_TREEPOPUP_VIEWTRANS, asset_account);
     }
@@ -156,7 +156,7 @@ void AssetList::OnListItemSelected(wxListEvent& event)
 
 int AssetList::OnGetItemImage(long item) const
 {
-    return AssetType(m_panel->m_assets[item].ASSETTYPE).id();
+    return m_panel->m_assets[item].m_type.id();
 }
 
 void AssetList::OnListKeyDown(wxListEvent& event)
@@ -215,9 +215,9 @@ void AssetList::OnDeleteAsset(wxCommandEvent& /*event*/)
 
     if (msgDlg.ShowModal() == wxID_YES) {
         const AssetData& asset = m_panel->m_assets[m_selected_row];
-        AssetModel::instance().purge_id(asset.ASSETID);
-        mmAttachmentManage::DeleteAllAttachments(AssetModel::refTypeName, asset.ASSETID);
-        TrxLinkModel::RemoveTransLinkRecords<AssetModel>(asset.ASSETID);
+        AssetModel::instance().purge_id(asset.m_id);
+        mmAttachmentManage::DeleteAllAttachments(AssetModel::refTypeName, asset.m_id);
+        TrxLinkModel::RemoveTransLinkRecords<AssetModel>(asset.m_id);
 
         m_panel->initVirtualListControl();
         m_selected_row = -1;
@@ -245,7 +245,7 @@ void AssetList::OnDuplicateAsset(wxCommandEvent& /*event*/)
 
     if (EditAsset(&duplicate_asset)) {
         m_panel->initVirtualListControl();
-        doRefreshItems(duplicate_asset.ASSETID);
+        doRefreshItems(duplicate_asset.m_id);
     }
 }
 
@@ -276,7 +276,7 @@ void AssetList::OnOrganizeAttachments(wxCommandEvent& /*event*/)
     if (m_selected_row < 0) return;
 
     wxString RefType = AssetModel::refTypeName;
-    int64 RefId = m_panel->m_assets[m_selected_row].ASSETID;
+    int64 RefId = m_panel->m_assets[m_selected_row].m_id;
 
     AttachmentDialog dlg(this, RefType, RefId);
     dlg.ShowModal();
@@ -289,7 +289,7 @@ void AssetList::OnOpenAttachment(wxCommandEvent& /*event*/)
     if (m_selected_row < 0) return;
 
     wxString RefType = AssetModel::refTypeName;
-    int64 RefId = m_panel->m_assets[m_selected_row].ASSETID;
+    int64 RefId = m_panel->m_assets[m_selected_row].m_id;
 
     mmAttachmentManage::OpenAttachmentFromPanelIcon(this, RefType, RefId);
     doRefreshItems(RefId);
@@ -333,7 +333,7 @@ void AssetList::OnColClick(wxListEvent& event)
     savePref();
 
     int64 trx_id = -1;
-    if (m_selected_row>=0) trx_id = m_panel->m_assets[m_selected_row].ASSETID;
+    if (m_selected_row>=0) trx_id = m_panel->m_assets[m_selected_row].m_id;
 
     doRefreshItems(trx_id);
 }
@@ -343,7 +343,7 @@ void AssetList::OnEndLabelEdit(wxListEvent& event)
     if (event.IsEditCancelled())
         return;
     AssetData* asset_n = &m_panel->m_assets[event.GetIndex()];
-    asset_n->ASSETNAME = event.m_item.m_text;
+    asset_n->m_name = event.m_item.m_text;
     AssetModel::instance().unsafe_save_data_n(asset_n);
     RefreshItems(event.GetIndex(), event.GetIndex());
 }
@@ -588,7 +588,7 @@ int AssetPanel::initVirtualListControl(int64 id)
     int selected_item = 0;
     for (const auto& asset: this->m_assets)
     {
-        if (asset.ASSETID == id) return selected_item;
+        if (asset.m_id == id) return selected_item;
         ++ selected_item;
     }
     return -1;
@@ -631,21 +631,21 @@ wxString AssetPanel::getItem(long item, int col_id)
     case AssetList::LIST_ID_ICON:
         return "";
     case AssetList::LIST_ID_ID:
-        return wxString::Format("%lld", asset.ASSETID).Trim();
+        return wxString::Format("%lld", asset.m_id).Trim();
     case AssetList::LIST_ID_NAME:
-        return asset.ASSETNAME;
+        return asset.m_name;
     case AssetList::LIST_ID_TYPE:
-        return wxGetTranslation(asset.ASSETTYPE);
+        return wxGetTranslation(asset.m_type.name());
     case AssetList::LIST_ID_VALUE_INITIAL:
         return CurrencyModel::toCurrency(AssetModel::value(asset).first);
     case AssetList::LIST_ID_VALUE_CURRENT:
         return CurrencyModel::toCurrency(AssetModel::value(asset).second);
     case AssetList::LIST_ID_DATE:
-        return mmGetDateTimeForDisplay(asset.STARTDATE);
+        return mmGetDateTimeForDisplay(asset.m_start_date);
     case AssetList::LIST_ID_NOTES: {
-        wxString full_notes = asset.NOTES;
+        wxString full_notes = asset.m_notes;
         full_notes.Replace("\n", " ");
-        if (AttachmentModel::NrAttachments(AssetModel::refTypeName, asset.ASSETID))
+        if (AttachmentModel::NrAttachments(AssetModel::refTypeName, asset.m_id))
             full_notes = full_notes.Prepend(mmAttachmentManage::GetAttachmentNoteSign());
         return full_notes;
     }
@@ -662,12 +662,13 @@ void AssetPanel::updateExtraAssetData(int selIndex)
     {
         const AssetData& asset = this->m_assets[selIndex];
         enableEditDeleteButtons(true);
-        const auto& change_rate = (AssetModel::change_id(asset) != AssetModel::CHANGE_ID_NONE)
-            ? wxString::Format("%.2f %%", asset.VALUECHANGERATE) : "";
-        const wxString& miniInfo = " " + wxString::Format(_t("Change in Value: %1$s %2$s")
-            , wxGetTranslation(asset.VALUECHANGE), change_rate);
+        const auto& change_rate = (asset.m_change.id() != AssetChange::e_none)
+            ? wxString::Format("%.2f %%", asset.m_change_rate) : "";
+        const wxString& miniInfo = " " + wxString::Format(_t("Change in Value: %1$s %2$s"),
+            wxGetTranslation(asset.m_change.name()), change_rate
+        );
 
-        st->SetLabelText(asset.NOTES);
+        st->SetLabelText(asset.m_notes);
         stm->SetLabelText(miniInfo);
     }
     else
@@ -776,13 +777,13 @@ void AssetPanel::AddAssetTrans(const int selected_index)
 {
     AssetData* asset = &m_assets[selected_index];
     AssetDialog asset_dialog(this, asset, true);
-    const AccountData* account = AccountModel::instance().get_key(asset->ASSETNAME);
-    const AccountData* account2 = AccountModel::instance().get_key(asset->ASSETTYPE);
+    const AccountData* account = AccountModel::instance().get_key(asset->m_name);
+    const AccountData* account2 = AccountModel::instance().get_key(asset->m_type.name());
     if (account || account2) {
-        asset_dialog.SetTransactionAccountName(account ? asset->ASSETNAME : asset->ASSETTYPE);
+        asset_dialog.SetTransactionAccountName(account ? asset->m_name : asset->m_type.name());
     }
     else {
-        TrxLinkModel::DataA translist = TrxLinkModel::TranslinkList<AssetModel>(asset->ASSETID);
+        TrxLinkModel::DataA translist = TrxLinkModel::TranslinkList<AssetModel>(asset->m_id);
         if (translist.empty()) {
             wxMessageBox(_t(
                 "This asset does not have its own account\n\n"
@@ -804,7 +805,7 @@ void AssetPanel::ViewAssetTrans(int selectedIndex)
     AssetData* asset = &m_assets[selectedIndex];
 
     wxDialog dlg(this, wxID_ANY,
-                 _t("View Asset Transactions") + ": " + asset->ASSETNAME,
+                 _t("View Asset Transactions") + ": " + asset->m_name,
                  wxDefaultPosition, wxDefaultSize,
                  wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER);
 
@@ -820,7 +821,7 @@ void AssetPanel::ViewAssetTrans(int selectedIndex)
     BindAssetListEvents(assetTxnListCtrl);
 
     // Load asset transactions
-    LoadAssetTransactions(assetTxnListCtrl, asset->ASSETID);
+    LoadAssetTransactions(assetTxnListCtrl, asset->m_id);
 
     // Add buttons
     wxSizer* buttonSizer = dlg.CreateSeparatedButtonSizer(wxOK);
@@ -931,12 +932,12 @@ void AssetPanel::CopySelectedRowsToClipboard(wxListCtrl* listCtrl)
 void AssetPanel::GotoAssetAccount(const int selected_index)
 {
     AssetData* asset = &m_assets[selected_index];
-    const AccountData* account_n = AccountModel::instance().get_key(asset->ASSETNAME);
+    const AccountData* account_n = AccountModel::instance().get_key(asset->m_name);
     if (account_n) {
         SetAccountParameters(account_n);
     }
     else {
-        TrxLinkModel::DataA asset_a = TrxLinkModel::TranslinkList<AssetModel>(asset->ASSETID);
+        TrxLinkModel::DataA asset_a = TrxLinkModel::TranslinkList<AssetModel>(asset->m_id);
         for (const auto &asset_d : asset_a) {
             const TrxData* trx_n = TrxModel::instance().get_data_n(asset_d.CHECKINGACCOUNTID);
             if (trx_n) {

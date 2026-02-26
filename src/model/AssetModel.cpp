@@ -21,22 +21,6 @@
 #include "TrxLinkModel.h"
 #include "CurrencyHistoryModel.h"
 
-mmChoiceNameA AssetModel::STATUS_CHOICES = mmChoiceNameA({
-    { STATUS_ID_CLOSED, _n("Closed") },
-    { STATUS_ID_OPEN,   _n("Open") }
-}, -1, true);
-
-mmChoiceNameA AssetModel::CHANGE_CHOICES = mmChoiceNameA({
-    { CHANGE_ID_NONE,       _n("None") },
-    { CHANGE_ID_APPRECIATE, _n("Appreciates") },
-    { CHANGE_ID_DEPRECIATE, _n("Depreciates") }
-}, -1, true);
-
-mmChoiceNameA AssetModel::CHANGEMODE_CHOICES = mmChoiceNameA({
-    { CHANGEMODE_ID_PERCENTAGE, _n("Percentage") },
-    { CHANGEMODE_ID_LINEAR,     _n("Linear") }
-}, -1, true);
-
 AssetModel::AssetModel() :
     TableFactory<AssetTable, AssetData>()
 {
@@ -70,7 +54,7 @@ wxString AssetModel::get_asset_name(int64 asset_id)
 {
     const Data* asset_n = instance().get_data_n(asset_id);
     if (asset_n)
-        return asset_n->ASSETNAME;
+        return asset_n->m_name;
     else
         return _t("Asset Error");
 }
@@ -97,7 +81,7 @@ AssetCol::STARTDATE AssetModel::STARTDATE(OP op, const wxDate& date)
 
 wxDate AssetModel::STARTDATE(const Data& r)
 {
-    return parseDateTime(r.STARTDATE);
+    return parseDateTime(r.m_start_date);
 }
 
 const CurrencyData* AssetModel::currency(const Data* /* r */)
@@ -121,18 +105,18 @@ std::pair<double, double> AssetModel::valueAtDate(const Data* r, const wxDate& d
     if (date < STARTDATE(*r)) return balance;
 
     TrxLinkModel::DataA translink_records = TrxLinkModel::instance().find(
-        TrxLinkCol::LINKRECORDID(r->ASSETID),
+        TrxLinkCol::LINKRECORDID(r->m_id),
         TrxLinkCol::LINKTYPE(this->refTypeName)
     );
 
-    double dailyRate = r->VALUECHANGERATE / 36500.0;
-    int changeType = change_id(*r);
+    double dailyRate = r->m_change_rate / 36500.0;
+    mmChoiceId changeType = r->m_change.id();
 
     auto applyChangeRate = [changeType, dailyRate](double& value, double days) {
-        if (changeType == CHANGE_ID_APPRECIATE) {
+        if (changeType == AssetChange::e_appreciates) {
             value *= exp(dailyRate * days);
         }
-        else if (changeType == CHANGE_ID_DEPRECIATE) {
+        else if (changeType == AssetChange::e_depreciates) {
             value *= exp(-dailyRate * days);
         }
     };
@@ -190,7 +174,7 @@ std::pair<double, double> AssetModel::valueAtDate(const Data* r, const wxDate& d
     }
     else
     {
-        balance = {r->VALUE, r->VALUE};
+        balance = {r->m_value, r->m_value};
         applyChangeRate(balance.second, static_cast<double>((date - STARTDATE(*r)).GetDays()));
     }
     return balance;

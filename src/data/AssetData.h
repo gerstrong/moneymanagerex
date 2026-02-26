@@ -39,37 +39,112 @@ public:
     static mmChoiceNameA s_choice_a;
 
 private:
-    int m_id;
+    mmChoiceId m_id;
 
 public:
-    AssetType(int id = s_choice_a.default_id_n()) : m_id(s_choice_a.valid_id_n(id)) {}
-    AssetType(const wxString& name) : m_id(AssetType::s_choice_a.find_name_n(name)) {}
+    AssetType(mmChoiceId id = s_choice_a.default_id_n()) :
+        m_id(s_choice_a.valid_id_n(id)) {}
+    AssetType(const wxString& name) :
+        m_id(AssetType::s_choice_a.find_name_n(name)) {}
 
-    int id() const { return m_id; }
+    mmChoiceId id() const { return m_id; }
     const wxString name() const { return AssetType::s_choice_a.get_name(m_id); }
+};
+
+struct AssetStatus
+{
+public:
+    enum
+    {
+        e_closed = 0,
+        e_open,
+        size
+    };
+    static mmChoiceNameA s_choice_a;
+
+private:
+    mmChoiceId m_id;
+
+public:
+    AssetStatus(mmChoiceId id = s_choice_a.default_id_n()) :
+        m_id(s_choice_a.valid_id_n(id)) {}
+    AssetStatus(const wxString& name) :
+        m_id(AssetStatus::s_choice_a.find_name_n(name)) {}
+
+    mmChoiceId id() const { return m_id; }
+    const wxString name() const { return AssetStatus::s_choice_a.get_name(m_id); }
+};
+
+struct AssetChange
+{
+public:
+    enum
+    {
+        e_none = 0,
+        e_appreciates,
+        e_depreciates,
+        size
+    };
+    static mmChoiceNameA s_choice_a;
+
+private:
+    mmChoiceId m_id;
+
+public:
+    AssetChange(mmChoiceId id = s_choice_a.default_id_n()) :
+        m_id(s_choice_a.valid_id_n(id)) {}
+    AssetChange(const wxString& name) :
+        m_id(AssetChange::s_choice_a.find_name_n(name)) {}
+
+    mmChoiceId id() const { return m_id; }
+    const wxString name() const { return AssetChange::s_choice_a.get_name(m_id); }
+};
+
+struct AssetChangeMode
+{
+public:
+    enum
+    {
+        e_percentage = 0,
+        e_linear,
+        size
+    };
+    static mmChoiceNameA s_choice_a;
+
+private:
+    mmChoiceId m_id;
+
+public:
+    AssetChangeMode(mmChoiceId id = s_choice_a.default_id_n()) :
+        m_id(s_choice_a.valid_id_n(id)) {}
+    AssetChangeMode(const wxString& name) :
+        m_id(AssetChangeMode::s_choice_a.find_name_n(name)) {}
+
+    mmChoiceId id() const { return m_id; }
+    const wxString name() const { return AssetChangeMode::s_choice_a.get_name(m_id); }
 };
 
 // User-friendly representation of a record in table ASSETS_V1.
 struct AssetData
 {
-    int64    ASSETID;
-    wxString ASSETTYPE;
-    wxString ASSETSTATUS;
-    wxString ASSETNAME;
-    wxString STARTDATE;
-    int64    CURRENCYID;
-    double   VALUE;
-    wxString VALUECHANGE;
-    wxString VALUECHANGEMODE;
-    double   VALUECHANGERATE;
-    wxString NOTES;
+    int64           m_id;
+    AssetType       m_type;
+    AssetStatus     m_status;
+    wxString        m_name;
+    wxString        m_start_date;
+    int64           m_currency_id;
+    double          m_value;
+    AssetChange     m_change;
+    AssetChangeMode m_change_mode;
+    double          m_change_rate;
+    wxString        m_notes;
 
     explicit AssetData();
     explicit AssetData(wxSQLite3ResultSet& q);
     AssetData(const AssetData& other) = default;
 
-    int64 id() const { return ASSETID; }
-    void id(const int64 id) { ASSETID = id; }
+    int64 id() const { return m_id; }
+    void id(const int64 id) { m_id = id; }
     AssetRow to_row() const;
     AssetData& from_row(const AssetRow& row);
     void to_insert_stmt(wxSQLite3Statement& stmt, int64 id) const;
@@ -90,7 +165,7 @@ struct AssetData
     {
         bool operator()(const AssetData& x, const AssetData& y)
         {
-            return x.ASSETID < y.ASSETID;
+            return x.m_id < y.m_id;
         }
     };
 
@@ -98,7 +173,7 @@ struct AssetData
     {
         bool operator()(const AssetData& x, const AssetData& y)
         {
-            return x.STARTDATE < y.STARTDATE;
+            return x.m_start_date < y.m_start_date;
         }
     };
 
@@ -106,7 +181,7 @@ struct AssetData
     {
         bool operator()(const AssetData& x, const AssetData& y)
         {
-            return x.ASSETNAME < y.ASSETNAME;
+            return x.m_name < y.m_name;
         }
     };
 
@@ -114,7 +189,7 @@ struct AssetData
     {
         bool operator()(const AssetData& x, const AssetData& y)
         {
-            return x.ASSETSTATUS < y.ASSETSTATUS;
+            return x.m_status.id() < y.m_status.id();
         }
     };
 
@@ -122,7 +197,7 @@ struct AssetData
     {
         bool operator()(const AssetData& x, const AssetData& y)
         {
-            return x.CURRENCYID < y.CURRENCYID;
+            return x.m_currency_id < y.m_currency_id;
         }
     };
 
@@ -130,7 +205,7 @@ struct AssetData
     {
         bool operator()(const AssetData& x, const AssetData& y)
         {
-            return x.VALUECHANGEMODE < y.VALUECHANGEMODE;
+            return x.m_change_mode.id() < y.m_change_mode.id();
         }
     };
 
@@ -138,7 +213,7 @@ struct AssetData
     {
         bool operator()(const AssetData& x, const AssetData& y)
         {
-            return x.VALUE < y.VALUE;
+            return x.m_value < y.m_value;
         }
     };
 
@@ -146,7 +221,7 @@ struct AssetData
     {
         bool operator()(const AssetData& x, const AssetData& y)
         {
-            return x.VALUECHANGE < y.VALUECHANGE;
+            return x.m_change.id() < y.m_change.id();
         }
     };
 
@@ -154,7 +229,7 @@ struct AssetData
     {
         bool operator()(const AssetData& x, const AssetData& y)
         {
-            return x.NOTES < y.NOTES;
+            return x.m_notes < y.m_notes;
         }
     };
 
@@ -162,7 +237,7 @@ struct AssetData
     {
         bool operator()(const AssetData& x, const AssetData& y)
         {
-            return x.VALUECHANGERATE < y.VALUECHANGERATE;
+            return x.m_change_rate < y.m_change_rate;
         }
     };
 
@@ -170,7 +245,7 @@ struct AssetData
     {
         bool operator()(const AssetData& x, const AssetData& y)
         {
-            return x.ASSETTYPE < y.ASSETTYPE;
+            return x.m_type.id() < y.m_type.id();
         }
     };
 };

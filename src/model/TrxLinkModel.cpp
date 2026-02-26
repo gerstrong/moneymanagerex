@@ -177,7 +177,7 @@ void TrxLinkModel::RemoveTranslinkEntry(const int64 checking_account_id)
 
 void TrxLinkModel::UpdateAssetValue(AssetData* asset_n)
 {
-    DataA trans_list = TranslinkList<AssetModel>(asset_n->ASSETID);
+    DataA trans_list = TranslinkList<AssetModel>(asset_n->m_id);
     double new_value = 0;
     for (const auto &trans : trans_list) {
         const TrxData* trx_n = TrxModel::instance().get_data_n(trans.CHECKINGACCOUNTID);
@@ -201,8 +201,8 @@ void TrxLinkModel::UpdateAssetValue(AssetData* asset_n)
         }
     }
 
-    if (asset_n->VALUE != new_value) {
-        asset_n->VALUE = new_value;
+    if (asset_n->m_value != new_value) {
+        asset_n->m_value = new_value;
         AssetModel::instance().unsafe_save_data_n(asset_n);
     }
 }

@@ -180,12 +180,10 @@ wxArrayString ReportModel::allGroupNames()
 {
     wxArrayString groups;
     wxString PreviousGroup;
-    for (const auto &report : this->find_all(Col::COL_ID_GROUPNAME))
-    {
-        if (report.GROUPNAME != PreviousGroup)
-        {
-            groups.Add(report.GROUPNAME);
-            PreviousGroup = report.GROUPNAME;
+    for (const auto& report_d : this->find_all(Col::COL_ID_GROUPNAME)) {
+        if (report_d.m_group_name != PreviousGroup) {
+            groups.Add(report_d.m_group_name);
+            PreviousGroup = report_d.m_group_name;
         }
     }
     return groups;
@@ -238,10 +236,10 @@ bool ReportModel::PrepareSQL(wxString& sql, std::map <wxString, wxString>& rep_p
     return true;
 }
 
-int ReportModel::get_html(const Data* r, wxString& out)
+int ReportModel::get_html(const Data* report_n, wxString& out)
 {
-    wxString sql = r->SQLCONTENT;
-    wxString templatecontent = r->TEMPLATECONTENT;
+    wxString sql = report_n->m_sql_content;
+    wxString templatecontent = report_n->m_template_content;
     if (templatecontent.empty()) {
         out = _t("Template is empty");
         return 3;
@@ -250,24 +248,20 @@ int ReportModel::get_html(const Data* r, wxString& out)
     wxSQLite3ResultSet q;
     int columnCount = 0;
     std::map <wxString, wxString> rep_params;
-    try
-    {
+    try {
         PrepareSQL(sql, rep_params);
 
         wxSQLite3Statement stmt = this->m_db->PrepareStatement(sql);
-        if (!stmt.IsReadOnly())
-        {
-            out = wxString::Format(_t("The SQL script:\n%s\nwill modify database! Aborted!"), r->SQLCONTENT);
+        if (!stmt.IsReadOnly()) {
+            out = wxString::Format(_t("The SQL script:\n%s\nwill modify database! Aborted!"), report_n->m_sql_content);
             return -1;
         }
-        else
-        {
+        else {
             q = stmt.ExecuteQuery();
             columnCount = q.GetColumnCount();
         }
     }
-    catch (const wxSQLite3Exception& e)
-    {
+    catch (const wxSQLite3Exception& e) {
         out = e.GetMessage();
         return e.GetErrorCode();
     }
@@ -275,14 +269,13 @@ int ReportModel::get_html(const Data* r, wxString& out)
     std::map <std::wstring, int> colHeaders;
 
     mm_html_template report(templatecontent);
-    r->to_html_template(report);
+    report_n->to_html_template(report);
     loop_t contents;
     loop_t errors;
     row_t error;
     loop_t columns;
 
-    for (int i = 0; i < columnCount; ++i)
-    {
+    for (int i = 0; i < columnCount; ++i) {
         int col_type = q.GetColumnType(i);
         const std::wstring col_name = q.GetColumnName(i).ToStdWstring();
         colHeaders[col_name] = col_type;
@@ -300,12 +293,11 @@ int ReportModel::get_html(const Data* r, wxString& out)
         method("set", &Record::set).
         end().open().glue();
 
-    bool skip_lua = r->LUACONTENT.IsEmpty();
+    bool skip_lua = report_n->m_lua_content.IsEmpty();
 
-    bool lua_status = state.doString(std::string(r->LUACONTENT.ToUTF8()));
-    if (!skip_lua && !lua_status)
-    {
-        error(L"ERROR") = wxString("failed to doString : ") + r->LUACONTENT + wxString(" err: ") + wxString(state.lastError());
+    bool lua_status = state.doString(std::string(report_n->m_lua_content.ToUTF8()));
+    if (!skip_lua && !lua_status) {
+        error(L"ERROR") = wxString("failed to doString : ") + report_n->m_lua_content + wxString(" err: ") + wxString(state.lastError());
         errors += error;
     }
     else {

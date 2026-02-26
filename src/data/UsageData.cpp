@@ -30,7 +30,7 @@ UsageRow UsageData::to_row() const
 
     row.USAGEID     = m_id;
     row.USAGEDATE   = m_date;
-    row.JSONCONTENT = m_json;
+    row.JSONCONTENT = m_json_content;
 
     return row;
 }
@@ -38,9 +38,9 @@ UsageRow UsageData::to_row() const
 // Convert UsageRow to UsageData
 UsageData& UsageData::from_row(const UsageRow& row)
 {
-    m_id   = row.USAGEID;     // int64
-    m_date = row.USAGEDATE;   // wxString
-    m_json = row.JSONCONTENT; // wxString
+    m_id           = row.USAGEID;     // int64
+    m_date         = row.USAGEDATE;   // wxString
+    m_json_content = row.JSONCONTENT; // wxString
 
     return *this;
 }
@@ -49,7 +49,7 @@ bool UsageData::equals(const UsageData* other) const
 {
     if ( m_id != other->m_id) return false;
     if (!m_date.IsSameAs(other->m_date)) return false;
-    if (!m_json.IsSameAs(other->m_json)) return false;
+    if (!m_json_content.IsSameAs(other->m_json_content)) return false;
 
     return true;
 }

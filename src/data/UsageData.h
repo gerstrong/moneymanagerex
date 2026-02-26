@@ -26,7 +26,7 @@ struct UsageData
 {
     int64 m_id; // primary key
     wxString m_date;
-    wxString m_json;
+    wxString m_json_content;
 
     explicit UsageData();
     explicit UsageData(wxSQLite3ResultSet& q);
@@ -70,7 +70,7 @@ struct UsageData
     {
         bool operator()(const UsageData& x, const UsageData& y)
         {
-            return x.m_json < y.m_json;
+            return x.m_json_content < y.m_json_content;
         }
     };
 };

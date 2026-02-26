@@ -330,30 +330,31 @@ void GeneralReportManager::fillControls()
     m_rootItem = m_treeCtrl->AddRoot(_t("Reports"));
     m_selectedItemID = m_rootItem;
     m_treeCtrl->SetItemBold(m_rootItem, true);
-    auto records = ReportModel::instance().find_all();
-    std::sort(records.begin(), records.end(), ReportData::SorterByREPORTNAME());
-    std::stable_sort(records.begin(), records.end(), ReportData::SorterByGROUPNAME());
+    auto report_a = ReportModel::instance().find_all();
+    std::sort(report_a.begin(), report_a.end(), ReportData::SorterByREPORTNAME());
+    std::stable_sort(report_a.begin(), report_a.end(), ReportData::SorterByGROUPNAME());
     wxTreeItemId group;
     wxString group_name;
-    for (const auto& record : records)
-    {
-        bool no_group = record.GROUPNAME.empty();
-        if (group_name != record.GROUPNAME && !no_group)
-        {
-            group_name = record.GROUPNAME;
+    for (const auto& report_d : report_a) {
+        bool no_group = report_d.m_group_name.empty();
+        if (group_name != report_d.m_group_name && !no_group) {
+            group_name = report_d.m_group_name;
             group = m_treeCtrl->AppendItem(m_rootItem, group_name);
             m_treeCtrl->SetItemBold(group, true);
             m_treeCtrl->SetItemData(group, new MyTreeItemData(-1, group_name));
         }
-        wxTreeItemId item = m_treeCtrl->AppendItem(no_group ? m_rootItem : group
-            , wxString::Format("%s%s", (record.ACTIVE.GetValue() ? L"" : L"\u2717 "), record.REPORTNAME));
-        m_treeCtrl->SetItemData(item, new MyTreeItemData(record.REPORTID, record.GROUPNAME));
-        if (!record.ACTIVE.GetValue()) {
+        wxTreeItemId item = m_treeCtrl->AppendItem(no_group ? m_rootItem : group,
+            wxString::Format("%s%s",
+                (report_d.m_active ? L"" : L"\u2717 "),
+                report_d.m_name
+            )
+        );
+        m_treeCtrl->SetItemData(item, new MyTreeItemData(report_d.m_id, report_d.m_group_name));
+        if (!report_d.m_active) {
             m_treeCtrl->SetItemTextColour(item, mmThemeMetaColour(meta::COLOR_HIDDEN));
         }
 
-        if (m_selectedReportID == record.REPORTID)
-        {
+        if (m_selectedReportID == report_d.m_id) {
             m_selectedItemID = item;
         }
     }
@@ -670,13 +671,13 @@ void GeneralReportManager::importReport()
     reportName = fn.FileName(reportFileName).GetName();
     const ReportData* report_n = ReportModel::instance().get_key(reportName);
     ReportData report_d = report_n ? *report_n : ReportData();
-    report_d.GROUPNAME       = m_selectedGroup;
-    report_d.REPORTNAME      = reportName;
-    report_d.SQLCONTENT      = sql;
-    report_d.LUACONTENT      = lua;
-    report_d.TEMPLATECONTENT = htt;
-    report_d.DESCRIPTION     = txt;
-    report_d.ACTIVE          = 1;
+    report_d.m_group_name       = m_selectedGroup;
+    report_d.m_name             = reportName;
+    report_d.m_sql_content      = sql;
+    report_d.m_lua_content      = lua;
+    report_d.m_template_content = htt;
+    report_d.m_description      = txt;
+    report_d.m_active           = true;
     ReportModel::instance().save_data_n(report_d);
     m_selectedReportID = report_d.id();
 
@@ -742,17 +743,17 @@ void GeneralReportManager::OnUpdateReport(wxCommandEvent& WXUNUSED(event))
     mmMiniEditor* SqlScriptText = static_cast<mmMiniEditor*>(FindWindow(ID_SQL_CONTENT));
     mmMiniEditor* LuaScriptText = static_cast<mmMiniEditor*>(FindWindow(ID_LUA_CONTENT));
     mmMiniEditor* descriptionText = static_cast<mmMiniEditor*>(FindWindow(ID_DESCRIPTION));
-    report_n->SQLCONTENT = SqlScriptText->GetValue();
-    report_n->LUACONTENT = LuaScriptText->GetValue();
-    report_n->TEMPLATECONTENT = templateText->GetValue();
-    report_n->DESCRIPTION = descriptionText->GetValue();
+    report_n->m_sql_content      = SqlScriptText->GetValue();
+    report_n->m_lua_content      = LuaScriptText->GetValue();
+    report_n->m_template_content = templateText->GetValue();
+    report_n->m_description      = descriptionText->GetValue();
     ReportModel::instance().unsafe_update_data_n(report_n);
 
     templateText->SetSavePoint();  // reset change flags
     SqlScriptText->SetSavePoint();
     LuaScriptText->SetSavePoint();
     descriptionText->SetSavePoint();
-    browser_->SetPage(report_n->DESCRIPTION, "");
+    browser_->SetPage(report_n->m_description, "");
 }
 
 bool GeneralReportManager::isModified() {
@@ -806,7 +807,7 @@ void GeneralReportManager::OnContextMenu(wxContextMenuEvent& event)
     m_treeCtrl->SelectItem(id);
     MyTreeItemData *iData = dynamic_cast<MyTreeItemData*>(m_treeCtrl->GetItemData(id));
     int64 report_id = iData ? iData->get_report_id() : -1;
-    const ReportData *report = ReportModel::instance().get_data_n(report_id);
+    const ReportData* report_n = ReportModel::instance().get_data_n(report_id);
 
     wxMenu* samplesMenu = new wxMenu;
     samplesMenu->Append(ID_NEW_SAMPLE_ASSETS, _tu("Assets…"));
@@ -816,7 +817,7 @@ void GeneralReportManager::OnContextMenu(wxContextMenuEvent& event)
     ctxMenu->Append(ID_DUPLICATE, _tu("Duplicate Report"));
     ctxMenu->Append(wxID_ANY, _t("New Sample Report"), samplesMenu);
     ctxMenu->AppendSeparator();
-    ctxMenu->Append(ID_GROUP, (report) ?_tu("Change Group…") : _tu("Rename Group…"));
+    ctxMenu->Append(ID_GROUP, report_n ?_tu("Change Group…") : _tu("Rename Group…"));
     ctxMenu->Append(ID_UNGROUP, _t("UnGroup"));
     ctxMenu->Append(ID_RENAME, _tu("Rename Report…"));
     ctxMenu->AppendSeparator();
@@ -833,9 +834,9 @@ void GeneralReportManager::OnContextMenu(wxContextMenuEvent& event)
     ctxMenu->Append(ID_SYNC, _tu("Sync Report…"));
     #endif
 
-    if (report) {
-        ctxMenu->Enable(ID_UNGROUP, !report->GROUPNAME.empty());
-        menuItemActive->Check(report->ACTIVE.GetValue());
+    if (report_n) {
+        ctxMenu->Enable(ID_UNGROUP, !report_n->m_group_name.empty());
+        menuItemActive->Check(report_n->m_active);
     }
     else {
         ctxMenu->Enable(ID_GROUP, m_selectedGroup != "");
@@ -905,7 +906,7 @@ void GeneralReportManager::OnSelChanged(wxTreeEvent& event)
         return;
     }
 
-    m_selectedReportID = report_n->REPORTID;
+    m_selectedReportID = report_n->m_id;
     createEditorTab(editors_notebook, ID_DESCRIPTION);
     createEditorTab(editors_notebook, ID_TEMPLATE);
     createEditorTab(editors_notebook, ID_LUA_CONTENT);
@@ -916,13 +917,13 @@ void GeneralReportManager::OnSelChanged(wxTreeEvent& event)
     mmMiniEditor* templateText = static_cast<mmMiniEditor*>(FindWindow(ID_TEMPLATE));
     mmMiniEditor* descriptionText = static_cast<mmMiniEditor*>(FindWindow(ID_DESCRIPTION));
 
-    templateText->ChangeValue(report_n->TEMPLATECONTENT);
+    templateText->ChangeValue(report_n->m_template_content);
     templateText->SetSavePoint();
-    SqlScriptText->ChangeValue(report_n->SQLCONTENT);
+    SqlScriptText->ChangeValue(report_n->m_sql_content);
     SqlScriptText->SetSavePoint();
-    LuaScriptText->ChangeValue(report_n->LUACONTENT);
+    LuaScriptText->ChangeValue(report_n->m_lua_content);
     LuaScriptText->SetSavePoint();
-    wxString description = report_n->DESCRIPTION;
+    wxString description = report_n->m_description;
     descriptionText->ChangeValue(description);
     descriptionText->SetSavePoint();
 
@@ -950,14 +951,14 @@ void GeneralReportManager::renameReport(int64 id)
     wxString label = wxGetTextFromUser(
         _t("Enter the name for the report"),
         _t("General Report Manager"),
-        report_n->REPORTNAME
+        report_n->m_name
     );
     label.Trim();
 
     if (ReportModel::instance().find(ReportCol::REPORTNAME(label)).empty()
         && !label.empty()
     ) {
-        report_n->REPORTNAME = label;
+        report_n->m_name = label;
         ReportModel::instance().unsafe_update_data_n(report_n);
     }
 }
@@ -969,10 +970,10 @@ bool GeneralReportManager::syncReport(int64 id)
     if (report_n) {
         wxString msg = wxString() << _("Pull Report Title:")
             << "\n"
-            << report_n->REPORTNAME;
+            << report_n->m_name;
         int iError = wxMessageBox(msg, "General Reports Manager", wxYES_NO | wxICON_ERROR);
         if (iError == wxYES) {
-            DownloadAndStoreReport(report_n->GROUPNAME, report_n->REPORTNAME, "");
+            DownloadAndStoreReport(report_n->m_group_name, report_n->m_name, "");
             return true;
         }
     }
@@ -986,7 +987,7 @@ bool GeneralReportManager::deleteReport(int64 id)
     if (report_n) {
         wxString msg = wxString() << _t("Delete the Report Title:")
             << "\n\n"
-            << report_n->REPORTNAME;
+            << report_n->m_name;
         int iError = wxMessageBox(msg, "General Reports Manager", wxYES_NO | wxICON_ERROR);
         if (iError == wxYES) {
             ReportModel::instance().purge_id(id);
@@ -1003,7 +1004,7 @@ void GeneralReportManager::changeReportState(int64 id)
 {
     ReportData* report_n = ReportModel::instance().unsafe_get_data_n(id);
     if (report_n) {
-        report_n->ACTIVE = (report_n->ACTIVE + 1) % 2;
+        report_n->m_active = !report_n->m_active;
         ReportModel::instance().unsafe_update_data_n(report_n);
     }
 }
@@ -1017,7 +1018,7 @@ void GeneralReportManager::duplicateReport(int64 id)
     wxString label = wxGetTextFromUser(
         _t("Enter the name for the report"),
         _t("General Report Manager"),
-        report_n->REPORTNAME
+        report_n->m_name
     );
     label.Trim();
 
@@ -1025,13 +1026,13 @@ void GeneralReportManager::duplicateReport(int64 id)
         ReportCol::REPORTNAME(label)
     ).empty() && !label.empty()) {
         ReportData new_report_d = ReportData();
-        new_report_d.GROUPNAME       = report_n->GROUPNAME;
-        new_report_d.REPORTNAME      = label;
-        new_report_d.SQLCONTENT      = report_n->SQLCONTENT;
-        new_report_d.LUACONTENT      = report_n->LUACONTENT ;
-        new_report_d.TEMPLATECONTENT = report_n->TEMPLATECONTENT;
-        new_report_d.DESCRIPTION     = report_n->DESCRIPTION;
-        new_report_d.ACTIVE          = report_n->ACTIVE;
+        new_report_d.m_group_name       = report_n->m_group_name;
+        new_report_d.m_name             = label;
+        new_report_d.m_sql_content      = report_n->m_sql_content;
+        new_report_d.m_lua_content      = report_n->m_lua_content;
+        new_report_d.m_template_content = report_n->m_template_content;
+        new_report_d.m_description      = report_n->m_description;
+        new_report_d.m_active           = report_n->m_active;
         ReportModel::instance().add_data_n(new_report_d);
         m_selectedReportID = new_report_d.id();
     }
@@ -1042,7 +1043,7 @@ bool GeneralReportManager::changeReportGroup(int64 id, bool ungroup)
     ReportData * report_n = ReportModel::instance().unsafe_get_data_n(id);
     if (report_n) {
         if (ungroup) {
-            report_n->GROUPNAME = "";
+            report_n->m_group_name = "";
             ReportModel::instance().unsafe_update_data_n(report_n);
             return true;
         }
@@ -1050,13 +1051,13 @@ bool GeneralReportManager::changeReportGroup(int64 id, bool ungroup)
             mmDialogComboBoxAutocomplete dlg(this,
                 _t("Enter or choose name for the new report group"),
                 _t("Change report group"),
-                report_n->GROUPNAME,
+                report_n->m_group_name,
                 ReportModel::instance().allGroupNames()
             );
 
             if (dlg.ShowModal() == wxID_OK) {
                 const wxString groupName = dlg.getText();
-                report_n->GROUPNAME = groupName;
+                report_n->m_group_name = groupName;
                 ReportModel::instance().unsafe_update_data_n(report_n);
                 return true;
             }
@@ -1074,7 +1075,7 @@ bool GeneralReportManager::renameReportGroup(const wxString& GroupName)
         const wxString groupName = dlg.getText();
         auto report_a = ReportModel::instance().find(ReportCol::GROUPNAME(GroupName));
         for (auto& report_d : report_a) {
-            report_d.GROUPNAME = groupName;
+            report_d.m_group_name = groupName;
         }
         ReportModel::instance().save_data_a(report_a);
         return true;
@@ -1188,13 +1189,12 @@ void GeneralReportManager::newReport(int sample)
     }
 
     ReportData new_report_d = ReportData();
-    new_report_d.GROUPNAME       = group_name;
-    new_report_d.REPORTNAME      = report_name;
-    new_report_d.SQLCONTENT      = sqlContent;
-    new_report_d.LUACONTENT      = luaContent;
-    new_report_d.TEMPLATECONTENT = httContent;
-    new_report_d.DESCRIPTION     = description;
-    new_report_d.ACTIVE          = 1;
+    new_report_d.m_group_name       = group_name;
+    new_report_d.m_name             = report_name;
+    new_report_d.m_sql_content      = sqlContent;
+    new_report_d.m_lua_content      = luaContent;
+    new_report_d.m_template_content = httContent;
+    new_report_d.m_description      = description;
     ReportModel::instance().add_data_n(new_report_d);
     m_selectedReportID = new_report_d.id();
 }
@@ -1209,7 +1209,7 @@ void GeneralReportManager::OnExportReport(wxCommandEvent& WXUNUSED(event))
     if (!report_n)
         return;
 
-    wxString file_name = report_n->REPORTNAME + ".grm";
+    wxString file_name = report_n->m_name + ".grm";
     wxFileDialog dlg(this
         , _t("Choose file to Save As Report")
         , wxEmptyString
@@ -1227,13 +1227,13 @@ void GeneralReportManager::OnExportReport(wxCommandEvent& WXUNUSED(event))
     wxZipOutputStream zip(out);
     wxTextOutputStream txt(zip, wxEOL_UNIX);
     zip.PutNextEntry("sqlcontent.sql");
-    txt << report_n->SQLCONTENT;
+    txt << report_n->m_sql_content;
     zip.PutNextEntry("luacontent.lua");
-    txt << report_n->LUACONTENT;
+    txt << report_n->m_lua_content;
     zip.PutNextEntry("template.htt");
-    txt << report_n->TEMPLATECONTENT;
+    txt << report_n->m_template_content;
     zip.PutNextEntry("description.txt");
-    txt << report_n->DESCRIPTION;
+    txt << report_n->m_description;
 }
 
 void GeneralReportManager::showHelp()
@@ -1530,13 +1530,13 @@ void GeneralReportManager::DownloadAndStoreReport(const wxString& groupName, con
 
     const ReportData* report_n = ReportModel::instance().get_key(reportName);
     ReportData report_d = report_n ? *report_n : ReportData();
-    report_d.GROUPNAME = groupName;
-    report_d.REPORTNAME = reportName;
-    report_d.SQLCONTENT = sql;
-    report_d.LUACONTENT = lua;
-    report_d.TEMPLATECONTENT = htt;
-    report_d.DESCRIPTION = txt;
-    report_d.ACTIVE = 1;
+    report_d.m_group_name       = groupName;
+    report_d.m_name             = reportName;
+    report_d.m_sql_content      = sql;
+    report_d.m_lua_content      = lua;
+    report_d.m_template_content = htt;
+    report_d.description        = txt;
+    report_d.m_active           = true;
     ReportModel::instance().save_data_n(report_d);
     m_selectedReportID = report_d.id();
 }

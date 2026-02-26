@@ -265,12 +265,12 @@ void ReportBase::restoreReportSettings()
 //----------------------------------------------------------------------
 
 mmGeneralReport::mmGeneralReport(const ReportData* report) :
-    ReportBase(report->REPORTNAME),
+    ReportBase(report->m_name),
     m_report(report)
 {
     // Store reportid if no id is provided
-    if (m_report_id == -1 && report->REPORTID >= LONG_MIN && report->REPORTID <= LONG_MAX) {
-        m_report_id = static_cast<ReportBase::REPORT_ID>(int(report->REPORTID.ToLong()));
+    if (m_report_id == -1 && report->m_id >= LONG_MIN && report->m_id <= LONG_MAX) {
+        m_report_id = static_cast<ReportBase::REPORT_ID>(int(report->m_id.ToLong()));
     }
 }
 
@@ -318,7 +318,7 @@ wxString mmGeneralReport::getHTMLText()
 int mmGeneralReport::getParameters()
 {
     int params = 0;
-    const auto content = m_report->SQLCONTENT.Lower();
+    const auto content = m_report->m_sql_content.Lower();
     if (content.Contains("&begin_date") || content.Contains("&end_date"))
         params |= M_DATE_RANGE;
     else if (content.Contains("&single_date"))

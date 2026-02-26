@@ -58,7 +58,7 @@ wxString UsageReport::getHTMLText()
 
     for (const auto & xu_d : xu_a) {
          Document json_doc;
-         if (json_doc.Parse(xu_d.m_json.utf8_str()).HasParseError())
+         if (json_doc.Parse(xu_d.m_json_content.utf8_str()).HasParseError())
              continue;
 
          //wxLogDebug("======= UsageReport::getHTMLText =======");

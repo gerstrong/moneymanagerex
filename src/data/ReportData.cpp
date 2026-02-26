@@ -16,15 +16,12 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  ********************************************************/
 
-// PLEASE EDIT!
-// This is only sample code re-used from "table/ReportTable.cpp".
-
 #include "ReportData.h"
 
 ReportData::ReportData()
 {
-    REPORTID = -1;
-    ACTIVE = -1;
+    m_id     = -1;
+    m_active = true;
 }
 
 // Convert ReportData to ReportRow
@@ -32,14 +29,14 @@ ReportRow ReportData::to_row() const
 {
     ReportRow row;
 
-    row.REPORTID = REPORTID;
-    row.REPORTNAME = REPORTNAME;
-    row.GROUPNAME = GROUPNAME;
-    row.ACTIVE = ACTIVE;
-    row.SQLCONTENT = SQLCONTENT;
-    row.LUACONTENT = LUACONTENT;
-    row.TEMPLATECONTENT = TEMPLATECONTENT;
-    row.DESCRIPTION = DESCRIPTION;
+    row.REPORTID        = m_id;
+    row.REPORTNAME      = m_name;
+    row.GROUPNAME       = m_group_name;
+    row.ACTIVE          = (m_active ? 1 : 0);
+    row.SQLCONTENT      = m_sql_content;
+    row.LUACONTENT      = m_lua_content;
+    row.TEMPLATECONTENT = m_template_content;
+    row.DESCRIPTION     = m_description;
 
     return row;
 }
@@ -47,28 +44,28 @@ ReportRow ReportData::to_row() const
 // Convert ReportRow to ReportData
 ReportData& ReportData::from_row(const ReportRow& row)
 {
-    REPORTID = row.REPORTID; // int64
-    REPORTNAME = row.REPORTNAME; // wxString
-    GROUPNAME = row.GROUPNAME; // wxString
-    ACTIVE = row.ACTIVE; // int64
-    SQLCONTENT = row.SQLCONTENT; // wxString
-    LUACONTENT = row.LUACONTENT; // wxString
-    TEMPLATECONTENT = row.TEMPLATECONTENT; // wxString
-    DESCRIPTION = row.DESCRIPTION; // wxString
+    m_id               = row.REPORTID;        // int64
+    m_name             = row.REPORTNAME;      // wxString
+    m_group_name       = row.GROUPNAME;       // wxString
+    m_active           = (row.ACTIVE != 0);   // int64
+    m_sql_content      = row.SQLCONTENT;      // wxString
+    m_lua_content      = row.LUACONTENT;      // wxString
+    m_template_content = row.TEMPLATECONTENT; // wxString
+    m_description      = row.DESCRIPTION;     // wxString
 
     return *this;
 }
 
 bool ReportData::equals(const ReportData* other) const
 {
-    if ( REPORTID != other->REPORTID) return false;
-    if (!REPORTNAME.IsSameAs(other->REPORTNAME)) return false;
-    if (!GROUPNAME.IsSameAs(other->GROUPNAME)) return false;
-    if ( ACTIVE != other->ACTIVE) return false;
-    if (!SQLCONTENT.IsSameAs(other->SQLCONTENT)) return false;
-    if (!LUACONTENT.IsSameAs(other->LUACONTENT)) return false;
-    if (!TEMPLATECONTENT.IsSameAs(other->TEMPLATECONTENT)) return false;
-    if (!DESCRIPTION.IsSameAs(other->DESCRIPTION)) return false;
+    if ( m_id != other->m_id) return false;
+    if (!m_name.IsSameAs(other->m_name)) return false;
+    if (!m_group_name.IsSameAs(other->m_group_name)) return false;
+    if ( m_active != other->m_active) return false;
+    if (!m_sql_content.IsSameAs(other->m_sql_content)) return false;
+    if (!m_lua_content.IsSameAs(other->m_lua_content)) return false;
+    if (!m_template_content.IsSameAs(other->m_template_content)) return false;
+    if (!m_description.IsSameAs(other->m_description)) return false;
 
     return true;
 }

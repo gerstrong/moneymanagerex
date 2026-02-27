@@ -388,7 +388,7 @@ void StockPanel::CopySelectedRowsToClipboard(wxListCtrl* listCtrl)
 
 wxString StockPanel::GetPanelTitle(const AccountData& account) const
 {
-    return wxString::Format(_t("Stock Portfolio: %s"), account.ACCOUNTNAME);
+    return wxString::Format(_t("Stock Portfolio: %s"), account.m_name);
 }
 
 wxString StockPanel::BuildPage() const

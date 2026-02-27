@@ -160,7 +160,7 @@ void TrxFilterDialog::mmDoInitVariables()
     );
     for (const auto& acc : accounts)
     {
-        m_accounts_name.push_back(acc.ACCOUNTNAME);
+        m_accounts_name.push_back(acc.m_name);
     }
     m_accounts_name.Sort();
 }
@@ -217,8 +217,8 @@ void TrxFilterDialog::mmDoDataToControls(const wxString& json)
                 for (const auto& a : AccountModel::instance().find(
                     AccountCol::ACCOUNTNAME(acc_name)
                 )) {
-                    m_selected_accounts_id.push_back(a.ACCOUNTID);
-                    baloon += (baloon.empty() ? "" : "\n") + a.ACCOUNTNAME;
+                    m_selected_accounts_id.push_back(a.m_id);
+                    baloon += (baloon.empty() ? "" : "\n") + a.m_name;
                 }
             }
             if (m_selected_accounts_id.size() == 1)
@@ -536,7 +536,7 @@ void TrxFilterDialog::mmDoInitSettingNameChoice(wxString sel) const
     else
     {
         const AccountData* account_n = AccountModel::instance().get_data_n(accountID_);
-        wxString account_name = account_n ? account_n->ACCOUNTNAME : "";
+        wxString account_name = account_n ? account_n->m_name : "";
         m_setting_name->Append(account_name, new wxStringClientData(account_name));
         sel = "";
     }
@@ -1807,7 +1807,7 @@ const wxString TrxFilterDialog::mmGetJsonSettings(bool i18n) const
         json_writer.StartArray();
         for (const auto& acc : m_selected_accounts_id) {
             const AccountData* a = AccountModel::instance().get_data_n(acc);
-            json_writer.String(a->ACCOUNTNAME.utf8_str());
+            json_writer.String(a->m_name.utf8_str());
         }
         json_writer.EndArray();
     }
@@ -2244,8 +2244,8 @@ void TrxFilterDialog::OnAccountsButton(wxCommandEvent& WXUNUSED(event))
 
     for (const auto& acc : m_selected_accounts_id) {
         const AccountData* account_n = AccountModel::instance().get_data_n(acc);
-        if (account_n && m_accounts_name.Index(account_n->ACCOUNTNAME) != wxNOT_FOUND)
-            selected_items.Add(m_accounts_name.Index(account_n->ACCOUNTNAME));
+        if (account_n && m_accounts_name.Index(account_n->m_name) != wxNOT_FOUND)
+            selected_items.Add(m_accounts_name.Index(account_n->m_name));
     }
     s_acc.SetSelections(selected_items);
 
@@ -2259,7 +2259,7 @@ void TrxFilterDialog::OnAccountsButton(wxCommandEvent& WXUNUSED(event))
             const wxString accounts_name = m_accounts_name[index];
             const auto account = AccountModel::instance().get_key(accounts_name);
             if (account)
-                m_selected_accounts_id.push_back(account->ACCOUNTID);
+                m_selected_accounts_id.push_back(account->m_id);
             baloon += accounts_name + "\n";
         }
     }
@@ -2272,7 +2272,7 @@ void TrxFilterDialog::OnAccountsButton(wxCommandEvent& WXUNUSED(event))
     else if (m_selected_accounts_id.size() == 1) {
         const AccountData* account_n = AccountModel::instance().get_data_n(*m_selected_accounts_id.begin());
         if (account_n)
-            bSelectedAccounts_->SetLabelText(account_n->ACCOUNTNAME);
+            bSelectedAccounts_->SetLabelText(account_n->m_name);
     }
     else if (m_selected_accounts_id.size() > 1) {
         bSelectedAccounts_->SetLabelText("...");

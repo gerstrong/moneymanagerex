@@ -484,12 +484,11 @@ void TrxLinkDialog::SetTransactionCategory(const int64 categid)
 void TrxLinkDialog::SetTransactionAccount(const wxString& trans_account)
 {
     const AccountData* account = AccountModel::instance().get_key(trans_account);
-    if (account)
-    {
-        m_account->SetLabelText(account->ACCOUNTNAME);
-        m_account_id = account->ACCOUNTID;
+    if (account) {
+        m_account->SetLabelText(account->m_name);
+        m_account_id = account->m_id;
         SetLastPayeeAndCategory(m_account_id);
-        const CurrencyData* currency = CurrencyModel::instance().get_data_n(account->CURRENCYID);
+        const CurrencyData* currency = CurrencyModel::instance().get_data_n(account->m_currency_id);
         m_entered_amount->SetCurrency(currency);
         m_trans_currency->SetLabelText(currency->m_symbol);
     }
@@ -518,8 +517,11 @@ int64 TrxLinkDialog::SaveChecking()
 
     const AccountData* account = AccountModel::instance().get_data_n(m_account_id);
     wxDateTime trxDate = m_date_selector->GetValue();
-    if (trxDate.FormatISODate() < account->INITIALDATE) {
-        mmErrorDialogs::ToolTip4Object(m_account, _t("The opening date for the account is later than the date of this transaction"), _t("Invalid Date"));
+    if (trxDate.FormatISODate() < account->m_open_date) {
+        mmErrorDialogs::ToolTip4Object(m_account,
+            _t("The opening date for the account is later than the date of this transaction"),
+            _t("Invalid Date")
+        );
         return -1;
     }
 
@@ -533,9 +535,9 @@ int64 TrxLinkDialog::SaveChecking()
 
     m_transaction_n->ACCOUNTID = m_account_id;
     m_transaction_n->TOACCOUNTID = (
-            TransactionType() == TrxModel::TYPE_ID_TRANSFER ||
-            CheckingType() == TrxLinkModel::AS_TRANSFER
-        ) ? m_account_id : -1; // Self Transfer as Revaluation
+        TransactionType() == TrxModel::TYPE_ID_TRANSFER ||
+        CheckingType() == TrxLinkModel::AS_TRANSFER
+    ) ? m_account_id : -1; // Self Transfer as Revaluation
 
     m_transaction_n->PAYEEID           = m_payee_id;
     m_transaction_n->TRANSCODE         = TrxModel::type_name(TransactionType());

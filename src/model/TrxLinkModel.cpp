@@ -218,7 +218,7 @@ bool TrxLinkModel::ShareAccountId(int64& stock_entry_id)
         if (!checking_entry.empty())
         {
             const AccountData* account_entry = AccountModel::instance().get_data_n(checking_entry.at(0).ACCOUNTID);
-            stock_entry_id = account_entry->ACCOUNTID;
+            stock_entry_id = account_entry->m_id;
             return true;
         }
     }

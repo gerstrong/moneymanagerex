@@ -138,7 +138,7 @@ public:
 
 inline NavigatorTypes::TYPE_ID AccountModel::type_id(const Data* account)
 {
-    return static_cast<NavigatorTypes::TYPE_ID>(NavigatorTypes::instance().getTypeIdFromDBName(account->ACCOUNTTYPE));
+    return static_cast<NavigatorTypes::TYPE_ID>(NavigatorTypes::instance().getTypeIdFromDBName(account->m_type_));
 }
 
 inline NavigatorTypes::TYPE_ID AccountModel::type_id(const Data& account)
@@ -156,11 +156,11 @@ inline int AccountModel::status_id(const wxString& name)
 }
 inline AccountModel::STATUS_ID AccountModel::status_id(const Data* account)
 {
-    return static_cast<STATUS_ID>(status_id(account->STATUS));
+    return static_cast<STATUS_ID>(status_id(account->m_status_));
 }
 inline AccountModel::STATUS_ID AccountModel::status_id(const Data& account)
 {
-    return static_cast<STATUS_ID>(status_id(account.STATUS));
+    return static_cast<STATUS_ID>(status_id(account.m_status_));
 }
 
 inline bool AccountModel::is_positive(int value)

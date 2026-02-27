@@ -158,11 +158,11 @@ std::map<wxDateTime, int> CurrencyModel::DateUsed(int64 CurrencyID)
 {
     wxDateTime dt;
     std::map<wxDateTime, int> datesList;
-    const auto &accounts = AccountModel::instance().find(CurrencyCol::CURRENCYID(CurrencyID));
-    for (const auto &account : accounts) {
-        if (AccountModel::type_id(account) == NavigatorTypes::TYPE_ID_INVESTMENT) {
+    const auto& account_a = AccountModel::instance().find(CurrencyCol::CURRENCYID(CurrencyID));
+    for (const auto& account_d : account_a) {
+        if (AccountModel::type_id(account_d) == NavigatorTypes::TYPE_ID_INVESTMENT) {
             for (const auto& stock_d : StockModel::instance().find(
-                StockCol::HELDAT(account.ACCOUNTID)
+                StockCol::HELDAT(account_d.m_id)
             )) {
                 dt.ParseDate(stock_d.m_purchase_date);
                 datesList[dt] = 1;
@@ -170,8 +170,8 @@ std::map<wxDateTime, int> CurrencyModel::DateUsed(int64 CurrencyID)
         }
         else {
             for (const auto& trx_d : TrxModel::instance().find_or(
-                TrxCol::ACCOUNTID(account.ACCOUNTID),
-                TrxCol::TOACCOUNTID(account.ACCOUNTID)
+                TrxCol::ACCOUNTID(account_d.m_id),
+                TrxCol::TOACCOUNTID(account_d.m_id)
             )) {
                 dt.ParseDate(trx_d.TRANSDATE);
                 datesList[dt] = 1;
@@ -334,15 +334,13 @@ const wxString CurrencyModel::fromString2CLocale(const wxString &s, const Data* 
 
     auto locale = InfoModel::instance().getString("LOCALE", "");
 
-    if (locale.empty())
-    {
+    if (locale.empty()) {
         if (!currency->m_group_separator.empty())
             str.Replace(currency->m_group_separator, wxEmptyString);
         if (!currency->m_decimal_point.empty())
             str.Replace(currency->m_decimal_point, ".");
     }
-    else
-    {
+    else {
         wxString decimal = toString(1.0);
         wxRegEx pattern2(R"([^.,])");
         pattern2.ReplaceAll(&decimal, wxEmptyString);

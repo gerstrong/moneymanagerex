@@ -622,7 +622,7 @@ void ReportPanel::onNewWindow(wxWebViewEvent& evt)
             if (transaction && transaction->TRANSID > -1) {
                 const AccountData* account = AccountModel::instance().get_data_n(transaction->ACCOUNTID);
                 if (account) {
-                    w_frame->selectNavTreeItem(account->ACCOUNTNAME);
+                    w_frame->selectNavTreeItem(account->m_name);
                     w_frame->setGotoAccountID(transaction->ACCOUNTID, { transID, 0 });
                     wxCommandEvent event(wxEVT_COMMAND_MENU_SELECTED, MENU_GOTOACCOUNT);
                     w_frame->GetEventHandler()->AddPendingEvent(event);

@@ -1124,11 +1124,12 @@ mmSingleChoiceDialog::mmSingleChoiceDialog(wxWindow* parent, const wxString& mes
     Fit();
 }
 mmSingleChoiceDialog::mmSingleChoiceDialog(wxWindow* parent, const wxString& message,
-    const wxString& caption, const AccountModel::DataA& accounts)
+    const wxString& caption, const AccountModel::DataA& account_a)
 {
     if (parent) this->SetFont(parent->GetFont());
     wxArrayString choices;
-    for (const auto& item : accounts) choices.Add(item.ACCOUNTNAME);
+    for (const auto& account_d : account_a)
+        choices.Add(account_d.m_name);
     wxSingleChoiceDialog::Create(parent, message, caption, choices);
     mmThemeAutoColour(this);
     SetMinSize(wxSize(220, 384));

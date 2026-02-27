@@ -326,7 +326,7 @@ void StockList::OnMoveStocks(wxCommandEvent& /*event*/)
 
     const AccountData* from_account = AccountModel::instance().get_data_n(m_stock_panel->m_account_id);
     wxString headerMsg = wxString::Format(_t("Moving Transaction from %s to"),
-        from_account->ACCOUNTNAME
+        from_account->m_name
     );
     mmSingleChoiceDialog scd(this, _t("Select the destination Account "),
         headerMsg , accounts
@@ -337,7 +337,7 @@ void StockList::OnMoveStocks(wxCommandEvent& /*event*/)
     if (error_code == wxID_OK) {
         wxString acctName = scd.GetStringSelection();
         const AccountData* to_account = AccountModel::instance().get_key(acctName);
-        toAccountID = to_account->ACCOUNTID;
+        toAccountID = to_account->m_id;
     }
 
     if ( toAccountID != -1 ) {

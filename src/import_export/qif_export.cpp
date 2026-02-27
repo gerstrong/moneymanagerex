@@ -88,11 +88,11 @@ void mmQIFExportDialog::fillControls()
 
     for (const auto& a : all_accounts)
     {
-        m_accounts_name.Add(a.ACCOUNTNAME);
-        selected_accounts_id_.push_back(a.ACCOUNTID);
-        accounts_id_.push_back(a.ACCOUNTID);
-        if (a.ACCOUNTID == m_account_id)
-            bSelectedAccounts_->SetLabelText(a.ACCOUNTNAME);
+        m_accounts_name.Add(a.m_name);
+        selected_accounts_id_.push_back(a.m_id);
+        accounts_id_.push_back(a.m_id);
+        if (a.m_id == m_account_id)
+            bSelectedAccounts_->SetLabelText(a.m_name);
     }
 
     if (m_account_id > -1)
@@ -269,7 +269,7 @@ void mmQIFExportDialog::OnAccountsButton(wxCommandEvent& WXUNUSED(event))
 
     for (const auto& a : all_accounts)
     {
-        if (std::find(selected_accounts_id_.begin(), selected_accounts_id_.end(), a.ACCOUNTID) != selected_accounts_id_.end())
+        if (std::find(selected_accounts_id_.begin(), selected_accounts_id_.end(), a.m_id) != selected_accounts_id_.end())
             s.push_back(i);
         i++;
     }
@@ -287,7 +287,7 @@ void mmQIFExportDialog::OnAccountsButton(wxCommandEvent& WXUNUSED(event))
             int index = entry;
             const wxString accounts_name = m_accounts_name[index];
             const auto account = AccountModel::instance().get_key(accounts_name);
-            if (account) selected_accounts_id_.push_back(account->ACCOUNTID);
+            if (account) selected_accounts_id_.push_back(account->m_id);
             baloon += accounts_name + "\n";
         }
     }
@@ -299,7 +299,7 @@ void mmQIFExportDialog::OnAccountsButton(wxCommandEvent& WXUNUSED(event))
     else if (selected_accounts_id_.size() == 1) {
         int64 account_id = accounts_id_[selected_items[0]];
         const AccountData* account = AccountModel::instance().get_data_n(account_id);
-        if (account) bSelectedAccounts_->SetLabelText(account->ACCOUNTNAME);
+        if (account) bSelectedAccounts_->SetLabelText(account->m_name);
     }
     else if (selected_accounts_id_.size() > 1) {
         bSelectedAccounts_->SetLabelText(wxString::FromUTF8Unchecked("…"));

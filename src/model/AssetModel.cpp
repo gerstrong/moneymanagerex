@@ -147,7 +147,7 @@ std::pair<double, double> AssetModel::valueAtDate(const Data* r, const wxDate& d
 
             double accflow = TrxModel::account_flow(tran, tran.ACCOUNTID);
             double amount = -1 * accflow *
-                CurrencyHistoryModel::getDayRate(AccountModel::instance().get_data_n(tran.ACCOUNTID)->CURRENCYID, tranDate);
+                CurrencyHistoryModel::getDayRate(AccountModel::instance().get_data_n(tran.ACCOUNTID)->m_currency_id, tranDate);
             //double amount = -1 * TrxModel::account_flow(tran, tran.ACCOUNTID) *
             //    CurrencyHistoryModel::getDayRate(AccountModel::instance().get_data_n(tran.ACCOUNTID)->CURRENCYID, tranDate);
 

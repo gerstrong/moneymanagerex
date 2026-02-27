@@ -93,7 +93,7 @@ wxString TrxReport::getHTMLText()
         allAccounts = false;
         for (const auto& acc : selected_accounts) {
             const AccountData* a = AccountModel::instance().get_data_n(acc);
-            accounts_label += (accounts_label.empty() ? "" : ", ") + a->ACCOUNTNAME;
+            accounts_label += (accounts_label.empty() ? "" : ", ") + a->m_name;
         }
     }
 
@@ -327,7 +327,7 @@ table {
 
                 if (acc) {
                     const CurrencyData* curr = AccountModel::currency(acc);
-                    double flow = TrxModel::account_flow(transaction, acc->ACCOUNTID);
+                    double flow = TrxModel::account_flow(transaction, acc->m_id);
                     if (noOfTrans || (!allAccounts && (std::find(selected_accounts.begin(), selected_accounts.end(), transaction.ACCOUNTID) == selected_accounts.end())))
                         flow = -flow;
                     const double convRate = CurrencyHistoryModel::getDayRate(curr->m_id, transaction.TRANSDATE);

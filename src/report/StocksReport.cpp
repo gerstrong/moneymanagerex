@@ -59,13 +59,13 @@ void  StocksReport::refreshData()
         if (AccountModel::status_id(a) != AccountModel::STATUS_ID_OPEN) continue;
 
         account.id = a.id();
-        account.name = a.ACCOUNTNAME;
+        account.name = a.m_name;
         account.realgainloss = 0.0;
         account.unrealgainloss = 0.0;
         account.total = AccountModel::investment_balance(a).first;
         account.data.clear();
 
-        for (const auto& stock : StockModel::instance().find(StockCol::HELDAT(a.ACCOUNTID)))
+        for (const auto& stock : StockModel::instance().find(StockCol::HELDAT(a.m_id)))
         {
             const CurrencyData* currency = AccountModel::currency(a);
             const double today_rate = CurrencyHistoryModel::getDayRate(currency->m_id, today);
@@ -299,7 +299,7 @@ wxString mmReportChartStocks::getHTMLText()
 
         if (!gd.series.empty()) {
             hb.addHeader(1, wxString::Format("%s / %s - (%s)",
-                stock_d.m_symbol, stock_d.m_name, account->ACCOUNTNAME
+                stock_d.m_symbol, stock_d.m_name, account->m_name
             ));
             gd.type = GraphData::LINE_DATETIME;
             hb.addChart(gd);

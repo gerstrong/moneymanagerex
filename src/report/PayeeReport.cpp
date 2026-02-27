@@ -96,7 +96,7 @@ void PayeeReport::loadData()
         // NOTE: call to getDayRate() in every transaction is slow
         // if "Use historical currency" is enabled in settings
         const double convRate = CurrencyHistoryModel::getDayRate(
-            AccountModel::instance().get_data_n(trx.ACCOUNTID)->CURRENCYID,
+            AccountModel::instance().get_data_n(trx.ACCOUNTID)->m_currency_id,
             trx.TRANSDATE
         );
 

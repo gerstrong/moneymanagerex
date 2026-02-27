@@ -52,7 +52,7 @@ double FlowReport::trueAmount(const TrxData& trx)
     ) != m_account_id.end();
     if (!(isAccountFound && isToAccountFound)) {
         const double convRate = CurrencyHistoryModel::getDayRate(
-            AccountModel::instance().get_data_n(trx.ACCOUNTID)->CURRENCYID,
+            AccountModel::instance().get_data_n(trx.ACCOUNTID)->m_currency_id,
             trx.TRANSDATE
         );
         switch (TrxModel::type_id(trx.TRANSCODE)) {
@@ -67,7 +67,7 @@ double FlowReport::trueAmount(const TrxData& trx)
                 amount = -trx.TRANSAMOUNT * convRate;
             else {
                 const double toConvRate = CurrencyHistoryModel::getDayRate(
-                    AccountModel::instance().get_data_n(trx.TOACCOUNTID)->CURRENCYID,
+                    AccountModel::instance().get_data_n(trx.TOACCOUNTID)->m_currency_id,
                     trx.TRANSDATE
                 );
                 amount = +trx.TOTRANSAMOUNT * toConvRate;
@@ -93,23 +93,23 @@ void FlowReport::getTransactions()
         AccountModel::STATUS(OP_NE, AccountModel::STATUS_ID_CLOSED)
     )) {
         if (m_account_a &&
-            std::find(m_account_a->begin(), m_account_a->end(), account.ACCOUNTNAME) ==
+            std::find(m_account_a->begin(), m_account_a->end(), account.m_name) ==
                 m_account_a->end()
         ) {
             continue;
         }
 
-        double convRate = CurrencyHistoryModel::getDayRate(account.CURRENCYID, todayString);
-        m_balance += account.INITIALBAL * convRate;
+        double convRate = CurrencyHistoryModel::getDayRate(account.m_currency_id, todayString);
+        m_balance += account.m_open_balance * convRate;
 
-        m_account_id.push_back(account.ACCOUNTID);
+        m_account_id.push_back(account.m_id);
 
         for (const auto& tran : AccountModel::transactionsByDateTimeId(account)) {
             wxString strDate = TrxModel::getTransDateTime(tran).FormatISOCombined();
             // Do not include asset or stock transfers in income expense calculations.
             if (TrxModel::is_foreignAsTransfer(tran) || (strDate > todayString))
                 continue;
-            m_balance += TrxModel::account_flow(tran, account.ACCOUNTID) * convRate;
+            m_balance += TrxModel::account_flow(tran, account.m_id) * convRate;
         }
     }
 

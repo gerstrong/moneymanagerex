@@ -16,21 +16,6 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  ********************************************************/
 
-// PLEASE EDIT!
-//
-// This is only sample code re-used from "table/AccountTable.h".
-//
-// The data structure can be refined by:
-// * using more user-frielndly filed name
-// * using stronger field types
-// * adding enumerations for fields with limited choices
-// * demultiplexing composite values in database columns
-//
-// See also an implementation in Swift:
-//   https://github.com/moneymanagerex/mmex-ios/tree/master/MMEX/Data
-// and an implementation in Java:
-//   https://github.com/moneymanagerex/android-money-manager-ex/tree/master/app/src/main/java/com/money/manager/ex/domainmodel
-
 #pragma once
 
 #include "table/_TableBase.h"
@@ -39,34 +24,34 @@
 // User-friendly representation of a record in table ACCOUNTLIST_V1.
 struct AccountData
 {
-    int64 ACCOUNTID; // primary key
-    wxString ACCOUNTNAME;
-    wxString ACCOUNTTYPE;
-    wxString ACCOUNTNUM;
-    wxString STATUS;
-    wxString NOTES;
-    wxString HELDAT;
-    wxString WEBSITE;
-    wxString CONTACTINFO;
-    wxString ACCESSINFO;
-    double INITIALBAL;
-    wxString INITIALDATE;
-    wxString FAVORITEACCT;
-    int64 CURRENCYID;
-    int64 STATEMENTLOCKED;
-    wxString STATEMENTDATE;
-    double MINIMUMBALANCE;
-    double CREDITLIMIT;
-    double INTERESTRATE;
-    wxString PAYMENTDUEDATE;
-    double MINIMUMPAYMENT;
+    int64    m_id;
+    wxString m_name;
+    wxString m_type_;
+    wxString m_num;
+    wxString m_status_;
+    wxString m_notes;
+    wxString m_held_at;
+    wxString m_website;
+    wxString m_contact_info;
+    wxString m_access_info;
+    double   m_open_balance;
+    wxString m_open_date;
+    wxString m_favorite_;
+    int64    m_currency_id;
+    bool     m_stmt_locked;
+    wxString m_stmt_date;
+    double   m_min_balance;
+    double   m_credit_limit;
+    double   m_interest_rate;
+    wxString m_payment_due_date;
+    double   m_min_payment;
 
     explicit AccountData();
     explicit AccountData(wxSQLite3ResultSet& q);
     AccountData(const AccountData& other) = default;
 
-    int64 id() const { return ACCOUNTID; }
-    void id(const int64 id) { ACCOUNTID = id; }
+    int64 id() const { return m_id; }
+    void id(const int64 id) { m_id = id; }
     AccountRow to_row() const;
     AccountData& from_row(const AccountRow& row);
     void to_insert_stmt(wxSQLite3Statement& stmt, int64 id) const;
@@ -87,7 +72,7 @@ struct AccountData
     {
         bool operator()(const AccountData& x, const AccountData& y)
         {
-            return x.ACCOUNTID < y.ACCOUNTID;
+            return x.m_id < y.m_id;
         }
     };
 
@@ -96,7 +81,7 @@ struct AccountData
         bool operator()(const AccountData& x, const AccountData& y)
         {
             // Locale case-insensitive
-            return std::wcscoll(x.ACCOUNTNAME.Lower().wc_str(), y.ACCOUNTNAME.Lower().wc_str()) < 0;
+            return std::wcscoll(x.m_name.Lower().wc_str(), y.m_name.Lower().wc_str()) < 0;
         }
     };
 
@@ -104,7 +89,7 @@ struct AccountData
     {
         bool operator()(const AccountData& x, const AccountData& y)
         {
-            return x.ACCOUNTTYPE < y.ACCOUNTTYPE;
+            return x.m_type_ < y.m_type_;
         }
     };
 
@@ -112,7 +97,7 @@ struct AccountData
     {
         bool operator()(const AccountData& x, const AccountData& y)
         {
-            return x.ACCOUNTNUM < y.ACCOUNTNUM;
+            return x.m_num < y.m_num;
         }
     };
 
@@ -120,7 +105,7 @@ struct AccountData
     {
         bool operator()(const AccountData& x, const AccountData& y)
         {
-            return x.STATUS < y.STATUS;
+            return x.m_status_ < y.m_status_;
         }
     };
 
@@ -128,7 +113,7 @@ struct AccountData
     {
         bool operator()(const AccountData& x, const AccountData& y)
         {
-            return x.NOTES < y.NOTES;
+            return x.m_notes < y.m_notes;
         }
     };
 
@@ -136,7 +121,7 @@ struct AccountData
     {
         bool operator()(const AccountData& x, const AccountData& y)
         {
-            return x.HELDAT < y.HELDAT;
+            return x.m_held_at < y.m_held_at;
         }
     };
 
@@ -144,7 +129,7 @@ struct AccountData
     {
         bool operator()(const AccountData& x, const AccountData& y)
         {
-            return x.WEBSITE < y.WEBSITE;
+            return x.m_website < y.m_website;
         }
     };
 
@@ -152,7 +137,7 @@ struct AccountData
     {
         bool operator()(const AccountData& x, const AccountData& y)
         {
-            return x.CONTACTINFO < y.CONTACTINFO;
+            return x.m_contact_info < y.m_contact_info;
         }
     };
 
@@ -160,7 +145,7 @@ struct AccountData
     {
         bool operator()(const AccountData& x, const AccountData& y)
         {
-            return x.ACCESSINFO < y.ACCESSINFO;
+            return x.m_access_info < y.m_access_info;
         }
     };
 
@@ -168,7 +153,7 @@ struct AccountData
     {
         bool operator()(const AccountData& x, const AccountData& y)
         {
-            return x.INITIALBAL < y.INITIALBAL;
+            return x.m_open_balance < y.m_open_balance;
         }
     };
 
@@ -176,7 +161,7 @@ struct AccountData
     {
         bool operator()(const AccountData& x, const AccountData& y)
         {
-            return x.INITIALDATE < y.INITIALDATE;
+            return x.m_open_date < y.m_open_date;
         }
     };
 
@@ -184,7 +169,7 @@ struct AccountData
     {
         bool operator()(const AccountData& x, const AccountData& y)
         {
-            return x.FAVORITEACCT < y.FAVORITEACCT;
+            return x.m_favorite_ < y.m_favorite_;
         }
     };
 
@@ -192,7 +177,7 @@ struct AccountData
     {
         bool operator()(const AccountData& x, const AccountData& y)
         {
-            return x.CURRENCYID < y.CURRENCYID;
+            return x.m_currency_id < y.m_currency_id;
         }
     };
 
@@ -200,7 +185,7 @@ struct AccountData
     {
         bool operator()(const AccountData& x, const AccountData& y)
         {
-            return x.STATEMENTLOCKED < y.STATEMENTLOCKED;
+            return (x.m_stmt_locked ? 1 : 0) < (y.m_stmt_locked ? 1 : 0);
         }
     };
 
@@ -208,7 +193,7 @@ struct AccountData
     {
         bool operator()(const AccountData& x, const AccountData& y)
         {
-            return x.STATEMENTDATE < y.STATEMENTDATE;
+            return x.m_stmt_date < y.m_stmt_date;
         }
     };
 
@@ -216,7 +201,7 @@ struct AccountData
     {
         bool operator()(const AccountData& x, const AccountData& y)
         {
-            return x.MINIMUMBALANCE < y.MINIMUMBALANCE;
+            return x.m_min_balance < y.m_min_balance;
         }
     };
 
@@ -224,7 +209,7 @@ struct AccountData
     {
         bool operator()(const AccountData& x, const AccountData& y)
         {
-            return x.CREDITLIMIT < y.CREDITLIMIT;
+            return x.m_credit_limit < y.m_credit_limit;
         }
     };
 
@@ -232,7 +217,7 @@ struct AccountData
     {
         bool operator()(const AccountData& x, const AccountData& y)
         {
-            return x.INTERESTRATE < y.INTERESTRATE;
+            return x.m_interest_rate < y.m_interest_rate;
         }
     };
 
@@ -240,7 +225,7 @@ struct AccountData
     {
         bool operator()(const AccountData& x, const AccountData& y)
         {
-            return x.PAYMENTDUEDATE < y.PAYMENTDUEDATE;
+            return x.m_payment_due_date < y.m_payment_due_date;
         }
     };
 
@@ -248,7 +233,7 @@ struct AccountData
     {
         bool operator()(const AccountData& x, const AccountData& y)
         {
-            return x.MINIMUMPAYMENT < y.MINIMUMPAYMENT;
+            return x.m_min_payment < y.m_min_payment;
         }
     };
 };

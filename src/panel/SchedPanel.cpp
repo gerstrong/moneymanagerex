@@ -482,7 +482,7 @@ wxString SchedPanel::getItem(long item, int col_id)
                 return value;
             const AccountData* account = AccountModel::instance().get_data_n(accountid);
             const CurrencyData* currency = account ?
-                CurrencyModel::instance().get_data_n(account->CURRENCYID) : nullptr;
+                CurrencyModel::instance().get_data_n(account->m_currency_id) : nullptr;
             if (currency)
                 value = CurrencyModel::toCurrency(transamount, currency);
             if (!value.IsEmpty() && TrxModel::status_id(bill.STATUS) == TrxModel::STATUS_ID_VOID)
@@ -504,7 +504,7 @@ wxString SchedPanel::getItem(long item, int col_id)
                 return value;
             const AccountData* account = AccountModel::instance().get_data_n(accountid);
             const CurrencyData* currency = account ?
-                CurrencyModel::instance().get_data_n(account->CURRENCYID) : nullptr;
+                CurrencyModel::instance().get_data_n(account->m_currency_id) : nullptr;
             if (currency)
                 value = CurrencyModel::toCurrency(transamount, currency);
             if (!value.IsEmpty() && TrxModel::status_id(bill.STATUS) == TrxModel::STATUS_ID_VOID)

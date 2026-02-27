@@ -67,15 +67,14 @@ AccountModel& AccountModel::instance()
 wxArrayString AccountModel::all_checking_account_names(bool skip_closed)
 {
     wxArrayString accounts;
-    for (const auto &account : this->find_all(Col::COL_ID_ACCOUNTNAME))
-    {
-        if (skip_closed && status_id(account) == STATUS_ID_CLOSED)
+    for (const auto& account_d : this->find_all(Col::COL_ID_ACCOUNTNAME)) {
+        if (skip_closed && status_id(account_d) == STATUS_ID_CLOSED)
             continue;
-        if (type_id(account) == NavigatorTypes::TYPE_ID_SHARES)
+        if (type_id(account_d) == NavigatorTypes::TYPE_ID_SHARES)
             continue;
-        if (account.ACCOUNTNAME.empty())
+        if (account_d.m_name.empty())
             continue;
-        accounts.Add(account.ACCOUNTNAME);
+        accounts.Add(account_d.m_name);
     }
     return accounts;
 }
@@ -83,15 +82,15 @@ wxArrayString AccountModel::all_checking_account_names(bool skip_closed)
 const std::map<wxString, int64> AccountModel::all_accounts(bool skip_closed)
 {
     std::map<wxString, int64> accounts;
-    for (const auto& account : this->find_all(Col::COL_ID_ACCOUNTNAME))
+    for (const auto& account_d : this->find_all(Col::COL_ID_ACCOUNTNAME))
     {
-        if (skip_closed && status_id(account) == STATUS_ID_CLOSED)
+        if (skip_closed && status_id(account_d) == STATUS_ID_CLOSED)
             continue;
-        if (type_id(account) == NavigatorTypes::TYPE_ID_SHARES)
+        if (type_id(account_d) == NavigatorTypes::TYPE_ID_SHARES)
             continue;
-        if (account.ACCOUNTNAME.empty())
+        if (account_d.m_name.empty())
             continue;
-        accounts[account.ACCOUNTNAME] = account.ACCOUNTID;
+        accounts[account_d.m_name] = account_d.m_id;
     }
     return accounts;
 }
@@ -103,9 +102,9 @@ const AccountData* AccountModel::get_key(const wxString& name)
     if (account_n)
         return account_n;
 
-    DataA items = find(AccountCol::ACCOUNTNAME(name));
-    if (!items.empty())
-        account_n = get_data_n(items[0].ACCOUNTID);
+    DataA account_a = find(AccountCol::ACCOUNTNAME(name));
+    if (!account_a.empty())
+        account_n = get_data_n(account_a[0].m_id);
     return account_n;
 }
 
@@ -116,9 +115,9 @@ const AccountData* AccountModel::get_num(const wxString& num)
     if (account_n)
         return account_n;
 
-    DataA items = find(AccountCol::ACCOUNTNUM(num));
-    if (!items.empty())
-        account_n = get_data_n(items[0].ACCOUNTID);
+    DataA account_a = find(AccountCol::ACCOUNTNUM(num));
+    if (!account_a.empty())
+        account_n = get_data_n(account_a[0].m_id);
     return account_n;
 }
 
@@ -126,7 +125,7 @@ wxString AccountModel::get_id_name(int64 account_id)
 {
     const Data* account_n = instance().get_data_n(account_id);
     if (account_n)
-        return account_n->ACCOUNTNAME;
+        return account_n->m_name;
     else
         return _t("Account Error");
 }
@@ -138,27 +137,27 @@ bool AccountModel::purge_id(int64 id)
 
     Savepoint();
 
-    for (const auto& r: TrxModel::instance().find_or(
+    for (const auto& trx_d : TrxModel::instance().find_or(
         TrxCol::ACCOUNTID(id),
         TrxCol::TOACCOUNTID(id)
     )) {
-        if (TrxModel::is_foreign(r)) {
-            TrxShareModel::instance().remove_trx_share(r.TRANSID);
-            TrxLinkData tr = TrxLinkModel::TranslinkRecord(r.TRANSID);
+        if (TrxModel::is_foreign(trx_d)) {
+            TrxShareModel::instance().remove_trx_share(trx_d.TRANSID);
+            TrxLinkData tr = TrxLinkModel::TranslinkRecord(trx_d.TRANSID);
             TrxLinkModel::instance().purge_id(tr.TRANSLINKID);
         }
-        TrxModel::instance().purge_id(r.TRANSID);
+        TrxModel::instance().purge_id(trx_d.TRANSID);
     }
 
-    for (const auto& r: SchedModel::instance().find_or(
+    for (const auto& sched_d : SchedModel::instance().find_or(
         SchedCol::ACCOUNTID(id),
         SchedCol::TOACCOUNTID(id)
     ))
-        SchedModel::instance().purge_id(r.BDID);
+        SchedModel::instance().purge_id(sched_d.BDID);
 
-    for (const auto& r : StockModel::instance().find(StockCol::HELDAT(id))) {
-        TrxLinkModel::RemoveTransLinkRecords<StockModel>(r.m_id);
-        StockModel::instance().purge_id(r.m_id);
+    for (const auto& stock_d : StockModel::instance().find(StockCol::HELDAT(id))) {
+        TrxLinkModel::RemoveTransLinkRecords<StockModel>(stock_d.m_id);
+        StockModel::instance().purge_id(stock_d.m_id);
     }
 
     // FIXME: remove AttachmentData owned by id
@@ -168,9 +167,9 @@ bool AccountModel::purge_id(int64 id)
     return unsafe_remove_data(id);
 }
 
-const CurrencyData* AccountModel::currency(const Data* r)
+const CurrencyData* AccountModel::currency(const Data* account_n)
 {
-    const CurrencyData * currency_n = CurrencyModel::instance().get_data_n(r->CURRENCYID);
+    const CurrencyData * currency_n = CurrencyModel::instance().get_data_n(account_n->m_currency_id);
     if (currency_n)
         return currency_n;
     else
@@ -180,16 +179,16 @@ const CurrencyData* AccountModel::currency(const Data* r)
     }
 }
 
-const CurrencyData* AccountModel::currency(const Data& r)
+const CurrencyData* AccountModel::currency(const Data& account_d)
 {
-    return currency(&r);
+    return currency(&account_d);
 }
 
-const TrxModel::DataA AccountModel::transactionsByDateTimeId(const Data*r)
+const TrxModel::DataA AccountModel::transactionsByDateTimeId(const Data* account_n)
 {
     auto trans = TrxModel::instance().find_or(
-        TrxCol::ACCOUNTID(r->ACCOUNTID),
-        TrxCol::TOACCOUNTID(r->ACCOUNTID)
+        TrxCol::ACCOUNTID(account_n->m_id),
+        TrxCol::TOACCOUNTID(account_n->m_id)
     );
     std::sort(trans.begin(), trans.end());
     if (PrefModel::instance().UseTransDateTime())
@@ -199,52 +198,50 @@ const TrxModel::DataA AccountModel::transactionsByDateTimeId(const Data*r)
     return trans;
 }
 
-const TrxModel::DataA AccountModel::transactionsByDateTimeId(const Data& r)
+const TrxModel::DataA AccountModel::transactionsByDateTimeId(const Data& account_d)
 {
-    return transactionsByDateTimeId(&r);
+    return transactionsByDateTimeId(&account_d);
 }
 
-const SchedModel::DataA AccountModel::billsdeposits(const Data* r)
+const SchedModel::DataA AccountModel::billsdeposits(const Data* account_n)
 {
     return SchedModel::instance().find_or(
-        SchedCol::ACCOUNTID(r->ACCOUNTID),
-        SchedCol::TOACCOUNTID(r->ACCOUNTID)
+        SchedCol::ACCOUNTID(account_n->m_id),
+        SchedCol::TOACCOUNTID(account_n->m_id)
     );
 }
 
-const SchedModel::DataA AccountModel::billsdeposits(const Data& r)
+const SchedModel::DataA AccountModel::billsdeposits(const Data& account_d)
 {
-    return billsdeposits(&r);
+    return billsdeposits(&account_d);
 }
 
-double AccountModel::balance(const Data* r)
+double AccountModel::balance(const Data* account_n)
 {
-    double sum = r->INITIALBAL;
-    for (const auto& tran: transactionsByDateTimeId(r))
-    {
-        sum += TrxModel::account_flow(tran, r->ACCOUNTID);
+    double sum = account_n->m_open_balance;
+    for (const auto& tran: transactionsByDateTimeId(account_n)) {
+        sum += TrxModel::account_flow(tran, account_n->m_id);
     }
 
     return sum;
 }
 
-double AccountModel::balance(const Data& r)
+double AccountModel::balance(const Data& account_d)
 {
-    return balance(&r);
+    return balance(&account_d);
 }
 
-std::pair<double, double> AccountModel::investment_balance(const Data* r)
+std::pair<double, double> AccountModel::investment_balance(const Data* account_n)
 {
     std::pair<double /*market value*/, double /*invest value*/> sum;
-    for (const auto& stock: StockModel::instance().find(StockCol::HELDAT(r->ACCOUNTID)))
-    {
+    for (const auto& stock: StockModel::instance().find(StockCol::HELDAT(account_n->m_id))) {
         sum.first += StockModel::CurrentValue(stock);
         sum.second += StockModel::InvestmentValue(stock);
     }
 
     for (const auto& asset: AssetModel::instance().find_or(
-        AssetCol::ASSETNAME(r->ACCOUNTNAME),
-        AssetCol::ASSETTYPE(r->ACCOUNTNAME)
+        AssetCol::ASSETNAME(account_n->m_name),
+        AssetCol::ASSETTYPE(account_n->m_name)
     )) {
         auto asset_bal = AssetModel::value(asset);
         sum.first += asset_bal.second;
@@ -253,24 +250,24 @@ std::pair<double, double> AccountModel::investment_balance(const Data* r)
     return sum;
 }
 
-std::pair<double, double> AccountModel::investment_balance(const Data& r)
+std::pair<double, double> AccountModel::investment_balance(const Data& account_d)
 {
-    return investment_balance(&r);
+    return investment_balance(&account_d);
 }
 
-wxString AccountModel::toCurrency(double value, const Data* r)
+wxString AccountModel::toCurrency(double value, const Data* account_n)
 {
-    return CurrencyModel::toCurrency(value, currency(r));
+    return CurrencyModel::toCurrency(value, currency(account_n));
 }
 
-wxString AccountModel::toString(double value, const Data* r, int precision)
+wxString AccountModel::toString(double value, const Data* account_n, int precision)
 {
-    return CurrencyModel::toString(value, currency(r), precision);
+    return CurrencyModel::toString(value, currency(account_n), precision);
 }
 
-wxString AccountModel::toString(double value, const Data& r, int precision)
+wxString AccountModel::toString(double value, const Data& account_d, int precision)
 {
-    return toString(value, &r, precision);
+    return toString(value, &account_d, precision);
 }
 
 AccountCol::STATUS AccountModel::STATUS(OP op, STATUS_ID status)
@@ -278,13 +275,13 @@ AccountCol::STATUS AccountModel::STATUS(OP op, STATUS_ID status)
     return AccountCol::STATUS(op, status_name(status));
 }
 
-bool AccountModel::FAVORITEACCT(const Data* r)
+bool AccountModel::FAVORITEACCT(const Data* account_n)
 {
-    return r->FAVORITEACCT.CmpNoCase("TRUE") == 0;
+    return account_n->m_favorite_.CmpNoCase("TRUE") == 0;
 }
-bool AccountModel::FAVORITEACCT(const Data& r)
+bool AccountModel::FAVORITEACCT(const Data& account_d)
 {
-    return FAVORITEACCT(&r);
+    return FAVORITEACCT(&account_d);
 }
 
 bool AccountModel::is_used(const CurrencyData* currency_n)
@@ -338,24 +335,26 @@ bool AccountModel::BoolOf(int64 value)
 const AccountModel::DataA AccountModel::FilterAccounts(const wxString& account_pattern, bool skip_closed)
 {
     DataA accounts;
-    for (auto &account : this->find_all(AccountCol::COL_ID_ACCOUNTNAME))
+    for (auto &account_d : this->find_all(AccountCol::COL_ID_ACCOUNTNAME))
     {
-        if (skip_closed && status_id(account) == STATUS_ID_CLOSED)
+        if (skip_closed && status_id(account_d) == STATUS_ID_CLOSED)
             continue;
-        if (type_id(account) == NavigatorTypes::TYPE_ID_INVESTMENT)
+        if (type_id(account_d) == NavigatorTypes::TYPE_ID_INVESTMENT)
             continue;
-        if (account.ACCOUNTNAME.Lower().Matches(account_pattern.Lower().Append("*")))
-            accounts.push_back(account);
+        if (account_d.m_name.Lower().Matches(account_pattern.Lower().Append("*")))
+            accounts.push_back(account_d);
     }
     return accounts;
 }
 
 void AccountModel::resetAccountType(wxString oldtype)
 {
-    for (auto& account_d : AccountModel::instance().find(AccountCol::ACCOUNTTYPE(oldtype))) {
+    for (auto& account_d : AccountModel::instance().find(
+        AccountCol::ACCOUNTTYPE(oldtype)
+    )) {
         // CHECK: use account_d directly
-        AccountData acc_d = *(get_key(account_d.ACCOUNTNAME));
-        acc_d.ACCOUNTTYPE = "Checking";
+        AccountData acc_d = *(get_key(account_d.m_name));
+        acc_d.m_type_ = "Checking";
         save_data_n(acc_d);
     }
 }
@@ -363,10 +362,10 @@ void AccountModel::resetAccountType(wxString oldtype)
 void AccountModel::resetUnknownAccountTypes()
 {
     for (const auto& account_d : find_all(Col::COL_ID_ACCOUNTNAME)) {
-        if (NavigatorTypes::instance().getTypeIdFromDBName(account_d.ACCOUNTTYPE, -1) == -1) {
+        if (NavigatorTypes::instance().getTypeIdFromDBName(account_d.m_type_, -1) == -1) {
             // CHECK: use account_d directly
-            AccountData acc_d = *(get_key(account_d.ACCOUNTNAME));
-            acc_d.ACCOUNTTYPE = "Checking";
+            AccountData acc_d = *(get_key(account_d.m_name));
+            acc_d.m_type_ = "Checking";
             save_data_n(acc_d);
         }
     }
@@ -375,14 +374,13 @@ void AccountModel::resetUnknownAccountTypes()
 wxArrayString AccountModel::getUsedAccountTypes(bool skip_closed)
 {
     wxArrayString usedTypes;
-    for (auto &account : this->find_all(AccountCol::COL_ID_ACCOUNTTYPE))
-    {
-        if (skip_closed && status_id(account) == STATUS_ID_CLOSED)
+    for (auto& account_d : this->find_all(AccountCol::COL_ID_ACCOUNTTYPE)) {
+        if (skip_closed && status_id(account_d) == STATUS_ID_CLOSED)
             continue;
-        if (type_id(account) == NavigatorTypes::TYPE_ID_INVESTMENT)
+        if (type_id(account_d) == NavigatorTypes::TYPE_ID_INVESTMENT)
             continue;
-        if (usedTypes.Index(account.ACCOUNTTYPE) == wxNOT_FOUND) {
-            usedTypes.Add(account.ACCOUNTTYPE);
+        if (usedTypes.Index(account_d.m_type_) == wxNOT_FOUND) {
+            usedTypes.Add(account_d.m_type_);
         }
     }
     return usedTypes;

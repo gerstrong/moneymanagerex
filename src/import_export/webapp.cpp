@@ -185,7 +185,7 @@ bool mmWebApp::WebApp_UpdateAccount()
         {
             json_writer.StartObject();
             json_writer.Key("AccountName");
-            json_writer.String(account.ACCOUNTNAME.utf8_str());
+            json_writer.String(account.m_name.utf8_str());
             json_writer.EndObject();
         }
     }
@@ -462,27 +462,27 @@ int64 mmWebApp::MMEX_InsertNewTransaction(webtran_holder& WebAppTrans)
     wxString TrStatus;
 
     //Search Account
-    const AccountData* Account = AccountModel::instance().get_key(WebAppTrans.Account);
+    const AccountData* account_n = AccountModel::instance().get_key(WebAppTrans.Account);
     wxString accountName, accountInitialDate;
-    if (Account != nullptr) {
-        AccountID = Account->ACCOUNTID;
-        accountName = Account->ACCOUNTNAME;
-        accountInitialDate = Account->INITIALDATE;
+    if (account_n != nullptr) {
+        AccountID = account_n->m_id;
+        accountName = account_n->m_name;
+        accountInitialDate = account_n->m_open_date;
         TrStatus = WebAppTrans.Status;
     }
     else {
         TrStatus = TrxModel::STATUS_KEY_FOLLOWUP;
 
-        //Search first bank account
-        for (const auto &FirstAccount : AccountModel::instance().find_all(
+        // Search first bank account
+        for (const auto& first_account_d : AccountModel::instance().find_all(
             AccountCol::COL_ID_ACCOUNTNAME
         )) {
-            if (AccountModel::type_id(FirstAccount) != NavigatorTypes::TYPE_ID_INVESTMENT &&
-                AccountModel::type_id(FirstAccount) != NavigatorTypes::TYPE_ID_TERM
+            if (AccountModel::type_id(first_account_d) != NavigatorTypes::TYPE_ID_INVESTMENT &&
+                AccountModel::type_id(first_account_d) != NavigatorTypes::TYPE_ID_TERM
             ) {
-                accountName = FirstAccount.ACCOUNTNAME;
-                AccountID = FirstAccount.ACCOUNTID;
-                accountInitialDate = FirstAccount.INITIALDATE;
+                accountName = first_account_d.m_name;
+                AccountID = first_account_d.m_id;
+                accountInitialDate = first_account_d.m_open_date;
                 break;
             }
         }
@@ -500,7 +500,7 @@ int64 mmWebApp::MMEX_InsertNewTransaction(webtran_holder& WebAppTrans)
     if (WebAppTrans.ToAccount != "None") {
         ToAccount = AccountModel::instance().get_key(WebAppTrans.ToAccount);
         if (ToAccount)
-            ToAccountID = ToAccount->ACCOUNTID;
+            ToAccountID = ToAccount->m_id;
     }
 
     //Search or insert Category
@@ -545,7 +545,7 @@ int64 mmWebApp::MMEX_InsertNewTransaction(webtran_holder& WebAppTrans)
     // Create New Transaction
     TrxData new_trx_d = TrxData();
     wxString trxDate = WebAppTrans.Date.FormatISOCombined();
-    if ((trxDate < accountInitialDate) || (ToAccount && trxDate < ToAccount->INITIALDATE)) {
+    if ((trxDate < accountInitialDate) || (ToAccount && trxDate < ToAccount->m_open_date)) {
         wxString msgStr = wxString::Format("%s: %s / %s: %s\n\n%s\n%s",
             _t("Account"), accountName,
             _t("Date"), trxDate,

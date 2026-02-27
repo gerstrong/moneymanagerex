@@ -309,7 +309,7 @@ void JournalList::setColumnsInfo()
 
     if (!PrefModel::instance().UseTransDateTime())
         m_col_disabled_id.insert(LIST_ID_TIME);
-    if (m_cp->isAccount() && m_cp->m_account->CREDITLIMIT == 0)
+    if (m_cp->isAccount() && m_cp->m_account->m_credit_limit == 0)
         m_col_disabled_id.insert(LIST_ID_CREDIT);
 
     m_col_id_nr.push_back(LIST_ID_ICON);
@@ -862,7 +862,7 @@ void JournalList::onMouseRightClick(wxMouseEvent& event)
         case LIST_ID_WITHDRAWAL: {
             columnIsAmount = true;
             const AccountData* account = AccountModel::instance().get_data_n(m_trans[row].ACCOUNTID_W);
-            const CurrencyData* currency = account ? CurrencyModel::instance().get_data_n(account->CURRENCYID) : nullptr;
+            const CurrencyData* currency = account ? CurrencyModel::instance().get_data_n(account->m_currency_id) : nullptr;
             if (currency) {
                 copyText_ = CurrencyModel::toString(m_trans[row].TRANSAMOUNT_W, currency);
                 menuItemText = wxString::Format("%.2f", m_trans[row].TRANSAMOUNT_W);
@@ -873,7 +873,7 @@ void JournalList::onMouseRightClick(wxMouseEvent& event)
         case LIST_ID_DEPOSIT: {
             columnIsAmount = true;
             const AccountData* account = AccountModel::instance().get_data_n(m_trans[row].ACCOUNTID_D);
-            const CurrencyData* currency = account ? CurrencyModel::instance().get_data_n(account->CURRENCYID) : nullptr;
+            const CurrencyData* currency = account ? CurrencyModel::instance().get_data_n(account->m_currency_id) : nullptr;
             if (currency) {
                 copyText_ = CurrencyModel::toString(m_trans[row].TRANSAMOUNT_D, currency);
                 menuItemText = wxString::Format("%.2f", m_trans[row].TRANSAMOUNT_D);
@@ -886,7 +886,7 @@ void JournalList::onMouseRightClick(wxMouseEvent& event)
             break;
         case LIST_ID_CREDIT:
             copyText_ = CurrencyModel::toString(
-                m_cp->m_account->CREDITLIMIT + m_trans[row].ACCOUNT_BALANCE,
+                m_cp->m_account->m_credit_limit + m_trans[row].ACCOUNT_BALANCE,
                 m_cp->m_currency
             );
             break;
@@ -1399,7 +1399,7 @@ void JournalList::onMoveTransaction(wxCommandEvent& /*event*/)
             wxString dest_account_name = scd.GetStringSelection();
             const AccountData* dest_account = AccountModel::instance().get_key(dest_account_name);
             if (dest_account)
-                dest_account_id = dest_account->ACCOUNTID;
+                dest_account_id = dest_account->m_id;
             else
                 return;
             std::vector<int64> skip_trx;
@@ -1410,7 +1410,7 @@ void JournalList::onMoveTransaction(wxCommandEvent& /*event*/)
                     if (checkTransactionLocked(trx_n->ACCOUNTID, trx_n->TRANSDATE)
                             || TrxModel::is_foreign(*trx_n)
                             || TrxModel::type_id(trx_n->TRANSCODE) == TrxModel::TYPE_ID_TRANSFER
-                            || trx_n->TRANSDATE < dest_account->INITIALDATE
+                            || trx_n->TRANSDATE < dest_account->m_open_date
                     ) {
                         skip_trx.push_back(trx_n->TRANSID);
                     } else {
@@ -1546,11 +1546,9 @@ void JournalList::onMarkTransaction(wxCommandEvent& event)
     for (int row = 0; row < GetItemCount(); row++) {
         if (GetItemState(row, wxLIST_STATE_SELECTED) == wxLIST_STATE_SELECTED) {
             const AccountData* account = AccountModel::instance().get_data_n(m_trans[row].ACCOUNTID);
-            const auto statement_date = parseDateTime(account->STATEMENTDATE).FormatISODate();
+            const auto statement_date = parseDateTime(account->m_stmt_date).FormatISODate();
             wxString strDate = TrxModel::getTransDateTime(m_trans[row]).FormatISODate();
-            if (!AccountModel::BoolOf(account->STATEMENTLOCKED)
-                || strDate > statement_date
-            ) {
+            if (!account->m_stmt_locked || strDate > statement_date) {
                 //bRefreshRequired |= (status == TrxModel::STATUS_KEY_VOID) || (m_trans[row].STATUS == TrxModel::STATUS_KEY_VOID);
                 if (!m_trans[row].m_repeat_num) {
                     m_trans[row].STATUS = status;
@@ -1970,7 +1968,7 @@ const wxString JournalList::getItem(long item, int col_id) const
         if (!m_cp->isAccount()) {
             const AccountData* account = AccountModel::instance().get_data_n(journal.ACCOUNTID_W);
             const CurrencyData* currency = account ?
-                CurrencyModel::instance().get_data_n(account->CURRENCYID) : nullptr;
+                CurrencyModel::instance().get_data_n(account->m_currency_id) : nullptr;
             if (currency)
                 value = CurrencyModel::toCurrency(journal.TRANSAMOUNT_W, currency);
         }
@@ -1984,7 +1982,7 @@ const wxString JournalList::getItem(long item, int col_id) const
         if (!m_cp->isAccount()) {
             const AccountData* account = AccountModel::instance().get_data_n(journal.ACCOUNTID_D);
             const CurrencyData* currency = account ?
-                CurrencyModel::instance().get_data_n(account->CURRENCYID) : nullptr;
+                CurrencyModel::instance().get_data_n(account->m_currency_id) : nullptr;
             if (currency)
                 value = CurrencyModel::toCurrency(journal.TRANSAMOUNT_D, currency);
         }
@@ -2000,7 +1998,7 @@ const wxString JournalList::getItem(long item, int col_id) const
         return value;
     case LIST_ID_CREDIT:
         return CurrencyModel::toString(
-            m_cp->m_account->CREDITLIMIT + journal.ACCOUNT_BALANCE,
+            m_cp->m_account->m_credit_limit + journal.ACCOUNT_BALANCE,
             m_cp->m_currency
         );
     }
@@ -2266,14 +2264,14 @@ bool JournalList::checkForClosedAccounts()
 bool JournalList::checkTransactionLocked(int64 accountID, const wxString& transdate)
 {
     const AccountData* account = AccountModel::instance().get_data_n(accountID);
-    if (AccountModel::BoolOf(account->STATEMENTLOCKED)) {
+    if (account->m_stmt_locked) {
         wxDateTime transaction_date;
         if (transaction_date.ParseDate(transdate)) {
-            if (transaction_date <= parseDateTime(account->STATEMENTDATE)) {
+            if (transaction_date <= parseDateTime(account->m_stmt_date)) {
                 wxMessageBox(wxString::Format(
                     _t("Locked transaction to date: %s\n\n"
                       "Reconciled transactions.")
-                    , mmGetDateTimeForDisplay(account->STATEMENTDATE))
+                    , mmGetDateTimeForDisplay(account->m_stmt_date))
                     , _t("MMEX Transaction Check"), wxOK | wxICON_WARNING);
                 return true;
             }

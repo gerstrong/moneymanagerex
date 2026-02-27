@@ -337,10 +337,10 @@ bool TrxModel::is_locked(const Data& trx_d)
     bool val = false;
     const AccountData* account_n = AccountModel::instance().get_data_n(trx_d.ACCOUNTID);
 
-    if (AccountModel::BoolOf(account_n->STATEMENTLOCKED)) {
+    if (account_n->m_stmt_locked) {
         wxDateTime transaction_date;
         if (transaction_date.ParseDate(trx_d.TRANSDATE)) {
-            if (transaction_date <= parseDateTime(account_n->STATEMENTDATE)) {
+            if (transaction_date <= parseDateTime(account_n->m_stmt_date)) {
                 val = true;
             }
         }
@@ -528,7 +528,7 @@ const wxString TrxModel::Full_Data::get_currency_code(int64 account_id) const
             account_id = this->TOACCOUNTID;
     }
     const AccountData* account_n = AccountModel::instance().get_data_n(account_id);
-    int64 currency_id = account_n ? account_n->CURRENCYID: -1;
+    int64 currency_id = account_n ? account_n->m_currency_id: -1;
     const CurrencyData* curr = CurrencyModel::instance().get_data_n(currency_id);
 
     return curr ? curr->m_symbol : "";
@@ -542,7 +542,7 @@ const wxString TrxModel::Full_Data::get_account_name(int64 account_id) const
         }
         else {
             const AccountData* account_n = AccountModel::instance().get_data_n(TOACCOUNTID);
-            return account_n ? account_n->ACCOUNTNAME : "";
+            return account_n ? account_n->m_name : "";
         }
     }
 

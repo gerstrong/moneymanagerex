@@ -53,18 +53,18 @@ const wxString mmExportTransaction::getTransactionCSV(const TrxModel::Full_Data&
     wxString payee = full_tran.PAYEENAME;
 
     const auto acc_in = AccountModel::instance().get_data_n(full_tran.ACCOUNTID);
-    const auto curr_in = CurrencyModel::instance().get_data_n(acc_in->CURRENCYID);
-    wxString account = acc_in->ACCOUNTNAME;
+    const auto curr_in = CurrencyModel::instance().get_data_n(acc_in->m_currency_id);
+    wxString account = acc_in->m_name;
     wxString currency = curr_in->m_symbol;
 
     if (is_transfer)
     {
         account_id = reverce ? full_tran.ACCOUNTID : full_tran.TOACCOUNTID;
         const auto acc_to = AccountModel::instance().get_data_n(full_tran.TOACCOUNTID);
-        const auto curr_to = CurrencyModel::instance().get_data_n(acc_to->CURRENCYID);
+        const auto curr_to = CurrencyModel::instance().get_data_n(acc_to->m_currency_id);
 
-        payee = reverce ? acc_to->ACCOUNTNAME : acc_in->ACCOUNTNAME;
-        account = reverce ? acc_in->ACCOUNTNAME : acc_to->ACCOUNTNAME;
+        payee = reverce ? acc_to->m_name : acc_in->m_name;
+        account = reverce ? acc_in->m_name : acc_to->m_name;
         currency = reverce ? curr_in->m_symbol : curr_to->m_symbol;
 
         //Transaction number used to make transaction unique
@@ -89,7 +89,7 @@ const wxString mmExportTransaction::getTransactionCSV(const TrxModel::Full_Data&
             buffer << inQuotes(full_tran.STATUS, delimiter) << delimiter;
             buffer << inQuotes(full_tran.TRANSCODE, delimiter) << delimiter;
 
-            buffer << inQuotes(acc_in->ACCOUNTNAME, delimiter) << delimiter;
+            buffer << inQuotes(acc_in->m_name, delimiter) << delimiter;
 
             buffer << inQuotes(payee, delimiter) << delimiter;
             buffer << inQuotes(split_categ, delimiter) << delimiter;
@@ -144,13 +144,13 @@ const wxString mmExportTransaction::getTransactionQIF(const TrxModel::Full_Data&
     {
         const auto acc_in = AccountModel::instance().get_data_n(full_tran.ACCOUNTID);
         const auto acc_to = AccountModel::instance().get_data_n(full_tran.TOACCOUNTID);
-        const auto curr_in = CurrencyModel::instance().get_data_n(acc_in->CURRENCYID);
-        const auto curr_to = CurrencyModel::instance().get_data_n(acc_to->CURRENCYID);
+        const auto curr_in = CurrencyModel::instance().get_data_n(acc_in->m_currency_id);
+        const auto curr_to = CurrencyModel::instance().get_data_n(acc_to->m_currency_id);
 
         categ = "[" + (reverce ? full_tran.ACCOUNTNAME : full_tran.TOACCOUNTNAME) + "]";
         payee = wxString::Format("%s %s %s -> %s %s %s"
-            , wxString::FromCDouble(full_tran.TRANSAMOUNT, 2), curr_in->m_symbol, acc_in->ACCOUNTNAME
-            , wxString::FromCDouble(full_tran.TOTRANSAMOUNT, 2), curr_to->m_symbol, acc_to->ACCOUNTNAME);
+            , wxString::FromCDouble(full_tran.TRANSAMOUNT, 2), curr_in->m_symbol, acc_in->m_name
+            , wxString::FromCDouble(full_tran.TOTRANSAMOUNT, 2), curr_to->m_symbol, acc_to->m_name);
         //Transaction number used to make transaction unique
         // to proper merge transfer records
         if (transNum.IsEmpty() && notes.IsEmpty())
@@ -225,8 +225,8 @@ const wxString mmExportTransaction::getAccountHeaderQIF(int64 accountID)
     wxString currency_symbol = CurrencyModel::GetBaseCurrency()->m_symbol;
     const AccountData *account_n = AccountModel::instance().get_data_n(accountID);
     if (account_n) {
-        double dInitBalance = account_n->INITIALBAL;
-        const CurrencyData *currency = CurrencyModel::instance().get_data_n(account_n->CURRENCYID);
+        double dInitBalance = account_n->m_open_balance;
+        const CurrencyData *currency = CurrencyModel::instance().get_data_n(account_n->m_currency_id);
         if (currency) {
             currency_symbol = currency->m_symbol;
         }
@@ -235,8 +235,8 @@ const wxString mmExportTransaction::getAccountHeaderQIF(int64 accountID)
         const wxString sInitBalance = CurrencyModel::toString(dInitBalance, currency);
 
         buffer = wxString("!Account") << "\n"
-            << "N" << account_n->ACCOUNTNAME << "\n"
-            << "T" << qif_acc_type(account_n->ACCOUNTTYPE) << "\n"
+            << "N" << account_n->m_name << "\n"
+            << "T" << qif_acc_type(account_n->m_type_) << "\n"
             << "D" << currency_code << "\n"
             << (dInitBalance != 0 ? wxString::Format("$%s\n", sInitBalance) : "")
             << "^" << "\n"
@@ -312,16 +312,16 @@ void mmExportTransaction::getAccountsJSON(PrettyWriter<StringBuffer>& json_write
     for (const auto &entry : allAccounts4Export)
     {
         const AccountData* a = AccountModel::instance().get_data_n(entry.first);
-        const CurrencyData* c = CurrencyModel::instance().get_data_n(a->CURRENCYID);
+        const CurrencyData* c = CurrencyModel::instance().get_data_n(a->m_currency_id);
         json_writer.StartObject();
         json_writer.Key("ID");
-        json_writer.Int64(a->ACCOUNTID.GetValue());
+        json_writer.Int64(a->m_id.GetValue());
         json_writer.Key("NAME");
-        json_writer.String(a->ACCOUNTNAME.utf8_str());
+        json_writer.String(a->m_name.utf8_str());
         json_writer.Key("INITIAL_BALANCE");
-        json_writer.Double(a->INITIALBAL);
+        json_writer.Double(a->m_open_balance);
         json_writer.Key("TYPE");
-        json_writer.String(a->ACCOUNTTYPE.utf8_str());
+        json_writer.String(a->m_type_.utf8_str());
         json_writer.Key("CURRENCY_SYMBOL");
         json_writer.String(c->m_symbol.utf8_str());
         json_writer.EndObject();

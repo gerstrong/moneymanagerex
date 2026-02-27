@@ -81,8 +81,8 @@ public:
             for (const auto &acc : AccountModel::instance().find_all(
                 AccountCol::COL_ID_ACCOUNTNAME)
             ) {
-                if (acc.ACCOUNTID == id)
-                    this->ChangeValue(acc.ACCOUNTNAME);
+                if (acc.m_id == id)
+                    this->ChangeValue(acc.m_name);
             }
         }
     }
@@ -105,7 +105,7 @@ public:
         else {
             const AccountData* account_n = AccountModel::instance().get_key(this->GetValue());
             if (account_n) {
-                id = account_n->ACCOUNTID;
+                id = account_n->m_id;
             }
             else {
                 //TODO:

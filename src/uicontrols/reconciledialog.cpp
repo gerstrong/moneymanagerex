@@ -52,11 +52,11 @@ mmReconcileDialog::mmReconcileDialog(wxWindow* parent, const AccountData* accoun
     m_account = account;
     m_checkingPanel = cp;
     m_reconciledBalance = cp->GetTodayReconciledBalance();
-    m_currency = CurrencyModel::instance().get_data_n(account->CURRENCYID);
+    m_currency = CurrencyModel::instance().get_data_n(account->m_currency_id);
     m_ignore  = false;
     this->SetFont(parent->GetFont());
 
-    Create(parent, -1, _t("Reconcile account") + " '" + m_account->ACCOUNTNAME + "'", wxDefaultPosition, wxDefaultSize, wxCAPTION | wxRESIZE_BORDER | wxSYSTEM_MENU | wxCLOSE_BOX, "");
+    Create(parent, -1, _t("Reconcile account") + " '" + m_account->m_name + "'", wxDefaultPosition, wxDefaultSize, wxCAPTION | wxRESIZE_BORDER | wxSYSTEM_MENU | wxCLOSE_BOX, "");
     CreateControls();
 
     m_settings[SETTING_INCLUDE_VOID] = InfoModel::instance().getBool("RECONCILE_DIALOG_INCLUDE_VOID", false);
@@ -258,7 +258,7 @@ void mmReconcileDialog::FillControls(bool init)
 {
     if (init) {
         double endval;
-        wxString endvalue = InfoModel::instance().getString(wxString::Format("RECONCILE_ACCOUNT_%lld_END_BALANCE", m_account->ACCOUNTID), "0.00");
+        wxString endvalue = InfoModel::instance().getString(wxString::Format("RECONCILE_ACCOUNT_%lld_END_BALANCE", m_account->m_id), "0.00");
         if (!endvalue.ToDouble(&endval)) {
             endval = 0;
         }
@@ -269,13 +269,13 @@ void mmReconcileDialog::FillControls(bool init)
     wxSharedPtr<mmDateRange> date_range;
     date_range = new mmCurrentMonthToDate;
     TrxModel::DataA all_trans = TrxModel::instance().find(
-        TrxCol::ACCOUNTID(m_account->ACCOUNTID),
+        TrxCol::ACCOUNTID(m_account->m_id),
         TrxModel::STATUS(OP_NE, TrxModel::STATUS_ID_RECONCILED),
         TrxCol::DELETEDTIME(OP_EQ, wxEmptyString),
         TrxModel::TRANSDATE(OP_LE, mmDate::today())
     );
     TrxModel::DataA all_trans2 = TrxModel::instance().find(  // get transfers
-        TrxCol::TOACCOUNTID(m_account->ACCOUNTID),
+        TrxCol::TOACCOUNTID(m_account->m_id),
         TrxModel::STATUS(OP_NE, TrxModel::STATUS_ID_RECONCILED),
         TrxCol::DELETEDTIME(OP_EQ, wxEmptyString),
         TrxModel::TRANSDATE(OP_LE, mmDate::today())
@@ -302,7 +302,7 @@ void mmReconcileDialog::FillControls(bool init)
             m_hiddenDuplicatedBalance += trx.TRANSAMOUNT;
             continue;
         }
-        if (trx.TRANSCODE == "Deposit" || (trx.TRANSCODE == "Transfer" && trx.TOACCOUNTID == m_account->ACCOUNTID)) {
+        if (trx.TRANSCODE == "Deposit" || (trx.TRANSCODE == "Transfer" && trx.TOACCOUNTID == m_account->m_id)) {
             list = m_listRight;
             item = m_listRight->InsertItem(++ritemIndex, "");
         }
@@ -571,7 +571,7 @@ void mmReconcileDialog::showHideColumn(bool show, int col, int cs) {
 
 void mmReconcileDialog::newTransaction()
 {
-    TrxDialog dlg(this, m_account->ACCOUNTID, {0, false}, false, TrxModel::TYPE_ID_WITHDRAWAL);
+    TrxDialog dlg(this, m_account->m_id, {0, false}, false, TrxModel::TYPE_ID_WITHDRAWAL);
     int i = wxID_CANCEL;
     do {
         i = dlg.ShowModal();
@@ -586,7 +586,7 @@ void mmReconcileDialog::newTransaction()
 
 void mmReconcileDialog::addTransaction2List(const TrxData* trx)
 {
-    wxListCtrl* list = (trx->TRANSCODE == "Deposit" || (trx->TRANSCODE == "Transfer" && trx->TOACCOUNTID == m_account->ACCOUNTID)) ? m_listRight : m_listLeft;
+    wxListCtrl* list = (trx->TRANSCODE == "Deposit" || (trx->TRANSCODE == "Transfer" && trx->TOACCOUNTID == m_account->m_id)) ? m_listRight : m_listLeft;
     long idx = getListIndexByDate(trx, list);
     if (idx == -1) {
         idx = list->GetItemCount();
@@ -668,8 +668,8 @@ void mmReconcileDialog::moveItemData(wxListCtrl* list, int row1, int row2)
 
 void mmReconcileDialog::setListItemData(const TrxData* trx, wxListCtrl* list, long item)
 {
-    wxString prefix = trx->TRANSCODE == "Transfer" ? (trx->TOACCOUNTID == m_account->ACCOUNTID ? "< " : "> ") : "";
-    wxString payeeName = (trx->TRANSCODE == "Transfer") ? AccountModel::get_id_name(trx->TOACCOUNTID == m_account->ACCOUNTID ? trx->ACCOUNTID : trx->TOACCOUNTID): PayeeModel::get_payee_name(trx->PAYEEID);
+    wxString prefix = trx->TRANSCODE == "Transfer" ? (trx->TOACCOUNTID == m_account->m_id ? "< " : "> ") : "";
+    wxString payeeName = (trx->TRANSCODE == "Transfer") ? AccountModel::get_id_name(trx->TOACCOUNTID == m_account->m_id ? trx->ACCOUNTID : trx->TOACCOUNTID): PayeeModel::get_payee_name(trx->PAYEEID);
     list->SetItem(item, 1, mmGetDateTimeForDisplay(trx->TRANSDATE));
     list->SetItem(item, 2, trx->TRANSACTIONNUMBER);
     list->SetItem(item, 3, prefix + payeeName);
@@ -786,7 +786,7 @@ void mmReconcileDialog::OnClose(wxCommandEvent& event)
     };
 
     if (event.GetId() != wxID_CANCEL) {
-        InfoModel::instance().setString(wxString::Format("RECONCILE_ACCOUNT_%lld_END_BALANCE", m_account->ACCOUNTID), m_endingCtrl->GetLabelText());
+        InfoModel::instance().setString(wxString::Format("RECONCILE_ACCOUNT_%lld_END_BALANCE", m_account->m_id), m_endingCtrl->GetLabelText());
 
         // Save state:
         for (long i = 0; i < m_listLeft->GetItemCount(); ++i) {

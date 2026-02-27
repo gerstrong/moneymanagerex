@@ -48,11 +48,11 @@ BalanceReport::BalanceReport(BalanceReport::PERIOD_ID period_id) :
 std::map<wxDate, double> BalanceReport::loadCheckingDateBalance(const AccountData& account)
 {
     std::map<wxDate, double> date_balance;
-    double balance = account.INITIALBAL;
+    double balance = account.m_open_balance;
 
     for (const auto& tran : AccountModel::transactionsByDateTimeId(account)) {
         wxDate date = TrxModel::getTransDateTime(tran);
-        balance += TrxModel::account_flow(tran, account.ACCOUNTID);
+        balance += TrxModel::account_flow(tran, account.m_id);
         date_balance[date] = balance;
     }
     return date_balance;
@@ -65,18 +65,18 @@ static bool sortFunction(const std::pair<wxDate, double> x, std::pair<wxDate, do
 
 double BalanceReport::getCheckingBalance(const AccountData* account, const wxDate& date)
 {
-    std::map<wxDate, double> date_balance = m_account_date_balance[account->ACCOUNTID];
+    std::map<wxDate, double> date_balance = m_account_date_balance[account->m_id];
 
     auto const& i = std::upper_bound(date_balance.rbegin(), date_balance.rend(), std::pair<wxDate, double>(date, 0), sortFunction);
     if (i != date_balance.rend())
         return (*i).second;
-    return account->INITIALBAL;
+    return account->m_open_balance;
 }
 
 std::pair<double, double> BalanceReport::getBalance(const AccountData* account, const wxDate& date)
 {
     std::pair<double /*cash bal*/, double /*market bal*/> bal = { 0.0, 0.0 };
-    if (date.FormatISODate() >= account->INITIALDATE) {
+    if (date.FormatISODate() >= account->m_open_date) {
         bal.first = getCheckingBalance(account, date);
         if (AccountModel::type_id(account) == NavigatorTypes::TYPE_ID_INVESTMENT) {
             bal.second = StockModel::instance().getDailyBalanceAt(account, date);
@@ -131,10 +131,10 @@ wxString BalanceReport::getHTMLText()
     dateStart = wxDate::Today();
     // Calculate the report date
     for (const auto& account: AccountModel::instance().find_all()) {
-        const wxDate accountOpeningDate = parseDateTime(account.INITIALDATE);
+        const wxDate accountOpeningDate = parseDateTime(account.m_open_date);
         if (accountOpeningDate.IsEarlierThan(dateStart))
             dateStart = accountOpeningDate;
-        m_account_date_balance[account.ACCOUNTID] = loadCheckingDateBalance(account);
+        m_account_date_balance[account.m_id] = loadCheckingDateBalance(account);
         if (AccountModel::type_id(account) != NavigatorTypes::TYPE_ID_INVESTMENT)
             continue;
         StockModel::DataA stocks = StockModel::instance().find(
@@ -193,15 +193,15 @@ wxString BalanceReport::getHTMLText()
         std::vector<double> balancePerDay(acc_size +1);
         std::fill(balancePerDay.begin(), balancePerDay.end(), 0.0);
         for (const auto& account : AccountModel::instance().find_all()) {
-            idx = NavigatorTypes::instance().getAccountTypeIdx(account.ACCOUNTTYPE);
+            idx = NavigatorTypes::instance().getAccountTypeIdx(account.m_type_);
             if (idx == -1) {
                 idx = NavigatorTypes::instance().getAccountTypeIdx(NavigatorTypes::TYPE_ID_CHECKING);
             }
             if (idx > -1) {
                 std::pair<double, double> dailybal = getBalance(&account, end_date);
-                balancePerDay[idx] += dailybal.first * getCurrencyDateRate(account.CURRENCYID, end_date);
+                balancePerDay[idx] += dailybal.first * getCurrencyDateRate(account.m_currency_id, end_date);
                 if (AccountModel::type_id(account) == NavigatorTypes::TYPE_ID_INVESTMENT) {
-                    balancePerDay[idx] += dailybal.second * getCurrencyDateRate(account.CURRENCYID, end_date);
+                    balancePerDay[idx] += dailybal.second * getCurrencyDateRate(account.m_currency_id, end_date);
                 }
             }
         }

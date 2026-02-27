@@ -784,7 +784,7 @@ void mmUnivCSVDialog::SetSettings(const wxString &json_data)
         {
             const AccountData* account = AccountModel::instance().get_data_n(m_account_id);
             if (account)
-                m_choice_account_->SetStringSelection(account->ACCOUNTNAME);
+                m_choice_account_->SetStringSelection(account->m_name);
         }
         if (m_file_path != wxEmptyString)
             update_preview();
@@ -830,7 +830,7 @@ void mmUnivCSVDialog::SetSettings(const wxString &json_data)
     {
         const AccountData* account = AccountModel::instance().get_data_n(m_account_id);
         if (account)
-            an = account->ACCOUNTNAME;
+            an = account->m_name;
         else
             m_account_id = -1;
     }
@@ -1411,7 +1411,7 @@ void mmUnivCSVDialog::OnImport(wxCommandEvent& WXUNUSED(event))
         return mmErrorDialogs::InvalidAccount(m_choice_account_);
     }
 
-    accountID_ = account->ACCOUNTID;
+    accountID_ = account->m_id;
 
     const wxString fileName = m_text_ctrl_->GetValue();
     if (fileName.IsEmpty()) {
@@ -1509,8 +1509,8 @@ void mmUnivCSVDialog::OnImport(wxCommandEvent& WXUNUSED(event))
         wxString trxDate = holder.Date.FormatISOCombined();
         const AccountData* account2 = AccountModel::instance().get_data_n(accountID_);
         const AccountData* toAccount = AccountModel::instance().get_data_n(holder.ToAccountID);
-        if ((trxDate < account2->INITIALDATE) ||
-            (toAccount && (trxDate < toAccount->INITIALDATE)))
+        if ((trxDate < account2->m_open_date) ||
+            (toAccount && (trxDate < toAccount->m_open_date)))
         {
             wxString msg = wxString::Format(_t("Line %ld: %s"), nLines + 1,
                 _t("The opening date for the account is later than the date of this transaction"));
@@ -1678,7 +1678,7 @@ void mmUnivCSVDialog::OnExport(wxCommandEvent& WXUNUSED(event))
 
     const auto split = TrxSplitModel::instance().get_all_id();
     const auto tags = TagLinkModel::instance().get_all_id(TrxModel::refTypeName);
-    int64 fromAccountID = from_account->ACCOUNTID;
+    int64 fromAccountID = from_account->m_id;
 
     long numRecords = 0;
     const CurrencyData* currency = AccountModel::currency(from_account);
@@ -1695,7 +1695,7 @@ void mmUnivCSVDialog::OnExport(wxCommandEvent& WXUNUSED(event))
         }
     }
 
-    double account_balance = from_account->INITIALBAL;
+    double account_balance = from_account->m_open_balance;
 
     //If the user wants to export transactions
     if (m_exportStocksCheckBox->GetValue() == false) {
@@ -1897,7 +1897,7 @@ void mmUnivCSVDialog::OnExport(wxCommandEvent& WXUNUSED(event))
                         entry = std::to_wstring(stock_d.m_commission);
                         break;
                     case UNIV_CSV_ACCOUNT:
-                        entry = account->ACCOUNTNAME;
+                        entry = account->m_name;
                         break;
                     case UNIV_CSV_CURRENCY:
                         entry = AccountModel::currency(account)->m_symbol;
@@ -2076,12 +2076,12 @@ void mmUnivCSVDialog::update_preview()
         if (from_account) {
             const auto split = TrxSplitModel::instance().get_all_id();
             const auto tags = TagLinkModel::instance().get_all_id(TrxModel::refTypeName);
-            int64 fromAccountID = from_account->ACCOUNTID;
+            int64 fromAccountID = from_account->m_id;
             size_t count = 0;
             int row = 0;
             const wxString& delimit = this->delimit_;
 
-            double account_balance = from_account->INITIALBAL;
+            double account_balance = from_account->m_open_balance;
 
             //If the user wants to export transactions
             if (m_exportStocksCheckBox->GetValue() == false) {
@@ -2322,7 +2322,7 @@ void mmUnivCSVDialog::update_preview()
                                 text << inQuotes(commission, delimit);
                                 break;
                             case UNIV_CSV_ACCOUNT:
-                                text << inQuotes(account->ACCOUNTNAME, delimit);
+                                text << inQuotes(account->m_name, delimit);
                                 break;
                             case UNIV_CSV_CURRENCY:
                                 text << inQuotes(AccountModel::currency(account)->m_symbol, delimit);
@@ -2973,7 +2973,7 @@ void mmUnivCSVDialog::OnChoiceChanged(wxCommandEvent& event)
     {
         wxString acctName = m_choice_account_->GetStringSelection();
         const AccountData* account = AccountModel::instance().get_key(acctName);
-        m_account_id = account->ACCOUNTID;
+        m_account_id = account->m_id;
         const CurrencyData* currency = AccountModel::currency(account);
         *log_field_ << _t("Currency:") << " " << wxGetTranslation(currency->m_name) << "\n";
 

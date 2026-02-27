@@ -327,13 +327,13 @@ void CategoryModel::getCategoryStats(
         if (accountArray)
         {
             const auto account = AccountModel::instance().get_data_n(transaction.ACCOUNTID);
-            if (wxNOT_FOUND == accountArray->Index(account->ACCOUNTNAME)) {
+            if (wxNOT_FOUND == accountArray->Index(account->m_name)) {
                 continue;
             }
         }
 
         const double convRate = CurrencyHistoryModel::getDayRate(
-            AccountModel::instance().get_data_n(transaction.ACCOUNTID)->CURRENCYID,
+            AccountModel::instance().get_data_n(transaction.ACCOUNTID)->m_currency_id,
             transaction.TRANSDATE
         );
         wxDateTime d = TrxModel::getTransDateTime(transaction);

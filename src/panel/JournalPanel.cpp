@@ -412,8 +412,8 @@ void JournalPanel::updateHeader()
             _t("Filtered Flow: "),
             AccountModel::toCurrency(m_flow, m_account)
         ));
-        if (m_account->CREDITLIMIT != 0.0) {
-            double limit = 100.0 * ((m_balance < 0.0) ? -m_balance / m_account->CREDITLIMIT : 0.0);
+        if (m_account->m_credit_limit != 0.0) {
+            double limit = 100.0 * ((m_balance < 0.0) ? -m_balance / m_account->m_credit_limit : 0.0);
             summary.Append(wxString::Format("   %s %.1f%%",
                 _t("Credit Limit:"),
                 limit
@@ -494,7 +494,7 @@ void JournalPanel::setFilterDate(mmDateRange2::Range& range)
     m_filter_id = FILTER_ID_DATE;
     m_current_date_range = mmDateRange2();
     if (isAccount()) {
-        m_current_date_range.setSDateN(mmDateN(m_account->STATEMENTDATE));
+        m_current_date_range.setSDateN(mmDateN(m_account->m_stmt_date));
     }
     m_current_date_range.setRange(range);
     m_scheduled_enable = !isDeletedTrans() && m_current_date_range.rangeEnd().has_value();
@@ -544,7 +544,7 @@ void JournalPanel::loadFilterSettings()
             }
         }
         if (isAccount()) {
-            m_current_date_range.setSDateN(mmDateN(m_account->STATEMENTDATE));
+            m_current_date_range.setSDateN(mmDateN(m_account->m_stmt_date));
         }
     }
     else if (m_filter_id == FILTER_ID_DATE_PICKER) {
@@ -622,7 +622,7 @@ void JournalPanel::filterList()
 
     int sn = 0; // sequence number
     m_flow = 0.0;
-    m_balance = m_account ? m_account->INITIALBAL : 0.0;
+    m_balance = m_account ? m_account->m_open_balance : 0.0;
     m_reconciled_balance = m_today_reconciled_balance = m_balance;
     m_show_reconciled = false;
 
@@ -1137,7 +1137,7 @@ void JournalPanel::onFilterDate(wxCommandEvent& event)
     m_filter_id = FILTER_ID_DATE_RANGE;
     m_current_date_range = mmDateRange2();
     if (isAccount()) {
-        m_current_date_range.setSDateN(mmDateN(m_account->STATEMENTDATE));
+        m_current_date_range.setSDateN(mmDateN(m_account->m_stmt_date));
     }
     m_current_date_range.setRange(m_date_range_a[i]);
     updateScheduledEnable();
@@ -1388,7 +1388,7 @@ wxString JournalPanel::getPanelTitle() const
         }
     }
     else if (m_account)
-        return wxString::Format(_t("Account View: %s"), m_account->ACCOUNTNAME);
+        return wxString::Format(_t("Account View: %s"), m_account->m_name);
     else
         return "";
 }

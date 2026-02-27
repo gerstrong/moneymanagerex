@@ -289,7 +289,7 @@ bool SchedModel::AllowTransaction(const Data& r)
     const int64 acct_id = r.ACCOUNTID;
     const AccountData* account = AccountModel::instance().get_data_n(acct_id);
 
-    if (account->MINIMUMBALANCE == 0 && account->CREDITLIMIT == 0)
+    if (account->m_min_balance == 0 && account->m_credit_limit == 0)
         return true;
 
     double current_balance = AccountModel::balance(account);
@@ -298,28 +298,25 @@ bool SchedModel::AllowTransaction(const Data& r)
     bool allow_transaction = true;
     wxString limitDescription;
     double limitAmount{ 0.0L };
-    if (account->MINIMUMBALANCE != 0 && new_balance < account->MINIMUMBALANCE)
-    {
+    if (account->m_min_balance != 0 && new_balance < account->m_min_balance) {
         allow_transaction = false;
         limitDescription = _t("Minimum Balance");
-        limitAmount = account->MINIMUMBALANCE;
+        limitAmount = account->m_min_balance;
     }
-    else if (account->CREDITLIMIT != 0 && new_balance < -(account->CREDITLIMIT))
-    {
+    else if (account->m_credit_limit != 0 && new_balance < -(account->m_credit_limit)) {
         allow_transaction = false;
         limitDescription = _t("Credit Limit");
-        limitAmount = account->CREDITLIMIT;
+        limitAmount = account->m_credit_limit;
     }
 
-    if (!allow_transaction)
-    {
+    if (!allow_transaction) {
         wxString message = _t("A scheduled transaction will exceed the account limit.\n\n"
             "Account: %1$s\n"
             "Current Balance: %2$6.2f\n"
             "Transaction amount: %3$6.2f\n"
             "%4$s: %5$6.2f") + "\n\n" +
             _t("Do you want to continue?");
-        message.Printf(message, account->ACCOUNTNAME, current_balance, r.TRANSAMOUNT, limitDescription, limitAmount);
+        message.Printf(message, account->m_name, current_balance, r.TRANSAMOUNT, limitDescription, limitAmount);
 
         if (wxMessageBox(message, _t("MMEX Scheduled Transaction Check"), wxYES_NO | wxICON_WARNING) == wxYES)
             allow_transaction = true;

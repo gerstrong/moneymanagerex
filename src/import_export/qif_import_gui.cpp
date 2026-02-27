@@ -71,7 +71,7 @@ mmQIFImportDialog::mmQIFImportDialog(wxWindow* parent, int64 account_id, const w
     payeeIsNotes_ = false;
     const AccountData* account_n = AccountModel::instance().get_data_n(account_id);
     if (account_n)
-        m_accountNameStr = account_n->ACCOUNTNAME;
+        m_accountNameStr = account_n->m_name;
 
     this->SetFont(parent->GetFont());
     Create(parent);
@@ -469,7 +469,7 @@ bool mmQIFImportDialog::mmReadQIFFile()
         accName = accountDropDown_->GetStringSelection();
         const AccountData* acc = AccountModel::instance().get_key(accName);
         if (acc) {
-            m_accountNameStr = acc->ACCOUNTNAME;
+            m_accountNameStr = acc->m_name;
         }
     }
 
@@ -735,7 +735,7 @@ void mmQIFImportDialog::refreshTabs(int tabs)
                     && (trx.at(AccountName).empty() || accountCheckBox_->IsChecked())
                     ? m_accountNameStr
                     : ((accountNumberCheckBox_->IsChecked() && account)
-                        ? account->ACCOUNTNAME : trx.at(AccountName)
+                        ? account->m_name : trx.at(AccountName)
                         )
                 )
             );
@@ -811,15 +811,15 @@ void mmQIFImportDialog::refreshTabs(int tabs)
                 ? acc.second.at(AccountType) : "";
 
             if (account) {
-                const CurrencyData *currency_n = CurrencyModel::instance().get_data_n(account->CURRENCYID);
+                const CurrencyData *currency_n = CurrencyModel::instance().get_data_n(account->m_currency_id);
                 if (currency_n && currency_n->m_symbol == currencySymbol)
                     status = _t("OK");
                 else
                     status = _t("Warning");
-                if (account->ACCOUNTTYPE != mmExportTransaction::mm_acc_type(type)) {
+                if (account->m_type_ != mmExportTransaction::mm_acc_type(type)) {
                     status = _t("Warning");
                 }
-                data.push_back(wxVariant(account->ACCOUNTNAME));
+                data.push_back(wxVariant(account->m_name));
             }
             else {
                 status = _t("Missing");
@@ -1151,17 +1151,17 @@ void mmQIFImportDialog::OnOk(wxCommandEvent& WXUNUSED(event))
                 AccountData* account = AccountModel::instance().unsafe_get_data_n(trx.ACCOUNTID);
                 AccountData* toAccount = AccountModel::instance().unsafe_get_data_n(trx.TOACCOUNTID);
 
-                if ((trx.TRANSDATE < account->STATEMENTDATE && account->STATEMENTLOCKED.GetValue()) ||
-                    (toAccount && (trx.TRANSDATE < toAccount->STATEMENTDATE && toAccount->STATEMENTLOCKED.GetValue())))
+                if ((trx.TRANSDATE < account->m_stmt_date && account->m_stmt_locked.GetValue()) ||
+                    (toAccount && (trx.TRANSDATE < toAccount->m_stmt_date && toAccount->m_stmt_locked.GetValue())))
                     continue;
 
-                if (trx.TRANSDATE < account->INITIALDATE) {
+                if (trx.TRANSDATE < account->m_open_date) {
                     // FIXME: account is changed but not saved
-                    account->INITIALDATE = trx.TRANSDATE;
+                    account->m_open_date = trx.TRANSDATE;
                 }
-                if (toAccount && (trx.TRANSDATE < toAccount->INITIALDATE)) {
+                if (toAccount && (trx.TRANSDATE < toAccount->m_open_date)) {
                     // FIXME: account is changed but not saved
-                    toAccount->INITIALDATE = trx.TRANSDATE;
+                    toAccount->m_open_date = trx.TRANSDATE;
                 }
 
                 // Save Transaction Tags
@@ -1656,8 +1656,7 @@ int64 mmQIFImportDialog::getOrCreateAccounts()
 {
     m_QIFaccountsID.clear();
 
-    for (auto &item : m_QIFaccounts)
-    {
+    for (auto &item : m_QIFaccounts) {
         int64 accountID = -1;
         const AccountData* acc = (accountNumberCheckBox_->IsChecked())
             ? AccountModel::instance().get_num(item.first)
@@ -1666,21 +1665,20 @@ int64 mmQIFImportDialog::getOrCreateAccounts()
         if (!acc) {
             AccountData account_d = AccountData();
 
-            account_d.FAVORITEACCT = "TRUE";
-            account_d.STATUS = AccountModel::STATUS_NAME_OPEN;
+            account_d.m_favorite_ = "TRUE";
+            account_d.m_status_   = AccountModel::STATUS_NAME_OPEN;
 
             const auto type = item.second.find(AccountType) != item.second.end() ? item.second.at(AccountType) : "";
-            account_d.ACCOUNTTYPE = mmExportTransaction::mm_acc_type(type);
+            account_d.m_type_ = mmExportTransaction::mm_acc_type(type);
             //NavigatorTypes::TYPE_NAME_CHECKING;
-            account_d.ACCOUNTNAME = item.first;
-            account_d.INITIALBAL = 0;
-            account_d.INITIALDATE = wxDate::Today().FormatISODate();
-
-            account_d.CURRENCYID = CurrencyModel::GetBaseCurrency()->m_id;
+            account_d.m_name         = item.first;
+            account_d.m_open_balance = 0;
+            account_d.m_open_date    = wxDate::Today().FormatISODate();
+            account_d.m_currency_id  = CurrencyModel::GetBaseCurrency()->m_id;
             const wxString c = (item.second.find(Description) == item.second.end() ? "" : item.second.at(Description));
             for (const auto& curr : CurrencyModel::instance().find_all()) {
                 if (wxString::Format("[%s]", curr.m_symbol) == c) {
-                    account_d.CURRENCYID = curr.m_id;
+                    account_d.m_currency_id = curr.m_id;
                     break;
                 }
             }
@@ -1691,14 +1689,14 @@ int64 mmQIFImportDialog::getOrCreateAccounts()
             *log_field_ << sMsg << "\n";
         }
         else
-            accountID = acc->ACCOUNTID;
+            accountID = acc->m_id;
 
         m_QIFaccountsID[item.first] = accountID;
     }
 
     const AccountData* acc = AccountModel::instance().get_key(m_accountNameStr);
     if (acc) {
-        m_QIFaccountsID[m_accountNameStr] = acc->ACCOUNTID;
+        m_QIFaccountsID[m_accountNameStr] = acc->m_id;
     }
 
     return m_QIFaccountsID.size();
@@ -1758,7 +1756,7 @@ int64 mmQIFImportDialog::get_last_imported_acc()
     int64 accID = -1;
     const AccountData* acc = AccountModel::instance().get_key(m_accountNameStr);
     if (acc)
-        accID = acc->ACCOUNTID;
+        accID = acc->m_id;
     return accID;
 }
 

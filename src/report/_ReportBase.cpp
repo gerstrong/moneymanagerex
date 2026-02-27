@@ -91,12 +91,12 @@ void ReportBase::setAccounts(int selection, const wxString& type_name)
     case 1: // Select Accounts
     {
         wxArrayString accounts;
-        auto a = AccountModel::instance().find_all();
-        std::stable_sort(a.begin(), a.end(), AccountData::SorterByACCOUNTNAME());
-        for (const auto& item : a) {
-            if (m_only_active && item.STATUS != AccountModel::STATUS_NAME_OPEN)
+        auto account_a = AccountModel::instance().find_all();
+        std::stable_sort(account_a.begin(), account_a.end(), AccountData::SorterByACCOUNTNAME());
+        for (const auto& account_d : account_a) {
+            if (m_only_active && account_d.m_status_ != AccountModel::STATUS_NAME_OPEN)
                 continue;
-            accounts.Add(item.ACCOUNTNAME);
+            accounts.Add(account_d.m_name);
         }
 
         auto parent = wxWindow::FindWindowById(mmID_REPORTS);
@@ -131,8 +131,8 @@ void ReportBase::setAccounts(int selection, const wxString& type_name)
             AccountCol::ACCOUNTTYPE(type_name),
             AccountModel::STATUS(OP_NE, AccountModel::STATUS_ID_CLOSED)
         );
-        for (const auto &i : accounts) {
-            accountSelections->Add(i.ACCOUNTNAME);
+        for (const auto& i : accounts) {
+            accountSelections->Add(i.m_name);
         }
         m_account_a = accountSelections;
     } }

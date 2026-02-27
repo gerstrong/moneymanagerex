@@ -445,7 +445,7 @@ void StockDialog::OnSave(wxCommandEvent & /*event*/)
     }
 
     const wxString pdate = m_purchase_date_ctrl->GetValue().FormatISODate();
-    if (pdate < account_n->INITIALDATE)
+    if (pdate < account_n->m_open_date)
         return mmErrorDialogs::ToolTip4Object(m_purchase_date_ctrl, _t("The opening date for the account is later than the date of this transaction"), _t("Invalid Date"));
 
     const wxString stockName = m_stock_name_ctrl->GetValue();
@@ -524,13 +524,13 @@ void StockDialog::CreateShareAccount(
         return;
 
     AccountData new_account_d = AccountData();
-    new_account_d.ACCOUNTNAME  = name;
-    new_account_d.ACCOUNTTYPE  = NavigatorTypes::instance().getShareAccountStr();
-    new_account_d.FAVORITEACCT = "FALSE";
-    new_account_d.STATUS       = AccountModel::STATUS_NAME_OPEN;
-    new_account_d.INITIALBAL   = 0;
-    new_account_d.INITIALDATE  = openingDate;
-    new_account_d.CURRENCYID   = stock_account->CURRENCYID;
+    new_account_d.m_name         = name;
+    new_account_d.m_type_        = NavigatorTypes::instance().getShareAccountStr();
+    new_account_d.m_favorite_    = "FALSE";
+    new_account_d.m_status_      = AccountModel::STATUS_NAME_OPEN;
+    new_account_d.m_open_balance = 0;
+    new_account_d.m_open_date    = openingDate;
+    new_account_d.m_currency_id  = stock_account->m_currency_id;
     AccountModel::instance().add_data_n(new_account_d);
 
     TrxShareDialog share_dialog(this, m_stock_n);

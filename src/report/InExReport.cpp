@@ -56,7 +56,7 @@ wxString InExReport::getHTMLText()
 
         const AccountData *account = AccountModel::instance().get_data_n(transaction.ACCOUNTID);
         if (m_account_a) {
-            if (!account || wxNOT_FOUND == m_account_a->Index(account->ACCOUNTNAME))
+            if (!account || wxNOT_FOUND == m_account_a->Index(account->m_name))
                 continue;
         }
         double convRate = 1;
@@ -160,7 +160,7 @@ wxString mmReportIncomeExpensesMonthly::getHTMLText()
 
         const AccountData *account = AccountModel::instance().get_data_n(transaction.ACCOUNTID);
         if (m_account_a) {
-            if (!account || wxNOT_FOUND == m_account_a->Index(account->ACCOUNTNAME))
+            if (!account || wxNOT_FOUND == m_account_a->Index(account->m_name))
                 continue;
         }
         double convRate = 1;

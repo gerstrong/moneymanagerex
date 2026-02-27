@@ -246,15 +246,14 @@ void TrxDialog::dataToControls()
     if (!skip_account_init_)
     {
         const AccountData* acc_n = AccountModel::instance().get_data_n(m_journal_data.ACCOUNTID);
-        if (acc_n)
-        {
-            cbAccount_->ChangeValue(acc_n->ACCOUNTNAME);
-            m_textAmount->SetCurrency(CurrencyModel::instance().get_data_n(acc_n->CURRENCYID));
+        if (acc_n) {
+            cbAccount_->ChangeValue(acc_n->m_name);
+            m_textAmount->SetCurrency(CurrencyModel::instance().get_data_n(acc_n->m_currency_id));
         }
         const AccountData* to_acc = AccountModel::instance().get_data_n(m_journal_data.TOACCOUNTID);
         if (to_acc) {
-            cbToAccount_->ChangeValue(to_acc->ACCOUNTNAME);
-            toTextAmount_->SetCurrency(CurrencyModel::instance().get_data_n(to_acc->CURRENCYID));
+            cbToAccount_->ChangeValue(to_acc->m_name);
+            toTextAmount_->SetCurrency(CurrencyModel::instance().get_data_n(to_acc->m_currency_id));
         }
 
         skip_account_init_ = true;
@@ -697,7 +696,7 @@ bool TrxDialog::ValidateData()
     m_journal_data.ACCOUNTID = cbAccount_->mmGetId();
     const AccountData* account = AccountModel::instance().get_data_n(m_journal_data.ACCOUNTID);
 
-    if (m_journal_data.TRANSDATE < account->INITIALDATE) {
+    if (m_journal_data.TRANSDATE < account->m_open_date) {
         mmErrorDialogs::ToolTip4Object(cbAccount_, _t("The opening date for the account is later than the date of this transaction"), _t("Invalid Date"));
         return false;
     }
@@ -759,14 +758,14 @@ bool TrxDialog::ValidateData()
     {
         const AccountData *to_account = AccountModel::instance().get_key(cbToAccount_->GetValue());
 
-        if (!to_account || to_account->ACCOUNTID == m_journal_data.ACCOUNTID)
+        if (!to_account || to_account->m_id == m_journal_data.ACCOUNTID)
         {
             mmErrorDialogs::InvalidAccount(cbToAccount_, true);
             return false;
         }
-        m_journal_data.TOACCOUNTID = to_account->ACCOUNTID;
+        m_journal_data.TOACCOUNTID = to_account->m_id;
 
-        if (m_journal_data.TRANSDATE < to_account->INITIALDATE)
+        if (m_journal_data.TRANSDATE < to_account->m_open_date)
         {
             mmErrorDialogs::ToolTip4Object(cbToAccount_, _t("The opening date for the account is later than the date of this transaction"), _t("Invalid Date"));
             return false;
@@ -781,13 +780,11 @@ bool TrxDialog::ValidateData()
     }
 
     /* Check if transaction is to proceed.*/
-    if (AccountModel::BoolOf(account->STATEMENTLOCKED))
-    {
-        if (dpc_->GetValue() <= parseDateTime(account->STATEMENTDATE))
-        {
+    if (account->m_stmt_locked) {
+        if (dpc_->GetValue() <= parseDateTime(account->m_stmt_date)) {
             if (wxMessageBox(wxString::Format(
                 _t("Lock transaction to date: %s") + "\n\n" + _t("Do you want to continue?")
-                , mmGetDateTimeForDisplay(account->STATEMENTDATE))
+                , mmGetDateTimeForDisplay(account->m_stmt_date))
                 , _t("MMEX Transaction Check"), wxYES_NO | wxICON_WARNING) == wxNO)
             {
                 return false;
@@ -801,14 +798,14 @@ bool TrxDialog::ValidateData()
         if (m_journal_data.STATUS != TrxModel::STATUS_KEY_VOID &&
             (m_journal_data.TRANSCODE == TrxModel::TYPE_NAME_WITHDRAWAL ||
              m_journal_data.TRANSCODE == TrxModel::TYPE_NAME_TRANSFER) &&
-            (account->MINIMUMBALANCE != 0 || account->CREDITLIMIT != 0))
+            (account->m_min_balance != 0 || account->m_credit_limit != 0))
         {
             const double fromAccountBalance = AccountModel::balance(account);
             const double new_value = fromAccountBalance - m_journal_data.TRANSAMOUNT;
 
             bool abort_transaction =
-                (account->MINIMUMBALANCE != 0 && new_value < account->MINIMUMBALANCE) ||
-                (account->CREDITLIMIT != 0 && new_value < -(account->CREDITLIMIT));
+                (account->m_min_balance != 0 && new_value < account->m_min_balance) ||
+                (account->m_credit_limit != 0 && new_value < -(account->m_credit_limit));
 
             if (abort_transaction && wxMessageBox(
                 _t("The transaction will exceed the account limit.") + "\n\n" + _t("Do you want to continue?")
@@ -912,7 +909,7 @@ void TrxDialog::OnFocusChange(wxChildFocusEvent& event)
     {
         const AccountData* to_account_n = AccountModel::instance().get_data_n(cbToAccount_->mmGetId());
         if (to_account_n)
-            m_journal_data.TOACCOUNTID = to_account_n->ACCOUNTID;
+            m_journal_data.TOACCOUNTID = to_account_n->m_id;
     }
 
     dataToControls();

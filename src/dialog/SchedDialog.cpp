@@ -281,7 +281,7 @@ void SchedDialog::dataToControls()
     updateControlsForTransType();
 
     const AccountData* account_n = AccountModel::instance().get_data_n(m_sched_d.ACCOUNTID);
-    cbAccount_->ChangeValue(account_n ? account_n->ACCOUNTNAME : "");
+    cbAccount_->ChangeValue(account_n ? account_n->m_name : "");
 
     tagTextCtrl_->SetTags(m_sched_d.TAGS);
 
@@ -729,11 +729,11 @@ void SchedDialog::SetAmountCurrencies(int64 accountID, int64 toAccountID)
 {
     const AccountData* account_n = AccountModel::instance().get_data_n(accountID);
     if (account_n)
-        textAmount_->SetCurrency(CurrencyModel::instance().get_data_n(account_n->CURRENCYID));
+        textAmount_->SetCurrency(CurrencyModel::instance().get_data_n(account_n->m_currency_id));
 
     account_n = AccountModel::instance().get_data_n(toAccountID);
     if (account_n)
-        toTextAmount_->SetCurrency(CurrencyModel::instance().get_data_n(account_n->CURRENCYID));
+        toTextAmount_->SetCurrency(CurrencyModel::instance().get_data_n(account_n->m_currency_id));
 }
 
 void SchedDialog::OnCategs(wxCommandEvent& WXUNUSED(event))
@@ -1031,10 +1031,10 @@ void SchedDialog::OnOk(wxCommandEvent& WXUNUSED(event))
 
     const AccountData* account = AccountModel::instance().get_data_n(m_sched_d.ACCOUNTID);
     const AccountData* toAccount = AccountModel::instance().get_data_n(m_sched_d.TOACCOUNTID);
-    if (m_sched_d.TRANSDATE < account->INITIALDATE)
+    if (m_sched_d.TRANSDATE < account->m_open_date)
         return mmErrorDialogs::ToolTip4Object(cbAccount_, _t("The opening date for the account is later than the date of this transaction"), _t("Invalid Date"));
 
-    if (toAccount && (m_sched_d.TRANSDATE < toAccount->INITIALDATE))
+    if (toAccount && (m_sched_d.TRANSDATE < toAccount->m_open_date))
         return mmErrorDialogs::ToolTip4Object(cbToAccount_, _t("The opening date for the account is later than the date of this transaction"), _t("Invalid Date"));
 
     if (!m_enter_occur) {
@@ -1510,7 +1510,7 @@ void SchedDialog::OnAccountUpdated(wxCommandEvent& WXUNUSED(event))
             textAmount_->GetDouble(m_sched_d.TRANSAMOUNT);
         }
 
-        m_sched_d.ACCOUNTID = account_n->ACCOUNTID;
+        m_sched_d.ACCOUNTID = account_n->m_id;
     }
 }
 

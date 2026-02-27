@@ -58,13 +58,12 @@ void TrxFilter::setDateRange(wxDateTime startDate, wxDateTime endDate)
 
 void TrxFilter::setAccountList(wxSharedPtr<wxArrayString> accountList)
 {
-    if (accountList)
-    {
+    if (accountList) {
         m_account_a.clear();
-        for (const auto &entry : *accountList)
-        {
+        for (const auto &entry : *accountList) {
             const auto account = AccountModel::instance().get_key(entry);
-            if (account) m_account_a.push_back(account->ACCOUNTID);
+            if (account)
+                m_account_a.push_back(account->m_id);
         }
         m_filter_account = true;
     }
@@ -234,7 +233,7 @@ table {
         const AccountData* acc = AccountModel::instance().get_data_n(transaction.ACCOUNTID);
         if (acc) {
             const CurrencyData* curr = AccountModel::currency(acc);
-            double flow = TrxModel::account_flow(transaction, acc->ACCOUNTID);
+            double flow = TrxModel::account_flow(transaction, acc->m_id);
             hb.addCurrencyCell(flow, curr);
         }
         else {

@@ -881,11 +881,12 @@ mmOFXImportDialog::mmOFXImportDialog(wxWindow* parent)
 
     mainSizer->Add(new wxStaticText(this, wxID_ANY, _("&Account:")), 0, wxALL, 5);
     accountDropDown_ = new wxChoice(this, wxID_ANY);
-    for (const auto& account : AccountModel::instance().find_all(AccountCol::COL_ID_ACCOUNTNAME))
-    {
-        wxString accountIdStr = wxString::Format("%lld", account.ACCOUNTID.GetValue());
-        int idx = accountDropDown_->Append(account.ACCOUNTNAME, new wxStringClientData(accountIdStr));
-        if (account.ACCOUNTID == account_id_)
+    for (const auto& account : AccountModel::instance().find_all(
+        AccountCol::COL_ID_ACCOUNTNAME
+    )) {
+        wxString accountIdStr = wxString::Format("%lld", account.m_id.GetValue());
+        int idx = accountDropDown_->Append(account.m_name, new wxStringClientData(accountIdStr));
+        if (account.m_id == account_id_)
             accountDropDown_->SetSelection(idx);
     }
     mainSizer->Add(accountDropDown_, 0, wxALL | wxEXPAND, 5);
@@ -901,8 +902,7 @@ mmOFXImportDialog::mmOFXImportDialog(wxWindow* parent)
 
     mainSizer->Add(new wxStaticText(this, wxID_ANY, _("Minimum Fuzzy Match &Confidence Level:")), 0, wxALL, 5);
     fuzzyConfidenceChoice_ = new wxChoice(this, wxID_ANY);
-    for (int i = 100; i >= 40; i -= 1)
-    {
+    for (int i = 100; i >= 40; i -= 1) {
         wxString label = wxString::Format("%d%%", i);
         fuzzyConfidenceChoice_->Append(label, new wxStringClientData(wxString::Format("%d", i)));
         if (i == 85)
@@ -1057,18 +1057,18 @@ void mmOFXImportDialog::OnBrowse(wxCommandEvent& /*event*/)
                 if (data->GetData().ToLongLong(&tempAccountId)) {
                     const AccountData* account_n = AccountModel::instance().get_data_n(tempAccountId);
                     if (account_n) {
-                        wxString accountNum = account_n->ACCOUNTNUM;
+                        wxString accountNum = account_n->m_num;
                         accountNum.Trim(true).Trim(false); // Normalize
                         acctId.Trim(true).Trim(false);     // Normalize
                         wxLogDebug("Comparing ACCTID '%s' with ACCOUNTNUM '%s' for account '%s' (ID: %lld)",
-                            acctId, accountNum, account_n->ACCOUNTNAME, tempAccountId
+                            acctId, accountNum, account_n->m_name, tempAccountId
                         );
                         if (accountNum.IsSameAs(acctId, false)) {
                             // Case-insensitive
                             accountDropDown_->SetSelection(i);
                             account_id_ = tempAccountId;
                             wxLogDebug("Matched account: '%s' (ID: %lld, ACCOUNTNUM: '%s') at index %d",
-                                account_n->ACCOUNTNAME, account_id_.GetValue(), accountNum, i
+                                account_n->m_name, account_id_.GetValue(), accountNum, i
                             );
                             accountFound = true;
                             break;
@@ -1459,7 +1459,7 @@ bool mmOFXImportDialog::ImportTransactions(wxXmlNode* banktranlist, wxLongLong a
             // Check if this FITID exists in the current account first
             if (!TrxModel::instance().find(
                 TrxCol::TRANSACTIONNUMBER(OP_EQ, fitid),
-                TrxCol::ACCOUNTID(OP_EQ, account->ACCOUNTID.GetValue())
+                TrxCol::ACCOUNTID(OP_EQ, account->m_id.GetValue())
             ).empty())
                 continue; // Skip if duplicate in current account
             newTransactions++;
@@ -1515,18 +1515,18 @@ bool mmOFXImportDialog::ImportTransactions(wxXmlNode* banktranlist, wxLongLong a
         }
 
         TrxData transaction = TrxData();
-        transaction.ACCOUNTID = account->ACCOUNTID;
+        transaction.ACCOUNTID      = account->m_id;
         transaction.TRANSACTIONNUMBER = result.fitid;
-        transaction.TRANSDATE = date.FormatISODate();
-        transaction.TRANSAMOUNT = fabs(amount);
-        transaction.NOTES = memo;
+        transaction.TRANSDATE         = date.FormatISODate();
+        transaction.TRANSAMOUNT       = fabs(amount);
+        transaction.NOTES             = memo;
 
         bool isTransfer = false;
         // Check for existing transaction in the current account first
         TrxModel::DataA sameAccountTrans =
             TrxModel::instance().find(
                 TrxCol::TRANSACTIONNUMBER(OP_EQ, fitid),
-                TrxCol::ACCOUNTID(OP_EQ, account->ACCOUNTID)
+                TrxCol::ACCOUNTID(OP_EQ, account->m_id)
             );
         if (!sameAccountTrans.empty()) {
             result.imported = false;
@@ -1545,20 +1545,20 @@ bool mmOFXImportDialog::ImportTransactions(wxXmlNode* banktranlist, wxLongLong a
             for (auto& existing : allExistingTrans) {
                 // Check if this FITID is already a transfer involving the current account
                 if (existing.TRANSCODE == "Transfer" &&
-                    (existing.ACCOUNTID == account->ACCOUNTID || existing.TOACCOUNTID == account->ACCOUNTID)) {
+                    (existing.ACCOUNTID == account->m_id || existing.TOACCOUNTID == account->m_id)) {
                     result.imported = false;
                     result.transType = "";
                     result.importedPayee = "DUPLICATE";
                     result.category = "";
                     result.matchMode = "None";
                     stats.autoImportedCount++;
-                    wxLogDebug("FITID='%s' already a transfer involving %lld, skipped", fitid, account->ACCOUNTID);
+                    wxLogDebug("FITID='%s' already a transfer involving %lld, skipped", fitid, account->m_id);
                     isTransfer = true;
                     results.push_back(result);
                     transactionIndex++;
                     break;
                 }
-                else if (existing.ACCOUNTID != account->ACCOUNTID) {
+                else if (existing.ACCOUNTID != account->m_id) {
                     // Potential new transfer
                     double existingAmount = existing.TRANSAMOUNT;
                     wxDateTime existingDate;
@@ -1579,14 +1579,14 @@ bool mmOFXImportDialog::ImportTransactions(wxXmlNode* banktranlist, wxLongLong a
                         else {
                             if (existing.TRANSCODE == "Withdrawal" && amount > 0) {
                                 existing.TRANSCODE = "Transfer";
-                                existing.TOACCOUNTID = account->ACCOUNTID;
+                                existing.TOACCOUNTID = account->m_id;
                                 existing.TRANSAMOUNT = existingAmount;
                                 existing.TOTRANSAMOUNT = amount;
                             }
                             else if (existing.TRANSCODE == "Deposit" && amount < 0) {
                                 existing.TRANSCODE = "Transfer";
                                 existing.TOACCOUNTID = existing.ACCOUNTID;
-                                existing.ACCOUNTID = account->ACCOUNTID;
+                                existing.ACCOUNTID = account->m_id;
                                 existing.TRANSAMOUNT = fabs(amount);
                                 existing.TOTRANSAMOUNT = existingAmount;
                             }
@@ -1609,7 +1609,7 @@ bool mmOFXImportDialog::ImportTransactions(wxXmlNode* banktranlist, wxLongLong a
                                 TrxModel::instance().save_trx(existing);
                                 result.imported = true;
                                 result.transType = "Transfer";
-                                result.importedPayee = AccountModel::instance().get_data_n(existing.ACCOUNTID)->ACCOUNTNAME;
+                                result.importedPayee = AccountModel::instance().get_data_n(existing.ACCOUNTID)->m_name;
                                 result.category = "Transfer";
                                 result.matchMode = "Transfer";
                                 stats.autoImportedCount++;

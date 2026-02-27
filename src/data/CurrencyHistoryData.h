@@ -16,21 +16,6 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  ********************************************************/
 
-// PLEASE EDIT!
-//
-// This is only sample code re-used from "table/CurrencyHistoryTable.h".
-//
-// The data structure can be refined by:
-// * using more user-frielndly filed name
-// * using stronger field types
-// * adding enumerations for fields with limited choices
-// * demultiplexing composite values in database columns
-//
-// See also an implementation in Swift:
-//   https://github.com/moneymanagerex/mmex-ios/tree/master/MMEX/Data
-// and an implementation in Java:
-//   https://github.com/moneymanagerex/android-money-manager-ex/tree/master/app/src/main/java/com/money/manager/ex/domainmodel
-
 #pragma once
 
 #include "table/_TableBase.h"
@@ -39,18 +24,18 @@
 // User-friendly representation of a record in table CURRENCYHISTORY_V1.
 struct CurrencyHistoryData
 {
-    int64 CURRHISTID; // primary key
-    int64 CURRENCYID;
-    wxString CURRDATE;
-    double CURRVALUE;
-    int64 CURRUPDTYPE;
+    int64    m_id;
+    int64    m_currency_id;
+    wxString m_date;
+    double   m_base_conv_rate;
+    int64    m_update_type_;
 
     explicit CurrencyHistoryData();
     explicit CurrencyHistoryData(wxSQLite3ResultSet& q);
     CurrencyHistoryData(const CurrencyHistoryData& other) = default;
 
-    int64 id() const { return CURRHISTID; }
-    void id(const int64 id) { CURRHISTID = id; }
+    int64 id() const { return m_id; }
+    void id(const int64 id) { m_id = id; }
     CurrencyHistoryRow to_row() const;
     CurrencyHistoryData& from_row(const CurrencyHistoryRow& row);
     void to_insert_stmt(wxSQLite3Statement& stmt, int64 id) const;
@@ -71,7 +56,7 @@ struct CurrencyHistoryData
     {
         bool operator()(const CurrencyHistoryData& x, const CurrencyHistoryData& y)
         {
-            return x.CURRHISTID < y.CURRHISTID;
+            return x.m_id < y.m_id;
         }
     };
 
@@ -79,7 +64,7 @@ struct CurrencyHistoryData
     {
         bool operator()(const CurrencyHistoryData& x, const CurrencyHistoryData& y)
         {
-            return x.CURRENCYID < y.CURRENCYID;
+            return x.m_currency_id < y.m_currency_id;
         }
     };
 
@@ -87,7 +72,7 @@ struct CurrencyHistoryData
     {
         bool operator()(const CurrencyHistoryData& x, const CurrencyHistoryData& y)
         {
-            return x.CURRDATE < y.CURRDATE;
+            return x.m_date < y.m_date;
         }
     };
 
@@ -95,7 +80,7 @@ struct CurrencyHistoryData
     {
         bool operator()(const CurrencyHistoryData& x, const CurrencyHistoryData& y)
         {
-            return x.CURRVALUE < y.CURRVALUE;
+            return x.m_base_conv_rate < y.m_base_conv_rate;
         }
     };
 
@@ -103,7 +88,7 @@ struct CurrencyHistoryData
     {
         bool operator()(const CurrencyHistoryData& x, const CurrencyHistoryData& y)
         {
-            return x.CURRUPDTYPE < y.CURRUPDTYPE;
+            return x.m_update_type_ < y.m_update_type_;
         }
     };
 };

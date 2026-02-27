@@ -68,7 +68,7 @@ const CurrencyHistoryData* CurrencyHistoryModel::get_key(const int64& currencyID
 
 wxDate CurrencyHistoryModel::CURRDATE(const Data& ch_d)
 {
-    return parseDateTime(ch_d.CURRDATE);
+    return parseDateTime(ch_d.m_date);
 }
 
 CurrencyHistoryCol::CURRDATE CurrencyHistoryModel::CURRDATE(OP op, const wxDate& date)
@@ -85,10 +85,10 @@ int64 CurrencyHistoryModel::addUpdate(
 ) {
     const Data *ch_n = get_key(currencyID, date);
     Data ch_d = ch_n ? *ch_n : Data();
-    ch_d.CURRENCYID  = currencyID;
-    ch_d.CURRDATE    = date.FormatISODate();
-    ch_d.CURRVALUE   = price;
-    ch_d.CURRUPDTYPE = type;
+    ch_d.m_currency_id     = currencyID;
+    ch_d.m_date            = date.FormatISODate();
+    ch_d.m_base_conv_rate  = price;
+    ch_d.m_update_type_    = type;
     save_data_n(ch_d);
     return ch_d.id();
 }
@@ -124,7 +124,7 @@ double CurrencyHistoryModel::getDayRate(int64 currencyID, const wxDate& Date)
     if (!Data.empty())
     {
         //Rate found for specified day
-        return Data.back().CURRVALUE;
+        return Data.back().m_base_conv_rate;
     }
     else if (CurrencyHistoryModel::instance().find(
         CurrencyHistoryCol::CURRENCYID(currencyID)
@@ -141,18 +141,18 @@ double CurrencyHistoryModel::getDayRate(int64 currencyID, const wxDate& Date)
 
         if (!DataPrevious.empty() && !DataNext.empty())
         {
-            const wxTimeSpan spanPast = Date.Subtract(parseDateTime(DataPrevious.back().CURRDATE));
-            const wxTimeSpan spanFuture = parseDateTime(DataNext[0].CURRDATE).Subtract(Date);
+            const wxTimeSpan spanPast = Date.Subtract(parseDateTime(DataPrevious.back().m_date));
+            const wxTimeSpan spanFuture = parseDateTime(DataNext[0].m_date).Subtract(Date);
 
-            return spanPast <= spanFuture ? DataPrevious.back().CURRVALUE : DataNext[0].CURRVALUE;
+            return spanPast <= spanFuture ? DataPrevious.back().m_base_conv_rate : DataNext[0].m_base_conv_rate;
         }
         else if (!DataPrevious.empty())
         {
-            return DataPrevious.back().CURRVALUE;
+            return DataPrevious.back().m_base_conv_rate;
         }
         else if (!DataNext.empty())
         {
-            return DataNext[0].CURRVALUE;
+            return DataNext[0].m_base_conv_rate;
         }
     }
 
@@ -171,7 +171,7 @@ double CurrencyHistoryModel::getLastRate(const int64& currencyID)
     std::stable_sort(histData.begin(), histData.end(), CurrencyHistoryData::SorterByCURRDATE());
 
     if (!histData.empty())
-        return histData.back().CURRVALUE;
+        return histData.back().m_base_conv_rate;
     else
     {
         const CurrencyData* currency_n = CurrencyModel::instance().get_data_n(currencyID);

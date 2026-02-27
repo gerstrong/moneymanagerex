@@ -605,17 +605,17 @@ void CurrencyChoiceDialog::ShowCurrencyHistory()
     std::reverse(histData.begin(), histData.end());
     if (!histData.empty()) {
         int idx = 0;
-        for (const auto &d : histData) {
+        for (const auto& ch_d : histData) {
             wxListItem item;
             item.SetId(idx);
-            item.SetData(reinterpret_cast<void*>(d.CURRHISTID.GetValue()));
+            item.SetData(reinterpret_cast<void*>(ch_d.m_id.GetValue()));
             valueListBox_->InsertItem(item);
-            const wxString dispAmount = CurrencyModel::toString(d.CURRVALUE, currency, 6);
-            valueListBox_->SetItem(idx, 0, mmGetDateTimeForDisplay(d.CURRDATE));
+            const wxString dispAmount = CurrencyModel::toString(ch_d.m_base_conv_rate, currency, 6);
+            valueListBox_->SetItem(idx, 0, mmGetDateTimeForDisplay(ch_d.m_date));
             valueListBox_->SetItem(idx, 1, dispAmount);
 
 
-            const wxString& priceAmount = "* M"[d.CURRUPDTYPE.GetValue()];
+            const wxString& priceAmount = "* M"[ch_d.m_update_type_.GetValue()];
             valueListBox_->SetItem(idx, 2, priceAmount);
             idx++;
         }
@@ -746,20 +746,20 @@ void CurrencyChoiceDialog::OnHistoryDeleteUnused(wxCommandEvent& WXUNUSED(event)
     auto currencies = CurrencyModel::instance().find_all();
     for (auto &currency : currencies) {
         if (!AccountModel::is_used(currency)) {
-            for (const auto& r : CurrencyHistoryModel::instance().find(
+            for (const auto& ch_d : CurrencyHistoryModel::instance().find(
                 CurrencyHistoryCol::CURRENCYID(currency.m_id)
             ))
-                CurrencyHistoryModel::instance().purge_id(r.id());
+                CurrencyHistoryModel::instance().purge_id(ch_d.id());
         }
         else {
             std::map<wxDateTime, int> DatesList = CurrencyModel::DateUsed(currency.m_id);
             wxDateTime CurrDate;
-            for (const auto& r : CurrencyHistoryModel::instance().find(
+            for (const auto& ch_d : CurrencyHistoryModel::instance().find(
                 CurrencyHistoryCol::CURRENCYID(currency.m_id)
             )) {
-                CurrDate.ParseDate(r.CURRDATE);
+                CurrDate.ParseDate(ch_d.m_date);
                 if (DatesList.find(CurrDate) == DatesList.end())
-                    CurrencyHistoryModel::instance().purge_id(r.id());
+                    CurrencyHistoryModel::instance().purge_id(ch_d.id());
             }
         }
     }
@@ -773,11 +773,11 @@ void CurrencyChoiceDialog::OnHistorySelected(wxListEvent& event)
 {
     long selectedIndex = event.GetIndex();
     int64 histId = valueListBox_->GetItemData(selectedIndex);
-    const CurrencyHistoryData* histData = CurrencyHistoryModel::instance().get_data_n(histId);
+    const CurrencyHistoryData* ch_n = CurrencyHistoryModel::instance().get_data_n(histId);
 
-    if (histData->CURRHISTID > 0) {
-        valueDatePicker_->SetValue(CurrencyHistoryModel::CURRDATE(*histData));
-        valueTextBox_->SetValue(wxString::Format("%f", histData->CURRVALUE));
+    if (ch_n->m_id > 0) {
+        valueDatePicker_->SetValue(CurrencyHistoryModel::CURRDATE(*ch_n));
+        valueTextBox_->SetValue(wxString::Format("%f", ch_n->m_base_conv_rate));
     }
 }
 

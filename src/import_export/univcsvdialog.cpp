@@ -2704,23 +2704,23 @@ void mmUnivCSVDialog::validatePayees() {
 }
 
 void mmUnivCSVDialog::validateCategories() {
-    for(const auto& catname : m_CSVcategoryNames)
-    {
+    for(const auto& catname : m_CSVcategoryNames) {
         wxString search_name = catname.first;
         int64 parentID = -1;
         // delimit string by ":"
         wxStringTokenizer categs = wxStringTokenizer(search_name, ":");
         // check each level of category exists
-        CategoryData* category = nullptr;
+        const CategoryData* category_n = nullptr;
         while (categs.HasMoreTokens()) {
             wxString categname = categs.GetNextToken();
-            const CategoryData* category = CategoryModel::instance().get_key(categname, parentID);
-            if (!category)
+            category_n = CategoryModel::instance().get_key(categname, parentID);
+            if (!category_n)
                 break;
-            parentID = category->m_id;
+            parentID = category_n->m_id;
         }
 
-        if (category) m_CSVcategoryNames[search_name] = category->m_id;
+        if (category_n)
+            m_CSVcategoryNames[search_name] = category_n->m_id;
     }
 }
 

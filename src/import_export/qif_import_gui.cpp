@@ -1151,8 +1151,11 @@ void mmQIFImportDialog::OnOk(wxCommandEvent& WXUNUSED(event))
                 AccountData* account = AccountModel::instance().unsafe_get_data_n(trx.ACCOUNTID);
                 AccountData* toAccount = AccountModel::instance().unsafe_get_data_n(trx.TOACCOUNTID);
 
-                if ((trx.TRANSDATE < account->m_stmt_date && account->m_stmt_locked.GetValue()) ||
-                    (toAccount && (trx.TRANSDATE < toAccount->m_stmt_date && toAccount->m_stmt_locked.GetValue())))
+                if ((trx.TRANSDATE < account->m_stmt_date && account->m_stmt_locked) ||
+                    (toAccount &&
+                        (trx.TRANSDATE < toAccount->m_stmt_date && toAccount->m_stmt_locked)
+                    )
+                )
                     continue;
 
                 if (trx.TRANSDATE < account->m_open_date) {

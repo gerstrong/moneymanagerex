@@ -50,7 +50,7 @@ wxString StockModel::get_stock_name(int64 stock_id)
 {
     const Data* stock = instance().get_data_n(stock_id);
     if (stock)
-        return stock->STOCKNAME;
+        return stock->m_name;
     else
         return _t("Stock Error");
 }
@@ -63,18 +63,18 @@ StockModel& StockModel::instance()
 
 wxDate StockModel::PURCHASEDATE(const Data* stock)
 {
-    return parseDateTime(stock->PURCHASEDATE);
+    return parseDateTime(stock->m_purchase_date);
 }
 
 wxDate StockModel::PURCHASEDATE(const Data& stock)
 {
-    return parseDateTime(stock.PURCHASEDATE);
+    return parseDateTime(stock.m_purchase_date);
 }
 
 /** Original value of Stocks */
 double StockModel::InvestmentValue(const Data* r)
 {
-    return r->VALUE;
+    return r->m_purchase_value;
 }
 
 /** Original value of Stocks */
@@ -85,7 +85,7 @@ double StockModel::InvestmentValue(const Data& r)
 
 double StockModel::CurrentValue(const Data* r)
 {
-    return r->NUMSHARES * r->CURRENTPRICE;
+    return r->m_num_shares * r->m_current_price;
 }
 
 double StockModel::CurrentValue(const Data& r)
@@ -101,12 +101,12 @@ bool StockModel::purge_id(int64 id)
 {
     const StockData *stock_n = get_data_n(id);
     const auto& stock_a = StockModel::instance().find(
-        StockCol::SYMBOL(stock_n->SYMBOL)
+        StockCol::SYMBOL(stock_n->m_symbol)
     );
     if (stock_a.size() == 1) {
         Savepoint();
         for (const auto& sh_d : StockHistoryModel::instance().find(
-            StockHistoryCol::SYMBOL(stock_n->SYMBOL)
+            StockHistoryCol::SYMBOL(stock_n->m_symbol)
         ))
             StockHistoryModel::instance().purge_id(sh_d.id());
         ReleaseSavepoint();
@@ -122,9 +122,9 @@ Returns the last price date of a given stock
 */
 wxString StockModel::lastPriceDate(const Data* entity)
 {
-    wxString dtStr = entity->PURCHASEDATE;
+    wxString dtStr = entity->m_purchase_date;
     StockHistoryModel::DataA histData = StockHistoryModel::instance().find(
-        StockCol::SYMBOL(entity->SYMBOL)
+        StockCol::SYMBOL(entity->m_symbol)
     );
 
     std::sort(histData.begin(), histData.end(), StockHistoryData::SorterByDATE());
@@ -147,7 +147,7 @@ double StockModel::getDailyBalanceAt(const AccountData *account, const wxDate& d
     {
         wxString precValueDate, nextValueDate;
         StockHistoryModel::DataA stock_hist = StockHistoryModel::instance().find(
-            StockCol::SYMBOL(stock.SYMBOL)
+            StockCol::SYMBOL(stock.m_symbol)
         );
         std::stable_sort(stock_hist.begin(), stock_hist.end(), StockHistoryData::SorterByDATE());
         std::reverse(stock_hist.begin(), stock_hist.end());
@@ -157,19 +157,16 @@ double StockModel::getDailyBalanceAt(const AccountData *account, const wxDate& d
         for (const auto & hist : stock_hist)
         {
             // test for the date requested
-            if (hist.DATE == strDate)
-            {
+            if (hist.DATE == strDate) {
                 valueAtDate = hist.VALUE;
                 break;
             }
             // if not found, search for previous and next date
-            if (precValue == 0.0 && hist.DATE < strDate)
-            {
+            if (precValue == 0.0 && hist.DATE < strDate) {
                 precValue = hist.VALUE;
                 precValueDate = hist.DATE;
             }
-            if (hist.DATE > strDate)
-            {
+            if (hist.DATE > strDate) {
                 nextValue = hist.VALUE;
                 nextValueDate = hist.DATE;
             }
@@ -177,37 +174,33 @@ double StockModel::getDailyBalanceAt(const AccountData *account, const wxDate& d
             if (precValue != 0.0 && hist.DATE < strDate)
                 break;
         }
-        if (valueAtDate == 0.0)
-        {
+        if (valueAtDate == 0.0) {
             //  if previous not found but if the given date is after purchase date, takes purchase price
-            if (precValue == 0.0 && date >= PURCHASEDATE(stock))
-            {
-                precValue = stock.PURCHASEPRICE;
-                precValueDate = stock.PURCHASEDATE;
+            if (precValue == 0.0 && date >= PURCHASEDATE(stock)) {
+                precValue = stock.m_purchase_price;
+                precValueDate = stock.m_purchase_date;
             }
             //  if next not found and the accoung is open, takes previous date
-            if (nextValue == 0.0 && AccountModel::status_id(account) == AccountModel::STATUS_ID_OPEN)
-            {
+            if (nextValue == 0.0 && AccountModel::status_id(account) == AccountModel::STATUS_ID_OPEN) {
                 nextValue = precValue;
                 nextValueDate = precValueDate;
             }
-            if (precValue > 0.0 && nextValue > 0.0 && precValueDate >= stock.PURCHASEDATE && nextValueDate >= stock.PURCHASEDATE)
+            if (precValue > 0.0 && nextValue > 0.0 && precValueDate >= stock.m_purchase_date && nextValueDate >= stock.m_purchase_date)
                 valueAtDate = precValue;
         }
 
         double numShares = 0.0;
 
-        TrxLinkModel::DataA linkrecords = TrxLinkModel::TranslinkList<StockModel>(stock.STOCKID);
-        for (const auto& linkrecord : linkrecords)
-        {
+        TrxLinkModel::DataA linkrecords = TrxLinkModel::TranslinkList<StockModel>(stock.m_id);
+        for (const auto& linkrecord : linkrecords) {
             const TrxData* txn = TrxModel::instance().get_data_n(linkrecord.CHECKINGACCOUNTID);
             if (txn->TRANSID > -1 && txn->DELETEDTIME.IsEmpty() && TrxModel::getTransDateTime(*txn).FormatISODate() <= strDate) {
                 numShares += TrxShareModel::instance().unsafe_get_trx_share_n(linkrecord.CHECKINGACCOUNTID)->SHARENUMBER;
             }
         }
 
-        if (linkrecords.empty() && stock.PURCHASEDATE <= strDate)
-            numShares = stock.NUMSHARES;
+        if (linkrecords.empty() && stock.m_purchase_date <= strDate)
+            numShares = stock.m_num_shares;
 
         totBalance[stock.id()] += numShares * valueAtDate;
     }
@@ -227,9 +220,9 @@ to base currency.
 double StockModel::RealGainLoss(const Data* r, bool to_base_curr)
 {
     const CurrencyData* currency = AccountModel::currency(
-        AccountModel::instance().get_data_n(r->HELDAT)
+        AccountModel::instance().get_data_n(r->m_account_id)
     );
-    TrxLinkModel::DataA trans_list = TrxLinkModel::TranslinkList<StockModel>(r->STOCKID);
+    TrxLinkModel::DataA trans_list = TrxLinkModel::TranslinkList<StockModel>(r->m_id);
     double real_gain_loss = 0;
     double total_shares = 0;
     double total_initial_value = 0;
@@ -298,10 +291,10 @@ double StockModel::UnrealGainLoss(const Data* r, bool to_base_curr)
         return CurrentValue(r) - InvestmentValue(r);
 
     const CurrencyData* currency = AccountModel::currency(
-        AccountModel::instance().get_data_n(r->HELDAT)
+        AccountModel::instance().get_data_n(r->m_account_id)
     );
     double conv_rate = CurrencyHistoryModel::getDayRate(currency->m_id);
-    TrxLinkModel::DataA trans_list = TrxLinkModel::TranslinkList<StockModel>(r->STOCKID);
+    TrxLinkModel::DataA trans_list = TrxLinkModel::TranslinkList<StockModel>(r->m_id);
     if (!trans_list.empty()) {
         double total_shares = 0;
         double total_initial_value = 0;
@@ -360,8 +353,8 @@ void StockModel::UpdateCurrentPrice(const wxString& symbol, const double price)
         );
         for (auto& stock_d : stock_a) {
             // CHECK: use stock_d directly
-            StockData* stock_n = StockModel::instance().unsafe_get_data_n(stock_d.STOCKID);
-            stock_n->CURRENTPRICE = current_price;
+            StockData* stock_n = StockModel::instance().unsafe_get_data_n(stock_d.m_id);
+            stock_n->m_current_price = current_price;
             StockModel::instance().unsafe_update_data_n(stock_n);
         }
     }
@@ -369,7 +362,7 @@ void StockModel::UpdateCurrentPrice(const wxString& symbol, const double price)
 
 void StockModel::UpdatePosition(StockData* stock_n)
 {
-    TrxLinkModel::DataA tl_a = TrxLinkModel::TranslinkList<StockModel>(stock_n->STOCKID);
+    TrxLinkModel::DataA tl_a = TrxLinkModel::TranslinkList<StockModel>(stock_n->m_id);
     double total_shares = 0;
     double total_initial_value = 0;
     double total_commission = 0;
@@ -408,16 +401,16 @@ void StockModel::UpdatePosition(StockData* stock_n)
 
     // The stock record contains the total of share transactions.
     if (tl_a.empty()) {
-        stock_n->PURCHASEPRICE = stock_n->CURRENTPRICE;
+        stock_n->m_purchase_price = stock_n->m_current_price;
     }
     else {
         wxDateTime purchasedate;
         purchasedate.ParseDateTime(earliest_date) || purchasedate.ParseDate(earliest_date);
-        stock_n->PURCHASEDATE  = purchasedate.FormatISODate();
-        stock_n->PURCHASEPRICE = avg_share_price;
-        stock_n->NUMSHARES     = total_shares;
-        stock_n->VALUE         = total_initial_value;
-        stock_n->COMMISSION    = total_commission;
+        stock_n->m_purchase_date  = purchasedate.FormatISODate();
+        stock_n->m_purchase_price = avg_share_price;
+        stock_n->m_num_shares     = total_shares;
+        stock_n->m_purchase_value = total_initial_value;
+        stock_n->m_commission     = total_commission;
     }
     StockModel::instance().unsafe_save_data_n(stock_n);
 }

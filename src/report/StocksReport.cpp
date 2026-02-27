@@ -79,14 +79,14 @@ void  StocksReport::refreshData()
             m_real_gain_loss_excl_forex += line.realgainloss * today_rate;
             m_unreal_gain_loss_excl_forex += line.unrealgainloss * today_rate;
 
-            line.name = stock.STOCKNAME;
-            line.symbol = stock.SYMBOL;
-            line.date = stock.PURCHASEDATE;
-            line.qty = stock.NUMSHARES;
-            line.purchase = StockModel::InvestmentValue(stock);
-            line.current = stock.CURRENTPRICE;
-            line.commission = stock.COMMISSION;
-            line.value = StockModel::CurrentValue(stock);
+            line.name       = stock.m_name;
+            line.symbol     = stock.m_symbol;
+            line.date       = stock.m_purchase_date;
+            line.qty        = stock.m_num_shares;
+            line.purchase   = StockModel::InvestmentValue(stock);
+            line.current    = stock.m_current_price;
+            line.commission = stock.m_commission;
+            line.value      = StockModel::CurrentValue(stock);
             account.data.push_back(line);
         }
         m_stocks.push_back(account);
@@ -266,14 +266,14 @@ wxString mmReportChartStocks::getHTMLText()
     wxArrayString symbols;
     for (const auto& stock : StockModel::instance().find_all(StockCol::COL_ID_SYMBOL))
     {
-        const AccountData* account = AccountModel::instance().get_data_n(stock.HELDAT);
+        const AccountData* account = AccountModel::instance().get_data_n(stock.m_account_id);
         if (AccountModel::status_id(account) != AccountModel::STATUS_ID_OPEN) continue;
-        if (symbols.Index(stock.SYMBOL) != wxNOT_FOUND) continue;
+        if (symbols.Index(stock.m_symbol) != wxNOT_FOUND) continue;
 
-        symbols.Add(stock.SYMBOL);
+        symbols.Add(stock.m_symbol);
         int dataCount = 0, freq = 1;
         auto histData = StockHistoryModel::instance().find(
-            StockHistoryCol::SYMBOL(stock.SYMBOL),
+            StockHistoryCol::SYMBOL(stock.m_symbol),
             StockHistoryModel::DATE(OP_GE, m_date_range->start_date()),
             StockHistoryModel::DATE(OP_LE, m_date_range->end_date()));
         std::stable_sort(histData.begin(), histData.end(), StockHistoryData::SorterByDATE());
@@ -301,7 +301,7 @@ wxString mmReportChartStocks::getHTMLText()
 
         if (!gd.series.empty())
         {
-            hb.addHeader(1, wxString::Format("%s / %s - (%s)", stock.SYMBOL, stock.STOCKNAME, account->ACCOUNTNAME));
+            hb.addHeader(1, wxString::Format("%s / %s - (%s)", stock.m_symbol, stock.m_name, account->ACCOUNTNAME));
             gd.type = GraphData::LINE_DATETIME;
             hb.addChart(gd);
         }

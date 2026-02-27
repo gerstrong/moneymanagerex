@@ -93,8 +93,8 @@ public:
     double getDailyBalanceAt(const AccountData *account, const wxDate& date);
 
     /*
-    stock_entry.PURCHASEPRICE = avg price of shares purchased.
-    stock_entry.NUMSHARES = total amount of shares purchased.
+    stock_entry.m_purchase_price = avg price of shares purchased.
+    stock_entry.m_num_shares = total amount of shares purchased.
     stock_entry.VALUE     = value of shares based on:
     ... share_entry.SHARENUMBER * share_entry.SHAREPRICE
     */

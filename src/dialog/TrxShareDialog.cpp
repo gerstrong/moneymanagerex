@@ -84,7 +84,7 @@ TrxShareDialog::TrxShareDialog(
             m_share_entry = TrxShareModel::instance().unsafe_get_trx_share_n(m_translink_entry->CHECKINGACCOUNTID);
             if (m_share_entry->SHARELOT.IsEmpty())
                 // FIXME: m_share_entry is changed but not saved
-                m_share_entry->SHARELOT = m_stock_n->STOCKID.ToString();
+                m_share_entry->SHARELOT = m_stock_n->m_id.ToString();
 
             for (const auto& split: TrxSplitModel::instance().find(
                 TrxSplitCol::TRANSID(m_share_entry->SHAREINFOID)
@@ -143,29 +143,29 @@ void TrxShareDialog::DataToControls()
 {
     if (!m_stock_n) return;
 
-    m_stock_id = m_stock_n->STOCKID;
-    m_stock_name_ctrl->SetValue(m_stock_n->STOCKNAME);
-    m_transaction_panel->SetTransactionAccount(m_stock_n->STOCKNAME);
-    m_stock_symbol_ctrl->SetValue(m_stock_n->SYMBOL);
-    m_notes_ctrl->SetValue(m_stock_n->NOTES);
+    m_stock_id = m_stock_n->m_id;
+    m_stock_name_ctrl->SetValue(m_stock_n->m_name);
+    m_transaction_panel->SetTransactionAccount(m_stock_n->m_name);
+    m_stock_symbol_ctrl->SetValue(m_stock_n->m_symbol);
+    m_notes_ctrl->SetValue(m_stock_n->m_notes);
 
     m_stock_name_ctrl->Enable(false);
     m_stock_symbol_ctrl->Enable(false);
     m_share_lot_ctrl->Enable(false);
     m_notes_ctrl->Enable(false);
 
-    TrxLinkModel::DataA translink_list = TrxLinkModel::TranslinkList<StockModel>(m_stock_n->STOCKID);
+    TrxLinkModel::DataA translink_list = TrxLinkModel::TranslinkList<StockModel>(m_stock_n->m_id);
 
     if (translink_list.empty())
     {   // Set up the transaction as the first entry.
-        int precision = m_stock_n->NUMSHARES == floor(m_stock_n->NUMSHARES) ? 0 : PrefModel::instance().getSharePrecision();
-        m_share_num_ctrl->SetValue(m_stock_n->NUMSHARES, precision);
-        m_share_price_ctrl->SetValue(m_stock_n->PURCHASEPRICE, PrefModel::instance().getSharePrecision());
-        m_share_commission_ctrl->SetValue(m_stock_n->COMMISSION, PrefModel::instance().getSharePrecision());
-        m_share_lot_ctrl->SetValue(m_stock_n->STOCKID.ToString());
+        int precision = m_stock_n->m_num_shares == floor(m_stock_n->m_num_shares) ? 0 : PrefModel::instance().getSharePrecision();
+        m_share_num_ctrl->SetValue(m_stock_n->m_num_shares, precision);
+        m_share_price_ctrl->SetValue(m_stock_n->m_purchase_price, PrefModel::instance().getSharePrecision());
+        m_share_commission_ctrl->SetValue(m_stock_n->m_commission, PrefModel::instance().getSharePrecision());
+        m_share_lot_ctrl->SetValue(m_stock_n->m_id.ToString());
         m_transaction_panel->TransactionDate(StockModel::PURCHASEDATE(m_stock_n));
-        m_transaction_panel->SetTransactionValue(GetAmount(m_stock_n->NUMSHARES, m_stock_n->PURCHASEPRICE
-                , m_stock_n->COMMISSION), true);
+        m_transaction_panel->SetTransactionValue(GetAmount(m_stock_n->m_num_shares, m_stock_n->m_purchase_price
+                , m_stock_n->m_commission), true);
     }
     else
     {
@@ -200,7 +200,7 @@ void TrxShareDialog::DataToControls()
         {
             m_share_num_ctrl->SetValue(0, 0);
             m_share_price_ctrl->SetValue(0, PrefModel::instance().getSharePrecision());
-            m_share_lot_ctrl->SetValue(m_stock_n->STOCKID.ToString());
+            m_share_lot_ctrl->SetValue(m_stock_n->m_id.ToString());
             m_transaction_panel->SetTransactionValue(0, true);
         }
     }
@@ -352,8 +352,8 @@ void TrxShareDialog::CreateControls()
     }
     else
     {
-        wxString acc_held = AccountModel::get_id_name(m_stock_n->HELDAT);
-        m_transaction_panel->SetTransactionNumber(m_stock_n->STOCKNAME + "_" + m_stock_n->SYMBOL);
+        wxString acc_held = AccountModel::get_id_name(m_stock_n->m_account_id);
+        m_transaction_panel->SetTransactionNumber(m_stock_n->m_name + "_" + m_stock_n->m_symbol);
         m_transaction_panel->SetTransactionAccount(acc_held);
     }
 
@@ -448,7 +448,7 @@ void TrxShareDialog::OnOk(wxCommandEvent& WXUNUSED(event))
         */
         if (!m_translink_entry) {
              TrxLinkModel::SetStockTranslink(
-                m_stock_n->STOCKID, trx_id, m_transaction_panel->CheckingType()
+                m_stock_n->m_id, trx_id, m_transaction_panel->CheckingType()
             );
         }
         TrxShareModel::ShareEntry(
@@ -459,7 +459,7 @@ void TrxShareDialog::OnOk(wxCommandEvent& WXUNUSED(event))
         StockModel::UpdatePosition(m_stock_n);
         if (!loyalty_shares) {
             StockHistoryModel::instance().addUpdate(
-                m_stock_n->SYMBOL,
+                m_stock_n->m_symbol,
                 m_transaction_panel->TransactionDate(),
                 share_price,
                 StockHistoryModel::MANUAL
@@ -516,7 +516,7 @@ void TrxShareDialog::OnDeductibleSplit(wxCommandEvent&)
         m_local_deductible_splits.push_back({category_n->m_id, commission, wxArrayInt64(), ""});
     }
 
-    SplitDialog dlg(this, m_local_deductible_splits, m_stock_n->HELDAT);
+    SplitDialog dlg(this, m_local_deductible_splits, m_stock_n->m_account_id);
 
     if (dlg.ShowModal() == wxID_OK)
     {

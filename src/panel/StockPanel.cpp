@@ -225,8 +225,8 @@ void StockPanel::ViewStockTransactions(int selectedIndex)
 
     wxDialog dlg(this, wxID_ANY,
                  _t("View Stock Transactions") + ": "
-                 + (m_account_id > -1 ? (AccountModel::get_id_name(stock->HELDAT) + " - ") : "")
-                 + stock->SYMBOL,
+                 + (m_account_id > -1 ? (AccountModel::get_id_name(stock->m_account_id) + " - ") : "")
+                 + stock->m_symbol,
                  wxDefaultPosition, wxSize(800, 400),
                  wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER);
 
@@ -239,7 +239,7 @@ void StockPanel::ViewStockTransactions(int selectedIndex)
     topsizer->Add(stockTxnListCtrl, wxSizerFlags(g_flagsExpand).TripleBorder());
 
     // Load stock transactions
-    LoadStockTransactions(stockTxnListCtrl, m_account_id == -1 ? stock->SYMBOL : "", stock->STOCKID);
+    LoadStockTransactions(stockTxnListCtrl, m_account_id == -1 ? stock->m_symbol : "", stock->m_id);
 
     // Bind list events
     BindListEvents(stockTxnListCtrl);
@@ -402,7 +402,7 @@ const wxString StockPanel::Total_Shares()
     double total_shares = 0;
     for (const auto& stock : StockModel::instance().find(StockCol::HELDAT(m_account_id)))
     {
-        total_shares += stock.NUMSHARES;
+        total_shares += stock.m_num_shares;
     }
 
     int precision = (total_shares - static_cast<int>(total_shares) != 0) ? 4 : 0;
@@ -516,9 +516,9 @@ bool StockPanel::onlineQuoteRefresh(wxString& msg)
     std::map<wxString, double> symbols;
     StockModel::DataA stock_a = StockModel::instance().find_all();
     for (const auto& stock_d : stock_a) {
-        const wxString symbol = stock_d.SYMBOL.Upper();
+        const wxString symbol = stock_d.m_symbol.Upper();
         if (symbol.IsEmpty()) continue;
-        symbols[symbol] = stock_d.VALUE;
+        symbols[symbol] = stock_d.m_purchase_value;
     }
 
     refresh_button_->SetBitmapLabel(mmBitmapBundle(png::LED_YELLOW, mmBitmapButtonSize));
@@ -536,9 +536,9 @@ bool StockPanel::onlineQuoteRefresh(wxString& msg)
 
     StockHistoryModel::instance().Savepoint();
     for (auto& stock_d : stock_a) {
-        std::map<wxString, double>::const_iterator it = stocks_data.find(stock_d.SYMBOL.Upper());
+        std::map<wxString, double>::const_iterator it = stocks_data.find(stock_d.m_symbol.Upper());
         if (it == stocks_data.end()) {
-            nonYahooSymbols[stock_d.SYMBOL.Upper()] = 0;
+            nonYahooSymbols[stock_d.m_symbol.Upper()] = 0;
             continue;
         }
 
@@ -546,12 +546,12 @@ bool StockPanel::onlineQuoteRefresh(wxString& msg)
 
         if (dPrice != 0) {
             msg += wxString::Format("%s\t: %0.6f -> %0.6f\n",
-                stock_d.SYMBOL, stock_d.CURRENTPRICE, dPrice
+                stock_d.m_symbol, stock_d.m_current_price, dPrice
             );
-            stock_d.CURRENTPRICE = dPrice;
+            stock_d.m_current_price = dPrice;
             StockModel::instance().save_data_n(stock_d);
             StockHistoryModel::instance().addUpdate(
-                stock_d.SYMBOL, wxDate::Now(), dPrice, StockHistoryModel::ONLINE
+                stock_d.m_symbol, wxDate::Now(), dPrice, StockHistoryModel::ONLINE
             );
         }
     }
@@ -587,15 +587,15 @@ wxString StockList::getStockInfo(int selectedIndex, bool addtotal) const
     double stocktotalnumShares = 0;
     double stockavgPurchasePrice = 0;
     for (const auto& s: StockModel::instance().find(
-        StockCol::SYMBOL(m_stocks[selectedIndex].SYMBOL)
+        StockCol::SYMBOL(m_stocks[selectedIndex].m_symbol)
     )) {
         purchasedTime++;
-        stocktotalnumShares += s.NUMSHARES;
-        stockavgPurchasePrice += s.VALUE;
+        stocktotalnumShares += s.m_num_shares;
+        stockavgPurchasePrice += s.m_purchase_value;
     }
     stockavgPurchasePrice /= stocktotalnumShares;
 
-    double numShares = m_stocks[selectedIndex].NUMSHARES;
+    double numShares = m_stocks[selectedIndex].m_num_shares;
     wxString sNumShares = wxString::Format("%i", static_cast<int>(numShares));
     if (numShares - static_cast<long>(numShares) != 0.0)
         sNumShares = wxString::Format("%.4f", numShares);
@@ -604,8 +604,8 @@ wxString StockList::getStockInfo(int selectedIndex, bool addtotal) const
     if ((stocktotalnumShares - static_cast<long>(stocktotalnumShares)) != 0.0)
         sTotalNumShares = wxString::Format("%.4f", stocktotalnumShares);
 
-    double stockPurchasePrice = m_stocks[selectedIndex].PURCHASEPRICE;
-    double stockCurrentPrice = m_stocks[selectedIndex].CURRENTPRICE;
+    double stockPurchasePrice = m_stocks[selectedIndex].m_purchase_price;
+    double stockCurrentPrice = m_stocks[selectedIndex].m_current_price;
     double stockDifference = stockCurrentPrice - stockPurchasePrice;
 
     double stocktotalDifference = stockCurrentPrice - stockavgPurchasePrice;
@@ -624,8 +624,8 @@ wxString StockList::getStockInfo(int selectedIndex, bool addtotal) const
     const wxString& sTotalDifference = CurrencyModel::toCurrency(stocktotalDifference);
 
     wxString miniInfo = "";
-    if (m_stocks[selectedIndex].SYMBOL != "")
-        miniInfo << "\t" << wxString::Format(_t("Symbol: %s"), m_stocks[selectedIndex].SYMBOL) << "\t\t";
+    if (m_stocks[selectedIndex].m_symbol != "")
+        miniInfo << "\t" << wxString::Format(_t("Symbol: %s"), m_stocks[selectedIndex].m_symbol) << "\t\t";
     miniInfo << wxString::Format(_t("Total: %s"), " (" + sTotalNumShares + ") ");
     m_stock_panel->stock_details_short_->SetLabelText(miniInfo);
 
@@ -700,7 +700,7 @@ void StockPanel::RefreshList()
 {
     int64 selected_id = -1;
     if (m_lc->get_selectedIndex() > -1)
-        selected_id = m_lc->m_stocks[m_lc->get_selectedIndex()].STOCKID;
+        selected_id = m_lc->m_stocks[m_lc->get_selectedIndex()].m_id;
     m_lc->doRefreshItems(selected_id);
 }
 

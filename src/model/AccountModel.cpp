@@ -157,8 +157,8 @@ bool AccountModel::purge_id(int64 id)
         SchedModel::instance().purge_id(r.BDID);
 
     for (const auto& r : StockModel::instance().find(StockCol::HELDAT(id))) {
-        TrxLinkModel::RemoveTransLinkRecords<StockModel>(r.STOCKID);
-        StockModel::instance().purge_id(r.STOCKID);
+        TrxLinkModel::RemoveTransLinkRecords<StockModel>(r.m_id);
+        StockModel::instance().purge_id(r.m_id);
     }
 
     // FIXME: remove AttachmentData owned by id

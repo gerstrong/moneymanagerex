@@ -16,21 +16,6 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  ********************************************************/
 
-// PLEASE EDIT!
-//
-// This is only sample code re-used from "table/StockTable.h".
-//
-// The data structure can be refined by:
-// * using more user-frielndly filed name
-// * using stronger field types
-// * adding enumerations for fields with limited choices
-// * demultiplexing composite values in database columns
-//
-// See also an implementation in Swift:
-//   https://github.com/moneymanagerex/mmex-ios/tree/master/MMEX/Data
-// and an implementation in Java:
-//   https://github.com/moneymanagerex/android-money-manager-ex/tree/master/app/src/main/java/com/money/manager/ex/domainmodel
-
 #pragma once
 
 #include "table/_TableBase.h"
@@ -39,24 +24,24 @@
 // User-friendly representation of a record in table STOCK_V1.
 struct StockData
 {
-    int64 STOCKID; // primary key
-    int64 HELDAT;
-    wxString PURCHASEDATE;
-    wxString STOCKNAME;
-    wxString SYMBOL;
-    double NUMSHARES;
-    double PURCHASEPRICE;
-    wxString NOTES;
-    double CURRENTPRICE;
-    double VALUE;
-    double COMMISSION;
+    int64    m_id;
+    int64    m_account_id;
+    wxString m_name;
+    wxString m_symbol;
+    double   m_num_shares;
+    wxString m_purchase_date;
+    double   m_purchase_price;
+    double   m_current_price;
+    double   m_purchase_value;
+    double   m_commission;
+    wxString m_notes;
 
     explicit StockData();
     explicit StockData(wxSQLite3ResultSet& q);
     StockData(const StockData& other) = default;
 
-    int64 id() const { return STOCKID; }
-    void id(const int64 id) { STOCKID = id; }
+    int64 id() const { return m_id; }
+    void id(const int64 id) { m_id = id; }
     StockRow to_row() const;
     StockData& from_row(const StockRow& row);
     void to_insert_stmt(wxSQLite3Statement& stmt, int64 id) const;
@@ -77,7 +62,7 @@ struct StockData
     {
         bool operator()(const StockData& x, const StockData& y)
         {
-            return x.STOCKID < y.STOCKID;
+            return x.m_id < y.m_id;
         }
     };
 
@@ -85,7 +70,7 @@ struct StockData
     {
         bool operator()(const StockData& x, const StockData& y)
         {
-            return x.HELDAT < y.HELDAT;
+            return x.m_account_id < y.m_account_id;
         }
     };
 
@@ -93,7 +78,7 @@ struct StockData
     {
         bool operator()(const StockData& x, const StockData& y)
         {
-            return x.PURCHASEDATE < y.PURCHASEDATE;
+            return x.m_purchase_date < y.m_purchase_date;
         }
     };
 
@@ -101,7 +86,7 @@ struct StockData
     {
         bool operator()(const StockData& x, const StockData& y)
         {
-            return x.STOCKNAME < y.STOCKNAME;
+            return x.m_name < y.m_name;
         }
     };
 
@@ -109,7 +94,7 @@ struct StockData
     {
         bool operator()(const StockData& x, const StockData& y)
         {
-            return x.SYMBOL < y.SYMBOL;
+            return x.m_symbol < y.m_symbol;
         }
     };
 
@@ -117,7 +102,7 @@ struct StockData
     {
         bool operator()(const StockData& x, const StockData& y)
         {
-            return x.NUMSHARES < y.NUMSHARES;
+            return x.m_num_shares < y.m_num_shares;
         }
     };
 
@@ -125,7 +110,7 @@ struct StockData
     {
         bool operator()(const StockData& x, const StockData& y)
         {
-            return x.PURCHASEPRICE < y.PURCHASEPRICE;
+            return x.m_purchase_price < y.m_purchase_price;
         }
     };
 
@@ -133,7 +118,7 @@ struct StockData
     {
         bool operator()(const StockData& x, const StockData& y)
         {
-            return x.NOTES < y.NOTES;
+            return x.m_notes < y.m_notes;
         }
     };
 
@@ -141,7 +126,7 @@ struct StockData
     {
         bool operator()(const StockData& x, const StockData& y)
         {
-            return x.CURRENTPRICE < y.CURRENTPRICE;
+            return x.m_current_price < y.m_current_price;
         }
     };
 
@@ -149,7 +134,7 @@ struct StockData
     {
         bool operator()(const StockData& x, const StockData& y)
         {
-            return x.VALUE < y.VALUE;
+            return x.m_purchase_value < y.m_purchase_value;
         }
     };
 
@@ -157,7 +142,7 @@ struct StockData
     {
         bool operator()(const StockData& x, const StockData& y)
         {
-            return x.COMMISSION < y.COMMISSION;
+            return x.m_commission < y.m_commission;
         }
     };
 };

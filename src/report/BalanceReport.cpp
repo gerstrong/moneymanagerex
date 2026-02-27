@@ -142,14 +142,14 @@ wxString BalanceReport::getHTMLText()
         );
         for (const auto& stock : stocks) {
             mmHistoryItem histItem;
-            histItem.acctId = account.id();
-            histItem.stockId = stock.STOCKID;
-            histItem.purchasePrice = stock.PURCHASEPRICE;
-            histItem.purchaseDate = StockModel::PURCHASEDATE(stock);
-            histItem.purchaseDateStr = stock.PURCHASEDATE;
-            histItem.numShares = stock.NUMSHARES;
-            histItem.stockHist = StockHistoryModel::instance().find(
-                StockHistoryCol::SYMBOL(stock.SYMBOL)
+            histItem.acctId          = account.id();
+            histItem.stockId         = stock.m_id;
+            histItem.purchasePrice   = stock.m_purchase_price;
+            histItem.purchaseDate    = StockModel::PURCHASEDATE(stock);
+            histItem.purchaseDateStr = stock.m_purchase_date;
+            histItem.numShares       = stock.m_num_shares;
+            histItem.stockHist       = StockHistoryModel::instance().find(
+                StockHistoryCol::SYMBOL(stock.m_symbol)
             );
             std::stable_sort(histItem.stockHist.begin(), histItem.stockHist.end(), StockHistoryData::SorterByDATE());
             std::reverse(histItem.stockHist.begin(), histItem.stockHist.end());

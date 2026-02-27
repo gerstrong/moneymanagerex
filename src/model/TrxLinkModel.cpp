@@ -115,7 +115,7 @@ TrxLinkModel::DataA TrxLinkModel::TranslinkListBySymbol(const wxString symbol)
     StockModel::DataA stocks = StockModel::instance().find(StockCol::SYMBOL(symbol));
     for (auto& stock : stocks) {
        TrxLinkModel::DataA t = TrxLinkModel::instance().find(
-            TrxLinkCol::LINKRECORDID(stock.STOCKID)
+            TrxLinkCol::LINKRECORDID(stock.m_id)
         );
        result.insert(result.end(), t.begin(), t.end());
     }

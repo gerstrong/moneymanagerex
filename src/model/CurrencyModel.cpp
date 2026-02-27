@@ -161,19 +161,19 @@ std::map<wxDateTime, int> CurrencyModel::DateUsed(int64 CurrencyID)
     const auto &accounts = AccountModel::instance().find(CurrencyCol::CURRENCYID(CurrencyID));
     for (const auto &account : accounts) {
         if (AccountModel::type_id(account) == NavigatorTypes::TYPE_ID_INVESTMENT) {
-            for (const auto& tran : StockModel::instance().find(
+            for (const auto& stock_d : StockModel::instance().find(
                 StockCol::HELDAT(account.ACCOUNTID)
             )) {
-                dt.ParseDate(tran.PURCHASEDATE);
+                dt.ParseDate(stock_d.m_purchase_date);
                 datesList[dt] = 1;
             }
         }
         else {
-            for (const auto& tran : TrxModel::instance().find_or(
+            for (const auto& trx_d : TrxModel::instance().find_or(
                 TrxCol::ACCOUNTID(account.ACCOUNTID),
                 TrxCol::TOACCOUNTID(account.ACCOUNTID)
             )) {
-                dt.ParseDate(tran.TRANSDATE);
+                dt.ParseDate(trx_d.TRANSDATE);
                 datesList[dt] = 1;
             }
         }

@@ -16,20 +16,18 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  ********************************************************/
 
-// PLEASE EDIT!
-// This is only sample code re-used from "table/StockTable.cpp".
-
 #include "StockData.h"
 
 StockData::StockData()
 {
-    STOCKID = -1;
-    HELDAT = -1;
-    NUMSHARES = 0.0;
-    PURCHASEPRICE = 0.0;
-    CURRENTPRICE = 0.0;
-    VALUE = 0.0;
-    COMMISSION = 0.0;
+    m_id             = -1;
+    m_account_id     = -1;
+    m_num_shares     = 0.0;
+    m_purchase_price = 0.0;
+    m_current_price  = 0.0;
+    m_purchase_value = 0.0;
+    m_commission     = 0.0;
+
 }
 
 // Convert StockData to StockRow
@@ -37,17 +35,17 @@ StockRow StockData::to_row() const
 {
     StockRow row;
 
-    row.STOCKID = STOCKID;
-    row.HELDAT = HELDAT;
-    row.PURCHASEDATE = PURCHASEDATE;
-    row.STOCKNAME = STOCKNAME;
-    row.SYMBOL = SYMBOL;
-    row.NUMSHARES = NUMSHARES;
-    row.PURCHASEPRICE = PURCHASEPRICE;
-    row.NOTES = NOTES;
-    row.CURRENTPRICE = CURRENTPRICE;
-    row.VALUE = VALUE;
-    row.COMMISSION = COMMISSION;
+    row.STOCKID       = m_id;
+    row.HELDAT        = m_account_id;
+    row.PURCHASEDATE  = m_purchase_date;
+    row.STOCKNAME     = m_name;
+    row.SYMBOL        = m_symbol;
+    row.NUMSHARES     = m_num_shares;
+    row.PURCHASEPRICE = m_purchase_price;
+    row.NOTES         = m_notes;
+    row.CURRENTPRICE  = m_current_price;
+    row.VALUE         = m_purchase_value;
+    row.COMMISSION    = m_commission;
 
     return row;
 }
@@ -55,34 +53,34 @@ StockRow StockData::to_row() const
 // Convert StockRow to StockData
 StockData& StockData::from_row(const StockRow& row)
 {
-    STOCKID = row.STOCKID; // int64
-    HELDAT = row.HELDAT; // int64
-    PURCHASEDATE = row.PURCHASEDATE; // wxString
-    STOCKNAME = row.STOCKNAME; // wxString
-    SYMBOL = row.SYMBOL; // wxString
-    NUMSHARES = row.NUMSHARES; // double
-    PURCHASEPRICE = row.PURCHASEPRICE; // double
-    NOTES = row.NOTES; // wxString
-    CURRENTPRICE = row.CURRENTPRICE; // double
-    VALUE = row.VALUE; // double
-    COMMISSION = row.COMMISSION; // double
+    m_id             = row.STOCKID;       // int64
+    m_account_id     = row.HELDAT;        // int64
+    m_name           = row.STOCKNAME;     // wxString
+    m_symbol         = row.SYMBOL;        // wxString
+    m_num_shares     = row.NUMSHARES;     // double
+    m_purchase_date  = row.PURCHASEDATE;  // wxString
+    m_purchase_price = row.PURCHASEPRICE; // double
+    m_current_price  = row.CURRENTPRICE;  // double
+    m_purchase_value = row.VALUE;         // double
+    m_commission     = row.COMMISSION;    // double
+    m_notes          = row.NOTES;         // wxString
 
     return *this;
 }
 
 bool StockData::equals(const StockData* other) const
 {
-    if ( STOCKID != other->STOCKID) return false;
-    if ( HELDAT != other->HELDAT) return false;
-    if (!PURCHASEDATE.IsSameAs(other->PURCHASEDATE)) return false;
-    if (!STOCKNAME.IsSameAs(other->STOCKNAME)) return false;
-    if (!SYMBOL.IsSameAs(other->SYMBOL)) return false;
-    if ( NUMSHARES != other->NUMSHARES) return false;
-    if ( PURCHASEPRICE != other->PURCHASEPRICE) return false;
-    if (!NOTES.IsSameAs(other->NOTES)) return false;
-    if ( CURRENTPRICE != other->CURRENTPRICE) return false;
-    if ( VALUE != other->VALUE) return false;
-    if ( COMMISSION != other->COMMISSION) return false;
+    if ( m_id != other->m_id) return false;
+    if ( m_account_id != other->m_account_id) return false;
+    if (!m_name.IsSameAs(other->m_name)) return false;
+    if (!m_symbol.IsSameAs(other->m_symbol)) return false;
+    if ( m_num_shares != other->m_num_shares) return false;
+    if (!m_purchase_date.IsSameAs(other->m_purchase_date)) return false;
+    if ( m_purchase_price != other->m_purchase_price) return false;
+    if ( m_current_price != other->m_current_price) return false;
+    if ( m_purchase_value != other->m_purchase_value) return false;
+    if ( m_commission != other->m_commission) return false;
+    if (!m_notes.IsSameAs(other->m_notes)) return false;
 
     return true;
 }

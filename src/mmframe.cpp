@@ -1062,12 +1062,12 @@ void mmGUIFrame::DoRecreateNavTreeControl(bool home_page)
                         // Put the names of the Stock_entry names as children of the stock account.
                         std::unordered_set<wxString> processedStockNames;
                         for (const auto& stock : stocks) {
-                            if (!processedStockNames.insert(stock.STOCKNAME).second)
+                            if (!processedStockNames.insert(stock.m_name).second)
                                 continue;
-                            const AccountData* share_account = AccountModel::instance().get_key(stock.STOCKNAME);
+                            const AccountData* share_account = AccountModel::instance().get_key(stock.m_name);
                             if (!share_account)
                                 continue;
-                            stockItem = m_nav_tree_ctrl->AppendItem(accountItem, stock.STOCKNAME, accountImg, accountImg);
+                            stockItem = m_nav_tree_ctrl->AppendItem(accountItem, stock.m_name, accountImg, accountImg);
                             m_nav_tree_ctrl->SetItemData(stockItem, new mmTreeItemData(mmTreeItemData::CHECKING, share_account->ACCOUNTID));
                         }
                     }
@@ -3882,16 +3882,16 @@ void mmGUIFrame::OnRates(wxCommandEvent& WXUNUSED(event))
 
         std::map<wxString, double> symbols;
         for (const auto& stock_d : stock_a) {
-            const wxString symbol = stock_d.SYMBOL.Upper();
+            const wxString symbol = stock_d.m_symbol.Upper();
             if (symbol.IsEmpty()) continue;
-            symbols[symbol] = stock_d.CURRENTPRICE;
+            symbols[symbol] = stock_d.m_current_price;
         }
 
         std::map<wxString, double> stocks_data;
         if (get_yahoo_prices(symbols, stocks_data, "", msg, yahoo_price_type::SHARES)) {
             StockHistoryModel::instance().Savepoint();
             for (auto& stock_d : stock_a) {
-                std::map<wxString, double>::const_iterator it = stocks_data.find(stock_d.SYMBOL.Upper());
+                std::map<wxString, double>::const_iterator it = stocks_data.find(stock_d.m_symbol.Upper());
                 if (it == stocks_data.end())
                     continue;
 
@@ -3899,14 +3899,14 @@ void mmGUIFrame::OnRates(wxCommandEvent& WXUNUSED(event))
 
                 if (dPrice != 0) {
                     msg += wxString::Format("%s\t: %0.6f -> %0.6f\n",
-                        stock_d.SYMBOL, stock_d.CURRENTPRICE, dPrice
+                        stock_d.m_symbol, stock_d.m_current_price, dPrice
                     );
-                    stock_d.CURRENTPRICE = dPrice;
-                    if (stock_d.STOCKNAME.empty())
-                        stock_d.STOCKNAME = stock_d.SYMBOL;
+                    stock_d.m_current_price = dPrice;
+                    if (stock_d.m_name.empty())
+                        stock_d.m_name = stock_d.m_symbol;
                     StockModel::instance().save_data_n(stock_d);
                     StockHistoryModel::instance().addUpdate(
-                        stock_d.SYMBOL, wxDate::Now(), dPrice, StockHistoryModel::ONLINE
+                        stock_d.m_symbol, wxDate::Now(), dPrice, StockHistoryModel::ONLINE
                     );
                 }
             }

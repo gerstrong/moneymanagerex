@@ -1698,8 +1698,7 @@ void mmUnivCSVDialog::OnExport(wxCommandEvent& WXUNUSED(event))
     double account_balance = from_account->INITIALBAL;
 
     //If the user wants to export transactions
-    if (m_exportStocksCheckBox->GetValue()==false)
-    {
+    if (m_exportStocksCheckBox->GetValue() == false) {
         // Write transactions to file.
         TrxModel::DataA txns = TrxModel::instance().find_or(
             TrxCol::ACCOUNTID(fromAccountID),
@@ -1838,66 +1837,64 @@ void mmUnivCSVDialog::OnExport(wxCommandEvent& WXUNUSED(event))
     }
     else //Else if the user wants to export stocks
     {
-        StockModel::DataA txns = StockModel::instance().find(
+        StockModel::DataA stock_a = StockModel::instance().find(
             StockCol::HELDAT(fromAccountID)
         );
-        std::sort(txns.begin(), txns.end());
-        std::stable_sort(txns.begin(), txns.end(), StockData::SorterBySTOCKID());
+        std::sort(stock_a.begin(), stock_a.end());
+        std::stable_sort(stock_a.begin(), stock_a.end(), StockData::SorterBySTOCKID());
 
         const AccountData* account = AccountModel::instance().get_data_n(fromAccountID);
-        for (const auto& pStockTrancsaction : txns)
-        {
+        for (const auto& stock_d : stock_a) {
             //If the transaction happened between the dates that the user selected or if the user selected to export all the transactions regardless of date then the row is added to the preview
-            if (StockModel::PURCHASEDATE(pStockTrancsaction).IsBetween(
+            if (StockModel::PURCHASEDATE(stock_d).IsBetween(
                 m_date_picker_start->GetValue(),
                 m_date_picker_end->GetValue()
             ) || m_haveDatesCheckBox->GetValue()==false) {
                 pTxFile->AddNewLine();
 
-                for (const auto& it : csvFieldOrder_)
-                {
+                for (const auto& it : csvFieldOrder_) {
                     wxString entry = "";
                     ITransactionsFile::ItemType itemType = ITransactionsFile::TYPE_STRING;
                     switch (it.first)
                     {
                     case UNIV_CSV_ID:
-                        entry = wxString::Format("%lld", pStockTrancsaction.STOCKID);
+                        entry = wxString::Format("%lld", stock_d.m_id);
                         break;
                     case UNIV_CSV_DATE:
-                        entry = mmGetDateTimeForDisplay(StockModel::PURCHASEDATE(pStockTrancsaction).FormatISODate(), date_format_);
+                        entry = mmGetDateTimeForDisplay(StockModel::PURCHASEDATE(stock_d).FormatISODate(), date_format_);
                         break;
                     case UNIV_CSV_COMPANY_NAME:
-                        entry = StockModel::get_stock_name(pStockTrancsaction.STOCKID);
+                        entry = StockModel::get_stock_name(stock_d.m_id);
                         break;
                     case UNIV_CSV_SYMBOL:
-                        entry = pStockTrancsaction.SYMBOL;
+                        entry = stock_d.m_symbol;
                         break;
                     case UNIV_CSV_SHARE_TOTAL:
-                        entry = std::to_wstring(pStockTrancsaction.NUMSHARES);
+                        entry = std::to_wstring(stock_d.m_num_shares);
                         break;
                     case UNIV_CSV_AVG_SHARE_PRICE:
-                        entry = std::to_wstring(pStockTrancsaction.PURCHASEPRICE);
+                        entry = std::to_wstring(stock_d.m_purchase_price);
                         break;
                     case UNIV_CSV_TOTAL_COST:
-                        entry = std::to_wstring(StockModel::InvestmentValue(pStockTrancsaction));
+                        entry = std::to_wstring(StockModel::InvestmentValue(stock_d));
                         break;
                     case UNIV_CSV_REAL_GAIN:
-                        entry = std::to_wstring(StockModel::RealGainLoss(pStockTrancsaction));
+                        entry = std::to_wstring(StockModel::RealGainLoss(stock_d));
                         break;
                     case UNIV_CSV_UNREAL_GAIN:
-                        entry = std::to_wstring(StockModel::UnrealGainLoss(pStockTrancsaction));
+                        entry = std::to_wstring(StockModel::UnrealGainLoss(stock_d));
                         break;
                     case UNIV_CSV_CURRENT_PRICE:
-                        entry = std::to_wstring(StockModel::CurrentValue(pStockTrancsaction)/pStockTrancsaction.NUMSHARES);
+                        entry = std::to_wstring(StockModel::CurrentValue(stock_d)/stock_d.m_num_shares);
                         break;
                     case UNIV_CSV_CURRENT_TOTAL_VALUE:
-                        entry = std::to_wstring(StockModel::CurrentValue(pStockTrancsaction));
+                        entry = std::to_wstring(StockModel::CurrentValue(stock_d));
                         break;
                     case UNIV_CSV_NOTES:
-                        entry = wxString(pStockTrancsaction.NOTES).Trim();
+                        entry = wxString(stock_d.m_notes).Trim();
                         break;
                     case UNIV_CSV_COMMISSION:
-                        entry = std::to_wstring(pStockTrancsaction.COMMISSION);
+                        entry = std::to_wstring(stock_d.m_commission);
                         break;
                     case UNIV_CSV_ACCOUNT:
                         entry = account->ACCOUNTNAME;
@@ -1936,8 +1933,7 @@ void mmUnivCSVDialog::update_preview()
     int payee_col = -1;
     int cat_col = -1;
     int subcat_col = -1;
-    for (const auto& field : csvFieldOrder_)
-    {
+    for (const auto& field : csvFieldOrder_) {
         int it = field.first;
         const wxString& item_name = this->getCSVFieldName(it);
         this->m_list_ctrl_->InsertColumn(colCount, wxGetTranslation(item_name));
@@ -1957,8 +1953,7 @@ void mmUnivCSVDialog::update_preview()
         ++colCount;
     }
 
-    if (IsImporter())
-    {
+    if (IsImporter()) {
         const wxString fileName = m_text_ctrl_->GetValue();
         wxFileName csv_file(fileName);
 
@@ -2062,11 +2057,9 @@ void mmUnivCSVDialog::update_preview()
         m_spinIgnoreLastRows_->SetRange(m_spinIgnoreLastRows_->GetMin(), m_list_ctrl_->GetItemCount());
         UpdateListItemBackground();
 
-        if (!m_userDefinedDateMask)
-        {
+        if (!m_userDefinedDateMask) {
             dParser->doFinalizeStatistics();
-            if (dParser->isDateFormatFound())
-            {
+            if (dParser->isDateFormatFound()) {
                 const wxString date_mask = dParser->getDateMask();
                 date_format_ = dParser->getDateFormat();
                 choiceDateFormat_->SetStringSelection(date_mask);
@@ -2075,13 +2068,12 @@ void mmUnivCSVDialog::update_preview()
         }
         refreshTabs(PAYEE_TAB | CAT_TAB);
     }
-    else // exporter preview
-    {
+    // exporter preview
+    else {
         const wxString acctName = m_choice_account_->GetStringSelection();
         const AccountData* from_account = AccountModel::instance().get_key(acctName);
 
-        if (from_account)
-        {
+        if (from_account) {
             const auto split = TrxSplitModel::instance().get_all_id();
             const auto tags = TagLinkModel::instance().get_all_id(TrxModel::refTypeName);
             int64 fromAccountID = from_account->ACCOUNTID;
@@ -2092,23 +2084,23 @@ void mmUnivCSVDialog::update_preview()
             double account_balance = from_account->INITIALBAL;
 
             //If the user wants to export transactions
-            if (m_exportStocksCheckBox->GetValue()==false)
-            {
-                TrxModel::DataA txns =
-        TrxModel::instance().find_or(
-            TrxCol::ACCOUNTID(fromAccountID),
-            TrxCol::TOACCOUNTID(fromAccountID)
-        );
-                std::sort(txns.begin(), txns.end());
-                std::stable_sort(txns.begin(), txns.end(), TrxData::SorterByTRANSDATE());
-                for (const auto& pBankTransaction : txns)
-                {
-                    if (TrxModel::status_id(pBankTransaction) == TrxModel::STATUS_ID_VOID || !pBankTransaction.DELETEDTIME.IsEmpty())
+            if (m_exportStocksCheckBox->GetValue() == false) {
+                TrxModel::DataA trx_a = TrxModel::instance().find_or(
+                    TrxCol::ACCOUNTID(fromAccountID),
+                    TrxCol::TOACCOUNTID(fromAccountID)
+                );
+                std::sort(trx_a.begin(), trx_a.end());
+                std::stable_sort(trx_a.begin(), trx_a.end(), TrxData::SorterByTRANSDATE());
+                for (const auto& pBankTransaction : trx_a) {
+                    if (TrxModel::status_id(pBankTransaction) == TrxModel::STATUS_ID_VOID ||
+                        !pBankTransaction.DELETEDTIME.IsEmpty()
+                    )
                         continue;
 
                     //If the transaction happened between the dates that the user selected or if the user selected to export all the transactions regardless of date then the row is added to the preview
-                    if (TrxModel::getTransDateTime(pBankTransaction).IsBetween(m_date_picker_start->GetValue(),m_date_picker_end->GetValue()) || m_haveDatesCheckBox->GetValue()==false)
-                    {
+                    if (TrxModel::getTransDateTime(pBankTransaction).IsBetween(m_date_picker_start->GetValue(),m_date_picker_end->GetValue()) ||
+                        m_haveDatesCheckBox->GetValue() == false
+                    ) {
                         TrxModel::Full_Data tran(pBankTransaction, split, tags);
                         bool has_split = tran.has_split();
                         double value = TrxModel::account_flow(pBankTransaction, fromAccountID);
@@ -2136,14 +2128,14 @@ void mmUnivCSVDialog::update_preview()
 
                             double amt = splt.SPLITTRANSAMOUNT;
                             if (TrxModel::type_id(pBankTransaction) == TrxModel::TYPE_ID_WITHDRAWAL
-                                && has_split) {
+                                && has_split
+                            ) {
                                 amt = -amt;
-                                }
+                            }
                             const wxString amount = CurrencyModel::toStringNoFormatting(amt, currency);
                             const wxString amount_abs = CurrencyModel::toStringNoFormatting(fabs(amt), currency);
 
-                            for (const auto& field : csvFieldOrder_)
-                            {
+                            for (const auto& field : csvFieldOrder_) {
                                 int it = field.first;
                                 wxString text;
                                 switch (it)
@@ -2167,8 +2159,7 @@ void mmUnivCSVDialog::update_preview()
                                     text << inQuotes(amount, delimit);
                                     break;
                                 case UNIV_CSV_CATEGORY:
-                                    if (category)
-                                    {
+                                    if (category) {
                                         if (isIndexPresent(UNIV_CSV_SUBCATEGORY) && category->m_parent_id != -1)
                                             text << inQuotes(CategoryModel::full_name(category->m_parent_id, ":"), delimit);
                                         else
@@ -2249,18 +2240,18 @@ void mmUnivCSVDialog::update_preview()
             }
             else //Else if the user wants to export stocks
             {
-                StockModel::DataA txns = StockModel::instance().find(
+                StockModel::DataA stock_a = StockModel::instance().find(
                     StockCol::HELDAT(fromAccountID)
                 );
-                std::sort(txns.begin(), txns.end());
-                std::stable_sort(txns.begin(), txns.end(), StockData::SorterBySTOCKID());
+                std::sort(stock_a.begin(), stock_a.end());
+                std::stable_sort(stock_a.begin(), stock_a.end(), StockData::SorterBySTOCKID());
 
                 const AccountData* account = AccountModel::instance().get_data_n(fromAccountID);
-                for (const auto& pStockTrancsaction : txns)
-                {
+                for (const auto& stock_d : stock_a) {
                     // If the transaction happened between the dates that the user selected or if the user selected to export all the transactions regardless of date then the row is added to the preview
-                    if (StockModel::PURCHASEDATE(pStockTrancsaction).IsBetween(m_date_picker_start->GetValue(),m_date_picker_end->GetValue()) || m_haveDatesCheckBox->GetValue()==false)
-                    {
+                    if (StockModel::PURCHASEDATE(stock_d).IsBetween(m_date_picker_start->GetValue(),m_date_picker_end->GetValue()) ||
+                        m_haveDatesCheckBox->GetValue() == false
+                    ) {
                         int col = 0;
                         wxString buf;
                         buf.Printf("%d", col);
@@ -2270,14 +2261,20 @@ void mmUnivCSVDialog::update_preview()
                         m_list_ctrl_->SetItemData(itemIndex, row);
 
                         const CurrencyData* currency = AccountModel::currency(from_account);
-                        const wxString shareTotal = CurrencyModel::toStringNoFormatting(pStockTrancsaction.NUMSHARES, currency);
-                        const wxString avgSharePrice = CurrencyModel::toStringNoFormatting(pStockTrancsaction.PURCHASEPRICE, currency);
-                        const wxString totalCost = CurrencyModel::toStringNoFormatting(StockModel::InvestmentValue(pStockTrancsaction), currency);
-                        const wxString realGain = CurrencyModel::toStringNoFormatting(StockModel::RealGainLoss(pStockTrancsaction), currency);
-                        const wxString unrealGain = CurrencyModel::toStringNoFormatting(StockModel::UnrealGainLoss(pStockTrancsaction), currency);
-                        const wxString currentPrice = CurrencyModel::toStringNoFormatting(StockModel::CurrentValue(pStockTrancsaction)/pStockTrancsaction.NUMSHARES, currency);
-                        const wxString currentTotalValue = CurrencyModel::toStringNoFormatting(StockModel::CurrentValue(pStockTrancsaction), currency);
-                        const wxString commission = CurrencyModel::toStringNoFormatting(pStockTrancsaction.COMMISSION, currency);
+                        const wxString shareTotal = CurrencyModel::toStringNoFormatting(stock_d.m_num_shares, currency);
+                        const wxString avgSharePrice = CurrencyModel::toStringNoFormatting(stock_d.m_purchase_price, currency);
+                        const wxString totalCost = CurrencyModel::toStringNoFormatting(StockModel::InvestmentValue(stock_d), currency);
+                        const wxString realGain = CurrencyModel::toStringNoFormatting(StockModel::RealGainLoss(stock_d), currency);
+                        const wxString unrealGain = CurrencyModel::toStringNoFormatting(
+                            StockModel::UnrealGainLoss(stock_d), currency
+                        );
+                        const wxString currentPrice = CurrencyModel::toStringNoFormatting(
+                            StockModel::CurrentValue(stock_d)/stock_d.m_num_shares, currency
+                        );
+                        const wxString currentTotalValue = CurrencyModel::toStringNoFormatting(
+                            StockModel::CurrentValue(stock_d), currency
+                        );
+                        const wxString commission = CurrencyModel::toStringNoFormatting(stock_d.m_commission, currency);
 
                         for (const auto& field : csvFieldOrder_)
                         {
@@ -2286,16 +2283,16 @@ void mmUnivCSVDialog::update_preview()
                             switch (it)
                             {
                             case UNIV_CSV_ID:
-                                text << wxString::Format("%lld", pStockTrancsaction.STOCKID);
+                                text << wxString::Format("%lld", stock_d.m_id);
                                 break;
                             case UNIV_CSV_DATE:
-                                text << inQuotes(mmGetDateTimeForDisplay(StockModel::PURCHASEDATE(pStockTrancsaction).FormatISODate(), date_format_), delimit);
+                                text << inQuotes(mmGetDateTimeForDisplay(StockModel::PURCHASEDATE(stock_d).FormatISODate(), date_format_), delimit);
                                 break;
                             case UNIV_CSV_COMPANY_NAME:
-                                text << inQuotes(StockModel::get_stock_name(pStockTrancsaction.STOCKID), delimit);
+                                text << inQuotes(StockModel::get_stock_name(stock_d.m_id), delimit);
                                 break;
                             case UNIV_CSV_SYMBOL:
-                                text << inQuotes(pStockTrancsaction.SYMBOL, delimit);
+                                text << inQuotes(stock_d.m_symbol, delimit);
                                 break;
                             case UNIV_CSV_SHARE_TOTAL:
                                 text << inQuotes(shareTotal, delimit);
@@ -2319,7 +2316,7 @@ void mmUnivCSVDialog::update_preview()
                                 text << inQuotes(currentTotalValue, delimit);
                                 break;
                             case UNIV_CSV_NOTES:
-                                text << inQuotes(wxString(pStockTrancsaction.NOTES).Trim(), delimit);
+                                text << inQuotes(wxString(stock_d.m_notes).Trim(), delimit);
                                 break;
                             case UNIV_CSV_COMMISSION:
                                 text << inQuotes(commission, delimit);

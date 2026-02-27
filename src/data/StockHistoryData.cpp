@@ -16,16 +16,13 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  ********************************************************/
 
-// PLEASE EDIT!
-// This is only sample code re-used from "table/StockHistoryTable.cpp".
-
 #include "StockHistoryData.h"
 
 StockHistoryData::StockHistoryData()
 {
-    HISTID = -1;
-    VALUE = 0.0;
-    UPDTYPE = -1;
+    m_id          = -1;
+    m_price       = 0.0;
+    m_update_type_ = -1;
 }
 
 // Convert StockHistoryData to StockHistoryRow
@@ -33,11 +30,11 @@ StockHistoryRow StockHistoryData::to_row() const
 {
     StockHistoryRow row;
 
-    row.HISTID = HISTID;
-    row.SYMBOL = SYMBOL;
-    row.DATE = DATE;
-    row.VALUE = VALUE;
-    row.UPDTYPE = UPDTYPE;
+    row.HISTID  = m_id;
+    row.SYMBOL  = m_symbol;
+    row.DATE    = m_date;
+    row.VALUE   = m_price;
+    row.UPDTYPE = m_update_type_;
 
     return row;
 }
@@ -45,22 +42,22 @@ StockHistoryRow StockHistoryData::to_row() const
 // Convert StockHistoryRow to StockHistoryData
 StockHistoryData& StockHistoryData::from_row(const StockHistoryRow& row)
 {
-    HISTID = row.HISTID; // int64
-    SYMBOL = row.SYMBOL; // wxString
-    DATE = row.DATE; // wxString
-    VALUE = row.VALUE; // double
-    UPDTYPE = row.UPDTYPE; // int64
+    m_id          = row.HISTID;   // int64
+    m_symbol      = row.SYMBOL;   // wxString
+    m_date        = row.DATE;     // wxString
+    m_price       = row.VALUE;    // double
+    m_update_type_ = row.UPDTYPE; // int64
 
     return *this;
 }
 
 bool StockHistoryData::equals(const StockHistoryData* other) const
 {
-    if ( HISTID != other->HISTID) return false;
-    if (!SYMBOL.IsSameAs(other->SYMBOL)) return false;
-    if (!DATE.IsSameAs(other->DATE)) return false;
-    if ( VALUE != other->VALUE) return false;
-    if ( UPDTYPE != other->UPDTYPE) return false;
+    if ( m_id != other->m_id) return false;
+    if (!m_symbol.IsSameAs(other->m_symbol)) return false;
+    if (!m_date.IsSameAs(other->m_date)) return false;
+    if ( m_price != other->m_price) return false;
+    if ( m_update_type_ != other->m_update_type_) return false;
 
     return true;
 }

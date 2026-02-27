@@ -264,44 +264,43 @@ wxString mmReportChartStocks::getHTMLText()
 
     wxTimeSpan dist;
     wxArrayString symbols;
-    for (const auto& stock : StockModel::instance().find_all(StockCol::COL_ID_SYMBOL))
-    {
-        const AccountData* account = AccountModel::instance().get_data_n(stock.m_account_id);
+    for (const auto& stock_d : StockModel::instance().find_all(StockCol::COL_ID_SYMBOL)) {
+        const AccountData* account = AccountModel::instance().get_data_n(stock_d.m_account_id);
         if (AccountModel::status_id(account) != AccountModel::STATUS_ID_OPEN) continue;
-        if (symbols.Index(stock.m_symbol) != wxNOT_FOUND) continue;
+        if (symbols.Index(stock_d.m_symbol) != wxNOT_FOUND) continue;
 
-        symbols.Add(stock.m_symbol);
+        symbols.Add(stock_d.m_symbol);
         int dataCount = 0, freq = 1;
-        auto histData = StockHistoryModel::instance().find(
-            StockHistoryCol::SYMBOL(stock.m_symbol),
+        auto sh_a = StockHistoryModel::instance().find(
+            StockHistoryCol::SYMBOL(stock_d.m_symbol),
             StockHistoryModel::DATE(OP_GE, m_date_range->start_date()),
-            StockHistoryModel::DATE(OP_LE, m_date_range->end_date()));
-        std::stable_sort(histData.begin(), histData.end(), StockHistoryData::SorterByDATE());
+            StockHistoryModel::DATE(OP_LE, m_date_range->end_date())
+        );
+        std::stable_sort(sh_a.begin(), sh_a.end(), StockHistoryData::SorterByDATE());
 
-        //bool showGridLines = (histData.size() <= 366);
-        //bool pointDot = (histData.size() <= 30);
-        if (histData.size() > 366) {
-            freq = histData.size() / 366;
+        //bool showGridLines = (sh_a.size() <= 366);
+        //bool pointDot = (sh_a.size() <= 30);
+        if (sh_a.size() > 366) {
+            freq = sh_a.size() / 366;
         }
 
         GraphData gd;
         GraphSeries data;
 
-        for (const auto& hist : histData)
-        {
-            if (dataCount % freq == 0)
-            {
-                const wxDate d = StockHistoryModel::DATE(hist);
+        for (const auto& sh_d : sh_a) {
+            if (dataCount % freq == 0) {
+                const wxDate d = StockHistoryModel::DATE(sh_d);
                 gd.labels.push_back(d.FormatISODate());
-                data.values.push_back(hist.VALUE);
+                data.values.push_back(sh_d.m_price);
             }
             dataCount++;
         }
         gd.series.push_back(data);
 
-        if (!gd.series.empty())
-        {
-            hb.addHeader(1, wxString::Format("%s / %s - (%s)", stock.m_symbol, stock.m_name, account->ACCOUNTNAME));
+        if (!gd.series.empty()) {
+            hb.addHeader(1, wxString::Format("%s / %s - (%s)",
+                stock_d.m_symbol, stock_d.m_name, account->ACCOUNTNAME
+            ));
             gd.type = GraphData::LINE_DATETIME;
             hb.addChart(gd);
         }

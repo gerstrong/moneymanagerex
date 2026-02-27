@@ -542,12 +542,12 @@ void StockDialog::OnListItemSelected(wxListEvent& event)
     long selectedIndex = event.GetIndex();
     int64 histId = m_price_listbox->GetItemData(selectedIndex);
     const AccountData* account = AccountModel::instance().get_data_n(m_stock_n->m_account_id);
-    const StockHistoryData *histData = StockHistoryModel::instance().get_data_n(histId);
+    const StockHistoryData *sh_n = StockHistoryModel::instance().get_data_n(histId);
 
-    if (histData->HISTID > 0) {
-        m_history_date_ctrl->SetValue(StockHistoryModel::DATE(*histData));
+    if (sh_n->m_id > 0) {
+        m_history_date_ctrl->SetValue(StockHistoryModel::DATE(*sh_n));
         m_history_price_ctrl->SetValue(AccountModel::toString(
-            histData->VALUE,
+            sh_n->m_price,
             account,
             PrefModel::instance().getSharePrecision()
         ));
@@ -629,10 +629,10 @@ void StockDialog::OnHistoryImportButton(wxCommandEvent& /*event*/)
                 continue;
 
             StockHistoryData new_sh_d = StockHistoryData();
-            new_sh_d.SYMBOL  = m_stock_n->m_symbol;
-            new_sh_d.DATE    = dateStr;
-            new_sh_d.VALUE   = price;
-            new_sh_d.UPDTYPE = 2;
+            new_sh_d.m_symbol      = m_stock_n->m_symbol;
+            new_sh_d.m_date        = dateStr;
+            new_sh_d.m_price       = price;
+            new_sh_d.m_update_type_ = 2;
             new_sh_a.push_back(new_sh_d);
 
             if (rows.size()<10) {
@@ -801,7 +801,6 @@ void StockDialog::OnHistoryDownloadButton(wxCommandEvent& /*event*/)
 
         float k = 1.0L;
         if (meta.HasMember("currency") && meta["currency"].IsString()) {
-
             const auto currency = wxString::FromUTF8(meta["currency"].GetString());
             k = (currency == "GBp" ? 100 : 1);
         }
@@ -826,8 +825,7 @@ void StockDialog::OnHistoryDownloadButton(wxCommandEvent& /*event*/)
             break;
 
         std::map<time_t, float> history;
-        for (rapidjson::SizeType i = 0; i < timestamp.Size(); i++)
-        {
+        for (rapidjson::SizeType i = 0; i < timestamp.Size(); i++) {
             if (!timestamp[i].IsInt()) continue;
             time_t time = timestamp[i].GetInt();
             if (!quotes_closed[i].IsFloat()) continue;
@@ -837,23 +835,21 @@ void StockDialog::OnHistoryDownloadButton(wxCommandEvent& /*event*/)
 
         const wxString today = wxDate::Today().FormatISODate();
         StockHistoryModel::instance().Savepoint();
-        for (const auto& entry : history)
-        {
+        for (const auto& entry : history) {
             float dPrice = entry.second;
             const wxString date_str = wxDateTime(static_cast<time_t>(entry.first)).FormatISODate();
-            if (date_str == today) {
+            if (date_str == today)
                 continue;
-            }
 
             if (StockHistoryModel::instance().find(
                 StockHistoryCol::SYMBOL(m_stock_n->m_symbol),
                 StockHistoryCol::DATE(date_str)
             ).empty() && dPrice > 0) {
                 StockHistoryData new_sh_d = StockHistoryData();
-                new_sh_d.SYMBOL  = m_stock_n->m_symbol;
-                new_sh_d.DATE    = date_str;
-                new_sh_d.VALUE   = dPrice;
-                new_sh_d.UPDTYPE = StockHistoryModel::ONLINE;
+                new_sh_d.m_symbol      = m_stock_n->m_symbol;
+                new_sh_d.m_date        = date_str;
+                new_sh_d.m_price       = dPrice;
+                new_sh_d.m_update_type_ = StockHistoryModel::ONLINE;
                 StockHistoryModel::instance().add_data_n(new_sh_d);
             }
         }
@@ -868,8 +864,7 @@ void StockDialog::OnHistoryAddButton(wxCommandEvent& /*event*/)
     if (m_stock_n->m_symbol.IsEmpty())
         return;
 
-    if (!m_history_price_ctrl->IsEnabled())
-    {
+    if (!m_history_price_ctrl->IsEnabled()) {
         m_history_price_ctrl->Enable();
         m_history_date_ctrl->Enable();
         return;
@@ -949,44 +944,42 @@ void StockDialog::ShowStockHistory()
         return;
 
     const AccountData* account = AccountModel::instance().get_data_n(m_stock_n->m_account_id);
-    StockHistoryModel::DataA histData = StockHistoryModel::instance().find(
+    StockHistoryModel::DataA sh_a = StockHistoryModel::instance().find(
         StockHistoryCol::SYMBOL(m_stock_n->m_symbol)
     );
-    std::stable_sort(histData.begin(), histData.end(), StockHistoryData::SorterByDATE());
-    std::reverse(histData.begin(), histData.end());
-    if (histData.size()>300)
-        histData.resize(300);
-    size_t rows = histData.size() - 1;
-    if (!histData.empty())
-    {
-        for (size_t idx = 0; idx < histData.size(); idx++ )
-        {
-            wxListItem item;
-            item.SetId(static_cast<long>(idx));
-            item.SetData(reinterpret_cast<void*>(histData.at(idx).HISTID.GetValue()));
-            m_price_listbox->InsertItem(item);
-            const wxDate dtdt = StockHistoryModel::DATE(histData.at(idx));
-            const wxString dispAmount = AccountModel::toString(histData.at(idx).VALUE, account, PrefModel::instance().getSharePrecision());
-            m_price_listbox->SetItem(static_cast<long>(idx), 0, mmGetDateTimeForDisplay(histData.at(idx).DATE));
-            m_price_listbox->SetItem(static_cast<long>(idx), 1, dispAmount);
-            if (idx == 0)
-            {
-                m_history_date_ctrl->SetValue(dtdt);
-                m_history_price_ctrl->SetValue(dispAmount);
-                m_current_price_ctrl->SetValue(dispAmount);
-                // if the latest share price is not the current stock price, update it.
-                if (m_stock_n->m_current_price != histData.at(idx).VALUE) {
-                    StockModel::UpdateCurrentPrice(m_stock_n->m_symbol, histData.at(idx).VALUE);
-                    m_stock_n = StockModel::instance().unsafe_get_data_n(m_stock_n->m_id);
-                    m_value_investment->SetLabelText(AccountModel::toCurrency(
-                        StockModel::instance().CurrentValue(m_stock_n),
-                        AccountModel::instance().get_data_n(m_stock_n->m_account_id)
-                    ));
-                }
+    std::stable_sort(sh_a.begin(), sh_a.end(), StockHistoryData::SorterByDATE());
+    std::reverse(sh_a.begin(), sh_a.end());
+    if (sh_a.size()>300)
+        sh_a.resize(300);
+    size_t rows = sh_a.size() - 1;
+    if (sh_a.empty())
+        return;
+
+    for (size_t idx = 0; idx < sh_a.size(); idx++ ) {
+        wxListItem item;
+        item.SetId(static_cast<long>(idx));
+        item.SetData(reinterpret_cast<void*>(sh_a.at(idx).m_id.GetValue()));
+        m_price_listbox->InsertItem(item);
+        const wxDate dtdt = StockHistoryModel::DATE(sh_a.at(idx));
+        const wxString dispAmount = AccountModel::toString(sh_a.at(idx).m_price, account, PrefModel::instance().getSharePrecision());
+        m_price_listbox->SetItem(static_cast<long>(idx), 0, mmGetDateTimeForDisplay(sh_a.at(idx).m_date));
+        m_price_listbox->SetItem(static_cast<long>(idx), 1, dispAmount);
+        if (idx == 0) {
+            m_history_date_ctrl->SetValue(dtdt);
+            m_history_price_ctrl->SetValue(dispAmount);
+            m_current_price_ctrl->SetValue(dispAmount);
+            // if the latest share price is not the current stock price, update it.
+            if (m_stock_n->m_current_price != sh_a.at(idx).m_price) {
+                StockModel::UpdateCurrentPrice(m_stock_n->m_symbol, sh_a.at(idx).m_price);
+                m_stock_n = StockModel::instance().unsafe_get_data_n(m_stock_n->m_id);
+                m_value_investment->SetLabelText(AccountModel::toCurrency(
+                    StockModel::instance().CurrentValue(m_stock_n),
+                    AccountModel::instance().get_data_n(m_stock_n->m_account_id)
+                ));
             }
         }
-        m_price_listbox->RefreshItems(0, rows);
     }
+    m_price_listbox->RefreshItems(0, rows);
 }
 
 void StockDialog::OnFocusChange(wxChildFocusEvent& event)

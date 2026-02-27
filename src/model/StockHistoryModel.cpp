@@ -67,7 +67,7 @@ const StockHistoryData* StockHistoryModel::get_key(const wxString& symbol, const
 
 wxDate StockHistoryModel::DATE(const Data& sh_d)
 {
-    return parseDateTime(sh_d.DATE);
+    return parseDateTime(sh_d.m_date);
 }
 
 StockHistoryCol::DATE StockHistoryModel::DATE(OP op, const wxDate& date)
@@ -84,11 +84,10 @@ int64 StockHistoryModel::addUpdate(
 ) {
     const Data* sh_n = get_key(symbol, date);
     Data sh_d = sh_n ? *sh_n : Data();
-
-    sh_d.SYMBOL  = symbol;
-    sh_d.DATE    = date.FormatISODate();
-    sh_d.VALUE   = price;
-    sh_d.UPDTYPE = type;
+    sh_d.m_symbol      = symbol;
+    sh_d.m_date        = date.FormatISODate();
+    sh_d.m_price       = price;
+    sh_d.m_update_type_ = type;
 
     if (StockHistoryModel::instance().find(
         StockHistoryCol::SYMBOL(symbol),

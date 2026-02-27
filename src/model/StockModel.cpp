@@ -123,13 +123,13 @@ Returns the last price date of a given stock
 wxString StockModel::lastPriceDate(const Data* entity)
 {
     wxString dtStr = entity->m_purchase_date;
-    StockHistoryModel::DataA histData = StockHistoryModel::instance().find(
+    StockHistoryModel::DataA sh_a = StockHistoryModel::instance().find(
         StockCol::SYMBOL(entity->m_symbol)
     );
 
-    std::sort(histData.begin(), histData.end(), StockHistoryData::SorterByDATE());
-    if (!histData.empty())
-        dtStr = histData.back().DATE;
+    std::sort(sh_a.begin(), sh_a.end(), StockHistoryData::SorterByDATE());
+    if (!sh_a.empty())
+        dtStr = sh_a.back().m_date;
 
     return dtStr;
 }
@@ -154,24 +154,24 @@ double StockModel::getDailyBalanceAt(const AccountData *account, const wxDate& d
 
         double valueAtDate = 0.0,  precValue = 0.0, nextValue = 0.0;
 
-        for (const auto & hist : stock_hist)
+        for (const auto & sh_d : stock_hist)
         {
             // test for the date requested
-            if (hist.DATE == strDate) {
-                valueAtDate = hist.VALUE;
+            if (sh_d.m_date == strDate) {
+                valueAtDate = sh_d.m_price;
                 break;
             }
             // if not found, search for previous and next date
-            if (precValue == 0.0 && hist.DATE < strDate) {
-                precValue = hist.VALUE;
-                precValueDate = hist.DATE;
+            if (precValue == 0.0 && sh_d.m_date < strDate) {
+                precValue = sh_d.m_price;
+                precValueDate = sh_d.m_date;
             }
-            if (hist.DATE > strDate) {
-                nextValue = hist.VALUE;
-                nextValueDate = hist.DATE;
+            if (sh_d.m_date > strDate) {
+                nextValue = sh_d.m_price;
+                nextValueDate = sh_d.m_date;
             }
             // end conditions: prec value assigned and price date < requested date
-            if (precValue != 0.0 && hist.DATE < strDate)
+            if (precValue != 0.0 && sh_d.m_date < strDate)
                 break;
         }
         if (valueAtDate == 0.0) {
@@ -339,12 +339,12 @@ void StockModel::UpdateCurrentPrice(const wxString& symbol, const double price)
 {
     double current_price = price;
     if (price == -1) {
-        StockHistoryModel::DataA histData = StockHistoryModel::instance().find(
+        StockHistoryModel::DataA sh_a = StockHistoryModel::instance().find(
             StockHistoryCol::SYMBOL(symbol)
         );
-        if (!histData.empty()) {
-            std::sort(histData.begin(), histData.end(), StockHistoryData::SorterByDATE());
-            current_price = histData.back().VALUE;
+        if (!sh_a.empty()) {
+            std::sort(sh_a.begin(), sh_a.end(), StockHistoryData::SorterByDATE());
+            current_price = sh_a.back().m_price;
         }
     }
     if (current_price != -1) {

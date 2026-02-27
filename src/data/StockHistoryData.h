@@ -16,21 +16,6 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  ********************************************************/
 
-// PLEASE EDIT!
-//
-// This is only sample code re-used from "table/StockHistoryTable.h".
-//
-// The data structure can be refined by:
-// * using more user-frielndly filed name
-// * using stronger field types
-// * adding enumerations for fields with limited choices
-// * demultiplexing composite values in database columns
-//
-// See also an implementation in Swift:
-//   https://github.com/moneymanagerex/mmex-ios/tree/master/MMEX/Data
-// and an implementation in Java:
-//   https://github.com/moneymanagerex/android-money-manager-ex/tree/master/app/src/main/java/com/money/manager/ex/domainmodel
-
 #pragma once
 
 #include "table/_TableBase.h"
@@ -39,18 +24,18 @@
 // User-friendly representation of a record in table STOCKHISTORY_V1.
 struct StockHistoryData
 {
-    int64 HISTID; // primary key
-    wxString SYMBOL;
-    wxString DATE;
-    double VALUE;
-    int64 UPDTYPE;
+    int64    m_id;
+    wxString m_symbol;
+    wxString m_date;
+    double   m_price;
+    int64    m_update_type_;
 
     explicit StockHistoryData();
     explicit StockHistoryData(wxSQLite3ResultSet& q);
     StockHistoryData(const StockHistoryData& other) = default;
 
-    int64 id() const { return HISTID; }
-    void id(const int64 id) { HISTID = id; }
+    int64 id() const { return m_id; }
+    void id(const int64 id) { m_id = id; }
     StockHistoryRow to_row() const;
     StockHistoryData& from_row(const StockHistoryRow& row);
     void to_insert_stmt(wxSQLite3Statement& stmt, int64 id) const;
@@ -71,7 +56,7 @@ struct StockHistoryData
     {
         bool operator()(const StockHistoryData& x, const StockHistoryData& y)
         {
-            return x.HISTID < y.HISTID;
+            return x.m_id < y.m_id;
         }
     };
 
@@ -79,7 +64,7 @@ struct StockHistoryData
     {
         bool operator()(const StockHistoryData& x, const StockHistoryData& y)
         {
-            return x.SYMBOL < y.SYMBOL;
+            return x.m_symbol < y.m_symbol;
         }
     };
 
@@ -87,7 +72,7 @@ struct StockHistoryData
     {
         bool operator()(const StockHistoryData& x, const StockHistoryData& y)
         {
-            return x.DATE < y.DATE;
+            return x.m_date < y.m_date;
         }
     };
 
@@ -95,7 +80,7 @@ struct StockHistoryData
     {
         bool operator()(const StockHistoryData& x, const StockHistoryData& y)
         {
-            return x.VALUE < y.VALUE;
+            return x.m_price < y.m_price;
         }
     };
 
@@ -103,7 +88,7 @@ struct StockHistoryData
     {
         bool operator()(const StockHistoryData& x, const StockHistoryData& y)
         {
-            return x.UPDTYPE < y.UPDTYPE;
+            return x.m_update_type_ < y.m_update_type_;
         }
     };
 };

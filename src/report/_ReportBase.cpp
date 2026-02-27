@@ -340,8 +340,8 @@ mm_html_template::mm_html_template(const wxString& arg_template): html_template(
 void mm_html_template::load_context()
 {
     (*this)(L"TODAY") = wxDate::Now().FormatISODate();
-    for (const auto &r: InfoModel::instance().find_all())
-        (*this)(r.INFONAME.ToStdWstring()) = r.INFOVALUE;
+    for (const auto& info_d: InfoModel::instance().find_all())
+        (*this)(info_d.m_name.ToStdWstring()) = info_d.m_value;
     (*this)(L"INFOTABLE") = InfoModel::to_loop_t();
 
     const CurrencyData* currency = CurrencyModel::GetBaseCurrency();

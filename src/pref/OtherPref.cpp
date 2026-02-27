@@ -221,17 +221,15 @@ void OtherPref::SaveStocksUrl()
 {
     wxComboBox* url = static_cast<wxComboBox*>(FindWindow(ID_DIALOG_OPTIONS_TEXTCTRL_STOCKURL));
     wxString stockURL = url->GetValue().Trim(false).Trim();
-    if (!stockURL.IsEmpty())
-    {
+    if (!stockURL.IsEmpty()) {
         InfoModel::instance().setString("STOCKURL", stockURL);
     }
-    else
-    {
-        InfoModel::DataA items = InfoModel::instance().find(
+    else {
+        InfoModel::DataA info_a = InfoModel::instance().find(
             InfoCol::INFONAME("STOCKURL")
         );
-        if (!items.empty())
-            InfoModel::instance().purge_id(items[0].INFOID);
+        if (!info_a.empty())
+            InfoModel::instance().purge_id(info_a[0].m_id);
     }
 }
 

@@ -977,8 +977,8 @@ void SchedDialog::OnOk(wxCommandEvent& WXUNUSED(event))
                 const CurrencyData* from_currency = AccountModel::currency(acc);
                 const CurrencyData* to_currency = AccountModel::currency(to_account);
 
-                double rateFrom = CurrencyHistoryModel::getDayRate(from_currency->CURRENCYID, m_sched_d.TRANSDATE);
-                double rateTo = CurrencyHistoryModel::getDayRate(to_currency->CURRENCYID, m_sched_d.TRANSDATE);
+                double rateFrom = CurrencyHistoryModel::getDayRate(from_currency->m_id, m_sched_d.TRANSDATE);
+                double rateTo = CurrencyHistoryModel::getDayRate(to_currency->m_id, m_sched_d.TRANSDATE);
 
                 double convToBaseFrom = rateFrom * m_sched_d.TRANSAMOUNT;
                 m_sched_d.TOTRANSAMOUNT = convToBaseFrom / rateTo;

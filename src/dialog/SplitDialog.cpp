@@ -418,7 +418,7 @@ void SplitDialog::OnOk( wxCommandEvent& /*event*/ )
     double totalAmount = 0;
     for (const auto& entry : m_splits)
         totalAmount += entry.SPLITTRANSAMOUNT;
-    totalAmount = std::round(totalAmount * m_currency->SCALE.GetValue()) / m_currency->SCALE.GetValue();
+    totalAmount = std::round(totalAmount * m_currency->m_scale.GetValue()) / m_currency->m_scale.GetValue();
     if (totalAmount < 0) {
         return mmErrorDialogs::MessageError(this, _t("Invalid Total Amount"), _t("Error"));
     }

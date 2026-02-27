@@ -55,7 +55,7 @@ const wxString mmExportTransaction::getTransactionCSV(const TrxModel::Full_Data&
     const auto acc_in = AccountModel::instance().get_data_n(full_tran.ACCOUNTID);
     const auto curr_in = CurrencyModel::instance().get_data_n(acc_in->CURRENCYID);
     wxString account = acc_in->ACCOUNTNAME;
-    wxString currency = curr_in->CURRENCY_SYMBOL;
+    wxString currency = curr_in->m_symbol;
 
     if (is_transfer)
     {
@@ -65,7 +65,7 @@ const wxString mmExportTransaction::getTransactionCSV(const TrxModel::Full_Data&
 
         payee = reverce ? acc_to->ACCOUNTNAME : acc_in->ACCOUNTNAME;
         account = reverce ? acc_in->ACCOUNTNAME : acc_to->ACCOUNTNAME;
-        currency = reverce ? curr_in->CURRENCY_SYMBOL : curr_to->CURRENCY_SYMBOL;
+        currency = reverce ? curr_in->m_symbol : curr_to->m_symbol;
 
         //Transaction number used to make transaction unique
         // to proper merge transfer records
@@ -95,7 +95,7 @@ const wxString mmExportTransaction::getTransactionCSV(const TrxModel::Full_Data&
             buffer << inQuotes(split_categ, delimiter) << delimiter;
 
             buffer << inQuotes(split_amount, delimiter) << delimiter;
-            buffer << inQuotes(curr_in->CURRENCY_SYMBOL, delimiter) << delimiter;
+            buffer << inQuotes(curr_in->m_symbol, delimiter) << delimiter;
             buffer << inQuotes(transNum, delimiter) << delimiter;
             buffer << inQuotes(notes, delimiter);
 
@@ -149,8 +149,8 @@ const wxString mmExportTransaction::getTransactionQIF(const TrxModel::Full_Data&
 
         categ = "[" + (reverce ? full_tran.ACCOUNTNAME : full_tran.TOACCOUNTNAME) + "]";
         payee = wxString::Format("%s %s %s -> %s %s %s"
-            , wxString::FromCDouble(full_tran.TRANSAMOUNT, 2), curr_in->CURRENCY_SYMBOL, acc_in->ACCOUNTNAME
-            , wxString::FromCDouble(full_tran.TOTRANSAMOUNT, 2), curr_to->CURRENCY_SYMBOL, acc_to->ACCOUNTNAME);
+            , wxString::FromCDouble(full_tran.TRANSAMOUNT, 2), curr_in->m_symbol, acc_in->ACCOUNTNAME
+            , wxString::FromCDouble(full_tran.TOTRANSAMOUNT, 2), curr_to->m_symbol, acc_to->ACCOUNTNAME);
         //Transaction number used to make transaction unique
         // to proper merge transfer records
         if (transNum.IsEmpty() && notes.IsEmpty())
@@ -222,13 +222,13 @@ const wxString mmExportTransaction::getTransactionQIF(const TrxModel::Full_Data&
 const wxString mmExportTransaction::getAccountHeaderQIF(int64 accountID)
 {
     wxString buffer = "";
-    wxString currency_symbol = CurrencyModel::GetBaseCurrency()->CURRENCY_SYMBOL;
+    wxString currency_symbol = CurrencyModel::GetBaseCurrency()->m_symbol;
     const AccountData *account_n = AccountModel::instance().get_data_n(accountID);
     if (account_n) {
         double dInitBalance = account_n->INITIALBAL;
         const CurrencyData *currency = CurrencyModel::instance().get_data_n(account_n->CURRENCYID);
         if (currency) {
-            currency_symbol = currency->CURRENCY_SYMBOL;
+            currency_symbol = currency->m_symbol;
         }
 
         const wxString currency_code = "[" + currency_symbol + "]";
@@ -323,7 +323,7 @@ void mmExportTransaction::getAccountsJSON(PrettyWriter<StringBuffer>& json_write
         json_writer.Key("TYPE");
         json_writer.String(a->ACCOUNTTYPE.utf8_str());
         json_writer.Key("CURRENCY_SYMBOL");
-        json_writer.String(c->CURRENCY_SYMBOL.utf8_str());
+        json_writer.String(c->m_symbol.utf8_str());
         json_writer.EndObject();
     }
     json_writer.EndArray();

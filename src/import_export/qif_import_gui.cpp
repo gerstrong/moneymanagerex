@@ -67,7 +67,7 @@ mmQIFImportDialog::mmQIFImportDialog(wxWindow* parent, int64 account_id, const w
     , m_today(wxDate::Today())
     , m_fresh(wxDate::Today().Subtract(wxDateSpan::Months(1)))
 {
-    decimal_ = CurrencyModel::GetBaseCurrency()->DECIMAL_POINT;
+    decimal_ = CurrencyModel::GetBaseCurrency()->m_decimal_point;
     payeeIsNotes_ = false;
     const AccountData* account_n = AccountModel::instance().get_data_n(account_id);
     if (account_n)
@@ -670,7 +670,7 @@ bool mmQIFImportDialog::completeTransaction(std::unordered_map<int, wxString> &t
                 if (m_QIFaccounts.find(toAccName) == m_QIFaccounts.end())
                 {
                     std::unordered_map<int, wxString> a;
-                    a[Description] = "[" + CurrencyModel::GetBaseCurrency()->CURRENCY_SYMBOL + "]";
+                    a[Description] = "[" + CurrencyModel::GetBaseCurrency()->m_symbol + "]";
                     a[AccountType] = (trx.find(Description) != trx.end() ? trx.at(Description) : "");
                     m_QIFaccounts[toAccName] = a;
                 }
@@ -812,7 +812,7 @@ void mmQIFImportDialog::refreshTabs(int tabs)
 
             if (account) {
                 const CurrencyData *currency_n = CurrencyModel::instance().get_data_n(account->CURRENCYID);
-                if (currency_n && currency_n->CURRENCY_SYMBOL == currencySymbol)
+                if (currency_n && currency_n->m_symbol == currencySymbol)
                     status = _t("OK");
                 else
                     status = _t("Warning");
@@ -1676,11 +1676,11 @@ int64 mmQIFImportDialog::getOrCreateAccounts()
             account_d.INITIALBAL = 0;
             account_d.INITIALDATE = wxDate::Today().FormatISODate();
 
-            account_d.CURRENCYID = CurrencyModel::GetBaseCurrency()->CURRENCYID;
+            account_d.CURRENCYID = CurrencyModel::GetBaseCurrency()->m_id;
             const wxString c = (item.second.find(Description) == item.second.end() ? "" : item.second.at(Description));
             for (const auto& curr : CurrencyModel::instance().find_all()) {
-                if (wxString::Format("[%s]", curr.CURRENCY_SYMBOL) == c) {
-                    account_d.CURRENCYID = curr.CURRENCYID;
+                if (wxString::Format("[%s]", curr.m_symbol) == c) {
+                    account_d.CURRENCYID = curr.m_id;
                     break;
                 }
             }

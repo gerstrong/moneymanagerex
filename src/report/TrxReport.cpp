@@ -52,13 +52,13 @@ void TrxReport::displayTotals(const std::map<int64, double>& total, std::map<int
     for (const auto& [curr_id, curr_total]: total)
     {
         const CurrencyData* curr = CurrencyModel::instance().get_data_n(curr_id);
-        const bool isBaseCurr = (curr->CURRENCY_SYMBOL == CurrencyModel::GetBaseCurrency()->CURRENCY_SYMBOL);
+        const bool isBaseCurr = (curr->m_symbol == CurrencyModel::GetBaseCurrency()->m_symbol);
         grand_total += total_in_base_curr[curr_id];
         if (total.size() > 1 || !isBaseCurr)
         {
             const wxString totalStr_curr = isBaseCurr ? "" : CurrencyModel::toCurrency(curr_total, curr);
             const wxString totalStr = CurrencyModel::toCurrency(total_in_base_curr[curr_id], CurrencyModel::GetBaseCurrency());
-            hb.addTotalRow(curr->CURRENCY_SYMBOL, noOfCols, { totalStr_curr,  totalStr });
+            hb.addTotalRow(curr->m_symbol, noOfCols, { totalStr_curr,  totalStr });
         }
     }
     const wxString totalStr = CurrencyModel::toCurrency(grand_total, CurrencyModel::GetBaseCurrency());
@@ -330,7 +330,7 @@ table {
                     double flow = TrxModel::account_flow(transaction, acc->ACCOUNTID);
                     if (noOfTrans || (!allAccounts && (std::find(selected_accounts.begin(), selected_accounts.end(), transaction.ACCOUNTID) == selected_accounts.end())))
                         flow = -flow;
-                    const double convRate = CurrencyHistoryModel::getDayRate(curr->CURRENCYID, transaction.TRANSDATE);
+                    const double convRate = CurrencyHistoryModel::getDayRate(curr->m_id, transaction.TRANSDATE);
                     if (showColumnById(TrxFilterDialog::COL_AMOUNT)) {
                         if (TrxModel::status_id(transaction.STATUS) == TrxModel::STATUS_ID_VOID) {
                             double void_flow = TrxModel::type_id(transaction.TRANSCODE) == TrxModel::TYPE_ID_DEPOSIT ? transaction.TRANSAMOUNT : -transaction.TRANSAMOUNT;
@@ -339,14 +339,14 @@ table {
                         else if (transaction.DELETEDTIME.IsEmpty())
                             hb.addCurrencyCell(flow, curr);
                     }
-                    total[curr->CURRENCYID] += flow;
-                    grand_total[curr->CURRENCYID] += flow;
-                    total_in_base_curr[curr->CURRENCYID] += flow * convRate;
-                    grand_total_in_base_curr[curr->CURRENCYID] += flow * convRate;
+                    total[curr->m_id] += flow;
+                    grand_total[curr->m_id] += flow;
+                    total_in_base_curr[curr->m_id] += flow * convRate;
+                    grand_total_in_base_curr[curr->m_id] += flow * convRate;
                     if (TrxModel::type_id(transaction) != TrxModel::TYPE_ID_TRANSFER)
                     {
-                        grand_total_extrans[curr->CURRENCYID] += flow;
-                        grand_total_in_base_curr_extrans[curr->CURRENCYID] += flow * convRate;
+                        grand_total_extrans[curr->m_id] += flow;
+                        grand_total_in_base_curr_extrans[curr->m_id] += flow * convRate;
                     }
                     if (chart > -1 && groupBy == -1)
                     {

@@ -133,8 +133,8 @@ void GeneralPref::Create()
     currencyBaseSizer->Add(new wxStaticText(currencyStaticBox, wxID_STATIC, _t("Base Currency")), g_flagsH);
 
     const CurrencyData* currency = CurrencyModel::instance().get_data_n(PrefModel::instance().getBaseCurrencyID());
-    wxString currName = currency ? currency->CURRENCYNAME : _t("Set Currency");
-    m_currency_id = currency ? currency->CURRENCYID : -1;
+    wxString currName = currency ? currency->m_name : _t("Set Currency");
+    m_currency_id = currency ? currency->m_id : -1;
     baseCurrencyComboBox_ = new mmComboBoxCurrency(currencyStaticBox, ID_DIALOG_OPTIONS_BUTTON_CURRENCY);
     baseCurrencyComboBox_->SetMinSize(wxSize(200, -1));
     baseCurrencyComboBox_->ChangeValue(currName);

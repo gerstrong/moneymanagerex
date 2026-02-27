@@ -833,7 +833,7 @@ mmChoiceAmountMask::mmChoiceAmountMask(wxWindow* parent, wxWindowID id)
     }
 
     const CurrencyData* base_currency = CurrencyModel::GetBaseCurrency();
-    const auto decimal_point = base_currency->DECIMAL_POINT;
+    const auto decimal_point = base_currency->m_decimal_point;
 
     SetDecimalChar(decimal_point);
 }

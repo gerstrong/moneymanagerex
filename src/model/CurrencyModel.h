@@ -120,7 +120,7 @@ inline int CurrencyModel::type_id(const wxString& name)
 }
 inline CurrencyModel::TYPE_ID CurrencyModel::type_id(const Data* r)
 {
-    return static_cast<TYPE_ID>(type_id(r->CURRENCY_TYPE));
+    return static_cast<TYPE_ID>(type_id(r->m_type_));
 }
 inline CurrencyModel::TYPE_ID CurrencyModel::type_id(const Data& r)
 {

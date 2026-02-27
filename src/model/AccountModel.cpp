@@ -287,19 +287,20 @@ bool AccountModel::FAVORITEACCT(const Data& r)
     return FAVORITEACCT(&r);
 }
 
-bool AccountModel::is_used(const CurrencyData* c)
+bool AccountModel::is_used(const CurrencyData* currency_n)
 {
-    if (!c) return false;
-    const auto &accounts = AccountModel::instance().find(
-        AccountCol::CURRENCYID(c->CURRENCYID),
+    if (!currency_n)
+        return false;
+    const auto& account_a = AccountModel::instance().find(
+        AccountCol::CURRENCYID(currency_n->m_id),
         AccountModel::STATUS(OP_NE, STATUS_ID_CLOSED)
     );
-    return !accounts.empty();
+    return !account_a.empty();
 }
 
-bool AccountModel::is_used(const CurrencyData& c)
+bool AccountModel::is_used(const CurrencyData& currency_n)
 {
-    return is_used(&c);
+    return is_used(&currency_n);
 }
 
 int AccountModel::money_accounts_num()

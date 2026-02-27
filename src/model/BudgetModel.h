@@ -101,7 +101,7 @@ inline int BudgetModel::period_id(const wxString& name)
 }
 inline BudgetModel::PERIOD_ID BudgetModel::period_id(const Data* r)
 {
-    return static_cast<PERIOD_ID>(period_id(r->m_frequency));
+    return static_cast<PERIOD_ID>(period_id(r->m_frequency_));
 }
 inline BudgetModel::PERIOD_ID BudgetModel::period_id(const Data& r)
 {

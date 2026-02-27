@@ -829,15 +829,15 @@ bool getOnlineCurrencyRates(wxString& msg,const int64 curr_id, const bool used_o
     );
     for (const auto& currency : currency_a)
     {
-        if (curr_id > 0 && currency.CURRENCYID != curr_id)
+        if (curr_id > 0 && currency.m_id != curr_id)
             continue;
         if (curr_id < 0 && !AccountModel::is_used(currency))
             continue;
-        const auto symbol = currency.CURRENCY_SYMBOL;
+        const auto symbol = currency.m_symbol;
         if (symbol.IsEmpty())
             continue;
 
-        fiat[symbol] = CurrencyHistoryModel::getDayRate(currency.CURRENCYID, today_str);
+        fiat[symbol] = CurrencyHistoryModel::getDayRate(currency.m_id, today_str);
     }
 
     if (fiat.empty())
@@ -866,7 +866,7 @@ bool getOnlineCurrencyRates(wxString& msg,const int64 curr_id, const bool used_o
                     if (usd == nullptr) {
                         break; // can't use coincap without USD, since all prices are in USD so give up
                     }
-                    usd_conv_rate = usd->BASECONVRATE;
+                    usd_conv_rate = usd->m_base_conv_rate;
                 }
 
                 currency_data[item.first] = coincap_price_usd * usd_conv_rate;
@@ -897,7 +897,7 @@ bool getOnlineCurrencyRates(wxString& msg,const int64 curr_id, const bool used_o
         if (!used_only && !AccountModel::is_used(currency_d))
             continue;
 
-        const wxString currency_symbol = currency_d.CURRENCY_SYMBOL;
+        const wxString currency_symbol = currency_d.m_symbol;
         if (!currency_symbol.IsEmpty()
             && currency_data.find(currency_symbol) != currency_data.end()
         ) {
@@ -905,10 +905,10 @@ bool getOnlineCurrencyRates(wxString& msg,const int64 curr_id, const bool used_o
             if (new_rate > 0) {
                 if(PrefModel::instance().getUseCurrencyHistory())
                     CurrencyHistoryModel::instance().addUpdate(
-                        currency_d.CURRENCYID, today, new_rate, CurrencyHistoryModel::ONLINE
+                        currency_d.m_id, today, new_rate, CurrencyHistoryModel::ONLINE
                     );
                 else {
-                    currency_d.BASECONVRATE = new_rate;
+                    currency_d.m_base_conv_rate = new_rate;
                     CurrencyModel::instance().save_data_n(currency_d);
                 }
             }
@@ -1198,7 +1198,7 @@ bool getCoincapAssetHistory(const wxString& asset_id, wxDateTime begin_date, std
             return false;
         }
 
-        multiplier = usd->BASECONVRATE;
+        multiplier = usd->m_base_conv_rate;
     }
 
 

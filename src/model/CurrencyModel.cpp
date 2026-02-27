@@ -85,7 +85,7 @@ const wxArrayString CurrencyModel::all_currency_names()
 {
     wxArrayString c;
     for (const auto&i : find_all(Col::COL_ID_CURRENCYNAME))
-        c.Add(i.CURRENCYNAME);
+        c.Add(i.m_name);
     return c;
 }
 
@@ -95,7 +95,7 @@ const std::map<wxString, int64> CurrencyModel::all_currency()
     std::map<wxString, int64> currencies;
     for (const auto& curr : this->find_all(Col::COL_ID_CURRENCYNAME))
     {
-        currencies[curr.CURRENCYNAME] = curr.CURRENCYID;
+        currencies[curr.m_name] = curr.m_id;
     }
     return currencies;
 }
@@ -104,7 +104,7 @@ const wxArrayString CurrencyModel::all_currency_symbols()
 {
     wxArrayString c;
     for (const auto&i : find_all(Col::COL_ID_CURRENCY_SYMBOL))
-        c.Add(i.CURRENCY_SYMBOL);
+        c.Add(i.m_symbol);
     return c;
 }
 
@@ -121,7 +121,7 @@ bool CurrencyModel::GetBaseCurrencySymbol(wxString& base_currency_symbol)
     const auto base_currency = GetBaseCurrency();
     if (base_currency)
     {
-        base_currency_symbol = base_currency->CURRENCY_SYMBOL;
+        base_currency_symbol = base_currency->m_symbol;
         return true;
     }
     return false;
@@ -131,7 +131,7 @@ void CurrencyModel::ResetBaseConversionRates()
 {
     CurrencyModel::instance().Savepoint();
     for (auto currency_d : CurrencyModel::instance().find_all()) {
-        currency_d.BASECONVRATE = 1;
+        currency_d.m_base_conv_rate = 1;
         CurrencyModel::instance().save_data_n(currency_d);
     }
     CurrencyModel::instance().ReleaseSavepoint();
@@ -201,8 +201,8 @@ const wxString CurrencyModel::toCurrency(double value, const Data* currency, int
 {
     wxString d2s = toString(value, currency, precision);
     if (currency) {
-        d2s.Prepend(currency->PFX_SYMBOL);
-        d2s.Append(currency->SFX_SYMBOL);
+        d2s.Prepend(currency->m_prefix_symbol);
+        d2s.Append(currency->m_suffix_symbol);
     }
     return d2s;
 }
@@ -210,9 +210,9 @@ const wxString CurrencyModel::toCurrency(double value, const Data* currency, int
 const wxString CurrencyModel::toStringNoFormatting(double value, const Data* currency, int precision)
 {
     const Data* curr = currency ? currency : GetBaseCurrency();
-    precision = (precision >= 0) ? precision : log10(curr->SCALE.GetValue());
+    precision = (precision >= 0) ? precision : log10(curr->m_scale.GetValue());
     wxString s = wxString::FromCDouble(value, precision);
-    s.Replace(".", curr->DECIMAL_POINT);
+    s.Replace(".", curr->m_decimal_point);
 
     return s;
 }
@@ -260,7 +260,7 @@ const wxString CurrencyModel::toString(double value, const Data* currency, int p
     }
 
     if (precision < 0) {
-        precision = log10(currency ? currency->SCALE.GetValue() : GetBaseCurrency()->SCALE.GetValue());
+        precision = log10(currency ? currency->m_scale.GetValue() : GetBaseCurrency()->m_scale.GetValue());
     }
 
     auto l = (s_use_locale == "Y" ? std::locale(s_locale.c_str()) : (d == "Y" ? std::locale(default_locale) : std::locale()));
@@ -315,8 +315,8 @@ const wxString CurrencyModel::toString(double value, const Data* currency, int p
         wxString out(s);
         out.Replace(".", "\x05");
         out.Replace(",", "\t");
-        out.Replace("\x05", currency ? currency->DECIMAL_POINT : GetBaseCurrency()->DECIMAL_POINT);
-        out.Replace("\t", currency ? currency->GROUP_SEPARATOR : GetBaseCurrency()->GROUP_SEPARATOR);
+        out.Replace("\x05", currency ? currency->m_decimal_point : GetBaseCurrency()->m_decimal_point);
+        out.Replace("\t", currency ? currency->m_group_separator : GetBaseCurrency()->m_group_separator);
         return out;
     }
 
@@ -336,10 +336,10 @@ const wxString CurrencyModel::fromString2CLocale(const wxString &s, const Data* 
 
     if (locale.empty())
     {
-        if (!currency->GROUP_SEPARATOR.empty())
-            str.Replace(currency->GROUP_SEPARATOR, wxEmptyString);
-        if (!currency->DECIMAL_POINT.empty())
-            str.Replace(currency->DECIMAL_POINT, ".");
+        if (!currency->m_group_separator.empty())
+            str.Replace(currency->m_group_separator, wxEmptyString);
+        if (!currency->m_decimal_point.empty())
+            str.Replace(currency->m_decimal_point, ".");
     }
     else
     {
@@ -373,7 +373,7 @@ bool CurrencyModel::fromString(wxString s, double& val, const Data* currency)
 
 int CurrencyModel::precision(const Data* r)
 {
-    return static_cast<int>(log10(static_cast<double>(r->SCALE.GetValue())));
+    return static_cast<int>(log10(static_cast<double>(r->m_scale.GetValue())));
 }
 
 int CurrencyModel::precision(const Data& r)

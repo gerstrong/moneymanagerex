@@ -96,7 +96,7 @@ mmUnivCSVDialog::mmUnivCSVDialog(
     dialogType_(dialogType),
     m_account_id(account_id),
     m_file_path(file_path),
-    decimal_(CurrencyModel::GetBaseCurrency()->DECIMAL_POINT),
+    decimal_(CurrencyModel::GetBaseCurrency()->m_decimal_point),
     depositType_(TrxModel::TYPE_NAME_DEPOSIT)
 {
     CSVFieldName_[UNIV_CSV_ID].first                    = _n("ID");
@@ -678,7 +678,7 @@ void mmUnivCSVDialog::CreateControls()
         wxString acct_name = m_choice_account_->GetStringSelection();
         m_checkbox_preset_default->SetLabelText(wxString::Format(_t("Load this Preset when Account is:\n%s"), acct_name));
         *log_field_ << _t("Currency:") << " " <<
-            wxGetTranslation(AccountModel::currency(AccountModel::instance().get_key(acct_name))->CURRENCYNAME) << "\n";
+            wxGetTranslation(AccountModel::currency(AccountModel::instance().get_key(acct_name))->m_name) << "\n";
         if (!init_preset_name.IsEmpty())
             *log_field_ << wxString::Format(_t("Preset '%1$s' loaded because Account '%2$s' selected"), init_preset_name, acct_name) << "\n";
     }
@@ -1903,7 +1903,7 @@ void mmUnivCSVDialog::OnExport(wxCommandEvent& WXUNUSED(event))
                         entry = account->ACCOUNTNAME;
                         break;
                     case UNIV_CSV_CURRENCY:
-                        entry = AccountModel::currency(account)->CURRENCY_SYMBOL;
+                        entry = AccountModel::currency(account)->m_symbol;
                         break;
                     default:
                         break;
@@ -2328,7 +2328,7 @@ void mmUnivCSVDialog::update_preview()
                                 text << inQuotes(account->ACCOUNTNAME, delimit);
                                 break;
                             case UNIV_CSV_CURRENCY:
-                                text << inQuotes(AccountModel::currency(account)->CURRENCY_SYMBOL, delimit);
+                                text << inQuotes(AccountModel::currency(account)->m_symbol, delimit);
                                 break;
                             default:
                                 break;
@@ -2978,7 +2978,7 @@ void mmUnivCSVDialog::OnChoiceChanged(wxCommandEvent& event)
         const AccountData* account = AccountModel::instance().get_key(acctName);
         m_account_id = account->ACCOUNTID;
         const CurrencyData* currency = AccountModel::currency(account);
-        *log_field_ << _t("Currency:") << " " << wxGetTranslation(currency->CURRENCYNAME) << "\n";
+        *log_field_ << _t("Currency:") << " " << wxGetTranslation(currency->m_name) << "\n";
 
         m_checkbox_preset_default->Enable(m_choice_preset_name->GetSelection() >= 0);
         m_checkbox_preset_default->SetValue(false);

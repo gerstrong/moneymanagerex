@@ -813,9 +813,9 @@ const wxString htmlWidgetCurrency::getHtmlText()
     {
         if (AccountModel::is_used(currency)) {
 
-            double convertionRate = CurrencyHistoryModel::getDayRate(currency.CURRENCYID
+            double convertionRate = CurrencyHistoryModel::getDayRate(currency.m_id
                 , today);
-            usedRates[currency.CURRENCY_SYMBOL] = convertionRate;
+            usedRates[currency.m_symbol] = convertionRate;
 
             if (usedRates.size() >= 10) {
                 break;

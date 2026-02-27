@@ -57,7 +57,7 @@ public:
     CurrencyManager(wxWindow* parent, const CurrencyData* currency);
     ~CurrencyManager();
 
-    int64 getCurrencyID() { return m_currency_n->CURRENCYID; };
+    int64 getCurrencyID() { return m_currency_n->m_id; };
 
 private:
     bool Create(

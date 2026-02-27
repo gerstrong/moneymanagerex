@@ -199,7 +199,7 @@ void BudgetEntryDialog::OnOk(wxCommandEvent& event)
     if (typeSelection == DEF_TYPE_EXPENSE)
         amt = -amt;
 
-    m_budget_n->m_frequency = BudgetModel::period_name(period);
+    m_budget_n->m_frequency_ = BudgetModel::period_name(period);
     m_budget_n->m_amount    = amt;
     m_budget_n->m_notes     = m_Notes->GetValue();
     BudgetModel::instance().unsafe_save_data_n(m_budget_n);

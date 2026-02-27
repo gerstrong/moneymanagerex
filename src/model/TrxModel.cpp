@@ -531,7 +531,7 @@ const wxString TrxModel::Full_Data::get_currency_code(int64 account_id) const
     int64 currency_id = account_n ? account_n->CURRENCYID: -1;
     const CurrencyData* curr = CurrencyModel::instance().get_data_n(currency_id);
 
-    return curr ? curr->CURRENCY_SYMBOL : "";
+    return curr ? curr->m_symbol : "";
 }
 
 const wxString TrxModel::Full_Data::get_account_name(int64 account_id) const

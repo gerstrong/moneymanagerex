@@ -27,7 +27,7 @@ struct BudgetData
     int64    m_id;
     int64    m_period_id;
     int64    m_category_id;
-    wxString m_frequency;
+    wxString m_frequency_;
     double   m_amount;
     wxString m_notes;
     bool     m_active;
@@ -82,7 +82,7 @@ struct BudgetData
     {
         bool operator()(const BudgetData& x, const BudgetData& y)
         {
-            return x.m_frequency < y.m_frequency;
+            return x.m_frequency_ < y.m_frequency_;
         }
     };
 

@@ -224,7 +224,7 @@ void BudgetModel::copyBudgetYear(int64 newYearID, int64 baseYearID)
         new_budget_d.m_period_id = newYearID;
         double yearAmount = getEstimate(false, period_id(budget_d), budget_d.m_amount);
         if (optionDeductMonthly && budgetedMonths > 0) {
-            new_budget_d.m_frequency = period_name(PERIOD_ID_MONTHLY);
+            new_budget_d.m_frequency_ = period_name(PERIOD_ID_MONTHLY);
             new_budget_d.m_amount    = (yearDeduction[new_budget_d.m_category_id] / yearAmount < 1)
                 ? (yearAmount - yearDeduction[new_budget_d.m_category_id]) / (12 - budgetedMonths)
                 : 0;

@@ -68,7 +68,7 @@ void  StocksReport::refreshData()
         for (const auto& stock : StockModel::instance().find(StockCol::HELDAT(a.ACCOUNTID)))
         {
             const CurrencyData* currency = AccountModel::currency(a);
-            const double today_rate = CurrencyHistoryModel::getDayRate(currency->CURRENCYID, today);
+            const double today_rate = CurrencyHistoryModel::getDayRate(currency->m_id, today);
             m_stock_balance += today_rate * StockModel::CurrentValue(stock);
             line.realgainloss = StockModel::RealGainLoss(stock);
             account.realgainloss += line.realgainloss;
@@ -177,7 +177,7 @@ wxString StocksReport::getHTMLText()
             hb.startTfoot();
             {
                 // Round FX gain/loss to the scale of the base currency for display
-                int scale = pow(10, log10(CurrencyModel::instance().GetBaseCurrency()->SCALE.GetValue()));
+                int scale = pow(10, log10(CurrencyModel::instance().GetBaseCurrency()->m_scale.GetValue()));
                 double forex_real_gain_loss = std::round((m_real_gain_loss_sum_total - m_real_gain_loss_excl_forex) * scale) / scale;
                 double forex_unreal_gain_loss = std::round((m_unreal_gain_loss_sum_total - m_unreal_gain_loss_excl_forex) * scale) / scale;
 

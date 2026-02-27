@@ -98,7 +98,7 @@ double CurrencyHistoryModel::getDayRate(int64 currencyID, const wxString& DateIS
 {
     if (!PrefModel::instance().getUseCurrencyHistory()) {
         const CurrencyData* c = CurrencyModel::instance().get_data_n(currencyID);
-        return c ? c->BASECONVRATE : 1.0;
+        return c ? c->m_base_conv_rate : 1.0;
     }
     wxDate Date;
     if (Date.ParseDate(DateISO))
@@ -111,11 +111,11 @@ double CurrencyHistoryModel::getDayRate(int64 currencyID, const wxString& DateIS
 
 double CurrencyHistoryModel::getDayRate(int64 currencyID, const wxDate& Date)
 {
-    if (currencyID == CurrencyModel::GetBaseCurrency()->CURRENCYID || currencyID == -1)
+    if (currencyID == CurrencyModel::GetBaseCurrency()->m_id || currencyID == -1)
         return 1;
 
     if (!PrefModel::instance().getUseCurrencyHistory())
-        return CurrencyModel::instance().get_data_n(currencyID)->BASECONVRATE;
+        return CurrencyModel::instance().get_data_n(currencyID)->m_base_conv_rate;
 
     CurrencyHistoryModel::DataA Data = CurrencyHistoryModel::instance().find(
         CurrencyHistoryCol::CURRENCYID(OP_EQ, currencyID),
@@ -156,14 +156,14 @@ double CurrencyHistoryModel::getDayRate(int64 currencyID, const wxDate& Date)
         }
     }
 
-    return CurrencyModel::instance().get_data_n(currencyID)->BASECONVRATE;
+    return CurrencyModel::instance().get_data_n(currencyID)->m_base_conv_rate;
 }
 
 /** Return the last rate for specified currency */
 double CurrencyHistoryModel::getLastRate(const int64& currencyID)
 {
     if (!PrefModel::instance().getUseCurrencyHistory())
-        return CurrencyModel::instance().get_data_n(currencyID)->BASECONVRATE;
+        return CurrencyModel::instance().get_data_n(currencyID)->m_base_conv_rate;
 
     CurrencyHistoryModel::DataA histData = CurrencyHistoryModel::instance().find(
         CurrencyHistoryCol::CURRENCYID(currencyID)
@@ -175,7 +175,7 @@ double CurrencyHistoryModel::getLastRate(const int64& currencyID)
     else
     {
         const CurrencyData* currency_n = CurrencyModel::instance().get_data_n(currencyID);
-        return currency_n->BASECONVRATE;
+        return currency_n->m_base_conv_rate;
     }
 }
 

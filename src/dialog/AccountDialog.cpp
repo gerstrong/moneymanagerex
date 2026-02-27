@@ -164,7 +164,7 @@ void AccountDialog::CreateControls()
     wxString currName = _t("Select Currency");
     const CurrencyData* base_currency = CurrencyModel::GetBaseCurrency();
     if (base_currency)
-        currName = base_currency->CURRENCYNAME;
+        currName = base_currency->m_name;
 
     wxButton* itemButton71 = new wxButton(this, ID_DIALOG_NEWACCT_BUTTON_CURRENCY, currName);
     mmToolTip(itemButton71, _t("Specify the currency to be used by this account."));
@@ -335,7 +335,7 @@ void AccountDialog::fillControls()
     itemCheckBox->SetValue(AccountModel::FAVORITEACCT(m_account_n));
 
     wxButton* bn = static_cast<wxButton*>(FindWindow(ID_DIALOG_NEWACCT_BUTTON_CURRENCY));
-    bn->SetLabelText(AccountModel::currency(m_account_n)->CURRENCYNAME);
+    bn->SetLabelText(AccountModel::currency(m_account_n)->m_name);
 
     double initBal = m_account_n->INITIALBAL;
     m_initbalance_ctrl->SetCurrency(AccountModel::currency(m_account_n));
@@ -398,7 +398,7 @@ void AccountDialog::OnCurrency(wxCommandEvent& /*event*/)
     if (CurrencyChoiceDialog::Execute(this, m_currencyID)) {
         const CurrencyData* currency = CurrencyModel::instance().get_data_n(m_currencyID);
         wxButton* bn = static_cast<wxButton*>(FindWindow(ID_DIALOG_NEWACCT_BUTTON_CURRENCY));
-        bn->SetLabelText(currency->CURRENCYNAME);
+        bn->SetLabelText(currency->m_name);
 
         double value;
 
@@ -419,7 +419,7 @@ void AccountDialog::OnCurrency(wxCommandEvent& /*event*/)
             m_minimum_payment_ctrl->SetValue(value);
 
         if (m_account_n) {
-            m_account_n->CURRENCYID = currency->CURRENCYID;
+            m_account_n->CURRENCYID = currency->m_id;
         }
     }
 }

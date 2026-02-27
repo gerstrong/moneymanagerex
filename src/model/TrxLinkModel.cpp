@@ -188,7 +188,7 @@ void TrxLinkModel::UpdateAssetValue(AssetData* asset_n)
                 AccountModel::instance().get_data_n(trx_n->ACCOUNTID)
             );
             const double conv_rate = CurrencyHistoryModel::getDayRate(
-                currency_n->CURRENCYID,
+                currency_n->m_id,
                 trx_n->TRANSDATE
             );
 

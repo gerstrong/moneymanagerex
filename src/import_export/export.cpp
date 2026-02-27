@@ -253,8 +253,8 @@ const wxString mmExportTransaction::getCategoriesQIF()
     buffer_qif << "!Type:Cat" << "\n";
     for (const auto& category : CategoryModel::instance().find_all())
     {
-        const wxString& categ_name = CategoryModel::full_name(category.CATEGID, ":");
-        bool bIncome = CategoryModel::has_income(category.CATEGID);
+        const wxString& categ_name = CategoryModel::full_name(category.m_id, ":");
+        bool bIncome = CategoryModel::has_income(category.m_id);
         buffer_qif << "N" << categ_name << "\n"
             << (bIncome ? "I" : "E") << "\n"
             << "^" << "\n";
@@ -360,9 +360,9 @@ void mmExportTransaction::getCategoriesJSON(PrettyWriter<StringBuffer>& json_wri
     {
         json_writer.StartObject();
         json_writer.Key("ID");
-        json_writer.Int64(category.CATEGID.GetValue());
+        json_writer.Int64(category.m_id.GetValue());
         json_writer.Key("NAME");
-        json_writer.String(CategoryModel::full_name(category.CATEGID, ":").utf8_str());
+        json_writer.String(CategoryModel::full_name(category.m_id, ":").utf8_str());
         json_writer.EndObject();
     }
     json_writer.EndArray();
@@ -393,13 +393,13 @@ void mmExportTransaction::getUsedCategoriesJSON(PrettyWriter<StringBuffer>& json
     json_writer.StartArray();
     for (const auto& category : CategoryModel::instance().find_all())
     {
-        if (!CategoryModel::instance().is_used(category.CATEGID))
+        if (!CategoryModel::instance().is_used(category.m_id))
             continue;
         json_writer.StartObject();
         json_writer.Key("ID");
-        json_writer.Int64(category.CATEGID.GetValue());
+        json_writer.Int64(category.m_id.GetValue());
         json_writer.Key("NAME");
-        json_writer.String(CategoryModel::full_name(category.CATEGID, ":").utf8_str());
+        json_writer.String(CategoryModel::full_name(category.m_id, ":").utf8_str());
         json_writer.EndObject();
     }
     json_writer.EndArray();

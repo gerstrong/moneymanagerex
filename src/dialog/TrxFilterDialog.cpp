@@ -2010,7 +2010,7 @@ void TrxFilterDialog::OnCategoryChange(wxEvent& event)
                     m_selected_categories_id.push_back(category.second);
                     if (mmIsCategorySubCatChecked())
                         for (const auto& subcat : CategoryModel::instance().sub_tree(CategoryModel::instance().get_data_n(category.second)))
-                            m_selected_categories_id.push_back(subcat.CATEGID);
+                            m_selected_categories_id.push_back(subcat.m_id);
                 }
     }
     event.Skip();

@@ -80,9 +80,9 @@ void BudgetModel::getBudgetEntry(int64 budgetYearID
 {
     //Set std::map with zerros
     double value = 0;
-    for (const auto& category : CategoryModel::instance().find_all()) {
-        budgetPeriod[category.CATEGID] = PERIOD_ID_NONE;
-        budgetAmt[category.CATEGID] = value;
+    for (const auto& category_d : CategoryModel::instance().find_all()) {
+        budgetPeriod[category_d.m_id] = PERIOD_ID_NONE;
+        budgetAmt[category_d.m_id]    = value;
 
     }
 
@@ -107,7 +107,7 @@ void BudgetModel::getBudgetStats(
 
     for (const auto& category_d : CategoryModel::instance().find_all()) {
         for (int month = 0; month < 12; month++) {
-            budgetStats[category_d.CATEGID][month] = value;
+            budgetStats[category_d.m_id][month] = value;
         }
     }
 
@@ -178,8 +178,8 @@ void BudgetModel::getBudgetStats(
     }
     if (!groupByMonth) {
         std::map<int64, std::map<int,double> > yearlyBudgetStats;
-        for (const auto& category : CategoryModel::instance().find_all()) {
-            yearlyBudgetStats[category.CATEGID][0] = 0.0;
+        for (const auto& category_d : CategoryModel::instance().find_all()) {
+            yearlyBudgetStats[category_d.m_id][0] = 0.0;
         }
 
         for (const auto& cat : budgetStats)

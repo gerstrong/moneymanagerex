@@ -160,7 +160,7 @@ void CategoryManager::saveCurrentCollapseState()
     {
         mmTreeItemCateg* iData = dynamic_cast<mmTreeItemCateg*>(m_treeCtrl->GetItemData(id));
         if (iData)
-            m_categoryVisible[iData->getCategData()->CATEGID] = m_treeCtrl->IsExpanded(id);
+            m_categoryVisible[iData->getCategData()->m_id] = m_treeCtrl->IsExpanded(id);
         id = m_treeCtrl->GetNextSibling(id);
     }
 }
@@ -168,18 +168,18 @@ void CategoryManager::saveCurrentCollapseState()
 bool CategoryManager::AppendSubcategoryItems(wxTreeItemId parent, const CategoryData* category) {
     bool show_hidden_categs = m_tbShowAll->GetValue();
     bool catDisplayed = false;
-    for (auto& subcat : m_categ_children[category->CATEGID]) {
+    for (auto& subcat : m_categ_children[category->m_id]) {
         // Check if the subcategory should be shown
-        bool subcatDisplayed = (show_hidden_categs || subcat.ACTIVE.GetValue() || subcat.CATEGID == m_init_selected_categ_id) && CategoryModel::full_name(subcat.CATEGID).Lower().Matches(m_maskStr + "*");
+        bool subcatDisplayed = (show_hidden_categs || subcat.m_active || subcat.m_id == m_init_selected_categ_id) && CategoryModel::full_name(subcat.m_id).Lower().Matches(m_maskStr + "*");
         // Append it to get the item ID
-        wxTreeItemId newId = m_treeCtrl->AppendItem(parent, subcat.CATEGNAME);
+        wxTreeItemId newId = m_treeCtrl->AppendItem(parent, subcat.m_name);
         // Check if any subcategories are not filtered out
         subcatDisplayed |= AppendSubcategoryItems(newId, &subcat);
         if (subcatDisplayed)
         {
             m_treeCtrl->SetItemData(newId, new mmTreeItemCateg(subcat));
-            if (!categShowStatus(subcat.CATEGID)) m_treeCtrl->SetItemTextColour(newId, m_hiddenColor);
-            if (m_categ_id == subcat.CATEGID) m_selectedItemId = newId;
+            if (!categShowStatus(subcat.m_id)) m_treeCtrl->SetItemTextColour(newId, m_hiddenColor);
+            if (m_categ_id == subcat.m_id) m_selectedItemId = newId;
         }
         // otherwise the subcategory and all descendants are filtered out, so delete the item
         else m_treeCtrl->Delete(newId);
@@ -203,16 +203,16 @@ void CategoryManager::fillControls()
     wxTreeItemId maincat = root_;
     m_categ_children.clear();
     for (CategoryData cat : CategoryModel::instance().find_all(CategoryCol::COL_ID_CATEGNAME)) {
-        m_categ_children[cat.PARENTID].push_back(cat);
+        m_categ_children[cat.m_parent_id].push_back(cat);
     }
 
     for (auto& category : m_categ_children[-1])
     {
-        bool cat_bShow = categShowStatus(category.CATEGID);
-        bool catDisplayed = (show_hidden_categs || cat_bShow || category.CATEGID == m_init_selected_categ_id) && CategoryModel::full_name(category.CATEGID).Lower().Matches(match);
+        bool cat_bShow = categShowStatus(category.m_id);
+        bool catDisplayed = (show_hidden_categs || cat_bShow || category.m_id == m_init_selected_categ_id) && CategoryModel::full_name(category.m_id).Lower().Matches(match);
 
         // Append top level category to root_ to get the item ID
-        maincat = m_treeCtrl->AppendItem(root_, category.CATEGNAME);
+        maincat = m_treeCtrl->AppendItem(root_, category.m_name);
         // If the category has any subcategories, append them
         catDisplayed |= AppendSubcategoryItems(maincat, &category);
         // If the main category or any subcategory are shown
@@ -220,9 +220,9 @@ void CategoryManager::fillControls()
             m_treeCtrl->SetItemData(maincat, new mmTreeItemCateg(category));
             if (!cat_bShow)
                 m_treeCtrl->SetItemTextColour(maincat, m_hiddenColor);
-            if (m_categ_id == category.CATEGID)
+            if (m_categ_id == category.m_id)
                 m_selectedItemId = maincat;
-            if (m_maskStr.IsEmpty() && (m_categoryVisible.find(category.CATEGID) != m_categoryVisible.end()) && !m_categoryVisible.at(category.CATEGID))
+            if (m_maskStr.IsEmpty() && (m_categoryVisible.find(category.m_id) != m_categoryVisible.end()) && !m_categoryVisible.at(category.m_id))
                 m_treeCtrl->CollapseAllChildren(maincat);
             else m_treeCtrl->ExpandAllChildren(maincat);
         }
@@ -368,8 +368,7 @@ void CategoryManager::OnAdd(wxCommandEvent& /*event*/)
         m_treeCtrl->GetItemData(m_selectedItemId)
     )->getCategData();
     CategoryData new_category_d = CategoryData();
-    new_category_d.CATEGNAME = name;
-    new_category_d.ACTIVE    = 1;
+    new_category_d.m_name = name;
     if (m_selectedItemId == root_) {
         const auto& category_a = CategoryModel::instance().find(
             CategoryCol::CATEGNAME(name),
@@ -383,12 +382,12 @@ void CategoryManager::OnAdd(wxCommandEvent& /*event*/)
             );
             return;
         }
-        new_category_d.PARENTID = -1;
+        new_category_d.m_parent_id = -1;
     }
     else {
         const auto& category_a = CategoryModel::instance().find(
             CategoryCol::CATEGNAME(name),
-            CategoryCol::PARENTID(selectedCategory->CATEGID)
+            CategoryCol::PARENTID(selectedCategory->m_id)
         );
         if (!category_a.empty()) {
             wxMessageBox(
@@ -398,7 +397,7 @@ void CategoryManager::OnAdd(wxCommandEvent& /*event*/)
             );
             return;
         }
-        new_category_d.PARENTID = selectedCategory->CATEGID;
+        new_category_d.m_parent_id = selectedCategory->m_id;
     }
 
     CategoryModel::instance().add_data_n(new_category_d);
@@ -411,7 +410,7 @@ void CategoryManager::OnAdd(wxCommandEvent& /*event*/)
     m_treeCtrl->SelectItem(tid);
     m_treeCtrl->SetFocus();
     m_refresh_requested = true;
-    m_categ_id = new_category_d.CATEGID;
+    m_categ_id = new_category_d.m_id;
     return;
 }
 
@@ -425,7 +424,7 @@ void CategoryManager::OnBeginDrag(wxTreeEvent& event)
 
     mmTreeItemCateg* iData = dynamic_cast<mmTreeItemCateg*>
         (m_treeCtrl->GetItemData(sourceItem));
-    m_dragSourceCATEGID = iData->getCategData()->CATEGID;
+    m_dragSourceCATEGID = iData->getCategData()->m_id;
     event.Allow();
 }
 
@@ -437,7 +436,7 @@ void CategoryManager::OnEndDrag(wxTreeEvent& event)
     if (destItem.IsOk() && destItem != root_) {
         CategoryData* newParent = dynamic_cast<mmTreeItemCateg*>(m_treeCtrl->GetItemData(destItem))->getCategData();
         if (newParent) {
-            categID = newParent->CATEGID;
+            categID = newParent->m_id;
         }
     }
 
@@ -445,13 +444,13 @@ void CategoryManager::OnEndDrag(wxTreeEvent& event)
 
     CategoryData* sourceCat = CategoryModel::instance().unsafe_get_data_n(m_dragSourceCATEGID);
 
-    if (categID == sourceCat->PARENTID)
+    if (categID == sourceCat->m_parent_id)
         return;
 
     if (!CategoryModel::instance().find(
-        CategoryCol::CATEGNAME(sourceCat->CATEGNAME),
+        CategoryCol::CATEGNAME(sourceCat->m_name),
         CategoryCol::PARENTID(categID)
-    ).empty() && sourceCat->PARENTID != categID) {
+    ).empty() && sourceCat->m_parent_id != categID) {
         wxMessageBox(_t("Unable to move a subcategory to a category that already has a subcategory with that name. Consider renaming before moving.")
             , _t("A subcategory with this name already exists")
             , wxOK | wxICON_ERROR);
@@ -460,8 +459,8 @@ void CategoryManager::OnEndDrag(wxTreeEvent& event)
 
     wxString subtree_root;
     for (const auto& subcat : CategoryModel::sub_tree(sourceCat)) {
-        if (subcat.PARENTID == sourceCat->CATEGID) subtree_root = subcat.CATEGNAME;
-        if (subcat.CATEGID == categID) {
+        if (subcat.m_parent_id == sourceCat->m_id) subtree_root = subcat.m_name;
+        if (subcat.m_id == categID) {
             wxMessageBox(wxString::Format("Unable to move a category to one of its own descendants.\n\nConsider first relocating subcategory %s to move the subtree.", subtree_root)
                 , _t("Target category is a descendant")
                 , wxOK | wxICON_ERROR);
@@ -479,7 +478,7 @@ void CategoryManager::OnEndDrag(wxTreeEvent& event)
     if (msgDlg.ShowModal() != wxID_YES)
         return;
 
-    sourceCat->PARENTID = categID;
+    sourceCat->m_parent_id = categID;
     CategoryModel::instance().unsafe_update_data_n(sourceCat);
 
     m_refresh_requested = true;
@@ -517,7 +516,7 @@ void CategoryManager::mmDoDeleteSelectedCategory()
         );
         for (const auto& subcat : CategoryModel::sub_tree(CategoryModel::instance().get_data_n(m_categ_id))) {
             TrxModel::DataA trans = TrxModel::instance().find(
-                TrxCol::CATEGID(subcat.CATEGID)
+                TrxCol::CATEGID(subcat.m_id)
             );
             deletedTrans.insert(deletedTrans.end(), trans.begin(), trans.end());
         }
@@ -526,7 +525,7 @@ void CategoryManager::mmDoDeleteSelectedCategory()
         );
         for (const auto& subcat : CategoryModel::sub_tree(CategoryModel::instance().get_data_n(m_categ_id))) {
             TrxSplitModel::DataA trans = TrxSplitModel::instance().find(
-                TrxSplitCol::CATEGID(subcat.CATEGID)
+                TrxSplitCol::CATEGID(subcat.m_id)
             );
             splits.insert(splits.end(), trans.begin(), trans.end());
         }
@@ -563,7 +562,7 @@ void CategoryManager::mmDoDeleteSelectedCategory()
         }
 
         for (auto& subcat : CategoryModel::sub_tree(CategoryModel::instance().get_data_n(m_categ_id)))
-            CategoryModel::instance().purge_id(subcat.CATEGID);
+            CategoryModel::instance().purge_id(subcat.m_id);
 
         CategoryModel::instance().purge_id(m_categ_id);
     }
@@ -603,7 +602,7 @@ void CategoryManager::OnDoubleClicked(wxTreeEvent& /*event*/)
     {
         mmTreeItemCateg* iData = dynamic_cast<mmTreeItemCateg*>
             (m_treeCtrl->GetItemData(m_selectedItemId));
-        m_categ_id = iData->getCategData()->CATEGID;
+        m_categ_id = iData->getCategData()->m_id;
         EndModal(wxID_OK);
     }
 }
@@ -627,7 +626,7 @@ void CategoryManager::OnSelChanged(wxTreeEvent& event)
         dynamic_cast<mmTreeItemCateg*>(m_treeCtrl->GetItemData(m_selectedItemId));
     if (!bRootSelected && iData)
     {
-        m_categ_id = iData->getCategData()->CATEGID;
+        m_categ_id = iData->getCategData()->m_id;
 
         m_buttonDelete->Enable(!mmIsUsed());
         m_buttonSelect->Enable(m_IsSelection && !bRootSelected && !CategoryModel::is_hidden(m_categ_id));
@@ -655,14 +654,14 @@ void CategoryManager::OnEdit(wxCommandEvent& /*event*/)
 
     CategoryModel::DataA category_a = CategoryModel::instance().find(
         CategoryCol::CATEGNAME(text),
-        CategoryCol::PARENTID(category->PARENTID)
+        CategoryCol::PARENTID(category->m_parent_id)
     );
     if (!category_a.empty()) {
         wxString errMsg = _t("A category with this name already exists for the parent");
         wxMessageBox(errMsg, _t("Category Manager: Editing Error"), wxOK | wxICON_ERROR);
         return;
     }
-    category->CATEGNAME = text;
+    category->m_name = text;
     CategoryModel::instance().unsafe_save_data_n(category);
     mmWebApp::MMEX_WebApp_UpdateCategory();
 
@@ -680,7 +679,7 @@ wxTreeItemId CategoryManager::getTreeItemFor(const wxTreeItemId& itemID, const w
     wxTreeItemId catID = m_treeCtrl->GetFirstChild(itemID, treeDummyValue);
     while (catID.IsOk() && searching)
     {
-        if (itemText == m_treeCtrl->GetItemText(catID) && parentid == dynamic_cast<mmTreeItemCateg*>(m_treeCtrl->GetItemData(catID))->getCategData()->PARENTID)
+        if (itemText == m_treeCtrl->GetItemText(catID) && parentid == dynamic_cast<mmTreeItemCateg*>(m_treeCtrl->GetItemData(catID))->getCategData()->m_parent_id)
             searching = false;
         else
             catID = m_treeCtrl->GetNextChild(itemID, treeDummyValue);
@@ -692,7 +691,7 @@ void CategoryManager::setTreeSelection(int64 category_id)
 {
     const CategoryData* category_n = CategoryModel::instance().get_data_n(category_id);
     if (category_n) {
-        setTreeSelection(category_n->CATEGNAME, category_n->PARENTID);
+        setTreeSelection(category_n->m_name, category_n->m_parent_id);
     }
     m_categ_id = category_id;
 }
@@ -776,10 +775,10 @@ void CategoryManager::OnMenuSelected(wxCommandEvent& event)
         case MENU_ITEM_HIDE:
         {
             m_treeCtrl->SetItemTextColour(m_selectedItemId, m_hiddenColor);
-            cat->ACTIVE = 0;
+            cat->m_active = false;
             CategoryModel::instance().unsafe_update_data_n(cat);
             for (auto& subcat_d : CategoryModel::sub_tree(cat)) {
-                subcat_d.ACTIVE = 0;
+                subcat_d.m_active = false;
                 CategoryModel::instance().save_data_n(subcat_d);
             }
             break;
@@ -787,10 +786,10 @@ void CategoryManager::OnMenuSelected(wxCommandEvent& event)
         case MENU_ITEM_UNHIDE:
         {
             m_treeCtrl->SetItemTextColour(m_selectedItemId, NormalColor_);
-            cat->ACTIVE = 1;
+            cat->m_active = true;
             CategoryModel::instance().unsafe_update_data_n(cat);
             for (auto& subcat_d : CategoryModel::sub_tree(cat)) {
-                subcat_d.ACTIVE = 1;
+                subcat_d.m_active = true;
                 CategoryModel::instance().save_data_n(subcat_d);
             }
             break;
@@ -820,7 +819,7 @@ void CategoryManager::OnClearSettings(wxCommandEvent& /*event*/)
         auto category_a = CategoryModel::instance().find_all();
         CategoryModel::instance().Savepoint();
         for (auto &category_d : category_a) {
-            category_d.ACTIVE = 1;
+            category_d.m_active = true;
             CategoryModel::instance().save_data_n(category_d);
         }
         CategoryModel::instance().ReleaseSavepoint();

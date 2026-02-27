@@ -573,14 +573,14 @@ void mmPayeeSelectionDialog::AddCategoryToChoice(wxChoice* choice, long long cat
     wxString indent;
     for (int i = 0; i < level; ++i)
         indent += "  ";
-    wxString itemText = indent + category.CATEGNAME;
+    wxString itemText = indent + category.m_name;
 
     wxString clientData = wxString::Format("%lld", categId);
     choice->Append(itemText, new wxStringClientData(clientData));
 
     for (const auto& child : catMap)
     {
-        if (child.second.PARENTID.GetValue() == categId)
+        if (child.second.m_parent_id.GetValue() == categId)
             AddCategoryToChoice(choice, child.first, catMap, level + 1);
     }
 }
@@ -723,12 +723,12 @@ mmPayeeSelectionDialog::mmPayeeSelectionDialog(wxWindow* parent, const wxString&
     categoryMap.clear();
     for (const auto& cat : categories)
     {
-        categoryMap[cat.CATEGID.GetValue()] = cat;
+        categoryMap[cat.m_id.GetValue()] = cat;
     }
     for (const auto& cat : categories)
     {
-        if (cat.PARENTID.GetValue() == -1)
-            AddCategoryToChoice(categoryChoice_, cat.CATEGID.GetValue(), categoryMap, 0);
+        if (cat.m_parent_id.GetValue() == -1)
+            AddCategoryToChoice(categoryChoice_, cat.m_id.GetValue(), categoryMap, 0);
     }
     categoryChoice_->SetSelection(0);
 
@@ -936,7 +936,7 @@ mmOFXImportDialog::mmOFXImportDialog(wxWindow* parent)
         CategoryCol::CATEGNAME(OP_EQ, "Transfer")
     );
     if (!transferCats.empty()) {
-        transferCategId_ = transferCats[0].CATEGID.GetValue();
+        transferCategId_ = transferCats[0].m_id.GetValue();
     }
     else {
         wxLogWarning("Transfer category not found in database. Transfers may not display correctly.");
@@ -1694,7 +1694,7 @@ bool mmOFXImportDialog::ImportTransactions(wxXmlNode* banktranlist, wxLongLong a
                     }
                     transaction.CATEGID = payeeDlg.GetSelectedCategoryID();
                     const CategoryData* category_n = CategoryModel::instance().get_data_n(transaction.CATEGID);
-                    result.category = category_n ? category_n->CATEGNAME : "Uncategorized";
+                    result.category = category_n ? category_n->m_name : "Uncategorized";
                     if (payeeDlg.ShouldUpdateRegex() && payee_n) {
                         payee_n->m_pattern = payeeDlg.GetRegexPattern();
                         PayeeModel::instance().unsafe_update_data_n(payee_n);
@@ -1724,7 +1724,7 @@ bool mmOFXImportDialog::ImportTransactions(wxXmlNode* banktranlist, wxLongLong a
                     transaction.CATEGID = payee_n->m_category_id;
                     transaction.STATUS = (matchMethod == "Fuzzy" && markFuzzyFollowUp) ? "F" : "";
                     const CategoryData* category = CategoryModel::instance().get_data_n(transaction.CATEGID);
-                    result.category = category ? category->CATEGNAME : "Uncategorized";
+                    result.category = category ? category->m_name : "Uncategorized";
                     stats.autoImportedCount++;
                     result.imported = true;
                 }

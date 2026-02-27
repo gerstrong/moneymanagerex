@@ -330,10 +330,10 @@ bool BudgetPanel::DisplayEntryAllowed(int64 categoryID, int64 subcategoryID)
 
     if (categoryID > 0) {
         displayDetails_[categoryID].second = result;
-        for (const auto& subcat : CategoryModel::sub_tree(
+        for (const auto& subcat_d : CategoryModel::sub_tree(
             CategoryModel::instance().get_data_n(categoryID)
         )) {
-            result = result || DisplayEntryAllowed(subcat.CATEGID, -1);
+            result = result || DisplayEntryAllowed(subcat_d.m_id, -1);
         }
     }
     return result;
@@ -396,14 +396,14 @@ void BudgetPanel::initVirtualListControl()
         , false, (evaluateTransfer ? &budgetAmt_ : 0));
 
     //start with only the root categories
-    CategoryModel::DataA categories = CategoryModel::instance().find(
+    CategoryModel::DataA category_a = CategoryModel::instance().find(
         CategoryCol::PARENTID(-1)
     );
-    std::stable_sort(categories.begin(), categories.end(), CategoryData::SorterByCATEGNAME());
-    for (const auto& category : categories)
+    std::stable_sort(category_a.begin(), category_a.end(), CategoryData::SorterByCATEGNAME());
+    for (const auto& category_d : category_a)
     {
-        displayDetails_[category.CATEGID].first = 0;
-        double estimated = getEstimate(category.CATEGID);
+        displayDetails_[category_d.m_id].first = 0;
+        double estimated = getEstimate(category_d.m_id);
         if (estimated < 0)
             estExpenses += estimated;
         else
@@ -412,7 +412,7 @@ void BudgetPanel::initVirtualListControl()
         double actual = 0;
         if (currentView_ != VIEW_PLANNED || estimated != 0)
         {
-            actual = categoryStats_[category.CATEGID][0];
+            actual = categoryStats_[category_d.m_id][0];
             if (actual < 0)
                 actExpenses += actual;
             else
@@ -420,66 +420,65 @@ void BudgetPanel::initVirtualListControl()
         }
 
 
-        budgetTotals_[category.CATEGID].first = estimated;
-        budgetTotals_[category.CATEGID].second = actual;
+        budgetTotals_[category_d.m_id].first = estimated;
+        budgetTotals_[category_d.m_id].second = actual;
 
-        if (DisplayEntryAllowed(category.CATEGID, -1))
-            budget_.emplace_back(category.CATEGID, -1);
+        if (DisplayEntryAllowed(category_d.m_id, -1))
+            budget_.emplace_back(category_d.m_id, -1);
 
         std::vector<int> totals_queue;
-        //now a depth-first walk of the subtree of this root category
-        CategoryModel::DataA subcats = CategoryModel::sub_tree(category);
-        for (int i = 0; i < static_cast<int>(subcats.size()); i++)
-        {
-            estimated = getEstimate(subcats[i].CATEGID);
+        //now a depth-first walk of the subtree of this root category_d
+        CategoryModel::DataA subcat_a = CategoryModel::sub_tree(category_d);
+        for (int i = 0; i < static_cast<int>(subcat_a.size()); i++) {
+            estimated = getEstimate(subcat_a[i].m_id);
             if (estimated < 0)
                 estExpenses += estimated;
             else
                 estIncome += estimated;
 
             actual = 0;
-            if (currentView_ != VIEW_PLANNED || estimated != 0)
-            {
-                actual = categoryStats_[subcats[i].CATEGID][0];
+            if (currentView_ != VIEW_PLANNED || estimated != 0) {
+                actual = categoryStats_[subcat_a[i].m_id][0];
                 if (actual < 0)
                     actExpenses += actual;
                 else
                     actIncome += actual;
             }
             //save totals for this subcategory
-            budgetTotals_[subcats[i].CATEGID].first = estimated;
-            budgetTotals_[subcats[i].CATEGID].second = actual;
+            budgetTotals_[subcat_a[i].m_id].first = estimated;
+            budgetTotals_[subcat_a[i].m_id].second = actual;
 
             //update totals of the category
-            budgetTotals_[category.CATEGID].first += estimated;
-            budgetTotals_[category.CATEGID].second += actual;
+            budgetTotals_[category_d.m_id].first += estimated;
+            budgetTotals_[category_d.m_id].second += actual;
 
             //walk up the hierarchy and update all the parent totals as well
-            int64 nextParent = subcats[i].PARENTID;
-            displayDetails_[subcats[i].CATEGID].first = 1;
+            int64 nextParent = subcat_a[i].m_parent_id;
+            displayDetails_[subcat_a[i].m_id].first = 1;
             for (int j = i; j > 0; j--) {
-                if (subcats[j - 1].CATEGID == nextParent) {
-                    displayDetails_[subcats[i].CATEGID].first++;
-                    budgetTotals_[subcats[j - 1].CATEGID].first += estimated;
-                    budgetTotals_[subcats[j - 1].CATEGID].second += actual;
-                    nextParent = subcats[j - 1].PARENTID;
-                    if (nextParent == category.CATEGID)
+                if (subcat_a[j - 1].m_id == nextParent) {
+                    displayDetails_[subcat_a[i].m_id].first++;
+                    budgetTotals_[subcat_a[j - 1].m_id].first += estimated;
+                    budgetTotals_[subcat_a[j - 1].m_id].second += actual;
+                    nextParent = subcat_a[j - 1].m_parent_id;
+                    if (nextParent == category_d.m_id)
                         break;
                 }
             }
 
             // add the subcategory row to the display list
-            if (DisplayEntryAllowed(subcats[i].CATEGID, -1))
-                budget_.emplace_back(subcats[i].CATEGID, -1);
+            if (DisplayEntryAllowed(subcat_a[i].m_id, -1))
+                budget_.emplace_back(subcat_a[i].m_id, -1);
 
             // check if we need to show any total rows before the next subcategory
-            if (i < static_cast<int>(subcats.size()) - 1) { //not the last subcategory
-                if (subcats[i].CATEGID == subcats[i + 1].PARENTID) totals_queue.emplace_back(i); //if next subcategory is our child, queue the total for after the children
-                else if (subcats[i].PARENTID != subcats[i + 1].PARENTID) { // last sibling -- we've exhausted this branch, so display all the totals we held on to
-                    while (!totals_queue.empty() && subcats[totals_queue.back()].CATEGID != subcats[i + 1].PARENTID) {
-                        if (DisplayEntryAllowed(-1, subcats[totals_queue.back()].CATEGID))
-                        {
-                            budget_.emplace_back(-1, subcats[totals_queue.back()].CATEGID);
+            if (i < static_cast<int>(subcat_a.size()) - 1) { //not the last subcategory
+                //if next subcategory is our child, queue the total for after the children
+                if (subcat_a[i].m_id == subcat_a[i + 1].m_parent_id) totals_queue.emplace_back(i);
+                else if (subcat_a[i].m_parent_id != subcat_a[i + 1].m_parent_id) {
+                    // last sibling -- we've exhausted this branch, so display all the totals we held on to
+                    while (!totals_queue.empty() && subcat_a[totals_queue.back()].m_id != subcat_a[i + 1].m_parent_id) {
+                        if (DisplayEntryAllowed(-1, subcat_a[totals_queue.back()].m_id)) {
+                            budget_.emplace_back(-1, subcat_a[totals_queue.back()].m_id);
                             size_t transCatTotalIndex = budget_.size() - 1;
                             m_lc->RefreshItem(transCatTotalIndex);
                         }
@@ -490,9 +489,8 @@ void BudgetPanel::initVirtualListControl()
             // the very last subcategory, so show the rest of the queued totals
             else {
                 while (!totals_queue.empty()) {
-                    if (DisplayEntryAllowed(-1, subcats[totals_queue.back()].CATEGID))
-                    {
-                        budget_.emplace_back(-1, subcats[totals_queue.back()].CATEGID);
+                    if (DisplayEntryAllowed(-1, subcat_a[totals_queue.back()].m_id)) {
+                        budget_.emplace_back(-1, subcat_a[totals_queue.back()].m_id);
                         size_t transCatTotalIndex = budget_.size() - 1;
                         m_lc->RefreshItem(transCatTotalIndex);
                     }
@@ -502,9 +500,8 @@ void BudgetPanel::initVirtualListControl()
         }
 
         // show the total of the category after all subcats have been shown
-        if (DisplayEntryAllowed(-1, category.CATEGID))
-        {
-            budget_.emplace_back(-1, category.CATEGID);
+        if (DisplayEntryAllowed(-1, category_d.m_id)) {
+            budget_.emplace_back(-1, category_d.m_id);
             size_t transCatTotalIndex = budget_.size() - 1;
             m_lc->RefreshItem(transCatTotalIndex);
         }
@@ -533,12 +530,12 @@ void BudgetPanel::initVirtualListControl()
     UpdateBudgetHeading();
 }
 
-double BudgetPanel::getEstimate(int64 category) const
+double BudgetPanel::getEstimate(int64 category_id) const
 {
     try
     {
-        BudgetModel::PERIOD_ID period = budgetPeriod_.at(category);
-        double amt = budgetAmt_.at(category);
+        BudgetModel::PERIOD_ID period = budgetPeriod_.at(category_id);
+        double amt = budgetAmt_.at(category_id);
         return BudgetModel::getEstimate(monthlyBudget_, period, amt);
     }
     catch (std::out_of_range const& exc)
@@ -572,8 +569,8 @@ wxString BudgetPanel::getItem(long item, int col_id)
             budget_[item].first > 0 ? budget_[item].first : budget_[item].second
         );
         if (category_n) {
-            wxString name = category_n->CATEGNAME;
-            for (int64 i = displayDetails_[category_n->CATEGID].first; i > 0; i--) {
+            wxString name = category_n->m_name;
+            for (int64 i = displayDetails_[category_n->m_id].first; i > 0; i--) {
                 name.Prepend("    ");
             }
             return name;

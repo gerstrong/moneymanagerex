@@ -167,7 +167,7 @@ wxString mmReportBudgetingPerformance::getHTMLText()
                 bool budgetDeductMonthly = PrefModel::instance().getBudgetDeductMonthly();
                 // pull categories from DB and store
                 for (CategoryData category : CategoryModel::instance().find_all(CategoryCol::COL_ID_CATEGNAME, false)) {
-                    categ_children[category.PARENTID].push_back(category);
+                    categ_children[category.m_parent_id].push_back(category);
                 }
 
                 std::vector<CategoryData> totals_stack;
@@ -176,11 +176,11 @@ wxString mmReportBudgetingPerformance::getHTMLText()
                 {
                     CategoryData category = categ_stack.back();
                     categ_stack.pop_back();
-                    int64 catID = category.CATEGID;
+                    int64 catID = category.m_id;
                     double estimate = 0;
                     double actual = 0;
                     for (auto child : categ_children[catID]) {
-                        formattedNames[child.CATEGID] = wxString("&nbsp;&nbsp;&nbsp;&nbsp;").Append(formattedNames[catID]);
+                        formattedNames[child.m_id] = wxString("&nbsp;&nbsp;&nbsp;&nbsp;").Append(formattedNames[catID]);
                         categ_stack.push_back(child);
                     }
                     int month = -1;
@@ -188,7 +188,7 @@ wxString mmReportBudgetingPerformance::getHTMLText()
                     hb.startTableCell(" style='vertical-align:middle;'");
                     hb.addText(wxString::Format(formattedNames[catID] + "<a href=\"viewtrans:%lld\" target=\"_blank\">%s</a>"
                         , catID
-                        , category.CATEGNAME));
+                        , category.m_name));
                     hb.endTableCell();
                     for (const auto& stat : categoryStats[catID])
                     {
@@ -236,10 +236,10 @@ wxString mmReportBudgetingPerformance::getHTMLText()
                         //update all the ancestor totals
                         for (auto i = totals_stack.rbegin(); i < totals_stack.rend(); i++)
                         {
-                            catTotalsEstimated[i->CATEGID][month] += estimate;
-                            catTotalsActual[i->CATEGID][month] += actual;
-                            catTotalsEstimated[i->CATEGID][12] += estimate;
-                            catTotalsActual[i->CATEGID][12] += actual;
+                            catTotalsEstimated[i->m_id][month] += estimate;
+                            catTotalsActual[i->m_id][month] += actual;
+                            catTotalsEstimated[i->m_id][12] += estimate;
+                            catTotalsActual[i->m_id][12] += actual;
                         }
                     }
 
@@ -260,17 +260,17 @@ wxString mmReportBudgetingPerformance::getHTMLText()
                         hb.addTableCell("-");
                     hb.endTableRow();
 
-                    if (!categ_stack.empty() && categ_stack.back().PARENTID == catID)
+                    if (!categ_stack.empty() && categ_stack.back().m_parent_id == catID)
                         totals_stack.push_back(category); //if next subcategory is our child, store the parent to display after the children
                     else
-                        while (!totals_stack.empty() && !categ_stack.empty() && totals_stack.back().CATEGID != categ_stack.back().PARENTID) {
+                        while (!totals_stack.empty() && !categ_stack.empty() && totals_stack.back().m_id != categ_stack.back().m_parent_id) {
                             hb.startAltTableRow();
                             {
-                                int64 id = totals_stack.back().CATEGID;
+                                int64 id = totals_stack.back().m_id;
                                 hb.startTableCell(" style='vertical-align:middle;'");
                                 hb.addText(wxString::Format(formattedNames[id] + "<a href=\"viewtrans:%lld:-2\" target=\"_blank\">%s</a>"
                                     , id
-                                    , totals_stack.back().CATEGNAME));
+                                    , totals_stack.back().m_name));
                                 hb.endTableCell();
                                 // monthly totals
                                 for (int m = 0; m < 12; m++)
@@ -311,11 +311,11 @@ wxString mmReportBudgetingPerformance::getHTMLText()
                 {
                     hb.startAltTableRow();
                     {
-                        int64 id = totals_stack.back().CATEGID;
+                        int64 id = totals_stack.back().m_id;
                         hb.startTableCell(" style='vertical-align:middle;'");
                         hb.addText(wxString::Format(formattedNames[id] + "<a href=\"viewtrans:%lld:-2\" target=\"_blank\">%s</a>"
                             , id
-                            , totals_stack.back().CATEGNAME));
+                            , totals_stack.back().m_name));
                         hb.endTableCell();
                         // monthly totals
                         for (int m = 0; m < 12; m++)

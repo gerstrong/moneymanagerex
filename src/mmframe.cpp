@@ -2459,15 +2459,15 @@ bool mmGUIFrame::createDataStore(const wxString& fileName, const wxString& pwd, 
                 if (2 == sscanf(catData.mb_str(),"*%lld:%lld*", &catID, &subCatID)) {
                     if (subCatID == -1) {
                         CategoryData* cat_n = CategoryModel::instance().unsafe_get_data_n(catID);
-                        if (cat_n && cat_n->CATEGID != -1) {
-                            cat_n->ACTIVE = 0;
+                        if (cat_n && cat_n->m_id != -1) {
+                            cat_n->m_active = false;
                             CategoryModel::instance().unsafe_update_data_n(cat_n);
                         }
                     }
                     else {
                         CategoryData* subcat_n = CategoryModel::instance().unsafe_get_data_n(subCatID);
-                        if (subcat_n && subcat_n->CATEGID != -1) {
-                            subcat_n->ACTIVE = 0;
+                        if (subcat_n && subcat_n->m_id != -1) {
+                            subcat_n->m_active = false;
                             CategoryModel::instance().unsafe_update_data_n(subcat_n);
                         }
                     }

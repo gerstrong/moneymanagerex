@@ -61,10 +61,9 @@ CategoryModel& CategoryModel::instance()
 const wxArrayString CategoryModel::FilterCategory(const wxString& category_pattern)
 {
     wxArrayString categories;
-    for (auto &category : CategoryModel::instance().find_all())
-    {
-        if (category.CATEGNAME.Lower().Matches(category_pattern.Lower().Append("*")))
-            categories.push_back(category.CATEGNAME);
+    for (auto& category_d : CategoryModel::instance().find_all()) {
+        if (category_d.m_name.Lower().Matches(category_pattern.Lower().Append("*")))
+            categories.push_back(category_d.m_name);
     }
     return categories;
 }
@@ -72,11 +71,11 @@ const wxArrayString CategoryModel::FilterCategory(const wxString& category_patte
 const CategoryData* CategoryModel::get_name(const wxString& name, const wxString& parentname)
 {
     const Data* category_n = nullptr;
-    DataA items = this->find(CategoryCol::CATEGNAME(name));
-    for (const auto& item : items) {
-        if (item.PARENTID != -1) {
-            if (instance().get_data_n(item.PARENTID)->CATEGNAME.Lower() == parentname.Lower()) {
-                category_n = get_data_n(item.CATEGID);
+    DataA category_a = this->find(CategoryCol::CATEGNAME(name));
+    for (const auto& category_d : category_a) {
+        if (category_d.m_parent_id != -1) {
+            if (instance().get_data_n(category_d.m_parent_id)->m_name.Lower() == parentname.Lower()) {
+                category_n = get_data_n(category_d.m_id);
                 break;
             }
         }
@@ -94,70 +93,72 @@ const CategoryData* CategoryModel::get_key(const wxString& name, const int64 par
     if (category_n)
         return category_n;
 
-    DataA items = this->find(CategoryCol::CATEGNAME(name), CategoryCol::PARENTID(parentid));
-    if (!items.empty())
-        category_n = get_data_n(items[0].CATEGID);
+    DataA category_a = this->find(
+        CategoryCol::CATEGNAME(name),
+        CategoryCol::PARENTID(parentid)
+    );
+    if (!category_a.empty())
+        category_n = get_data_n(category_a[0].m_id);
     return category_n;
 }
 
 const std::map<wxString, int64> CategoryModel::all_categories(bool excludeHidden)
 {
     std::map<wxString, int64> full_categs;
-    for (const auto& c : instance().find_all(Col::COL_ID_CATEGID))
-    {
-        if (excludeHidden && (c.ACTIVE == 0))
+    for (const auto& category_d : instance().find_all(Col::COL_ID_CATEGID)) {
+        if (excludeHidden && !category_d.m_active)
             continue;
 
-        full_categs[full_name(c.CATEGID)] = c.CATEGID;
+        full_categs[full_name(category_d.m_id)] = category_d.m_id;
     }
     return full_categs;
 }
 
-CategoryModel::DataA CategoryModel::sub_category(const Data* r)
+CategoryModel::DataA CategoryModel::sub_category(const Data* category_n)
 {
-    return instance().find(CategoryCol::PARENTID(r->CATEGID));
+    return instance().find(CategoryCol::PARENTID(category_n->m_id));
 }
 
-CategoryModel::DataA CategoryModel::sub_category(const Data& r)
+CategoryModel::DataA CategoryModel::sub_category(const Data& category_d)
 {
-    return instance().find(CategoryCol::PARENTID(r.CATEGID));
+    return instance().find(CategoryCol::PARENTID(category_d.m_id));
 }
 
-CategoryModel::DataA CategoryModel::sub_tree(const Data* r)
+CategoryModel::DataA CategoryModel::sub_tree(const Data* category_n)
 {
-    DataA subtree;
-    DataA subcategories = instance().find(CategoryCol::PARENTID(r->CATEGID));
-    std::stable_sort(subcategories.begin(), subcategories.end(), CategoryData::SorterByCATEGNAME());
-    for (const auto& subcategory : subcategories) {
-        subtree.push_back(subcategory);
-        DataA subtreecats = sub_tree(subcategory);
-        for (const auto& cat : subtreecats) {
-            subtree.push_back(cat);
+    DataA tree;
+    DataA sub_a = instance().find(CategoryCol::PARENTID(category_n->m_id));
+    std::stable_sort(sub_a.begin(), sub_a.end(), CategoryData::SorterByCATEGNAME());
+    for (const auto& sub_d : sub_a) {
+        tree.push_back(sub_d);
+        DataA subtree_a = sub_tree(sub_d);
+        for (const auto& subtree_d : subtree_a) {
+            tree.push_back(subtree_d);
         }
     }
-    return subtree;
+    return tree;
 }
 
-CategoryModel::DataA CategoryModel::sub_tree(const Data& r)
+CategoryModel::DataA CategoryModel::sub_tree(const Data& category_d)
 {
-    return sub_tree(&r);
+    return sub_tree(&category_d);
 }
 
-const wxString CategoryModel::full_name(const Data* category)
+const wxString CategoryModel::full_name(const Data* category_n)
 {
     static wxString delimiter;
     if (delimiter.empty()) {
         delimiter = InfoModel::instance().getString("CATEG_DELIMITER", ":");
     }
-    if (!category) return "";
-    if (category->PARENTID == -1)
-        return category->CATEGNAME;
+    if (!category_n) return "";
+    if (category_n->m_parent_id == -1)
+        return category_n->m_name;
     else {
-        wxString name = category->CATEGNAME;
-        const Data* parentCategory = instance().get_data_n(category->PARENTID);
-        while (parentCategory) {
-            name = name.Prepend(delimiter).Prepend(parentCategory->CATEGNAME);
-            parentCategory = instance().get_data_n(parentCategory->PARENTID);
+        wxString name = category_n->m_name;
+        const Data* parent_n = instance().get_data_n(category_n->m_parent_id);
+        while (parent_n) {
+            name = name.Prepend(delimiter).Prepend(parent_n->m_name);
+            parent_n = instance().get_data_n(parent_n->m_parent_id);
         }
         return name;
     }
@@ -165,23 +166,23 @@ const wxString CategoryModel::full_name(const Data* category)
 
 const wxString CategoryModel::full_name(int64 category_id)
 {
-    const Data* category = instance().get_data_n(category_id);
-    return full_name(category);
+    const Data* category_n = instance().get_data_n(category_id);
+    return full_name(category_n);
 }
 
 const wxString CategoryModel::full_name(int64 category_id, wxString delimiter)
 {
-    const Data* category = instance().get_data_n(category_id);
-    if (!category)
+    const Data* category_n = instance().get_data_n(category_id);
+    if (!category_n)
         return "";
-    if (category->PARENTID == -1)
-        return category->CATEGNAME;
+    if (category_n->m_parent_id == -1)
+        return category_n->m_name;
     else {
-        wxString name = category->CATEGNAME;
-        const Data* parentCategory = instance().get_data_n(category->PARENTID);
-        while (parentCategory) {
-            name = name.Prepend(delimiter).Prepend(parentCategory->CATEGNAME);
-            parentCategory = instance().get_data_n(parentCategory->PARENTID);
+        wxString name = category_n->m_name;
+        const Data* parent_n = instance().get_data_n(category_n->m_parent_id);
+        while (parent_n) {
+            name = name.Prepend(delimiter).Prepend(parent_n->m_name);
+            parent_n = instance().get_data_n(parent_n->m_parent_id);
         }
         return name;
     }
@@ -192,11 +193,8 @@ const wxString CategoryModel::full_name(int64 category_id, wxString delimiter)
 
 bool CategoryModel::is_hidden(int64 catID)
 {
-    const auto category = CategoryModel::instance().get_data_n(catID);
-    if (category && category->ACTIVE == 0)
-        return true;
-
-    return false;
+    const auto category_n = CategoryModel::instance().get_data_n(catID);
+    return (category_n && !category_n->m_active);
 }
 
 bool CategoryModel::is_used(int64 id)
@@ -231,11 +229,11 @@ bool CategoryModel::is_used(int64 id)
     if (!sched_split_a.empty())
         return true;
 
-    DataA children = instance().find(CategoryCol::PARENTID(id));
-    if (!children.empty()){
+    DataA child_a = instance().find(CategoryCol::PARENTID(id));
+    if (!child_a.empty()){
         bool used = false;
-        for(const auto& child : children){
-            used = used || is_used(child.CATEGID);
+        for(const auto& child_d : child_a){
+            used = used || is_used(child_d.m_id);
         }
         return used;
     }
@@ -314,7 +312,7 @@ void CategoryModel::getCategoryStats(
         for (int m = 0; m < columns; m++)
         {
             int month = group_by_month ? m : 0;
-            categoryStats[category.CATEGID][month] = value;
+            categoryStats[category.m_id][month] = value;
         }
     }
     //Calculations

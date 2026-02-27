@@ -509,13 +509,11 @@ void TrxShareDialog::OnDeductibleSplit(wxCommandEvent&)
         const CategoryData* category_n = CategoryModel::instance().get_key(_("Investment"), int64(-1L));
         if (!category_n) {
             CategoryData new_category_d = CategoryData();
-            new_category_d.CATEGNAME = _("Investment");
-            new_category_d.ACTIVE    = 1;
-            new_category_d.PARENTID  = -1;
+            new_category_d.m_name = _("Investment");
             CategoryModel::instance().add_data_n(new_category_d);
             category_n = CategoryModel::instance().get_data_n(new_category_d.id());
         }
-        m_local_deductible_splits.push_back({category_n->CATEGID, commission, wxArrayInt64(), ""});
+        m_local_deductible_splits.push_back({category_n->m_id, commission, wxArrayInt64(), ""});
     }
 
     SplitDialog dlg(this, m_local_deductible_splits, m_stock_n->HELDAT);

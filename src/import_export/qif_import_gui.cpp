@@ -1740,15 +1740,14 @@ void mmQIFImportDialog::getOrCreateCategories()
             if (temp.Index(categStr + wxString::Format(":%lld", parentID)) == wxNOT_FOUND) {
                 if (!category_n) {
                     CategoryData new_category_d = CategoryData();
-                    new_category_d.CATEGNAME = categStr;
-                    new_category_d.ACTIVE    = 1;
-                    new_category_d.PARENTID  = parentID;
+                    new_category_d.m_name      = categStr;
+                    new_category_d.m_parent_id = parentID;
                     CategoryModel::instance().add_data_n(new_category_d);
                     category_n = CategoryModel::instance().get_data_n(new_category_d.id());
                 }
                 temp.Add(categStr + wxString::Format(":%lld", parentID));
             }
-            parentID = category_n->CATEGID;
+            parentID = category_n->m_id;
         }
         m_QIFcategoryNames[item.first] = parentID;
     }

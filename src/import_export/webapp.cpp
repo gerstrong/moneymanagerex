@@ -227,15 +227,15 @@ bool mmWebApp::WebApp_UpdatePayee()
     for (const auto& payee_d : PayeeModel::instance().find_all(PayeeCol::COL_ID_PAYEENAME)) {
         const CategoryData* def_category = CategoryModel::instance().get_data_n(payee_d.m_category_id);
         if (def_category) {
-            if (def_category->PARENTID == -1) {
-                def_category_name = def_category->CATEGNAME;
+            if (def_category->m_parent_id == -1) {
+                def_category_name = def_category->m_name;
                 def_subcategory_name = "None";
             }
             else {
-                const CategoryData* parent_category = CategoryModel::instance().get_data_n(def_category->PARENTID);
-                if (parent_category != nullptr && parent_category->PARENTID == -1) {
-                    def_category_name = parent_category->CATEGNAME;
-                    def_subcategory_name = def_category->CATEGNAME;
+                const CategoryData* parent_category = CategoryModel::instance().get_data_n(def_category->m_parent_id);
+                if (parent_category != nullptr && parent_category->m_parent_id == -1) {
+                    def_category_name = parent_category->m_name;
+                    def_subcategory_name = def_category->m_name;
                 }
                 else {
                     def_category_name = "None";
@@ -297,7 +297,7 @@ bool mmWebApp::WebApp_UpdateCategory()
 
         json_writer.StartObject();
         json_writer.Key("CategoryName");
-        json_writer.String(category.CATEGNAME.utf8_str());
+        json_writer.String(category.m_name.utf8_str());
 
         for (const auto &sub_category : CategoryModel::sub_category(category))
         {
@@ -305,7 +305,7 @@ bool mmWebApp::WebApp_UpdateCategory()
             if (first_category_run == true)
             {
                 json_writer.Key("SubCategoryName");
-                json_writer.String(sub_category.CATEGNAME.utf8_str());
+                json_writer.String(sub_category.m_name.utf8_str());
                 json_writer.EndObject();
 
                 first_category_run = false;
@@ -314,10 +314,10 @@ bool mmWebApp::WebApp_UpdateCategory()
             {
                 json_writer.StartObject();
                 json_writer.Key("CategoryName");
-                json_writer.String(category.CATEGNAME.utf8_str());
+                json_writer.String(category.m_name.utf8_str());
 
                 json_writer.Key("SubCategoryName");
-                json_writer.String(sub_category.CATEGNAME.utf8_str());
+                json_writer.String(sub_category.m_name.utf8_str());
                 json_writer.EndObject();
 
                 first_category_run = false;
@@ -506,12 +506,10 @@ int64 mmWebApp::MMEX_InsertNewTransaction(webtran_holder& WebAppTrans)
     //Search or insert Category
     const CategoryData* category_n = CategoryModel::instance().get_key(WebAppTrans.Category, int64(-1));
     if (category_n != nullptr)
-        categoryID = category_n->CATEGID;
+        categoryID = category_n->m_id;
     else {
         CategoryData new_category_d = CategoryData();
-        new_category_d.CATEGNAME = WebAppTrans.Category;
-        new_category_d.ACTIVE   = 1;
-        new_category_d.PARENTID = -1;
+        new_category_d.m_name = WebAppTrans.Category;
         CategoryModel::instance().add_data_n(new_category_d);
         categoryID = new_category_d.id();
     }
@@ -520,13 +518,12 @@ int64 mmWebApp::MMEX_InsertNewTransaction(webtran_holder& WebAppTrans)
     if (!WebAppTrans.SubCategory.IsEmpty()) {
         const CategoryData* subcategory_n = CategoryModel::instance().get_key(WebAppTrans.SubCategory, categoryID);
         if (subcategory_n) {
-            categoryID = subcategory_n->CATEGID;
+            categoryID = subcategory_n->m_id;
         }
         else if (categoryID != -1) {
             CategoryData new_subcategory_d = CategoryData();
-            new_subcategory_d.PARENTID  = categoryID;
-            new_subcategory_d.CATEGNAME = WebAppTrans.SubCategory;
-            new_subcategory_d.ACTIVE    = 1;
+            new_subcategory_d.m_name      = WebAppTrans.SubCategory;
+            new_subcategory_d.m_parent_id = categoryID;
             CategoryModel::instance().add_data_n(new_subcategory_d);
             categoryID = new_subcategory_d.id();
         }

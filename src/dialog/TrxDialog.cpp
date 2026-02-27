@@ -1025,14 +1025,13 @@ void TrxDialog::SetCategoryForPayee(const PayeeData *payee_n)
         const CategoryData* category_n = CategoryModel::instance().get_key(_t("Unknown"), int64(-1));
         if (!category_n) {
             CategoryData new_category_d = CategoryData();
-            new_category_d.CATEGNAME = _t("Unknown");
-            new_category_d.ACTIVE    = 1;
+            new_category_d.m_name = _t("Unknown");
             CategoryModel::instance().add_data_n(new_category_d);
             category_n = CategoryModel::instance().get_data_n(new_category_d.id());
             cbCategory_->mmDoReInitialize();
         }
 
-        m_journal_data.CATEGID = category_n->CATEGID;
+        m_journal_data.CATEGID = category_n->m_id;
         cbCategory_->ChangeValue(_t("Unknown"));
         return;
     }

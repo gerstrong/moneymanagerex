@@ -595,10 +595,10 @@ void ReportPanel::onNewWindow(wxWebViewEvent& evt)
             std::vector<int64> cats;
             // include all sub categories
             if (-2 == subCatID) {
-                for (const auto& subCategory :
+                for (const auto& subcat_d :
                     CategoryModel::sub_tree(CategoryModel::instance().get_data_n(catID))
                 ) {
-                    cats.push_back(subCategory.CATEGID);
+                    cats.push_back(subcat_d.m_id);
                 }
             }
             cats.push_back(catID);

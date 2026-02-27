@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: moneymanagerex\n"
 "Report-Msgid-Bugs-To: developer@moneymanagerex.org\n"
 "POT-Creation-Date: 2026-02-18 14:44+0000\n"
-"PO-Revision-Date: 2026-02-20 01:18\n"
+"PO-Revision-Date: 2026-02-27 01:16\n"
 "Last-Translator: \n"
 "Language-Team: French\n"
 "Language: fr_FR\n"
@@ -9349,7 +9349,7 @@ msgstr "Terminer plus tard"
 
 #: uicontrols/reconciledialog.cpp:231
 msgid "&Done"
-msgstr "&Terminé"
+msgstr "&Terminer"
 
 #: uicontrols/reconciledialog.cpp:522
 msgid "Show &status column"

@@ -244,20 +244,23 @@ void mmUnivCSVDialog::CreateControls()
     wxString prefix = GetSettingsPrfix();
     prefix.Replace("%d", "");
     wxString init_preset_name;
-    for (const auto& setting : SettingModel::instance().find(
+    for (const auto& setting_d : SettingModel::instance().find(
         SettingCol::SETTINGNAME(OP_GE, prefix + "0"),
         SettingCol::SETTINGNAME(OP_LT, prefix + "A")
     )) {
         Document json_doc;
-        if (json_doc.Parse(setting.SETTINGVALUE.utf8_str()).HasParseError()) {
+        if (json_doc.Parse(setting_d.m_value.utf8_str()).HasParseError()) {
             continue;
         }
 
         Value& template_name = GetValueByPointerWithDefault(json_doc, "/SETTING_NAME", "");
         const wxString setting_name = template_name.IsString() ? wxString::FromUTF8(template_name.GetString()) : "??";
         preset_choices.Add(setting_name);
-        m_preset_id[setting_name] = setting.SETTINGNAME;
-        if (!m_acct_default_preset[m_account_id].IsEmpty() && m_acct_default_preset[m_account_id] == setting.SETTINGNAME) init_preset_name = setting_name;
+        m_preset_id[setting_name] = setting_d.m_name;
+        if (!m_acct_default_preset[m_account_id].IsEmpty() &&
+            m_acct_default_preset[m_account_id] == setting_d.m_name
+        )
+            init_preset_name = setting_name;
     }
 
     m_choice_preset_name = new wxChoice(scrolledWindow, wxID_APPLY, wxDefaultPosition, wxDefaultSize, preset_choices, wxCB_SORT);
@@ -2481,11 +2484,11 @@ void mmUnivCSVDialog::OnButtonClearClick(wxCommandEvent& WXUNUSED(event))
             return;
         }
         wxString preset_id = m_preset_id[preset_name];
-        SettingModel::DataA data = SettingModel::instance().find(
+        SettingModel::DataA setting_a = SettingModel::instance().find(
             SettingCol::SETTINGNAME(preset_id)
         );
-        if (data.size() > 0)
-            SettingModel::instance().purge_id(data[0].SETTINGID);
+        if (setting_a.size() > 0)
+            SettingModel::instance().purge_id(setting_a[0].m_id);
 
         // update default presets to remove any that reference the deleted item
         for (auto& member : m_acct_default_preset)

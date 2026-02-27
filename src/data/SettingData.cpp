@@ -16,14 +16,11 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  ********************************************************/
 
-// PLEASE EDIT!
-// This is only sample code re-used from "table/SettingTable.cpp".
-
 #include "SettingData.h"
 
 SettingData::SettingData()
 {
-    SETTINGID = -1;
+    m_id = -1;
 }
 
 // Convert SettingData to SettingRow
@@ -31,9 +28,9 @@ SettingRow SettingData::to_row() const
 {
     SettingRow row;
 
-    row.SETTINGID = SETTINGID;
-    row.SETTINGNAME = SETTINGNAME;
-    row.SETTINGVALUE = SETTINGVALUE;
+    row.SETTINGID    = m_id;
+    row.SETTINGNAME  = m_name;
+    row.SETTINGVALUE = m_value;
 
     return row;
 }
@@ -41,18 +38,18 @@ SettingRow SettingData::to_row() const
 // Convert SettingRow to SettingData
 SettingData& SettingData::from_row(const SettingRow& row)
 {
-    SETTINGID = row.SETTINGID; // int64
-    SETTINGNAME = row.SETTINGNAME; // wxString
-    SETTINGVALUE = row.SETTINGVALUE; // wxString
+    m_id    = row.SETTINGID;    // int64
+    m_name  = row.SETTINGNAME;  // wxString
+    m_value = row.SETTINGVALUE; // wxString
 
     return *this;
 }
 
 bool SettingData::equals(const SettingData* other) const
 {
-    if ( SETTINGID != other->SETTINGID) return false;
-    if (!SETTINGNAME.IsSameAs(other->SETTINGNAME)) return false;
-    if (!SETTINGVALUE.IsSameAs(other->SETTINGVALUE)) return false;
+    if ( m_id != other->m_id) return false;
+    if (!m_name.IsSameAs(other->m_name)) return false;
+    if (!m_value.IsSameAs(other->m_value)) return false;
 
     return true;
 }

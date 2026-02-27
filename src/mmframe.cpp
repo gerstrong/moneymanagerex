@@ -1014,12 +1014,8 @@ void mmGUIFrame::DoRecreateNavTreeControl(bool home_page)
             AccountCol::COL_ID_ACCOUNTNAME
         )) {
             if (
-                (m_temp_view == VIEW_ACCOUNTS_OPEN_STR &&
-                    AccountModel::status_id(account_d) != AccountModel::STATUS_ID_OPEN
-                ) ||
-                (m_temp_view == VIEW_ACCOUNTS_CLOSED_STR &&
-                    AccountModel::status_id(account_d) == AccountModel::STATUS_ID_OPEN
-                ) ||
+                (m_temp_view == VIEW_ACCOUNTS_OPEN_STR && !account_d.is_open()) ||
+                (m_temp_view == VIEW_ACCOUNTS_CLOSED_STR && !account_d.is_closed()) ||
                 (m_temp_view == VIEW_ACCOUNTS_FAVORITES_STR &&
                     !AccountModel::FAVORITEACCT(account_d))
             ) {
@@ -1034,8 +1030,8 @@ void mmGUIFrame::DoRecreateNavTreeControl(bool home_page)
             if (favorites &&
                 account_type != NavigatorTypes::TYPE_ID_INVESTMENT &&
                 AccountModel::FAVORITEACCT(account_d) &&
-                AccountModel::status_id(account_d) == AccountModel::STATUS_ID_OPEN)
-            {
+                account_d.is_open()
+            ) {
                 accountItem = addNavTreeItem(favorites, account_d.m_name, accountImg, mmTreeItemData::CHECKING, account_d.m_id);
             }
 

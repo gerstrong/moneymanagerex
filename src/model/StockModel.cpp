@@ -181,7 +181,7 @@ double StockModel::getDailyBalanceAt(const AccountData *account, const wxDate& d
                 precValueDate = stock.m_purchase_date;
             }
             //  if next not found and the accoung is open, takes previous date
-            if (nextValue == 0.0 && AccountModel::status_id(account) == AccountModel::STATUS_ID_OPEN) {
+            if (nextValue == 0.0 && account->is_open()) {
                 nextValue = precValue;
                 nextValueDate = precValueDate;
             }

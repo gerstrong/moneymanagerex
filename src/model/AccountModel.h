@@ -21,7 +21,6 @@
 #pragma once
 
 #include "base/defs.h"
-#include "util/mmChoice.h"
 #include "util/mmDate.h"
 
 #include "table/AccountTable.h"
@@ -37,21 +36,7 @@
 class AccountModel : public TableFactory<AccountTable, AccountData>
 {
 public:
-    enum STATUS_ID
-    {
-        STATUS_ID_OPEN = 0,
-        STATUS_ID_CLOSED,
-        STATUS_ID_size
-    };
-    static const wxString STATUS_NAME_OPEN;
-    static const wxString STATUS_NAME_CLOSED;
-
-public:
-    static mmChoiceNameA STATUS_CHOICES;
-
-public:
-    AccountModel();
-    ~AccountModel();
+    static const wxString refTypeName;
 
 public:
     /**
@@ -69,20 +54,9 @@ public:
     static AccountModel& instance();
 
 public:
-    /** Return the Data record for the given account name */
-    const Data* get_key(const wxString& name);
-
-    /** Return the Data record for the given account num */
-    const Data* get_num(const wxString& num);
+    static AccountCol::STATUS STATUS(OP op, AccountStatus status);
 
     static wxString get_id_name(int64 account_id);
-
-    /** Remove the Data record from memory and the database. */
-    bool purge_id(int64 id) override;
-
-public:
-    wxArrayString all_checking_account_names(bool skip_closed = false);
-    const std::map<wxString, int64> all_accounts(bool skip_closed = false);
 
     static const CurrencyData* currency(const Data* r);
     static const CurrencyData* currency(const Data& r);
@@ -106,12 +80,6 @@ public:
     static NavigatorTypes::TYPE_ID type_id(const Data* account);
     static NavigatorTypes::TYPE_ID type_id(const Data& account);
 
-    static const wxString status_name(int id);
-    static int status_id(const wxString& name);
-    static STATUS_ID status_id(const Data* account);
-    static STATUS_ID status_id(const Data& account);
-    static AccountCol::STATUS STATUS(OP op, STATUS_ID status);
-
     static bool FAVORITEACCT(const Data* r);
     static bool FAVORITEACCT(const Data& r);
 
@@ -125,42 +93,37 @@ public:
     static bool BoolOf(int64 value);
     static bool is_positive(int value);
 
-    const DataA FilterAccounts(const wxString& account_pattern, bool skip_closed = false);
-
+public:
+    AccountModel();
+    ~AccountModel();
 
 public:
-    static const wxString refTypeName;
+    // Return the Data record for the given account name */
+    const Data* get_key(const wxString& name);
+    // Return the Data record for the given account num */
+    const Data* get_num(const wxString& num);
+    // Remove the Data record from memory and the database. */
+    bool purge_id(int64 id) override;
+
+    wxArrayString all_checking_account_names(bool skip_closed = false);
+    const std::map<wxString, int64> all_accounts(bool skip_closed = false);
+
+    const DataA FilterAccounts(const wxString& account_pattern, bool skip_closed = false);
+
     void resetAccountType(wxString oldtype);
     void resetUnknownAccountTypes();
     wxArrayString getUsedAccountTypes(bool skip_closed = true);
 };
+
 //----------------------------------------------------------------------------
 
 inline NavigatorTypes::TYPE_ID AccountModel::type_id(const Data* account)
 {
     return static_cast<NavigatorTypes::TYPE_ID>(NavigatorTypes::instance().getTypeIdFromDBName(account->m_type_));
 }
-
 inline NavigatorTypes::TYPE_ID AccountModel::type_id(const Data& account)
 {
     return type_id(&account);
-}
-
-inline const wxString AccountModel::status_name(int id)
-{
-    return STATUS_CHOICES.get_name(id);
-}
-inline int AccountModel::status_id(const wxString& name)
-{
-    return STATUS_CHOICES.find_name_n(name);
-}
-inline AccountModel::STATUS_ID AccountModel::status_id(const Data* account)
-{
-    return static_cast<STATUS_ID>(status_id(account->m_status_));
-}
-inline AccountModel::STATUS_ID AccountModel::status_id(const Data& account)
-{
-    return static_cast<STATUS_ID>(status_id(account.m_status_));
 }
 
 inline bool AccountModel::is_positive(int value)

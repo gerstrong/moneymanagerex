@@ -65,7 +65,6 @@ void mmAddAccountWizard::RunIt()
         // Success
         AccountData account_d = AccountData();
         account_d.m_favorite_    = "TRUE";
-        account_d.m_status_      = AccountModel::STATUS_NAME_OPEN;
         account_d.m_type_        = NavigatorTypes::instance().type_name(accountType_);
         account_d.m_name         = accountName_;
         account_d.m_open_balance = 0;

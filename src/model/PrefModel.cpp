@@ -806,7 +806,7 @@ int PrefModel::AccountImageId(const int64 account_id, const bool def, const bool
     const AccountData* account_n = AccountModel::instance().get_data_n(account_id);
     if (account_n) {
         acctType = AccountModel::type_id(*account_n);
-        acctStatus = account_n->m_status_;
+        acctStatus = account_n->m_status.name();
     }
 
     if (!def && !ignoreClosure && (acctStatus == "Closed"))

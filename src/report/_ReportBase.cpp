@@ -90,25 +90,25 @@ void ReportBase::setAccounts(int selection, const wxString& type_name)
         break;
     case 1: // Select Accounts
     {
-        wxArrayString accounts;
+        wxArrayString account_name_a;
         auto account_a = AccountModel::instance().find_all();
         std::stable_sort(account_a.begin(), account_a.end(), AccountData::SorterByACCOUNTNAME());
         for (const auto& account_d : account_a) {
-            if (m_only_active && account_d.m_status_ != AccountModel::STATUS_NAME_OPEN)
+            if (m_only_active && !account_d.is_open())
                 continue;
-            accounts.Add(account_d.m_name);
+            account_name_a.Add(account_d.m_name);
         }
 
         auto parent = wxWindow::FindWindowById(mmID_REPORTS);
         mmMultiChoiceDialog mcd(parent ? parent : 0,
-            _t("Choose Accounts"), wxGetTranslation(m_title), accounts
+            _t("Choose Accounts"), wxGetTranslation(m_title), account_name_a
         );
 
         if (m_account_selected_a && !m_account_selected_a->IsEmpty()) {
             wxArrayInt selected;
             int i = 0;
-            for (const auto &account : accounts) {
-                if (wxNOT_FOUND != m_account_selected_a->Index(account))
+            for (const auto& account_name : account_name_a) {
+                if (wxNOT_FOUND != m_account_selected_a->Index(account_name))
                     selected.Add(i);
                 ++i;
             }
@@ -118,7 +118,7 @@ void ReportBase::setAccounts(int selection, const wxString& type_name)
         if (mcd.ShowModal() == wxID_OK) {
             wxArrayString* accountSelections = new wxArrayString();
             for (const auto &i : mcd.GetSelections()) {
-                accountSelections->Add(accounts[i]);
+                accountSelections->Add(account_name_a[i]);
             }
             m_account_selected_a = m_account_a = accountSelections;
         }
@@ -127,12 +127,12 @@ void ReportBase::setAccounts(int selection, const wxString& type_name)
     default: // All of Account type
     {
         wxArrayString* accountSelections = new wxArrayString();
-        auto accounts = AccountModel::instance().find(
+        auto account_a = AccountModel::instance().find(
             AccountCol::ACCOUNTTYPE(type_name),
-            AccountModel::STATUS(OP_NE, AccountModel::STATUS_ID_CLOSED)
+            AccountModel::STATUS(OP_NE, AccountStatus(AccountStatus::e_closed))
         );
-        for (const auto& i : accounts) {
-            accountSelections->Add(i.m_name);
+        for (const auto& account_d : account_a) {
+            accountSelections->Add(account_d.m_name);
         }
         m_account_a = accountSelections;
     } }

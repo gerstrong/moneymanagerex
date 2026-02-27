@@ -26,14 +26,6 @@
 #include "TrxLinkModel.h"
 #include "TrxShareModel.h"
 
-mmChoiceNameA AccountModel::STATUS_CHOICES = mmChoiceNameA({
-    { STATUS_ID_OPEN,   _n("Open") },
-    { STATUS_ID_CLOSED, _n("Closed") }
-}, STATUS_ID_CLOSED, true);
-
-const wxString AccountModel::STATUS_NAME_OPEN   = status_name(STATUS_ID_OPEN);
-const wxString AccountModel::STATUS_NAME_CLOSED = status_name(STATUS_ID_CLOSED);
-
 AccountModel::AccountModel() :
     TableFactory<AccountTable, AccountData>()
 {
@@ -68,7 +60,7 @@ wxArrayString AccountModel::all_checking_account_names(bool skip_closed)
 {
     wxArrayString accounts;
     for (const auto& account_d : this->find_all(Col::COL_ID_ACCOUNTNAME)) {
-        if (skip_closed && status_id(account_d) == STATUS_ID_CLOSED)
+        if (skip_closed && account_d.is_closed())
             continue;
         if (type_id(account_d) == NavigatorTypes::TYPE_ID_SHARES)
             continue;
@@ -82,9 +74,8 @@ wxArrayString AccountModel::all_checking_account_names(bool skip_closed)
 const std::map<wxString, int64> AccountModel::all_accounts(bool skip_closed)
 {
     std::map<wxString, int64> accounts;
-    for (const auto& account_d : this->find_all(Col::COL_ID_ACCOUNTNAME))
-    {
-        if (skip_closed && status_id(account_d) == STATUS_ID_CLOSED)
+    for (const auto& account_d : this->find_all(Col::COL_ID_ACCOUNTNAME)) {
+        if (skip_closed && account_d.is_closed())
             continue;
         if (type_id(account_d) == NavigatorTypes::TYPE_ID_SHARES)
             continue;
@@ -270,9 +261,9 @@ wxString AccountModel::toString(double value, const Data& account_d, int precisi
     return toString(value, &account_d, precision);
 }
 
-AccountCol::STATUS AccountModel::STATUS(OP op, STATUS_ID status)
+AccountCol::STATUS AccountModel::STATUS(OP op, AccountStatus status)
 {
-    return AccountCol::STATUS(op, status_name(status));
+    return AccountCol::STATUS(op, status.name());
 }
 
 bool AccountModel::FAVORITEACCT(const Data* account_n)
@@ -290,7 +281,7 @@ bool AccountModel::is_used(const CurrencyData* currency_n)
         return false;
     const auto& account_a = AccountModel::instance().find(
         AccountCol::CURRENCYID(currency_n->m_id),
-        AccountModel::STATUS(OP_NE, STATUS_ID_CLOSED)
+        AccountModel::STATUS(OP_NE, AccountStatus(AccountStatus::e_closed))
     );
     return !account_a.empty();
 }
@@ -337,7 +328,7 @@ const AccountModel::DataA AccountModel::FilterAccounts(const wxString& account_p
     DataA accounts;
     for (auto &account_d : this->find_all(AccountCol::COL_ID_ACCOUNTNAME))
     {
-        if (skip_closed && status_id(account_d) == STATUS_ID_CLOSED)
+        if (skip_closed && account_d.is_closed())
             continue;
         if (type_id(account_d) == NavigatorTypes::TYPE_ID_INVESTMENT)
             continue;
@@ -375,7 +366,7 @@ wxArrayString AccountModel::getUsedAccountTypes(bool skip_closed)
 {
     wxArrayString usedTypes;
     for (auto& account_d : this->find_all(AccountCol::COL_ID_ACCOUNTTYPE)) {
-        if (skip_closed && status_id(account_d) == STATUS_ID_CLOSED)
+        if (skip_closed && account_d.is_closed())
             continue;
         if (type_id(account_d) == NavigatorTypes::TYPE_ID_INVESTMENT)
             continue;

@@ -21,6 +21,7 @@
 AccountData::AccountData()
 {
     m_id            = -1;
+    m_status        = AccountStatus();
     m_open_balance  = 0.0;
     m_currency_id   = -1;
     m_stmt_locked   = false;
@@ -39,7 +40,7 @@ AccountRow AccountData::to_row() const
     row.ACCOUNTNAME     = m_name;
     row.ACCOUNTTYPE     = m_type_;
     row.ACCOUNTNUM      = m_num;
-    row.STATUS          = m_status_;
+    row.STATUS          = m_status.name();
     row.NOTES           = m_notes;
     row.HELDAT          = m_held_at;
     row.WEBSITE         = m_website;
@@ -67,7 +68,7 @@ AccountData& AccountData::from_row(const AccountRow& row)
     m_name             = row.ACCOUNTNAME;           // wxString
     m_type_            = row.ACCOUNTTYPE;           // wxString
     m_num              = row.ACCOUNTNUM;            // wxString
-    m_status_          = row.STATUS;                // wxString
+    m_status           = AccountStatus(row.STATUS); // wxString
     m_notes            = row.NOTES;                 // wxString
     m_held_at          = row.HELDAT;                // wxString
     m_website          = row.WEBSITE;               // wxString
@@ -94,7 +95,7 @@ bool AccountData::equals(const AccountData* other) const
     if (!m_name.IsSameAs(other->m_name)) return false;
     if (!m_type_.IsSameAs(other->m_type_)) return false;
     if (!m_num.IsSameAs(other->m_num)) return false;
-    if (!m_status_.IsSameAs(other->m_status_)) return false;
+    if ( m_status.id() != other->m_status.id()) return false;
     if (!m_notes.IsSameAs(other->m_notes)) return false;
     if (!m_held_at.IsSameAs(other->m_held_at)) return false;
     if (!m_website.IsSameAs(other->m_website)) return false;

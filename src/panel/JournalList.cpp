@@ -2235,16 +2235,16 @@ bool JournalList::checkForClosedAccounts()
 {
     int closedTrx = 0;
     for (const auto& id : m_selected_id) {
-        Journal::Data tran = !id.second
+        Journal::Data journal_d = !id.second
             ? Journal::Data(*TrxModel::instance().get_data_n(id.first))
             : Journal::Data(*SchedModel::instance().get_data_n(id.first));
-        const AccountData* account = AccountModel::instance().get_data_n(tran.ACCOUNTID);
-        if (account && AccountModel::STATUS_ID_CLOSED == AccountModel::status_id(account)) {
+        const AccountData* account_n = AccountModel::instance().get_data_n(journal_d.ACCOUNTID);
+        if (account_n && account_n->is_closed()) {
             closedTrx++;
             continue;
         }
-        const AccountData* to_account = AccountModel::instance().get_data_n(tran.TOACCOUNTID);
-        if (to_account && AccountModel::STATUS_ID_CLOSED == AccountModel::status_id(account))
+        const AccountData* to_account_n = AccountModel::instance().get_data_n(journal_d.TOACCOUNTID);
+        if (to_account_n && to_account_n->is_closed())
             closedTrx++;
     }
 
@@ -2263,19 +2263,25 @@ bool JournalList::checkForClosedAccounts()
 
 bool JournalList::checkTransactionLocked(int64 accountID, const wxString& transdate)
 {
-    const AccountData* account = AccountModel::instance().get_data_n(accountID);
-    if (account->m_stmt_locked) {
-        wxDateTime transaction_date;
-        if (transaction_date.ParseDate(transdate)) {
-            if (transaction_date <= parseDateTime(account->m_stmt_date)) {
-                wxMessageBox(wxString::Format(
-                    _t("Locked transaction to date: %s\n\n"
-                      "Reconciled transactions.")
-                    , mmGetDateTimeForDisplay(account->m_stmt_date))
-                    , _t("MMEX Transaction Check"), wxOK | wxICON_WARNING);
-                return true;
-            }
-        }
+    const AccountData* account_n = AccountModel::instance().get_data_n(accountID);
+    if (!account_n->m_stmt_locked)
+        return false;
+
+    wxDateTime transaction_date;
+    if (transaction_date.ParseDate(transdate) &&
+        transaction_date <= parseDateTime(account_n->m_stmt_date)
+    ) {
+        wxMessageBox(
+            wxString::Format(
+                _t("Locked transaction to date: %s\n\n"
+                    "Reconciled transactions."
+                ),
+                mmGetDateTimeForDisplay(account_n->m_stmt_date)
+            ),
+            _t("MMEX Transaction Check"),
+            wxOK | wxICON_WARNING
+        );
+        return true;
     }
     return false;
 }

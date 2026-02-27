@@ -140,8 +140,8 @@ void AccountDialog::CreateControls()
     grid_sizer->Add(new wxStaticText(this, wxID_STATIC, _t("Account Status:")), g_flagsH);
 
     wxChoice* itemChoice6 = new wxChoice(this, ID_DIALOG_NEWACCT_COMBO_ACCTSTATUS);
-    for (int i = 0; i < AccountModel::STATUS_ID_size; ++i) {
-        wxString status = AccountModel::status_name(i);
+    for (int i = 0; i < AccountStatus::size; ++i) {
+        wxString status = AccountStatus(i).name();
         itemChoice6->Append(wxGetTranslation(status), new wxStringClientData(status));
     }
     mmToolTip(itemChoice6, _t("Specify if this account has been closed. Closed accounts are inactive in most calculations, reporting etc."));
@@ -329,7 +329,7 @@ void AccountDialog::fillControls()
     itemAcctType->Enable(false);
 
     wxChoice* choice = static_cast<wxChoice*>(FindWindow(ID_DIALOG_NEWACCT_COMBO_ACCTSTATUS));
-    choice->SetSelection(AccountModel::status_id(m_account_n));
+    choice->SetSelection(m_account_n->m_status.id());
 
     wxCheckBox* itemCheckBox = static_cast<wxCheckBox*>(FindWindow(ID_DIALOG_NEWACCT_CHKBOX_FAVACCOUNT));
     itemCheckBox->SetValue(AccountModel::FAVORITEACCT(m_account_n));
@@ -382,7 +382,7 @@ void AccountDialog::OnAccountStatus()
         FindWindow(ID_DIALOG_NEWACCT_CHKBOX_FAVACCOUNT)
     );
     // Can only change if account is open
-    if (choice->GetSelection() == AccountModel::STATUS_ID_CLOSED)
+    if (choice->GetSelection() == AccountStatus::e_closed)
         itemCheckBox->Disable();
     else
         itemCheckBox->Enable();
@@ -563,7 +563,7 @@ void AccountDialog::OnOk(wxCommandEvent& /*event*/)
     wxTextCtrl* textCtrlContact = static_cast<wxTextCtrl*>(FindWindow(ID_DIALOG_NEWACCT_TEXTCTRL_CONTACT));
 
     wxChoice* choice = static_cast<wxChoice*>(FindWindow(ID_DIALOG_NEWACCT_COMBO_ACCTSTATUS));
-    m_account_n->m_status_ = AccountModel::status_name(choice->GetSelection());
+    m_account_n->m_status = AccountStatus(choice->GetSelection());
 
     wxCheckBox* itemCheckBox = static_cast<wxCheckBox*>(FindWindow(ID_DIALOG_NEWACCT_CHKBOX_FAVACCOUNT));
     m_account_n->m_favorite_ = itemCheckBox->IsChecked() ? "TRUE" : "FALSE";

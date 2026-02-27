@@ -20,6 +20,30 @@
 
 #include "util/mmChoice.h"
 
+struct AccountStatus
+{
+public:
+    enum
+    {
+        e_open = 0,
+        e_closed,
+        size
+    };
+    static mmChoiceNameA s_choice_a;
+
+private:
+    mmChoiceId m_id;
+
+public:
+    AccountStatus(mmChoiceId id = s_choice_a.default_id_n()) :
+        m_id(s_choice_a.valid_id_n(id)) {}
+    AccountStatus(const wxString& name) :
+        m_id(AccountStatus::s_choice_a.find_name_n(name)) {}
+
+    mmChoiceId id() const { return m_id; }
+    const wxString name() const { return AccountStatus::s_choice_a.get_name(m_id); }
+};
+
 struct AssetType
 {
 public:

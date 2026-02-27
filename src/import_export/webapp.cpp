@@ -179,15 +179,18 @@ bool mmWebApp::WebApp_UpdateAccount()
 
     json_writer.StartArray();
 
-    for (const auto &account : AccountModel::instance().find_all(AccountCol::COL_ID_ACCOUNTNAME))
-    {
-        if (AccountModel::type_id(account) != NavigatorTypes::TYPE_ID_INVESTMENT && AccountModel::status_id(account) != AccountModel::STATUS_ID_CLOSED)
-        {
-            json_writer.StartObject();
-            json_writer.Key("AccountName");
-            json_writer.String(account.m_name.utf8_str());
-            json_writer.EndObject();
-        }
+    for (const auto& account_d : AccountModel::instance().find_all(
+        AccountCol::COL_ID_ACCOUNTNAME
+    )) {
+        if (AccountModel::type_id(account_d) == NavigatorTypes::TYPE_ID_INVESTMENT ||
+            account_d.is_closed()
+        )
+            continue;
+
+        json_writer.StartObject();
+        json_writer.Key("AccountName");
+        json_writer.String(account_d.m_name.utf8_str());
+        json_writer.EndObject();
     }
 
     json_writer.EndArray();

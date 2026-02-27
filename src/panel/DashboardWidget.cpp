@@ -102,7 +102,8 @@ const wxString htmlWidgetStocks::getHTMLText()
     output += "</tr></thead><tbody id='INVEST'>\n";
     wxString body = "";
     for (const auto& account_d : account_a) {
-        if (AccountModel::status_id(account_d) != AccountModel::STATUS_ID_OPEN) continue;
+        if (!account_d.is_open())
+            continue;
 
         double conv_rate = CurrencyHistoryModel::getDayRate(account_d.m_currency_id, today);
         auto inv_bal = AccountModel::investment_balance(account_d);
@@ -583,13 +584,15 @@ htmlWidgetGrandTotals::~htmlWidgetGrandTotals()
 
 const wxString htmlWidgetAssets::getHTMLText()
 {
-    AccountModel::DataA asset_accounts = AccountModel::instance().find(
+    AccountModel::DataA asset_account_a = AccountModel::instance().find(
         AccountCol::ACCOUNTTYPE(NavigatorTypes::instance().getAssetAccountStr())
     );
-    if (asset_accounts.empty())
+    if (asset_account_a.empty())
         return wxEmptyString;
 
-    std::stable_sort(asset_accounts.begin(), asset_accounts.end(), AccountData::SorterByACCOUNTNAME());
+    std::stable_sort(asset_account_a.begin(), asset_account_a.end(),
+        AccountData::SorterByACCOUNTNAME()
+    );
 
     static const int MAX_ASSETS = 10;
     wxString output;
@@ -622,12 +625,12 @@ const wxString htmlWidgetAssets::getHTMLText()
         return row;
     };
 
-    for (const auto& asset : asset_accounts)
-    {
-        if (AccountModel::status_id(asset) != AccountModel::STATUS_ID_OPEN) continue;
+    for (const auto& asset_account_d : asset_account_a) {
+        if (!asset_account_d.is_open())
+            continue;
 
-        double cash = AccountModel::balance(asset);
-        auto inv = AccountModel::investment_balance(asset);
+        double cash = AccountModel::balance(asset_account_d);
+        auto inv = AccountModel::investment_balance(asset_account_d);
         double current = inv.first;
         double initial = inv.second;
 
@@ -635,17 +638,15 @@ const wxString htmlWidgetAssets::getHTMLText()
         currentTotal += current;
         cashTotal += cash;
 
-        if (rows++ < MAX_ASSETS)
-        {
+        if (rows++ < MAX_ASSETS) {
             initialDisplayed += initial;
             currentDisplayed += current;
             cashDisplayed += cash;
-            output << renderRow(asset.m_name, initial, current, cash);
+            output << renderRow(asset_account_d.m_name, initial, current, cash);
         }
     }
 
-    if (rows > MAX_ASSETS)
-    {
+    if (rows > MAX_ASSETS) {
         wxString otherAssets = _t("Other Assets");
         output << renderRow(wxString::Format("%s (%d)", otherAssets, rows - MAX_ASSETS),
                             initialTotal - initialDisplayed,
@@ -736,7 +737,7 @@ const wxString htmlWidgetAccounts::displayAccounts(double& tBalance, double& tRe
     wxString vAccts = SettingModel::instance().getViewAccounts();
     auto account_a = AccountModel::instance().find(
         AccountCol::ACCOUNTTYPE(NavigatorTypes::instance().type_name(type)),
-        AccountModel::STATUS(OP_NE, AccountModel::STATUS_ID_CLOSED)
+        AccountModel::STATUS(OP_NE, AccountStatus(AccountStatus::e_closed))
     );
     std::stable_sort(account_a.begin(), account_a.end(), AccountData::SorterByACCOUNTNAME());
     for (const auto& account_d : account_a) {
@@ -749,10 +750,10 @@ const wxString htmlWidgetAccounts::displayAccounts(double& tBalance, double& tRe
         tabReconciled += reconciledBal * currency_rate;
 
         // show the actual amount in that account
-        if (((vAccts == VIEW_ACCOUNTS_OPEN_STR && AccountModel::status_id(account_d) == AccountModel::STATUS_ID_OPEN) ||
+        if ((vAccts == VIEW_ACCOUNTS_OPEN_STR && account_d.is_open()) ||
             (vAccts == VIEW_ACCOUNTS_FAVORITES_STR && AccountModel::FAVORITEACCT(account_d)) ||
-            (vAccts == VIEW_ACCOUNTS_ALL_STR)))
-        {
+            (vAccts == VIEW_ACCOUNTS_ALL_STR)
+        ) {
             body += "<tr>";
             body += wxString::Format(R"(<td sorttable_customkey="*%s*" nowrap><a href="acct:%lld" oncontextmenu="return false;" target="_blank">%s</a>%s</td>)",
                 account_d.m_name, account_d.m_id, account_d.m_name,

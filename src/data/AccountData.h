@@ -18,33 +18,34 @@
 
 #pragma once
 
+#include "_DataEnum.h"
 #include "table/_TableBase.h"
 #include "table/AccountTable.h"
 
 // User-friendly representation of a record in table ACCOUNTLIST_V1.
 struct AccountData
 {
-    int64    m_id;
-    wxString m_name;
-    wxString m_type_;
-    wxString m_num;
-    wxString m_status_;
-    wxString m_notes;
-    wxString m_held_at;
-    wxString m_website;
-    wxString m_contact_info;
-    wxString m_access_info;
-    double   m_open_balance;
-    wxString m_open_date;
-    wxString m_favorite_;
-    int64    m_currency_id;
-    bool     m_stmt_locked;
-    wxString m_stmt_date;
-    double   m_min_balance;
-    double   m_credit_limit;
-    double   m_interest_rate;
-    wxString m_payment_due_date;
-    double   m_min_payment;
+    int64         m_id;
+    wxString      m_name;
+    wxString      m_type_;
+    wxString      m_num;
+    AccountStatus m_status;
+    wxString      m_notes;
+    wxString      m_held_at;
+    wxString      m_website;
+    wxString      m_contact_info;
+    wxString      m_access_info;
+    double        m_open_balance;
+    wxString      m_open_date;
+    wxString      m_favorite_;
+    int64         m_currency_id;
+    bool          m_stmt_locked;
+    wxString      m_stmt_date;
+    double        m_min_balance;
+    double        m_credit_limit;
+    double        m_interest_rate;
+    wxString      m_payment_due_date;
+    double        m_min_payment;
 
     explicit AccountData();
     explicit AccountData(wxSQLite3ResultSet& q);
@@ -67,6 +68,9 @@ struct AccountData
     bool equals(const AccountData* other) const;
     bool operator< (const AccountData& other) const { return id() < other.id(); }
     bool operator< (const AccountData* other) const { return id() < other->id(); }
+
+    bool is_open() const { return m_status.id() == AccountStatus::e_open; }
+    bool is_closed() const { return m_status.id() == AccountStatus::e_closed; }
 
     struct SorterByACCOUNTID
     {
@@ -105,7 +109,7 @@ struct AccountData
     {
         bool operator()(const AccountData& x, const AccountData& y)
         {
-            return x.m_status_ < y.m_status_;
+            return x.m_status.id() < y.m_status.id();
         }
     };
 

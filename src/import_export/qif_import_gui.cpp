@@ -1667,9 +1667,7 @@ int64 mmQIFImportDialog::getOrCreateAccounts()
 
         if (!acc) {
             AccountData account_d = AccountData();
-
             account_d.m_favorite_ = "TRUE";
-            account_d.m_status_   = AccountModel::STATUS_NAME_OPEN;
 
             const auto type = item.second.find(AccountType) != item.second.end() ? item.second.at(AccountType) : "";
             account_d.m_type_ = mmExportTransaction::mm_acc_type(type);

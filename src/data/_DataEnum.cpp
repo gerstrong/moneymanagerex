@@ -21,6 +21,11 @@
 
 #include "_DataEnum.h"
 
+mmChoiceNameA AccountStatus::s_choice_a = mmChoiceNameA({
+    { e_open,   _n("Open") },
+    { e_closed, _n("Closed") }
+}, e_open, true);
+
 mmChoiceNameA AssetType::s_choice_a = mmChoiceNameA({
     { e_property,   _n("Property") },
     { e_automobile, _n("Automobile") },

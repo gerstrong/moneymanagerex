@@ -708,14 +708,13 @@ void BudgetPanel::OnListItemActivated(int selectedIndex)
     if (budget_[selectedIndex].first == -1)
         return;
 
-    BudgetData budget_d;
+    BudgetData budget_d = BudgetData();
     if (budget_a.empty()) {
         budget_d = BudgetData();
-        budget_d.BUDGETYEARID = GetBudgetYearID();
-        budget_d.CATEGID      = budget_[selectedIndex].first;
-        budget_d.PERIOD       = "";
-        budget_d.AMOUNT       = 0.0;
-        budget_d.ACTIVE       = 1;
+        budget_d.m_period_id   = GetBudgetYearID();
+        budget_d.m_category_id = budget_[selectedIndex].first;
+        budget_d.m_frequency   = "";
+        budget_d.m_amount      = 0.0;
         BudgetModel::instance().add_data_n(budget_d);
     }
     else

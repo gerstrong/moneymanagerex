@@ -50,10 +50,10 @@ BudgetPeriodModel& BudgetPeriodModel::instance()
 
 bool BudgetPeriodModel::purge_id(int64 id)
 {
-    for (const BudgetData& d : BudgetModel::instance().find(
+    for (const BudgetData& budget_d : BudgetModel::instance().find(
         BudgetCol::BUDGETYEARID(id)
     ))
-        BudgetModel::instance().purge_id(d.BUDGETENTRYID);
+        BudgetModel::instance().purge_id(budget_d.m_period_id);
     return unsafe_remove_data(id);
 }
 

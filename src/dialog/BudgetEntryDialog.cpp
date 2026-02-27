@@ -79,7 +79,7 @@ bool BudgetEntryDialog::Create(
 
 void BudgetEntryDialog::fillControls()
 {
-    double amt = m_budget_n->AMOUNT;
+    double amt = m_budget_n->m_amount;
     int period = BudgetModel::period_id(*m_budget_n);
     m_choiceItem->SetSelection(period);
     if (period == BudgetModel::PERIOD_ID_NONE && amt == 0.0)
@@ -91,7 +91,7 @@ void BudgetEntryDialog::fillControls()
         m_choiceType->SetSelection(DEF_TYPE_INCOME);
 
     m_textAmount->SetValue(std::fabs(amt));
-    m_Notes->SetValue(m_budget_n->NOTES);
+    m_Notes->SetValue(m_budget_n->m_notes);
 }
 
 void BudgetEntryDialog::CreateControls()
@@ -109,7 +109,7 @@ void BudgetEntryDialog::CreateControls()
     wxFlexGridSizer* itemGridSizer2 = new wxFlexGridSizer(0, 2, 0, 0);
     itemPanel7->SetSizer(itemGridSizer2);
     
-    const CategoryData* category = CategoryModel::instance().get_data_n(m_budget_n->CATEGID);
+    const CategoryData* category = CategoryModel::instance().get_data_n(m_budget_n->m_category_id);
     wxASSERT(category);
     
     wxStaticText* itemTextEstCatAmt = new wxStaticText(itemPanel7, wxID_STATIC, catEstimateAmountStr_);
@@ -199,9 +199,9 @@ void BudgetEntryDialog::OnOk(wxCommandEvent& event)
     if (typeSelection == DEF_TYPE_EXPENSE)
         amt = -amt;
 
-    m_budget_n->PERIOD = BudgetModel::period_name(period);
-    m_budget_n->AMOUNT = amt;
-    m_budget_n->NOTES  = m_Notes->GetValue();
+    m_budget_n->m_frequency = BudgetModel::period_name(period);
+    m_budget_n->m_amount    = amt;
+    m_budget_n->m_notes     = m_Notes->GetValue();
     BudgetModel::instance().unsafe_save_data_n(m_budget_n);
 
     EndModal(wxID_OK);

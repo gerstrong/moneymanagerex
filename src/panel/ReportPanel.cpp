@@ -708,11 +708,10 @@ void ReportPanel::onNewWindow(wxWebViewEvent& evt)
         BudgetData budget_d;
         if (budget.empty()) {
             budget_d = BudgetData();
-            budget_d.BUDGETYEARID = budgetYearID;
-            budget_d.CATEGID      = std::stoll(parms[2]);
-            budget_d.PERIOD       = "";
-            budget_d.AMOUNT       = 0.0;
-            budget_d.ACTIVE       = 1;
+            budget_d.m_period_id   = budgetYearID;
+            budget_d.m_category_id = std::stoll(parms[2]);
+            budget_d.m_frequency   = "";
+            budget_d.m_amount      = 0.0;
             BudgetModel::instance().add_data_n(budget_d);
         }
         else

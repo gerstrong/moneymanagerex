@@ -16,21 +16,6 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  ********************************************************/
 
-// PLEASE EDIT!
-//
-// This is only sample code re-used from "table/BudgetTable.h".
-//
-// The data structure can be refined by:
-// * using more user-frielndly filed name
-// * using stronger field types
-// * adding enumerations for fields with limited choices
-// * demultiplexing composite values in database columns
-//
-// See also an implementation in Swift:
-//   https://github.com/moneymanagerex/mmex-ios/tree/master/MMEX/Data
-// and an implementation in Java:
-//   https://github.com/moneymanagerex/android-money-manager-ex/tree/master/app/src/main/java/com/money/manager/ex/domainmodel
-
 #pragma once
 
 #include "table/_TableBase.h"
@@ -39,20 +24,20 @@
 // User-friendly representation of a record in table BUDGETTABLE_V1.
 struct BudgetData
 {
-    int64 BUDGETENTRYID; // primary key
-    int64 BUDGETYEARID;
-    int64 CATEGID;
-    wxString PERIOD;
-    double AMOUNT;
-    wxString NOTES;
-    int64 ACTIVE;
+    int64    m_id;
+    int64    m_period_id;
+    int64    m_category_id;
+    wxString m_frequency;
+    double   m_amount;
+    wxString m_notes;
+    bool     m_active;
 
     explicit BudgetData();
     explicit BudgetData(wxSQLite3ResultSet& q);
     BudgetData(const BudgetData& other) = default;
 
-    int64 id() const { return BUDGETENTRYID; }
-    void id(const int64 id) { BUDGETENTRYID = id; }
+    int64 id() const { return m_id; }
+    void id(const int64 id) { m_id = id; }
     BudgetRow to_row() const;
     BudgetData& from_row(const BudgetRow& row);
     void to_insert_stmt(wxSQLite3Statement& stmt, int64 id) const;
@@ -73,7 +58,7 @@ struct BudgetData
     {
         bool operator()(const BudgetData& x, const BudgetData& y)
         {
-            return x.BUDGETENTRYID < y.BUDGETENTRYID;
+            return x.m_id < y.m_id;
         }
     };
 
@@ -81,7 +66,7 @@ struct BudgetData
     {
         bool operator()(const BudgetData& x, const BudgetData& y)
         {
-            return x.BUDGETYEARID < y.BUDGETYEARID;
+            return x.m_period_id < y.m_period_id;
         }
     };
 
@@ -89,7 +74,7 @@ struct BudgetData
     {
         bool operator()(const BudgetData& x, const BudgetData& y)
         {
-            return x.CATEGID < y.CATEGID;
+            return x.m_category_id < y.m_category_id;
         }
     };
 
@@ -97,7 +82,7 @@ struct BudgetData
     {
         bool operator()(const BudgetData& x, const BudgetData& y)
         {
-            return x.PERIOD < y.PERIOD;
+            return x.m_frequency < y.m_frequency;
         }
     };
 
@@ -105,7 +90,7 @@ struct BudgetData
     {
         bool operator()(const BudgetData& x, const BudgetData& y)
         {
-            return x.AMOUNT < y.AMOUNT;
+            return x.m_amount < y.m_amount;
         }
     };
 
@@ -113,7 +98,7 @@ struct BudgetData
     {
         bool operator()(const BudgetData& x, const BudgetData& y)
         {
-            return x.NOTES < y.NOTES;
+            return x.m_notes < y.m_notes;
         }
     };
 
@@ -121,7 +106,7 @@ struct BudgetData
     {
         bool operator()(const BudgetData& x, const BudgetData& y)
         {
-            return x.ACTIVE < y.ACTIVE;
+            return (x.m_active ? 1 : 0) < (y.m_active ? 1 : 0);
         }
     };
 };

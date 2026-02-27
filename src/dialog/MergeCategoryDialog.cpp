@@ -207,7 +207,7 @@ void MergeCategoryDialog::OnOk(wxCommandEvent& WXUNUSED(event))
         m_changedRecords += schedsplit_a.size();
 
         for (auto& budget_d : budget_a) {
-            BudgetModel::instance().purge_id(budget_d.BUDGETENTRYID);
+            BudgetModel::instance().purge_id(budget_d.m_period_id);
             m_changedRecords++;
         }
 

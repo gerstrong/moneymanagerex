@@ -33,10 +33,6 @@
 class CurrencyModel : public TableFactory<CurrencyTable, CurrencyData>
 {
 public:
-    CurrencyModel();
-    ~CurrencyModel();
-
-public:
     /**
     Initialize the global CurrencyModel table on initial call.
     Resets the global table on subsequent calls.
@@ -52,25 +48,8 @@ public:
     static CurrencyModel& instance();
 
 public:
-    enum TYPE_ID
-    {
-        TYPE_ID_FIAT = 0,
-        TYPE_ID_CRYPTO,
-        TYPE_ID_size
-    };
-    static const wxString TYPE_NAME_FIAT;
-    static const wxString TYPE_NAME_CRYPTO;
+    static CurrencyCol::CURRENCY_TYPE CURRENCY_TYPE(OP op, CurrencyType currency_type);
 
-private:
-    static mmChoiceNameA TYPE_CHOICES;
-
-public:
-    static const wxString type_name(int id);
-    static int type_id(const wxString& name);
-    static TYPE_ID type_id(const Data* r);
-    static TYPE_ID type_id(const Data& r);
-
-    static CurrencyCol::CURRENCY_TYPE CURRENCY_TYPE(OP op, TYPE_ID currencytype);
     const wxArrayString all_currency_names();
     const std::map<wxString, int64>  all_currency();
     const wxArrayString all_currency_symbols();
@@ -106,24 +85,8 @@ public:
     static int precision(const Data* r);
     static int precision(const Data& r);
     static int precision(int64 account_id);
+
+public:
+    CurrencyModel();
+    ~CurrencyModel();
 };
-
-//----------------------------------------------------------------------------
-
-inline const wxString CurrencyModel::type_name(int id)
-{
-    return TYPE_CHOICES.get_name(id);
-}
-inline int CurrencyModel::type_id(const wxString& name)
-{
-    return TYPE_CHOICES.find_name_n(name);
-}
-inline CurrencyModel::TYPE_ID CurrencyModel::type_id(const Data* r)
-{
-    return static_cast<TYPE_ID>(type_id(r->m_type_));
-}
-inline CurrencyModel::TYPE_ID CurrencyModel::type_id(const Data& r)
-{
-    return type_id(&r);
-}
-

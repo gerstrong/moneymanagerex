@@ -18,24 +18,25 @@
 
 #pragma once
 
+#include "_DataEnum.h"
 #include "table/_TableBase.h"
 #include "table/CurrencyTable.h"
 
 // User-friendly representation of a record in table CURRENCYFORMATS_V1.
 struct CurrencyData
 {
-    int64    m_id;
-    wxString m_symbol;
-    wxString m_name;
-    wxString m_type_;
-    wxString m_prefix_symbol;
-    wxString m_suffix_symbol;
-    wxString m_decimal_point;
-    wxString m_group_separator;
-    wxString m_unit_name;
-    wxString m_cent_name;
-    int64    m_scale;
-    double   m_base_conv_rate;
+    int64        m_id;
+    wxString     m_symbol;
+    wxString     m_name;
+    CurrencyType m_type;
+    wxString     m_prefix_symbol;
+    wxString     m_suffix_symbol;
+    wxString     m_decimal_point;
+    wxString     m_group_separator;
+    wxString     m_unit_name;
+    wxString     m_cent_name;
+    int64        m_scale;
+    double       m_base_conv_rate;
 
     explicit CurrencyData();
     explicit CurrencyData(wxSQLite3ResultSet& q);
@@ -151,7 +152,7 @@ struct CurrencyData
     {
         bool operator()(const CurrencyData& x, const CurrencyData& y)
         {
-            return x.m_type_ < y.m_type_;
+            return x.m_type.id() < y.m_type.id();
         }
     };
 };

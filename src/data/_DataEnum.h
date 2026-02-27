@@ -157,3 +157,27 @@ public:
     }
 };
 
+struct CurrencyType
+{
+public:
+    enum
+    {
+        e_fiat = 0,
+        e_crypto,
+        size
+    };
+    static mmChoiceNameA s_choice_a;
+
+private:
+    mmChoiceId m_id;
+
+public:
+    CurrencyType(mmChoiceId id = s_choice_a.default_id_n()) :
+        m_id(s_choice_a.valid_id_n(id)) {}
+    CurrencyType(const wxString& name) :
+        m_id(CurrencyType::s_choice_a.find_name_n(name)) {}
+
+    mmChoiceId id() const { return m_id; }
+    const wxString name() const { return CurrencyType::s_choice_a.get_name(m_id); }
+};
+

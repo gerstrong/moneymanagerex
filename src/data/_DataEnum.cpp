@@ -59,3 +59,8 @@ mmChoiceNameA BudgetFrequency::s_choice_a = mmChoiceNameA({
     { e_daily,      _n("Daily") }
 }, e_none, true);
 
+mmChoiceNameA CurrencyType::s_choice_a = mmChoiceNameA({
+    { e_fiat,   _n("Fiat") },
+    { e_crypto, _n("Crypto") }
+}, e_fiat, true);
+

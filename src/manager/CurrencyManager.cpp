@@ -73,7 +73,6 @@ CurrencyManager::CurrencyManager(wxWindow* parent, const CurrencyData* currency)
         m_currency_n->m_scale           = 100;
         m_currency_n->m_decimal_point   = ".";
         m_currency_n->m_group_separator = ",";
-        m_currency_n->m_type_           = CurrencyModel::TYPE_NAME_FIAT;
     }
 
     // Check if locale will be used in preference

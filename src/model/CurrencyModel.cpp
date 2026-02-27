@@ -36,14 +36,6 @@ constexpr auto LIMIT = 1e-10;
 static wxString s_locale;
 static wxString s_use_locale;
 
-mmChoiceNameA CurrencyModel::TYPE_CHOICES = mmChoiceNameA({
-    { TYPE_ID_FIAT,   _n("Fiat") },
-    { TYPE_ID_CRYPTO, _n("Crypto") }
-}, TYPE_ID_FIAT, true);
-
-const wxString CurrencyModel::TYPE_NAME_FIAT   = type_name(TYPE_ID_FIAT);
-const wxString CurrencyModel::TYPE_NAME_CRYPTO = type_name(TYPE_ID_CRYPTO);
-
 CurrencyModel::CurrencyModel() :
     TableFactory<CurrencyTable, CurrencyData>()
 {
@@ -76,9 +68,9 @@ CurrencyModel& CurrencyModel::instance()
     return Singleton<CurrencyModel>::instance();
 }
 
-CurrencyCol::CURRENCY_TYPE CurrencyModel::CURRENCY_TYPE(OP op, TYPE_ID currencytype)
+CurrencyCol::CURRENCY_TYPE CurrencyModel::CURRENCY_TYPE(OP op, CurrencyType currency_type)
 {
-    return CurrencyCol::CURRENCY_TYPE(op, CurrencyModel::type_name(currencytype));
+    return CurrencyCol::CURRENCY_TYPE(op, currency_type.name());
 }
 
 const wxArrayString CurrencyModel::all_currency_names()

@@ -21,6 +21,7 @@
 CurrencyData::CurrencyData()
 {
     m_id             = -1;
+    m_type           = CurrencyType();
     m_scale          = -1;
     m_base_conv_rate = 0.0;
 }
@@ -41,7 +42,7 @@ CurrencyRow CurrencyData::to_row() const
     row.SCALE           = m_scale;
     row.BASECONVRATE    = m_base_conv_rate;
     row.CURRENCY_SYMBOL = m_symbol;
-    row.CURRENCY_TYPE   = m_type_;
+    row.CURRENCY_TYPE   = m_type.name();
 
     return row;
 }
@@ -49,18 +50,18 @@ CurrencyRow CurrencyData::to_row() const
 // Convert CurrencyRow to CurrencyData
 CurrencyData& CurrencyData::from_row(const CurrencyRow& row)
 {
-    m_id              = row.CURRENCYID;      // int64
-    m_symbol          = row.CURRENCY_SYMBOL; // wxString
-    m_name            = row.CURRENCYNAME;    // wxString
-    m_type_           = row.CURRENCY_TYPE;   // wxString
-    m_prefix_symbol   = row.PFX_SYMBOL;      // wxString
-    m_suffix_symbol   = row.SFX_SYMBOL;      // wxString
-    m_decimal_point   = row.DECIMAL_POINT;   // wxString
-    m_group_separator = row.GROUP_SEPARATOR; // wxString
-    m_unit_name       = row.UNIT_NAME;       // wxString
-    m_cent_name       = row.CENT_NAME;       // wxString
-    m_scale           = row.SCALE;           // int64
-    m_base_conv_rate  = row.BASECONVRATE;    // double
+    m_id              = row.CURRENCYID;                  // int64
+    m_symbol          = row.CURRENCY_SYMBOL;             // wxString
+    m_name            = row.CURRENCYNAME;                // wxString
+    m_type            = CurrencyType(row.CURRENCY_TYPE); // wxString
+    m_prefix_symbol   = row.PFX_SYMBOL;                  // wxString
+    m_suffix_symbol   = row.SFX_SYMBOL;                  // wxString
+    m_decimal_point   = row.DECIMAL_POINT;               // wxString
+    m_group_separator = row.GROUP_SEPARATOR;             // wxString
+    m_unit_name       = row.UNIT_NAME;                   // wxString
+    m_cent_name       = row.CENT_NAME;                   // wxString
+    m_scale           = row.SCALE;                       // int64
+    m_base_conv_rate  = row.BASECONVRATE;                // double
 
     return *this;
 }
@@ -70,7 +71,7 @@ bool CurrencyData::equals(const CurrencyData* other) const
     if ( m_id != other->m_id) return false;
     if (!m_symbol.IsSameAs(other->m_symbol)) return false;
     if (!m_name.IsSameAs(other->m_name)) return false;
-    if (!m_type_.IsSameAs(other->m_type_)) return false;
+    if ( m_type.id() != other->m_type.id()) return false;
     if (!m_prefix_symbol.IsSameAs(other->m_prefix_symbol)) return false;
     if (!m_suffix_symbol.IsSameAs(other->m_suffix_symbol)) return false;
     if (!m_decimal_point.IsSameAs(other->m_decimal_point)) return false;

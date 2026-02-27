@@ -532,14 +532,12 @@ void BudgetPanel::initVirtualListControl()
 
 double BudgetPanel::getEstimate(int64 category_id) const
 {
-    try
-    {
-        BudgetModel::PERIOD_ID period = budgetPeriod_.at(category_id);
+    try {
+        BudgetFrequency freq = budgetPeriod_.at(category_id);
         double amt = budgetAmt_.at(category_id);
-        return BudgetModel::getEstimate(monthlyBudget_, period, amt);
+        return BudgetModel::getEstimate(monthlyBudget_, freq, amt);
     }
-    catch (std::out_of_range const& exc)
-    {
+    catch (std::out_of_range const& exc) {
         wxASSERT(false);
         wxLogDebug(wxString::FromUTF8(exc.what()));
         return 0.0;
@@ -579,8 +577,8 @@ wxString BudgetPanel::getItem(long item, int col_id)
     }
     case BudgetList::LIST_ID_FREQUENCY: {
         if (budget_[item].first >= 0 && displayDetails_[budget_[item].first].second) {
-            BudgetModel::PERIOD_ID period = budgetPeriod_[budget_[item].first];
-            return wxGetTranslation(BudgetModel::period_name(period));
+            BudgetFrequency freq = budgetPeriod_[budget_[item].first];
+            return wxGetTranslation(freq.name());
         }
         return wxEmptyString;
     }
@@ -710,7 +708,6 @@ void BudgetPanel::OnListItemActivated(int selectedIndex)
         budget_d = BudgetData();
         budget_d.m_period_id   = GetBudgetYearID();
         budget_d.m_category_id = budget_[selectedIndex].first;
-        budget_d.m_frequency_  = "";
         budget_d.m_amount      = 0.0;
         BudgetModel::instance().add_data_n(budget_d);
     }

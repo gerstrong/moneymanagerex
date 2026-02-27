@@ -23,6 +23,7 @@ BudgetData::BudgetData()
     m_id          = -1;
     m_period_id   = -1;
     m_category_id = -1;
+    m_frequency   = BudgetFrequency();
     m_amount      = 0.0;
     m_active      = true;
 }
@@ -35,7 +36,7 @@ BudgetRow BudgetData::to_row() const
     row.BUDGETENTRYID = m_id;
     row.BUDGETYEARID  = m_period_id;
     row.CATEGID       = m_category_id;
-    row.PERIOD        = m_frequency_;
+    row.PERIOD        = m_frequency.name();
     row.AMOUNT        = m_amount;
     row.NOTES         = m_notes;
     row.ACTIVE        = (m_active ? 1 : 0);
@@ -46,26 +47,26 @@ BudgetRow BudgetData::to_row() const
 // Convert BudgetRow to BudgetData
 BudgetData& BudgetData::from_row(const BudgetRow& row)
 {
-    m_id          = row.BUDGETENTRYID; // int64
-    m_period_id   = row.BUDGETYEARID;  // int64
-    m_category_id = row.CATEGID;       // int64
-    m_frequency_  = row.PERIOD;        // wxString
-    m_amount      = row.AMOUNT;        // double
-    m_notes       = row.NOTES;         // wxString
-    m_active      = (row.ACTIVE != 0); // int64
+    m_id          = row.BUDGETENTRYID;           // int64
+    m_period_id   = row.BUDGETYEARID;            // int64
+    m_category_id = row.CATEGID;                 // int64
+    m_frequency   = BudgetFrequency(row.PERIOD); // wxString
+    m_amount      = row.AMOUNT;                  // double
+    m_notes       = row.NOTES;                   // wxString
+    m_active      = (row.ACTIVE != 0);           // int64
 
     return *this;
 }
 
 bool BudgetData::equals(const BudgetData* other) const
 {
-    if ( m_id          != other->m_id)             return false;
-    if ( m_period_id   != other->m_period_id)      return false;
-    if ( m_category_id != other->m_category_id)    return false;
-    if (!m_frequency_.IsSameAs(other->m_frequency_)) return false;
-    if ( m_amount      != other->m_amount)         return false;
-    if (!m_notes.IsSameAs(other->m_notes))         return false;
-    if ( m_active      != other->m_active)         return false;
+    if ( m_id             != other->m_id)             return false;
+    if ( m_period_id      != other->m_period_id)      return false;
+    if ( m_category_id    != other->m_category_id)    return false;
+    if ( m_frequency.id() != other->m_frequency.id()) return false;
+    if ( m_amount         != other->m_amount)         return false;
+    if (!m_notes.IsSameAs(other->m_notes))            return false;
+    if ( m_active         != other->m_active)         return false;
 
     return true;
 }

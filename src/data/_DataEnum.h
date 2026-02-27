@@ -122,3 +122,38 @@ public:
     const wxString name() const { return AssetChangeMode::s_choice_a.get_name(m_id); }
 };
 
+struct BudgetFrequency
+{
+public:
+    enum
+    {
+        e_none = 0,
+        e_weekly,
+        e_biweekly,
+        e_monthly,
+        e_bimonthly,
+        e_quarterly,
+        e_halfyearly,
+        e_yearly,
+        e_daily,
+        size
+    };
+    static mmChoiceNameA s_choice_a;
+
+private:
+    mmChoiceId m_id;
+
+public:
+    BudgetFrequency(mmChoiceId id = s_choice_a.default_id_n()) :
+        m_id(s_choice_a.valid_id_n(id)) {}
+    BudgetFrequency(const wxString& name) :
+        m_id(BudgetFrequency::s_choice_a.find_name_n(name)) {}
+
+    mmChoiceId id() const { return m_id; }
+    const wxString name() const { return BudgetFrequency::s_choice_a.get_name(m_id); }
+    int times_per_year() const {
+        int a[size] = { 0, 52, 26, 12, 6, 4, 2, 1, 365 };
+        return a[m_id];
+    }
+};
+

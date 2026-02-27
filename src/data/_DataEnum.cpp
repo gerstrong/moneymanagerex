@@ -16,7 +16,7 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  ********************************************************/
 
-// The enumeration strings are written in the database.
+// The enumeration strings listed are written in the database.
 // DO NOT CHANGE THEM!
 
 #include "_DataEnum.h"
@@ -46,4 +46,16 @@ mmChoiceNameA AssetChangeMode::s_choice_a = mmChoiceNameA({
     { e_percentage, _n("Percentage") },
     { e_linear,     _n("Linear") }
 }, e_percentage, true);
+
+mmChoiceNameA BudgetFrequency::s_choice_a = mmChoiceNameA({
+    { e_none,       _n("None") },
+    { e_weekly,     _n("Weekly") },
+    { e_biweekly,   _n("Fortnightly") },
+    { e_monthly,    _n("Monthly") },
+    { e_bimonthly,  _n("Every 2 Months") },
+    { e_quarterly,  _n("Quarterly") },
+    { e_halfyearly, _n("Half-Yearly") },
+    { e_yearly,     _n("Yearly") },
+    { e_daily,      _n("Daily") }
+}, e_none, true);
 

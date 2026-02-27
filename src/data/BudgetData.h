@@ -18,19 +18,20 @@
 
 #pragma once
 
+#include "_DataEnum.h"
 #include "table/_TableBase.h"
 #include "table/BudgetTable.h"
 
 // User-friendly representation of a record in table BUDGETTABLE_V1.
 struct BudgetData
 {
-    int64    m_id;
-    int64    m_period_id;
-    int64    m_category_id;
-    wxString m_frequency_;
-    double   m_amount;
-    wxString m_notes;
-    bool     m_active;
+    int64           m_id;
+    int64           m_period_id;
+    int64           m_category_id;
+    BudgetFrequency m_frequency;
+    double          m_amount;
+    wxString        m_notes;
+    bool            m_active;
 
     explicit BudgetData();
     explicit BudgetData(wxSQLite3ResultSet& q);
@@ -82,7 +83,7 @@ struct BudgetData
     {
         bool operator()(const BudgetData& x, const BudgetData& y)
         {
-            return x.m_frequency_ < y.m_frequency_;
+            return x.m_frequency.id() < y.m_frequency.id();
         }
     };
 

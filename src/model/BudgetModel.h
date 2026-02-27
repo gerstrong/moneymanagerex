@@ -22,7 +22,6 @@
 #include "base/defs.h"
 #include <float.h>
 
-#include "util/mmChoice.h"
 #include "util/mmDateRange.h"
 
 #include "table/BudgetTable.h"
@@ -32,10 +31,6 @@
 
 class BudgetModel : public TableFactory<BudgetTable, BudgetData>
 {
-public:
-    BudgetModel();
-    ~BudgetModel();
-
 public:
     /**
     Initialize the global BudgetModel table on initial call.
@@ -52,59 +47,21 @@ public:
     static BudgetModel& instance();
 
 public:
-    enum PERIOD_ID
-    {
-        PERIOD_ID_NONE = 0,
-        PERIOD_ID_WEEKLY,
-        PERIOD_ID_BIWEEKLY,
-        PERIOD_ID_MONTHLY,
-        PERIOD_ID_BIMONTHLY,
-        PERIOD_ID_QUARTERLY,
-        PERIOD_ID_HALFYEARLY,
-        PERIOD_ID_YEARLY,
-        PERIOD_ID_DAILY,
-        PERIOD_ID_size
-    };
-
-private:
-    static mmChoiceNameA PERIOD_CHOICES;
-
-public:
-    static const wxString period_name(int id);
-    static int period_id(const wxString& name);
-    static PERIOD_ID period_id(const Data* r);
-    static PERIOD_ID period_id(const Data& r);
-
-    static BudgetCol::PERIOD PERIOD(OP op, PERIOD_ID period);
+    static BudgetCol::PERIOD FREQUENCY(OP op, BudgetFrequency freq);
 
     static void getBudgetEntry(int64 budgetYearID,
-        std::map<int64, PERIOD_ID> &budgetPeriod,
+        std::map<int64, BudgetFrequency>& budgetFreq,
         std::map<int64, double> &budgetAmt,
         std::map<int64, wxString> &budgetNotes);
     static void getBudgetStats(
-        std::map<int64, std::map<int, double> > &budgetStats
-        , mmDateRange* date_range
-        , bool groupByMonth);
+        std::map<int64, std::map<int, double>>& budgetStats,
+        mmDateRange* date_range,
+        bool groupByMonth
+    );
     static void copyBudgetYear(int64 newYearID, int64 baseYearID);
-    static double getEstimate(bool is_monthly, const PERIOD_ID period, const double amount);
+    static double getEstimate(bool is_monthly, const BudgetFrequency freq, const double amount);
+
+public:
+    BudgetModel();
+    ~BudgetModel();
 };
-
-//----------------------------------------------------------------------------
-
-inline const wxString BudgetModel::period_name(int id)
-{
-    return PERIOD_CHOICES.get_name(id);
-}
-inline int BudgetModel::period_id(const wxString& name)
-{
-    return PERIOD_CHOICES.find_name_n(name);
-}
-inline BudgetModel::PERIOD_ID BudgetModel::period_id(const Data* r)
-{
-    return static_cast<PERIOD_ID>(period_id(r->m_frequency_));
-}
-inline BudgetModel::PERIOD_ID BudgetModel::period_id(const Data& r)
-{
-    return period_id(&r);
-}
-

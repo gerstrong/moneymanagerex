@@ -751,7 +751,7 @@ const wxString htmlWidgetAccounts::displayAccounts(double& tBalance, double& tRe
 
         // show the actual amount in that account
         if ((vAccts == VIEW_ACCOUNTS_OPEN_STR && account_d.is_open()) ||
-            (vAccts == VIEW_ACCOUNTS_FAVORITES_STR && AccountModel::FAVORITEACCT(account_d)) ||
+            (vAccts == VIEW_ACCOUNTS_FAVORITES_STR && account_d.is_favorite()) ||
             (vAccts == VIEW_ACCOUNTS_ALL_STR)
         ) {
             body += "<tr>";

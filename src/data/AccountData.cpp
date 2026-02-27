@@ -23,6 +23,7 @@ AccountData::AccountData()
     m_id            = -1;
     m_status        = AccountStatus();
     m_open_balance  = 0.0;
+    m_favorite      = AccountFavorite();
     m_currency_id   = -1;
     m_stmt_locked   = false;
     m_min_balance   = 0.0;
@@ -48,7 +49,7 @@ AccountRow AccountData::to_row() const
     row.ACCESSINFO      = m_access_info;
     row.INITIALBAL      = m_open_balance;
     row.INITIALDATE     = m_open_date;
-    row.FAVORITEACCT    = m_favorite_;
+    row.FAVORITEACCT    = m_favorite.name();
     row.CURRENCYID      = m_currency_id;
     row.STATEMENTLOCKED = (m_stmt_locked ? 1 : 0);
     row.STATEMENTDATE   = m_stmt_date;
@@ -64,27 +65,27 @@ AccountRow AccountData::to_row() const
 // Convert AccountRow to AccountData
 AccountData& AccountData::from_row(const AccountRow& row)
 {
-    m_id               = row.ACCOUNTID;             // int64
-    m_name             = row.ACCOUNTNAME;           // wxString
-    m_type_            = row.ACCOUNTTYPE;           // wxString
-    m_num              = row.ACCOUNTNUM;            // wxString
-    m_status           = AccountStatus(row.STATUS); // wxString
-    m_notes            = row.NOTES;                 // wxString
-    m_held_at          = row.HELDAT;                // wxString
-    m_website          = row.WEBSITE;               // wxString
-    m_contact_info     = row.CONTACTINFO;           // wxString
-    m_access_info      = row.ACCESSINFO;            // wxString
-    m_open_balance     = row.INITIALBAL;            // double
-    m_open_date        = row.INITIALDATE;           // wxString
-    m_favorite_        = row.FAVORITEACCT;          // wxString
-    m_currency_id      = row.CURRENCYID;            // int64
-    m_stmt_locked      = (row.STATEMENTLOCKED > 0); // int64
-    m_stmt_date        = row.STATEMENTDATE;         // wxString
-    m_min_balance      = row.MINIMUMBALANCE;        // double
-    m_credit_limit     = row.CREDITLIMIT;           // double
-    m_interest_rate    = row.INTERESTRATE;          // double
-    m_payment_due_date = row.PAYMENTDUEDATE;        // wxString
-    m_min_payment      = row.MINIMUMPAYMENT;        // double
+    m_id               = row.ACCOUNTID;                     // int64
+    m_name             = row.ACCOUNTNAME;                   // wxString
+    m_type_            = row.ACCOUNTTYPE;                   // wxString
+    m_num              = row.ACCOUNTNUM;                    // wxString
+    m_status           = AccountStatus(row.STATUS);         // wxString
+    m_notes            = row.NOTES;                         // wxString
+    m_held_at          = row.HELDAT;                        // wxString
+    m_website          = row.WEBSITE;                       // wxString
+    m_contact_info     = row.CONTACTINFO;                   // wxString
+    m_access_info      = row.ACCESSINFO;                    // wxString
+    m_open_balance     = row.INITIALBAL;                    // double
+    m_open_date        = row.INITIALDATE;                   // wxString
+    m_favorite         = AccountFavorite(row.FAVORITEACCT); // wxString
+    m_currency_id      = row.CURRENCYID;                    // int64
+    m_stmt_locked      = (row.STATEMENTLOCKED > 0);         // int64
+    m_stmt_date        = row.STATEMENTDATE;                 // wxString
+    m_min_balance      = row.MINIMUMBALANCE;                // double
+    m_credit_limit     = row.CREDITLIMIT;                   // double
+    m_interest_rate    = row.INTERESTRATE;                  // double
+    m_payment_due_date = row.PAYMENTDUEDATE;                // wxString
+    m_min_payment      = row.MINIMUMPAYMENT;                // double
 
     return *this;
 }
@@ -103,7 +104,7 @@ bool AccountData::equals(const AccountData* other) const
     if (!m_access_info.IsSameAs(other->m_access_info)) return false;
     if ( m_open_balance != other->m_open_balance) return false;
     if (!m_open_date.IsSameAs(other->m_open_date)) return false;
-    if (!m_favorite_.IsSameAs(other->m_favorite_)) return false;
+    if ( m_favorite.id() != other->m_favorite.id()) return false;
     if ( m_currency_id != other->m_currency_id) return false;
     if ( m_stmt_locked != other->m_stmt_locked) return false;
     if (!m_stmt_date.IsSameAs(other->m_stmt_date)) return false;

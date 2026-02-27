@@ -44,6 +44,32 @@ public:
     const wxString name() const { return AccountStatus::s_choice_a.get_name(m_id); }
 };
 
+struct AccountFavorite
+{
+public:
+    enum
+    {
+        e_false = 0,
+        e_true,
+        size
+    };
+    static mmChoiceNameA s_choice_a;
+
+private:
+    mmChoiceId m_id;
+
+public:
+    AccountFavorite(mmChoiceId id = s_choice_a.default_id_n()) :
+        m_id(s_choice_a.valid_id_n(id)) {}
+    AccountFavorite(const wxString& name) :
+        m_id(AccountFavorite::s_choice_a.find_name_n(name)) {}
+    AccountFavorite(bool is_favorite) :
+        m_id(is_favorite ? e_true : e_false) {}
+
+    mmChoiceId id() const { return m_id; }
+    const wxString name() const { return AccountFavorite::s_choice_a.get_name(m_id); }
+};
+
 struct AssetType
 {
 public:

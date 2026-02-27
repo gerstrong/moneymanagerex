@@ -26,6 +26,11 @@ mmChoiceNameA AccountStatus::s_choice_a = mmChoiceNameA({
     { e_closed, _n("Closed") }
 }, e_open, true);
 
+mmChoiceNameA AccountFavorite::s_choice_a = mmChoiceNameA({
+    { e_false, _n("FALSE") },
+    { e_true,  _n("TRUE") }
+}, e_false, true);
+
 mmChoiceNameA AssetType::s_choice_a = mmChoiceNameA({
     { e_property,   _n("Property") },
     { e_automobile, _n("Automobile") },

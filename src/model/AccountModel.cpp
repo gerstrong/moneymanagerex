@@ -266,15 +266,6 @@ AccountCol::STATUS AccountModel::STATUS(OP op, AccountStatus status)
     return AccountCol::STATUS(op, status.name());
 }
 
-bool AccountModel::FAVORITEACCT(const Data* account_n)
-{
-    return account_n->m_favorite_.CmpNoCase("TRUE") == 0;
-}
-bool AccountModel::FAVORITEACCT(const Data& account_d)
-{
-    return FAVORITEACCT(&account_d);
-}
-
 bool AccountModel::is_used(const CurrencyData* currency_n)
 {
     if (!currency_n)

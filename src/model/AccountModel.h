@@ -80,9 +80,6 @@ public:
     static NavigatorTypes::TYPE_ID type_id(const Data* account);
     static NavigatorTypes::TYPE_ID type_id(const Data& account);
 
-    static bool FAVORITEACCT(const Data* r);
-    static bool FAVORITEACCT(const Data& r);
-
     static bool is_used(const CurrencyData* c);
     static bool is_used(const CurrencyData& c);
 

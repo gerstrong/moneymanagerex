@@ -332,7 +332,7 @@ void AccountDialog::fillControls()
     choice->SetSelection(m_account_n->m_status.id());
 
     wxCheckBox* itemCheckBox = static_cast<wxCheckBox*>(FindWindow(ID_DIALOG_NEWACCT_CHKBOX_FAVACCOUNT));
-    itemCheckBox->SetValue(AccountModel::FAVORITEACCT(m_account_n));
+    itemCheckBox->SetValue(m_account_n->is_favorite());
 
     wxButton* bn = static_cast<wxButton*>(FindWindow(ID_DIALOG_NEWACCT_BUTTON_CURRENCY));
     bn->SetLabelText(AccountModel::currency(m_account_n)->m_name);
@@ -563,11 +563,9 @@ void AccountDialog::OnOk(wxCommandEvent& /*event*/)
     wxTextCtrl* textCtrlContact = static_cast<wxTextCtrl*>(FindWindow(ID_DIALOG_NEWACCT_TEXTCTRL_CONTACT));
 
     wxChoice* choice = static_cast<wxChoice*>(FindWindow(ID_DIALOG_NEWACCT_COMBO_ACCTSTATUS));
-    m_account_n->m_status = AccountStatus(choice->GetSelection());
-
     wxCheckBox* itemCheckBox = static_cast<wxCheckBox*>(FindWindow(ID_DIALOG_NEWACCT_CHKBOX_FAVACCOUNT));
-    m_account_n->m_favorite_ = itemCheckBox->IsChecked() ? "TRUE" : "FALSE";
-
+    m_account_n->m_status       = AccountStatus(choice->GetSelection());
+    m_account_n->m_favorite     = AccountFavorite(itemCheckBox->IsChecked());
     m_account_n->m_name         = acctName;
     m_account_n->m_num          = textCtrlAcctNumber->GetValue();
     m_account_n->m_notes        = m_notesCtrl->GetValue();

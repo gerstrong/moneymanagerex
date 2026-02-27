@@ -526,7 +526,6 @@ void StockDialog::CreateShareAccount(
     AccountData new_account_d = AccountData();
     new_account_d.m_name         = name;
     new_account_d.m_type_        = NavigatorTypes::instance().getShareAccountStr();
-    new_account_d.m_favorite_    = "FALSE";
     new_account_d.m_open_balance = 0;
     new_account_d.m_open_date    = openingDate;
     new_account_d.m_currency_id  = stock_account->m_currency_id;

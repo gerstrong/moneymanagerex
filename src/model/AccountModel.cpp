@@ -269,7 +269,7 @@ int AccountModel::money_accounts_num()
 
 AccountModel::DataA AccountModel::find_name_a(const wxString& name)
 {
-    find(AccountCol::ACCOUNTNAME(name));
+    return find(AccountCol::ACCOUNTNAME(name));
 }
 
 const AccountModel::DataA AccountModel::FilterAccounts(const wxString& account_pattern, bool skip_closed)

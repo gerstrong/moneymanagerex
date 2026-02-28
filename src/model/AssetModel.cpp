@@ -53,9 +53,15 @@ AssetCol::ASSETTYPE AssetModel::ASSETTYPE(OP op, AssetType type)
     return AssetCol::ASSETTYPE(op, type.name());
 }
 
-AssetCol::STARTDATE AssetModel::STARTDATE(OP op, const wxDate& date)
+AssetCol::STARTDATE AssetModel::STARTDATE(OP op, const mmDate& date)
 {
-    return AssetCol::STARTDATE(op, date.FormatISODate());
+    // OP_EQ and OP_NE should not be used for date comparisons.
+    // if needed, create an equivalent AND/OR combination of two other operators.
+    return AssetCol::STARTDATE(op,
+        (op == OP_GE || op == OP_LT) ? date.isoStart() :
+        (op == OP_LE || op == OP_GT) ? date.isoEnd() :
+        date.isoDate()
+    );
 }
 
 wxString AssetModel::get_id_name(int64 asset_id)

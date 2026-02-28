@@ -42,7 +42,7 @@ public:
     static AssetModel& instance();
 
     static AssetCol::ASSETTYPE ASSETTYPE(OP op, AssetType type);
-    static AssetCol::STARTDATE STARTDATE(OP op, const wxDate& date);
+    static AssetCol::STARTDATE STARTDATE(OP op, const mmDate& date);
 
 public:
     // FIXME: add purge_id() to remove AttachmentData owned by AssetData

@@ -77,7 +77,7 @@ std::pair<double, double> AssetModel::valueAtDate(const Data& asset_d, const mmD
 {
     std::pair<double /*initial*/, double /*market*/> balance;
 
-    if (date < asset_d.m_start_date_p.value())
+    if (date < asset_d.m_start_date)
         return balance;
 
     mmChoiceId change_id = asset_d.m_change.id();
@@ -163,7 +163,7 @@ std::pair<double, double> AssetModel::valueAtDate(const Data& asset_d, const mmD
     }
     else {
         balance = {asset_d.m_value, asset_d.m_value};
-        apply_change(balance.second, asset_d.m_start_date_p.value(), date);
+        apply_change(balance.second, asset_d.m_start_date, date);
     }
     return balance;
 }

@@ -114,7 +114,7 @@ void AssetDialog::dataToControls()
     w_assetName->SetValue(m_asset_n->m_name);
     if (AccountModel::instance().get_name_data_n(m_asset_n->m_name))
         w_assetName->Enable(false);
-    w_dpc->SetValue(m_asset_n->m_start_date_p.getDateTimeN());
+    w_dpc->SetValue(m_asset_n->m_start_date.getDateTime());
     w_assetType->SetSelection(m_asset_n->m_type.id());
     if (AccountModel::instance().get_name_data_n(m_asset_n->m_type.name()))
         w_assetType->Enable(false);
@@ -427,7 +427,7 @@ void AssetDialog::OnOk(wxCommandEvent& /*event*/)
     m_asset_n->m_type          = asset_type;
     m_asset_n->m_status        = AssetStatus();
     m_asset_n->m_name          = asset_name;
-    m_asset_n->m_start_date_p  = mmDate(w_dpc->GetValue());
+    m_asset_n->m_start_date    = mmDate(w_dpc->GetValue());
     m_asset_n->m_currency_id_n = -1;
     m_asset_n->m_value         = asset_value;
     m_asset_n->m_change        = AssetChange(asset_change_id);
@@ -489,7 +489,7 @@ void AssetDialog::CreateAssetAccount()
     new_account_d.m_name          = m_asset_n->m_type.name();
     new_account_d.m_type_         = NavigatorTypes::instance().getAssetAccountStr();
     new_account_d.m_open_balance  = 0;
-    new_account_d.m_open_date     = m_asset_n->m_start_date_p.value();
+    new_account_d.m_open_date     = m_asset_n->m_start_date;
     new_account_d.m_currency_id_p = CurrencyModel::GetBaseCurrency()->m_id;
     AccountModel::instance().add_data_n(new_account_d);
 

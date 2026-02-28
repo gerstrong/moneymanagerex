@@ -31,7 +31,7 @@ struct AssetData
     AssetType       m_type;
     AssetStatus     m_status;
     wxString        m_name;
-    mmDateN         m_start_date_p;  // non-null after initialization
+    mmDate          m_start_date;    // non-null
     int64           m_currency_id_n; // -1 means base currency (no conversion)
     double          m_value;
     AssetChange     m_change;
@@ -73,7 +73,7 @@ struct AssetData
     {
         bool operator()(const AssetData& x, const AssetData& y)
         {
-            return x.m_start_date_p.value() < y.m_start_date_p.value();
+            return x.m_start_date < y.m_start_date;
         }
     };
 
@@ -150,7 +150,8 @@ struct AssetData
     };
 };
 
-inline AssetData::AssetData(wxSQLite3ResultSet& q)
+inline AssetData::AssetData(wxSQLite3ResultSet& q) :
+    AssetData()
 {
     from_select_result(q);
 }

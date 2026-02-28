@@ -1444,9 +1444,9 @@ void mmUnivCSVDialog::OnImport(wxCommandEvent& WXUNUSED(event))
         return mmErrorDialogs::ToolTip4Object(colorButton_, _t("Color"), _t("Invalid value"), wxICON_ERROR);
     }
 
-    TrxModel::instance().Begin();
-    TrxModel::instance().Savepoint("IMP");
-    FieldValueModel::instance().Savepoint("IMP");
+    TrxModel::instance().db_begin();
+    TrxModel::instance().db_savepoint("IMP");
+    FieldValueModel::instance().db_savepoint("IMP");
 
     wxProgressDialog progressDlg(_t("Universal CSV Import")
         , wxEmptyString, linesToImport
@@ -1606,13 +1606,13 @@ void mmUnivCSVDialog::OnImport(wxCommandEvent& WXUNUSED(event))
 
     msg << "\n\n";
 
-    TrxModel::instance().ReleaseSavepoint("IMP");
-    FieldValueModel::instance().ReleaseSavepoint("IMP");
+    TrxModel::instance().db_release_savepoint("IMP");
+    FieldValueModel::instance().db_release_savepoint("IMP");
 
     if (!is_canceled && nImportedLines > 0)
     {
         // we need to save them to the database.
-        TrxModel::instance().Commit();
+        TrxModel::instance().db_commit();
         mmWebApp::MMEX_WebApp_UpdateAccount();
         mmWebApp::MMEX_WebApp_UpdatePayee();
         mmWebApp::MMEX_WebApp_UpdateCategory();
@@ -1625,7 +1625,7 @@ void mmUnivCSVDialog::OnImport(wxCommandEvent& WXUNUSED(event))
     else
     {
         // discard the database changes.
-        TrxModel::instance().Rollback("");
+        TrxModel::instance().db_rollback("");
         if (is_canceled) msg << _t("Imported transactions discarded by user!");
         else msg << _t("No imported transactions!");
         msg << "\n\n";

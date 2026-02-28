@@ -34,23 +34,15 @@ public:
     static const wxString refTypeName;
 
 public:
-    // Initialize the global AssetModel table on initial call.
-    // Resets the global table on subsequent calls.
-    // Return the static instance address for AssetModel table
-    // Note: Assigning the address to a local variable can destroy the instance.
-    static AssetModel& instance(wxSQLite3Database* db);
-
-    // Return the static instance address for AssetModel table
-    // Note: Assigning the address to a local variable can destroy the instance.
-    static AssetModel& instance();
-
-public:
-    static AssetCol::ASSETTYPE ASSETTYPE(OP op, AssetType type);
-    static AssetCol::STARTDATE STARTDATE(OP op, const wxDate& date);
-
-public:
     AssetModel();
     ~AssetModel();
+
+public:
+    static AssetModel& instance(wxSQLite3Database* db);
+    static AssetModel& instance();
+
+    static AssetCol::ASSETTYPE ASSETTYPE(OP op, AssetType type);
+    static AssetCol::STARTDATE STARTDATE(OP op, const wxDate& date);
 
 public:
     // FIXME: add purge_id() to remove AttachmentData owned by AssetData

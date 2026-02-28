@@ -104,12 +104,12 @@ bool StockModel::purge_id(int64 id)
         StockCol::SYMBOL(stock_n->m_symbol)
     );
     if (stock_a.size() == 1) {
-        Savepoint();
+        db_savepoint();
         for (const auto& sh_d : StockHistoryModel::instance().find(
             StockHistoryCol::SYMBOL(stock_n->m_symbol)
         ))
             StockHistoryModel::instance().purge_id(sh_d.id());
-        ReleaseSavepoint();
+        db_release_savepoint();
     }
 
     // FIXME: remove AttachmentData owned by id

@@ -126,7 +126,7 @@ bool AccountModel::purge_id(int64 id)
 {
     // FIXME: check if id is used in InfoTable
 
-    Savepoint();
+    db_savepoint();
 
     for (const auto& trx_d : TrxModel::instance().find_or(
         TrxCol::ACCOUNTID(id),
@@ -153,7 +153,7 @@ bool AccountModel::purge_id(int64 id)
 
     // FIXME: remove AttachmentData owned by id
 
-    ReleaseSavepoint();
+    db_release_savepoint();
 
     return unsafe_remove_data(id);
 }

@@ -407,7 +407,7 @@ bool TrxModel::save_trx_a(DataA& trx_a)
 {
     bool ok = true;
 
-    Savepoint();
+    db_savepoint();
     for (auto& trx_d : trx_a) {
         if (trx_d.id() < 0)
             wxLogDebug("Incorrect function call to save %s", trx_d.to_json().utf8_str());
@@ -416,7 +416,7 @@ bool TrxModel::save_trx_a(DataA& trx_a)
             break;
         }
     }
-    ReleaseSavepoint();
+    db_release_savepoint();
 
     return ok;
 }

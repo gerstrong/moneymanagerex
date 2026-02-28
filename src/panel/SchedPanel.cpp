@@ -921,14 +921,14 @@ void SchedList::OnSetUserColour(wxCommandEvent& event)
     user_color_id -= MENU_ON_SET_UDC0;
     wxLogDebug("id: %i", user_color_id);
 
-    SchedModel::instance().Savepoint();
+    SchedModel::instance().db_savepoint();
 
     SchedData* sched_n = SchedModel::instance().unsafe_get_data_n(id);
     if (sched_n) {
         sched_n->COLOR = user_color_id;
         SchedModel::instance().unsafe_update_data_n(sched_n);
     }
-    SchedModel::instance().ReleaseSavepoint();
+    SchedModel::instance().db_release_savepoint();
 
     RefreshList();
 }

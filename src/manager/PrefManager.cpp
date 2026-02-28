@@ -174,8 +174,8 @@ bool PrefManager::SaveNewSystemSettings()
 {
     bool bResult = true;
 
-    InfoModel::instance().Savepoint();
-    SettingModel::instance().Savepoint();
+    InfoModel::instance().db_savepoint();
+    SettingModel::instance().db_savepoint();
 
     for (const auto notebook_panel : m_panel_list)
     {
@@ -183,8 +183,8 @@ bool PrefManager::SaveNewSystemSettings()
             bResult = false;
     }
 
-    SettingModel::instance().ReleaseSavepoint();
-    InfoModel::instance().ReleaseSavepoint();
+    SettingModel::instance().db_release_savepoint();
+    InfoModel::instance().db_release_savepoint();
 
     return bResult;
 }
@@ -213,8 +213,8 @@ void PrefManager::OnPageChange(wxBookCtrlEvent& event)
 
 void PrefManager::OnApply(wxCommandEvent& /*event*/)
 {
-    InfoModel::instance().Savepoint();
-    SettingModel::instance().Savepoint();
+    InfoModel::instance().db_savepoint();
+    SettingModel::instance().db_savepoint();
 
     int selected_page = m_listbook->GetSelection();
     if (m_panel_list[selected_page]->SaveSettings())
@@ -223,6 +223,6 @@ void PrefManager::OnApply(wxCommandEvent& /*event*/)
         wxMessageBox(msg, _t("Settings"));
     }
 
-    SettingModel::instance().ReleaseSavepoint();
-    InfoModel::instance().ReleaseSavepoint();
+    SettingModel::instance().db_release_savepoint();
+    InfoModel::instance().db_release_savepoint();
 }

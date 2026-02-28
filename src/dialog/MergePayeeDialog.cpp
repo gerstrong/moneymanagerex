@@ -160,7 +160,7 @@ void MergePayeeDialog::OnOk(wxCommandEvent& WXUNUSED(event))
         , wxOK | wxCANCEL | wxICON_INFORMATION);
 
     if (ans == wxOK) {
-        TrxModel::instance().Savepoint();
+        TrxModel::instance().db_savepoint();
         auto trx_a = TrxModel::instance().find(
             TrxCol::PAYEEID(sourcePayeeID_)
         );
@@ -169,9 +169,9 @@ void MergePayeeDialog::OnOk(wxCommandEvent& WXUNUSED(event))
         }
         TrxModel::instance().save_trx_a(trx_a);
         m_changed_records += trx_a.size();
-        TrxModel::instance().ReleaseSavepoint();
+        TrxModel::instance().db_release_savepoint();
 
-        SchedModel::instance().Savepoint();
+        SchedModel::instance().db_savepoint();
         auto sched_a = SchedModel::instance().find(
             SchedCol::PAYEEID(sourcePayeeID_)
         );
@@ -180,7 +180,7 @@ void MergePayeeDialog::OnOk(wxCommandEvent& WXUNUSED(event))
         }
         SchedModel::instance().save_data_a(sched_a);
         m_changed_records += sched_a.size();
-        SchedModel::instance().ReleaseSavepoint();
+        SchedModel::instance().db_release_savepoint();
 
         if (cbDeleteSourcePayee_->IsChecked()) {
             if (PayeeModel::instance().purge_id(sourcePayeeID_)) {

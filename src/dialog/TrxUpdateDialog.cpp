@@ -385,8 +385,8 @@ void TrxUpdateDialog::OnOk(wxCommandEvent& WXUNUSED(event))
     const auto split = TrxSplitModel::instance().get_all_id();
 
     std::vector<int64> skip_trx;
-    TrxModel::instance().Savepoint();
-    TagLinkModel::instance().Savepoint();
+    TrxModel::instance().db_savepoint();
+    TagLinkModel::instance().db_savepoint();
     for (const auto& id : m_transaction_id) {
         TrxData* trx_n = TrxModel::instance().unsafe_get_data_n(id);
         bool is_locked = TrxModel::is_locked(*trx_n);
@@ -526,8 +526,8 @@ void TrxUpdateDialog::OnOk(wxCommandEvent& WXUNUSED(event))
 
         TrxModel::instance().unsafe_save_trx(trx_n);
     }
-    TagLinkModel::instance().ReleaseSavepoint();
-    TrxModel::instance().ReleaseSavepoint();
+    TagLinkModel::instance().db_release_savepoint();
+    TrxModel::instance().db_release_savepoint();
     if (!skip_trx.empty()) {
         const wxString detail = wxString::Format("%s\n%s: %zu\n%s: %zu"
                         , _t("This is due to some elements of the transaction or account detail not allowing the update")

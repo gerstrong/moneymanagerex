@@ -781,10 +781,10 @@ void mmPayeeDialog::DeletePayee()
         if (deletedTrans.empty() || msgDlg.ShowModal() == wxID_YES)
         {
             if (!deletedTrans.empty()) {
-                TrxModel::instance().Savepoint();
-                TrxSplitModel::instance().Savepoint();
-                AttachmentModel::instance().Savepoint();
-                FieldValueModel::instance().Savepoint();
+                TrxModel::instance().db_savepoint();
+                TrxSplitModel::instance().db_savepoint();
+                AttachmentModel::instance().db_savepoint();
+                FieldValueModel::instance().db_savepoint();
                 const wxString& RefType = TrxModel::refTypeName;
 
                 for (auto& tran : deletedTrans) {
@@ -793,10 +793,10 @@ void mmPayeeDialog::DeletePayee()
                     FieldValueModel::DeleteAllData(RefType, tran.TRANSID);
                 }
 
-                TrxModel::instance().ReleaseSavepoint();
-                TrxSplitModel::instance().ReleaseSavepoint();
-                AttachmentModel::instance().ReleaseSavepoint();
-                FieldValueModel::instance().ReleaseSavepoint();
+                TrxModel::instance().db_release_savepoint();
+                TrxSplitModel::instance().db_release_savepoint();
+                AttachmentModel::instance().db_release_savepoint();
+                FieldValueModel::instance().db_release_savepoint();
             }
 
             PayeeModel::instance().purge_id(payee_n->m_id);

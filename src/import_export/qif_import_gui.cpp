@@ -1243,7 +1243,7 @@ void mmQIFImportDialog::OnOk(wxCommandEvent& WXUNUSED(event))
                 trx.STATUS = TrxModel::STATUS_KEY_DUPLICATE;
         }
         // At this point all transactions and tags have been merged into single sets
-        TagLinkModel::instance().Savepoint();
+        TagLinkModel::instance().db_savepoint();
         for (int i = 0; i < static_cast<int>(trx_a.size()); i++) {
             if (!m_txnTaglinks[std::make_pair(0, i)].empty()) {
                 // we need to know the transid for the taglink, so save the transaction first
@@ -1256,7 +1256,7 @@ void mmQIFImportDialog::OnOk(wxCommandEvent& WXUNUSED(event))
                 TagLinkModel::instance().save_data_a(m_txnTaglinks[std::make_pair(0, i)]);
             }
         }
-        TagLinkModel::instance().ReleaseSavepoint();
+        TagLinkModel::instance().db_release_savepoint();
         TrxModel::instance().save_trx_a(trx_a);
         progressDlg.Update(count, _t("Importing Split transactions"));
         joinSplit(trx_a, m_splitDataSets);
@@ -1286,8 +1286,8 @@ void mmQIFImportDialog::saveSplit()
     if (m_splitDataSets.empty())
         return;
 
-    TrxSplitModel::instance().Savepoint();
-    TagLinkModel::instance().Savepoint();
+    TrxSplitModel::instance().db_savepoint();
+    TagLinkModel::instance().db_savepoint();
     // Work through each group of splits
     for (int i = 0; i < static_cast<int>(m_splitDataSets.size()); i++) {
         // and each split in the group
@@ -1305,8 +1305,8 @@ void mmQIFImportDialog::saveSplit()
             }
         }
     }
-    TrxSplitModel::instance().ReleaseSavepoint();
-    TagLinkModel::instance().ReleaseSavepoint();
+    TrxSplitModel::instance().db_release_savepoint();
+    TagLinkModel::instance().db_release_savepoint();
 }
 
 void mmQIFImportDialog::joinSplit(
@@ -1703,7 +1703,7 @@ int64 mmQIFImportDialog::getOrCreateAccounts()
 
 void mmQIFImportDialog::getOrCreatePayees()
 {
-    PayeeModel::instance().Savepoint();
+    PayeeModel::instance().db_savepoint();
 
     for (const auto& item : m_payee_names) {
         // check if this payee exists
@@ -1721,7 +1721,7 @@ void mmQIFImportDialog::getOrCreatePayees()
         m_QIFpayeeNames[item] = std::make_tuple(new_payee_d.id(), new_payee_d.m_name, "");
     }
 
-    PayeeModel::instance().ReleaseSavepoint();
+    PayeeModel::instance().db_release_savepoint();
 }
 
 void mmQIFImportDialog::getOrCreateCategories()

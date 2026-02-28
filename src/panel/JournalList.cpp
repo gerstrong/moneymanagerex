@@ -1160,10 +1160,10 @@ void JournalList::onDeleteTransaction(wxCommandEvent& WXUNUSED(event))
     if (msgDlg.ShowModal() == wxID_YES) {
         wxString deletionTime = wxDateTime::Now().ToUTC().FormatISOCombined();
         std::set<std::pair<wxString, int64>> assetStockAccts;
-        TrxModel::instance().Savepoint();
-        AttachmentModel::instance().Savepoint();
-        TrxSplitModel::instance().Savepoint();
-        FieldValueModel::instance().Savepoint();
+        TrxModel::instance().db_savepoint();
+        AttachmentModel::instance().db_savepoint();
+        TrxSplitModel::instance().db_savepoint();
+        FieldValueModel::instance().db_savepoint();
         for (const auto& id : m_selected_id) {
             if (id.second) continue;
             TrxData* trx_n = TrxModel::instance().unsafe_get_data_n(id.first);
@@ -1192,10 +1192,10 @@ void JournalList::onDeleteTransaction(wxCommandEvent& WXUNUSED(event))
             );
         }
         m_selected_id.clear();
-        FieldValueModel::instance().ReleaseSavepoint();
-        TrxSplitModel::instance().ReleaseSavepoint();
-        AttachmentModel::instance().ReleaseSavepoint();
-        TrxModel::instance().ReleaseSavepoint();
+        FieldValueModel::instance().db_release_savepoint();
+        TrxSplitModel::instance().db_release_savepoint();
+        AttachmentModel::instance().db_release_savepoint();
+        TrxModel::instance().db_release_savepoint();
 
         if (!assetStockAccts.empty()) {
             for (const auto& i : assetStockAccts) {
@@ -1403,7 +1403,7 @@ void JournalList::onMoveTransaction(wxCommandEvent& /*event*/)
             else
                 return;
             std::vector<int64> skip_trx;
-            TrxModel::instance().Savepoint();
+            TrxModel::instance().db_savepoint();
             for (const auto& id : m_selected_id) {
                 if (!id.second) {
                     TrxData* trx_n = TrxModel::instance().unsafe_get_data_n(id.first);
@@ -1419,7 +1419,7 @@ void JournalList::onMoveTransaction(wxCommandEvent& /*event*/)
                     }
                 }
             }
-            TrxModel::instance().ReleaseSavepoint();
+            TrxModel::instance().db_release_savepoint();
             if (!skip_trx.empty()) {
                 const wxString detail = wxString::Format("%s\n%s: %zu\n%s: %zu"
                                 , _t("This is due to some elements of the transaction or account detail not allowing the move")
@@ -1541,7 +1541,7 @@ void JournalList::onMarkTransaction(wxCommandEvent& event)
     default: wxASSERT(false);
     }
 
-    TrxModel::instance().Savepoint();
+    TrxModel::instance().db_savepoint();
 
     for (int row = 0; row < GetItemCount(); row++) {
         if (GetItemState(row, wxLIST_STATE_SELECTED) == wxLIST_STATE_SELECTED) {
@@ -1558,7 +1558,7 @@ void JournalList::onMarkTransaction(wxCommandEvent& event)
         }
     }
 
-    TrxModel::instance().ReleaseSavepoint();
+    TrxModel::instance().db_release_savepoint();
 
     refreshVisualList();
 }
@@ -1664,7 +1664,7 @@ void JournalList::onPaste(wxCommandEvent& WXUNUSED(event))
         return;
 
     findSelectedTransactions();
-    TrxModel::instance().Savepoint();
+    TrxModel::instance().db_savepoint();
     m_pasted_id.clear();    // make sure the list is empty before we paste
     for (const auto& id : m_selectedForCopy) {
         if (!id.second) {
@@ -1673,7 +1673,7 @@ void JournalList::onPaste(wxCommandEvent& WXUNUSED(event))
             onPaste(tran);
         }
     }
-    TrxModel::instance().ReleaseSavepoint();
+    TrxModel::instance().db_release_savepoint();
     refreshVisualList();
 }
 
@@ -1742,7 +1742,7 @@ int64 JournalList::onPaste(const TrxData* tran)
         FieldValueCol::REFID(tran->TRANSID)
     );
     if (fv_a.size() > 0) {
-        FieldValueModel::instance().Savepoint();
+        FieldValueModel::instance().db_savepoint();
         for (const auto& fv_d : fv_a) {
             FieldValueData new_fv_d = FieldValueData();
             new_fv_d.FIELDID = fv_d.FIELDID;
@@ -1750,7 +1750,7 @@ int64 JournalList::onPaste(const TrxData* tran)
             new_fv_d.CONTENT = fv_d.CONTENT;
             FieldValueModel::instance().add_data_n(new_fv_d);
         }
-        FieldValueModel::instance().ReleaseSavepoint();
+        FieldValueModel::instance().db_release_savepoint();
     }
 
     // Clone attachments if wanted
@@ -1820,8 +1820,8 @@ void JournalList::onSetUserColour(wxCommandEvent& event)
     user_color_id -= MENU_ON_SET_UDC0;
     wxLogDebug("id: %i", user_color_id);
 
-    TrxModel::instance().Savepoint();
-    SchedModel::instance().Savepoint();
+    TrxModel::instance().db_savepoint();
+    SchedModel::instance().db_savepoint();
     for (const auto& id : m_selected_id) {
         if (!id.second) {
             const TrxData* tran = TrxModel::instance().get_data_n(id.first);
@@ -1839,8 +1839,8 @@ void JournalList::onSetUserColour(wxCommandEvent& event)
             }
         }
     }
-    SchedModel::instance().ReleaseSavepoint();
-    TrxModel::instance().ReleaseSavepoint();
+    SchedModel::instance().db_release_savepoint();
+    TrxModel::instance().db_release_savepoint();
     m_topItemIndex = GetTopItem() + GetCountPerPage() - 1;
 
     refreshVisualList();
@@ -2187,10 +2187,10 @@ void JournalList::deleteTransactionsByStatus(const wxString& status)
     wxString deletionTime = wxDateTime::Now().ToUTC().FormatISOCombined();
     std::set<std::pair<wxString, int64>> assetStockAccts;
     const auto s = TrxModel::status_key(status);
-    TrxModel::instance().Savepoint();
-    AttachmentModel::instance().Savepoint();
-    TrxSplitModel::instance().Savepoint();
-    FieldValueModel::instance().Savepoint();
+    TrxModel::instance().db_savepoint();
+    AttachmentModel::instance().db_savepoint();
+    TrxSplitModel::instance().db_savepoint();
+    FieldValueModel::instance().db_savepoint();
     for (const auto& tran : this->m_trans) {
         if (tran.m_repeat_num) continue;
         if (tran.STATUS == s || (s.empty() && status.empty())) {
@@ -2225,10 +2225,10 @@ void JournalList::deleteTransactionsByStatus(const wxString& status)
         }
     }
 
-    TrxSplitModel::instance().ReleaseSavepoint();
-    AttachmentModel::instance().ReleaseSavepoint();
-    TrxModel::instance().ReleaseSavepoint();
-    FieldValueModel::instance().ReleaseSavepoint();
+    TrxSplitModel::instance().db_release_savepoint();
+    AttachmentModel::instance().db_release_savepoint();
+    TrxModel::instance().db_release_savepoint();
+    FieldValueModel::instance().db_release_savepoint();
 }
 
 bool JournalList::checkForClosedAccounts()

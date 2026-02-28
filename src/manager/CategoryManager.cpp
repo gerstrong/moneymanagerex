@@ -538,10 +538,10 @@ void CategoryManager::mmDoDeleteSelectedCategory()
     if ((deletedTrans.empty() && splits.empty()) || msgDlg.ShowModal() == wxID_YES)
     {
         if(!(deletedTrans.empty() && splits.empty())){
-            TrxModel::instance().Savepoint();
-            TrxSplitModel::instance().Savepoint();
-            AttachmentModel::instance().Savepoint();
-            FieldValueModel::instance().Savepoint();
+            TrxModel::instance().db_savepoint();
+            TrxSplitModel::instance().db_savepoint();
+            AttachmentModel::instance().db_savepoint();
+            FieldValueModel::instance().db_savepoint();
             const wxString& RefType = TrxModel::refTypeName;
             for (auto& split : splits) {
                 TrxModel::instance().purge_id(split.TRANSID);
@@ -555,10 +555,10 @@ void CategoryManager::mmDoDeleteSelectedCategory()
                 FieldValueModel::DeleteAllData(RefType, tran.TRANSID);
             }
 
-            TrxModel::instance().ReleaseSavepoint();
-            TrxSplitModel::instance().ReleaseSavepoint();
-            AttachmentModel::instance().ReleaseSavepoint();
-            FieldValueModel::instance().ReleaseSavepoint();
+            TrxModel::instance().db_release_savepoint();
+            TrxSplitModel::instance().db_release_savepoint();
+            AttachmentModel::instance().db_release_savepoint();
+            FieldValueModel::instance().db_release_savepoint();
         }
 
         for (auto& subcat : CategoryModel::sub_tree(CategoryModel::instance().get_data_n(m_categ_id)))
@@ -817,12 +817,12 @@ void CategoryManager::OnClearSettings(wxCommandEvent& /*event*/)
             , wxYES_NO | wxNO_DEFAULT | wxICON_EXCLAMATION);
     if (msgDlg.ShowModal() == wxID_YES) {
         auto category_a = CategoryModel::instance().find_all();
-        CategoryModel::instance().Savepoint();
+        CategoryModel::instance().db_savepoint();
         for (auto &category_d : category_a) {
             category_d.m_active = true;
             CategoryModel::instance().save_data_n(category_d);
         }
-        CategoryModel::instance().ReleaseSavepoint();
+        CategoryModel::instance().db_release_savepoint();
         fillControls();
     }
 }

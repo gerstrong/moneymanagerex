@@ -30,10 +30,8 @@ AssetModel::~AssetModel()
 {
 }
 
-/**
-* Initialize the global AssetModel table.
-* Reset the AssetModel table or create the table if it does not exist.
-*/
+// Initialize the global AssetModel table.
+// Reset the AssetModel table or create the table if it does not exist.
 AssetModel& AssetModel::instance(wxSQLite3Database* db)
 {
     AssetModel& ins = Singleton<AssetModel>::instance();
@@ -44,7 +42,7 @@ AssetModel& AssetModel::instance(wxSQLite3Database* db)
     return ins;
 }
 
-/** Return the static instance of AssetModel table */
+// Return the static instance of AssetModel table
 AssetModel& AssetModel::instance()
 {
     return Singleton<AssetModel>::instance();

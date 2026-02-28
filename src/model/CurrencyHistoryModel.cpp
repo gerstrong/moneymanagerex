@@ -181,9 +181,9 @@ double CurrencyHistoryModel::getLastRate(const int64& currencyID)
 
 void CurrencyHistoryModel::ResetCurrencyHistory()
 {
-    CurrencyHistoryModel::instance().Savepoint();
+    CurrencyHistoryModel::instance().db_savepoint();
     for (const auto& r : CurrencyHistoryModel::instance().find_all()) {
         CurrencyHistoryModel::instance().purge_id(r.id());
     }
-    CurrencyHistoryModel::instance().ReleaseSavepoint();
+    CurrencyHistoryModel::instance().db_release_savepoint();
 }

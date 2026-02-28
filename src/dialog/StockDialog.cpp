@@ -832,7 +832,7 @@ void StockDialog::OnHistoryDownloadButton(wxCommandEvent& /*event*/)
         }
 
         const wxString today = wxDate::Today().FormatISODate();
-        StockHistoryModel::instance().Savepoint();
+        StockHistoryModel::instance().db_savepoint();
         for (const auto& entry : history) {
             float dPrice = entry.second;
             const wxString date_str = wxDateTime(static_cast<time_t>(entry.first)).FormatISODate();
@@ -851,7 +851,7 @@ void StockDialog::OnHistoryDownloadButton(wxCommandEvent& /*event*/)
                 StockHistoryModel::instance().add_data_n(new_sh_d);
             }
         }
-        StockHistoryModel::instance().ReleaseSavepoint();
+        StockHistoryModel::instance().db_release_savepoint();
         return ShowStockHistory();
     }
     mmErrorDialogs::MessageError(this, sOutput, _t("Stock History Error"));
@@ -926,7 +926,7 @@ void StockDialog::OnHistoryDeleteButton(wxCommandEvent& /*event*/)
         return;
 
     long item = -1;
-    StockHistoryModel::instance().Savepoint();
+    StockHistoryModel::instance().db_savepoint();
     for (;;) {
         item = m_price_listbox->GetNextItem(item, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
 
@@ -934,7 +934,7 @@ void StockDialog::OnHistoryDeleteButton(wxCommandEvent& /*event*/)
             break;
         StockHistoryModel::instance().purge_id(static_cast<int64>(m_price_listbox->GetItemData(item)));
     }
-    StockHistoryModel::instance().ReleaseSavepoint();
+    StockHistoryModel::instance().db_release_savepoint();
     ShowStockHistory();
 }
 

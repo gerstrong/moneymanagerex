@@ -683,7 +683,7 @@ void mmGUIFrame::OnAutoRepeatTransactionsTimer(wxTimerEvent& /*event*/)
                 const auto& fv_a = FieldValueModel::instance().find(
                     FieldValueCol::REFID(-q1.BDID)
                 );
-                FieldValueModel::instance().Savepoint();
+                FieldValueModel::instance().db_savepoint();
                 for (const auto& fv_d : fv_a) {
                     FieldValueData new_fv_d = FieldValueData();
                     new_fv_d.FIELDID = fv_d.FIELDID;
@@ -691,7 +691,7 @@ void mmGUIFrame::OnAutoRepeatTransactionsTimer(wxTimerEvent& /*event*/)
                     new_fv_d.CONTENT = fv_d.CONTENT;
                     FieldValueModel::instance().add_data_n(new_fv_d);
                 }
-                FieldValueModel::instance().ReleaseSavepoint();
+                FieldValueModel::instance().db_release_savepoint();
 
                 // Save base transaction tags
                 TagLinkModel::DataA taglinks;
@@ -722,7 +722,7 @@ void mmGUIFrame::OnAutoRepeatTransactionsTimer(wxTimerEvent& /*event*/)
 // Save our settings to ini db.
 void mmGUIFrame::saveSettings()
 {
-    SettingModel::instance().Savepoint();
+    SettingModel::instance().db_savepoint();
     if (!m_filename.IsEmpty()) {
         wxFileName fname(m_filename);
         SettingModel::instance().setString("LASTFILENAME", fname.GetFullPath());
@@ -743,7 +743,7 @@ void mmGUIFrame::saveSettings()
     SettingModel::instance().setInt("SIZEW", value_w);
     SettingModel::instance().setInt("SIZEH", value_h);
     SettingModel::instance().setBool("ISMAXIMIZED", this->IsMaximized());
-    SettingModel::instance().ReleaseSavepoint();
+    SettingModel::instance().db_release_savepoint();
 }
 //----------------------------------------------------------------------------
 
@@ -2455,7 +2455,7 @@ bool mmGUIFrame::createDataStore(const wxString& fileName, const wxString& pwd, 
         wxString sSettings = InfoModel::instance().getString("HIDDEN_CATEGS_ID", "");
         if (!sSettings.empty()) {
             wxStringTokenizer token(sSettings, ";");
-            CategoryModel::instance().Savepoint();
+            CategoryModel::instance().db_savepoint();
             while (token.HasMoreTokens()) {
                 wxString catData = token.GetNextToken();
                 wxLongLong_t catID = 0;
@@ -2477,7 +2477,7 @@ bool mmGUIFrame::createDataStore(const wxString& fileName, const wxString& pwd, 
                     }
                 }
             }
-            CategoryModel::instance().ReleaseSavepoint();
+            CategoryModel::instance().db_release_savepoint();
             InfoModel::instance().setString("HIDDEN_CATEGS_ID", "");
         }
     }
@@ -3893,7 +3893,7 @@ void mmGUIFrame::OnRates(wxCommandEvent& WXUNUSED(event))
 
         std::map<wxString, double> stocks_data;
         if (get_yahoo_prices(symbols, stocks_data, "", msg, yahoo_price_type::SHARES)) {
-            StockHistoryModel::instance().Savepoint();
+            StockHistoryModel::instance().db_savepoint();
             for (auto& stock_d : stock_a) {
                 std::map<wxString, double>::const_iterator it = stocks_data.find(stock_d.m_symbol.Upper());
                 if (it == stocks_data.end())
@@ -3914,7 +3914,7 @@ void mmGUIFrame::OnRates(wxCommandEvent& WXUNUSED(event))
                     );
                 }
             }
-            StockHistoryModel::instance().ReleaseSavepoint();
+            StockHistoryModel::instance().db_release_savepoint();
             wxString strLastUpdate;
             strLastUpdate.Printf(_t("%1$s on %2$s"),
                 wxDateTime::Now().FormatTime(),
@@ -4215,10 +4215,10 @@ void mmGUIFrame::autocleanDeletedTransactions() {
         TrxCol::DELETEDTIME(OP_NE, wxEmptyString)
     );
     if (!deletedTransactions.empty()) {
-        TrxModel::instance().Savepoint();
-        AttachmentModel::instance().Savepoint();
-        TrxSplitModel::instance().Savepoint();
-        FieldValueModel::instance().Savepoint();
+        TrxModel::instance().db_savepoint();
+        AttachmentModel::instance().db_savepoint();
+        TrxSplitModel::instance().db_savepoint();
+        FieldValueModel::instance().db_savepoint();
         for (const auto& transaction : deletedTransactions) {
             // removing the checking transaction also removes split, translink, and share entries
             TrxModel::instance().purge_id(transaction.TRANSID);
@@ -4230,10 +4230,10 @@ void mmGUIFrame::autocleanDeletedTransactions() {
             // remove also any custom fields for the transaction
             FieldValueModel::DeleteAllData(RefType, transaction.TRANSID);
         }
-        FieldValueModel::instance().ReleaseSavepoint();
-        TrxSplitModel::instance().ReleaseSavepoint();
-        AttachmentModel::instance().ReleaseSavepoint();
-        TrxModel::instance().ReleaseSavepoint();
+        FieldValueModel::instance().db_release_savepoint();
+        TrxSplitModel::instance().db_release_savepoint();
+        AttachmentModel::instance().db_release_savepoint();
+        TrxModel::instance().db_release_savepoint();
     }
 }
 

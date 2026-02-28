@@ -165,7 +165,7 @@ void MergeTagDialog::OnOk(wxCommandEvent& WXUNUSED(event))
     if (ans != wxOK)
         return;
 
-    TagLinkModel::instance().Savepoint();
+    TagLinkModel::instance().db_savepoint();
     TagLinkModel::DataA gl_a = TagLinkModel::instance().find(
         TagLinkCol::TAGID(sourceTagID_)
     );
@@ -174,7 +174,7 @@ void MergeTagDialog::OnOk(wxCommandEvent& WXUNUSED(event))
     }
     TagLinkModel::instance().save_data_a(gl_a);
     m_changed_records += gl_a.size();
-    TagLinkModel::instance().ReleaseSavepoint();
+    TagLinkModel::instance().db_release_savepoint();
 
     if (cbDeleteSourceTag_->IsChecked()) {
         TagModel::instance().purge_id(sourceTagID_);

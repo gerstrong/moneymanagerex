@@ -291,10 +291,10 @@ void TagManager::OnDelete(wxCommandEvent& WXUNUSED(event))
     if (stringSelections.IsEmpty())
         return;
 
-    TagModel::instance().Savepoint();
-    TagLinkModel::instance().Savepoint();
-    TrxModel::instance().Savepoint();
-    TrxSplitModel::instance().Savepoint();
+    TagModel::instance().db_savepoint();
+    TagLinkModel::instance().db_savepoint();
+    TrxModel::instance().db_savepoint();
+    TrxSplitModel::instance().db_savepoint();
     for (const auto& selection : stringSelections) {
         const TagData* tag_d = TagModel::instance().get_key(selection);
         int tag_used = TagModel::instance().is_used(tag_d->m_id);
@@ -325,10 +325,10 @@ void TagManager::OnDelete(wxCommandEvent& WXUNUSED(event))
                 selectedTags_.RemoveAt(index);
         }
     }
-    TagModel::instance().ReleaseSavepoint();
-    TagLinkModel::instance().ReleaseSavepoint();
-    TrxModel::instance().ReleaseSavepoint();
-    TrxSplitModel::instance().ReleaseSavepoint();
+    TagModel::instance().db_release_savepoint();
+    TagLinkModel::instance().db_release_savepoint();
+    TrxModel::instance().db_release_savepoint();
+    TrxSplitModel::instance().db_release_savepoint();
     refreshRequested_ = true;
     fillControls();
     int newIndex = std::min(selections[0], static_cast<int>(tagListBox_->GetCount()) - 1);

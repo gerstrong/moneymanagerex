@@ -78,10 +78,10 @@ FieldModel& FieldModel::instance()
 /** Delete a field and all his data */
 bool FieldModel::Delete(const int64& FieldID)
 {
-    Savepoint();
+    db_savepoint();
     for (const auto& r : FieldValueModel::instance().find(FieldValueCol::FIELDID(FieldID)))
         FieldValueModel::instance().purge_id(r.id());
-    ReleaseSavepoint();
+    db_release_savepoint();
     return unsafe_remove_data(FieldID);
 }
 

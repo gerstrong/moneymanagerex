@@ -121,12 +121,12 @@ bool CurrencyModel::GetBaseCurrencySymbol(wxString& base_currency_symbol)
 
 void CurrencyModel::ResetBaseConversionRates()
 {
-    CurrencyModel::instance().Savepoint();
+    CurrencyModel::instance().db_savepoint();
     for (auto currency_d : CurrencyModel::instance().find_all()) {
         currency_d.m_base_conv_rate = 1;
         CurrencyModel::instance().save_data_n(currency_d);
     }
-    CurrencyModel::instance().ReleaseSavepoint();
+    CurrencyModel::instance().db_release_savepoint();
 }
 
 const CurrencyData* CurrencyModel::GetCurrencyRecord(const wxString& currency_symbol)
@@ -179,12 +179,12 @@ std::map<wxDateTime, int> CurrencyModel::DateUsed(int64 CurrencyID)
 bool CurrencyModel::purge_id(int64 id)
 {
     // purge CurrencyHistoryData owned by id
-    Savepoint();
+    db_savepoint();
     for (const auto& r : CurrencyHistoryModel::instance().find(
         CurrencyHistoryCol::CURRENCYID(id)
     ))
         CurrencyHistoryModel::instance().purge_id(r.id());
-    ReleaseSavepoint();
+    db_release_savepoint();
 
     return unsafe_remove_data(id);
 }

@@ -534,7 +534,7 @@ bool StockPanel::onlineQuoteRefresh(wxString& msg)
 
     std::map<wxString, double> nonYahooSymbols;
 
-    StockHistoryModel::instance().Savepoint();
+    StockHistoryModel::instance().db_savepoint();
     for (auto& stock_d : stock_a) {
         std::map<wxString, double>::const_iterator it = stocks_data.find(stock_d.m_symbol.Upper());
         if (it == stocks_data.end()) {
@@ -555,7 +555,7 @@ bool StockPanel::onlineQuoteRefresh(wxString& msg)
             );
         }
     }
-    StockHistoryModel::instance().ReleaseSavepoint();
+    StockHistoryModel::instance().db_release_savepoint();
 
     for (const auto& entry : nonYahooSymbols) {
         msg += wxString::Format("%s\t: %s\n", entry.first, _t("Missing"));

@@ -890,8 +890,8 @@ bool getOnlineCurrencyRates(wxString& msg,const int64 curr_id, const bool used_o
         }
     }
 
-    CurrencyModel::instance().Savepoint();
-    CurrencyHistoryModel::instance().Savepoint();
+    CurrencyModel::instance().db_savepoint();
+    CurrencyHistoryModel::instance().db_savepoint();
     for (auto& currency_d : currency_a) {
         if (!used_only && !CurrencyModel::is_used(currency_d.m_id))
             continue;
@@ -913,8 +913,8 @@ bool getOnlineCurrencyRates(wxString& msg,const int64 curr_id, const bool used_o
             }
         }
     }
-    CurrencyModel::instance().ReleaseSavepoint();
-    CurrencyHistoryModel::instance().ReleaseSavepoint();
+    CurrencyModel::instance().db_release_savepoint();
+    CurrencyHistoryModel::instance().db_release_savepoint();
 
     return true;
 }

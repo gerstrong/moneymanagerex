@@ -83,15 +83,15 @@ void TagLinkModel::DeleteAllTags(const wxString& refType, int64 refID)
     const auto& links = instance().find(
         TagLinkCol::REFTYPE(refType), TagLinkCol::REFID(refID)
     );
-    instance().Savepoint();
+    instance().db_savepoint();
     for (const auto& link : links)
         instance().purge_id(link.TAGLINKID);
-    instance().ReleaseSavepoint();
+    instance().db_release_savepoint();
 }
 
 int TagLinkModel::update(const DataA& rows, const wxString& refType, int64 refId)
 {
-    TagLinkModel::instance().Savepoint();
+    TagLinkModel::instance().db_savepoint();
     bool save_timestamp = false;
     std::map<int, int64> row_id_map;
 
@@ -134,7 +134,7 @@ int TagLinkModel::update(const DataA& rows, const wxString& refType, int64 refId
             );
     }
 
-    TagLinkModel::instance().ReleaseSavepoint();
+    TagLinkModel::instance().db_release_savepoint();
 
     return rows.size();
 }

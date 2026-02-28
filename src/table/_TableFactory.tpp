@@ -116,14 +116,14 @@ template<typename T, typename D>
 bool TableFactory<T, D>::add_data_a(DataA& data_a)
 {
     bool ok = true;
-    this->Savepoint();
+    this->db_savepoint();
     for (auto& data : data_a) {
         if (!add_data_n(data)) {
             ok = false;
             break;
         }
     }
-    this->ReleaseSavepoint();
+    this->db_release_savepoint();
 
     return ok;
 }
@@ -222,14 +222,14 @@ bool TableFactory<T, D>::save_data_a(DataA& data_a)
 {
     bool ok = true;
 
-    this->Savepoint();
+    this->db_savepoint();
     for (Data& data : data_a) {
         if (!save_data_n(data)) {
             ok = false;
             break;
         }
     }
-    this->ReleaseSavepoint();
+    this->db_release_savepoint();
 
     return ok;
 }

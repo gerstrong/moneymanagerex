@@ -476,7 +476,7 @@ const wxString FieldValueDialog::GetWidgetData(wxWindowID controlID) const
 bool FieldValueDialog::SaveCustomValues(int64 ref_id)
 {
     bool save_timestamp = false;
-    FieldValueModel::instance().Savepoint();
+    FieldValueModel::instance().db_savepoint();
     int field_index = 0;
     for (const auto &field : m_fields) {
         wxWindowID controlID = GetBaseID() + field_index++ * FIELDMULTIPLIER;
@@ -508,7 +508,7 @@ bool FieldValueDialog::SaveCustomValues(int64 ref_id)
         }
     }
 
-    FieldValueModel::instance().ReleaseSavepoint();
+    FieldValueModel::instance().db_release_savepoint();
 
     if (save_timestamp && m_ref_type == TrxModel::refTypeName)
         TrxModel::instance().save_timestamp(ref_id);        
@@ -518,7 +518,7 @@ bool FieldValueDialog::SaveCustomValues(int64 ref_id)
 
 void FieldValueDialog::UpdateCustomValues(int64 ref_id)
 {
-    FieldValueModel::instance().Savepoint();
+    FieldValueModel::instance().db_savepoint();
     bool save_timestamp = false;
     int field_index = 0;
     for (const auto& field : m_fields) {
@@ -555,7 +555,7 @@ void FieldValueDialog::UpdateCustomValues(int64 ref_id)
         }
     }
 
-    FieldValueModel::instance().ReleaseSavepoint();
+    FieldValueModel::instance().db_release_savepoint();
 
     if (save_timestamp && m_ref_type == TrxModel::refTypeName)
         TrxModel::instance().save_timestamp(ref_id);        

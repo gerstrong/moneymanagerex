@@ -82,7 +82,7 @@ public:
     mmDateN() = default;
     mmDateN(mmDate dateDay);
     mmDateN(wxDateTime dateTimeN);
-    mmDateN(const wxString& isoDateN);
+    mmDateN(const wxString& isoDateTimeN);
 
 public:
     bool has_value() const;

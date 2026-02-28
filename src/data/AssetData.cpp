@@ -20,14 +20,15 @@
 
 AssetData::AssetData()
 {
-    m_id          = -1;
-    m_type        = AssetType();
-    m_status      = AssetStatus();
-    m_currency_id = -1;
-    m_value       = 0.0;
-    m_change      = AssetChange();
-    m_change_mode = AssetChangeMode();
-    m_change_rate = 0.0;
+    m_id           = -1;
+    m_type         = AssetType();
+    m_status       = AssetStatus();
+    m_start_date_n = mmDateN();
+    m_currency_id  = -1;
+    m_value        = 0.0;
+    m_change       = AssetChange();
+    m_change_mode  = AssetChangeMode();
+    m_change_rate  = 0.0;
 }
 
 // Convert AssetData to AssetRow
@@ -36,7 +37,7 @@ AssetRow AssetData::to_row() const
     AssetRow row;
 
     row.ASSETID         = m_id;
-    row.STARTDATE       = m_start_date_;
+    row.STARTDATE       = m_start_date_n.value().isoDate();
     row.ASSETNAME       = m_name;
     row.ASSETSTATUS     = m_status.name();
     row.CURRENCYID      = m_currency_id;
@@ -53,17 +54,17 @@ AssetRow AssetData::to_row() const
 // Convert AssetRow to AssetData
 AssetData& AssetData::from_row(const AssetRow& row)
 {
-    m_id          = row.ASSETID;                          // int64
-    m_type        = AssetType(row.ASSETTYPE);             // wxString
-    m_status      = AssetStatus(row.ASSETSTATUS);         // wxString
-    m_name        = row.ASSETNAME;                        // wxString
-    m_start_date_ = row.STARTDATE;                        // wxString
-    m_currency_id = row.CURRENCYID;                       // int64
-    m_value       = row.VALUE;                            // double
-    m_change      = AssetChange(row.VALUECHANGE);         // wxString
-    m_change_mode = AssetChangeMode(row.VALUECHANGEMODE); // wxString
-    m_change_rate = row.VALUECHANGERATE;                  // double
-    m_notes       = row.NOTES;                            // wxString
+    m_id           = row.ASSETID;                          // int64
+    m_type         = AssetType(row.ASSETTYPE);             // wxString
+    m_status       = AssetStatus(row.ASSETSTATUS);         // wxString
+    m_name         = row.ASSETNAME;                        // wxString
+    m_start_date_n = mmDateN(row.STARTDATE);               // wxString
+    m_currency_id  = row.CURRENCYID;                       // int64
+    m_value        = row.VALUE;                            // double
+    m_change       = AssetChange(row.VALUECHANGE);         // wxString
+    m_change_mode  = AssetChangeMode(row.VALUECHANGEMODE); // wxString
+    m_change_rate  = row.VALUECHANGERATE;                  // double
+    m_notes        = row.NOTES;                            // wxString
 
     return *this;
 }
@@ -74,7 +75,7 @@ bool AssetData::equals(const AssetData* other) const
     if ( m_type.id()        != other->m_type.id())        return false;
     if ( m_status.id()      != other->m_status.id())      return false;
     if (!m_name.IsSameAs(other->m_name))                  return false;
-    if (!m_start_date_.IsSameAs(other->m_start_date_))    return false;
+    if ( m_start_date_n     != other->m_start_date_n)     return false;
     if ( m_currency_id      != other->m_currency_id)      return false;
     if ( m_value            != other->m_value)            return false;
     if ( m_change.id()      != other->m_change.id())      return false;

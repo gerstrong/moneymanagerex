@@ -70,7 +70,7 @@ wxString AssetModel::get_id_name(int64 asset_id)
 std::pair<double, double> AssetModel::valueAtDate(const Data& asset_d, const wxDate& date)
 {
     std::pair<double /*initial*/, double /*market*/> balance;
-    if (date < asset_d.STARTDATE())
+    if (date < asset_d.m_start_date_n.getDateTimeN())
         return balance;
 
     TrxLinkModel::DataA translink_records = TrxLinkModel::instance().find(
@@ -148,7 +148,7 @@ std::pair<double, double> AssetModel::valueAtDate(const Data& asset_d, const wxD
         balance = {asset_d.m_value, asset_d.m_value};
         applyChangeRate(
             balance.second,
-            static_cast<double>((date - asset_d.STARTDATE()).GetDays())
+            static_cast<double>((date - asset_d.m_start_date_n.getDateTimeN()).GetDays())
         );
     }
     return balance;

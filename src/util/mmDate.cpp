@@ -52,8 +52,8 @@ mmDateN::mmDateN(wxDateTime dateTimeN) :
     }
 }
 
-mmDateN::mmDateN(const wxString& isoDateN)
+mmDateN::mmDateN(const wxString& isoDateTimeN) :
+    mmDateN(parseDateTime(isoDateTimeN))
 {
-    *this = mmDateN(parseDateTime(isoDateN));
 }
 

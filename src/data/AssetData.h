@@ -19,6 +19,7 @@
 #pragma once
 
 #include "util/_primitive.h"
+#include "util/mmDate.h"
 #include "_DataEnum.h"
 #include "table/_TableBase.h"
 #include "table/AssetTable.h"
@@ -30,7 +31,7 @@ struct AssetData
     AssetType       m_type;
     AssetStatus     m_status;
     wxString        m_name;
-    wxString        m_start_date_;
+    mmDateN         m_start_date_n;
     int64           m_currency_id;
     double          m_value;
     AssetChange     m_change;
@@ -60,8 +61,6 @@ struct AssetData
     bool operator< (const AssetData& other) const { return id() < other.id(); }
     bool operator< (const AssetData* other) const { return id() < other->id(); }
 
-    wxDateTime STARTDATE() const { return parseDateTime(m_start_date_); }
-
     struct SorterByASSETID
     {
         bool operator()(const AssetData& x, const AssetData& y)
@@ -74,7 +73,7 @@ struct AssetData
     {
         bool operator()(const AssetData& x, const AssetData& y)
         {
-            return x.m_start_date_ < y.m_start_date_;
+            return x.m_start_date_n.value() < y.m_start_date_n.value();
         }
     };
 

@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include "util/_primitive.h"
 #include "_DataEnum.h"
 #include "table/_TableBase.h"
 #include "table/AssetTable.h"
@@ -58,6 +59,8 @@ struct AssetData
     bool equals(const AssetData* other) const;
     bool operator< (const AssetData& other) const { return id() < other.id(); }
     bool operator< (const AssetData* other) const { return id() < other->id(); }
+
+    wxDateTime STARTDATE() const { return parseDateTime(m_start_date); }
 
     struct SorterByASSETID
     {

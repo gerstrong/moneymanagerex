@@ -34,34 +34,19 @@ public:
     static const wxString refTypeName;
 
 public:
-    /**
-    Initialize the global AssetModel table on initial call.
-    Resets the global table on subsequent calls.
-    * Return the static instance address for AssetModel table
-    * Note: Assigning the address to a local variable can destroy the instance.
-    */
+    // Initialize the global AssetModel table on initial call.
+    // Resets the global table on subsequent calls.
+    // Return the static instance address for AssetModel table
+    // Note: Assigning the address to a local variable can destroy the instance.
     static AssetModel& instance(wxSQLite3Database* db);
 
-    /**
-    * Return the static instance address for AssetModel table
-    * Note: Assigning the address to a local variable can destroy the instance.
-    */
+    // Return the static instance address for AssetModel table
+    // Note: Assigning the address to a local variable can destroy the instance.
     static AssetModel& instance();
 
 public:
     static AssetCol::ASSETTYPE ASSETTYPE(OP op, AssetType type);
     static AssetCol::STARTDATE STARTDATE(OP op, const wxDate& date);
-    
-public:
-    static wxString get_asset_name(int64 asset_id);
-    static wxDate STARTDATE(const Data& r);
-
-    // Returns the base currency Data record pointer
-    static const CurrencyData* currency(const Data* /* r */);
-    // Returns the calculated current value
-    static std::pair<double, double> value(const Data* r);
-    // Returns the calculated current value
-    static std::pair<double, double> value(const Data& r);
 
 public:
     AssetModel();
@@ -69,7 +54,14 @@ public:
 
 public:
     // FIXME: add purge_id() to remove AttachmentData owned by AssetData
+
+    // Return the asset name of a given id
+    wxString get_id_name(int64 asset_id);
+
+    // Return the value of an asset at a given date
+    std::pair<double, double> valueAtDate(const Data& asset_d, const wxDate& date);
+    // Return the current value of an asset
+    std::pair<double, double> value(const Data& asset_d);
+    // Return the current value of all assets
     double balance();
-    // Returns the calculated value at a given date
-    std::pair<double, double> valueAtDate(const Data* r, const wxDate& date);
 };

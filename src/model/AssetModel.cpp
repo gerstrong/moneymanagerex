@@ -50,25 +50,6 @@ AssetModel& AssetModel::instance()
     return Singleton<AssetModel>::instance();
 }
 
-wxString AssetModel::get_asset_name(int64 asset_id)
-{
-    const Data* asset_n = instance().get_data_n(asset_id);
-    if (asset_n)
-        return asset_n->m_name;
-    else
-        return _t("Asset Error");
-}
-
-double AssetModel::balance()
-{
-    double balance = 0.0;
-    for (const auto& r: this->find_all())
-    {
-        balance += value(r).second;
-    }
-    return balance;
-}
-
 AssetCol::ASSETTYPE AssetModel::ASSETTYPE(OP op, AssetType type)
 {
     return AssetCol::ASSETTYPE(op, type.name());
@@ -79,38 +60,28 @@ AssetCol::STARTDATE AssetModel::STARTDATE(OP op, const wxDate& date)
     return AssetCol::STARTDATE(op, date.FormatISODate());
 }
 
-wxDate AssetModel::STARTDATE(const Data& r)
+wxString AssetModel::get_id_name(int64 asset_id)
 {
-    return parseDateTime(r.m_start_date);
+    const Data* asset_n = get_data_n(asset_id);
+    if (asset_n)
+        return asset_n->m_name;
+    else
+        return _t("Asset Error");
 }
 
-const CurrencyData* AssetModel::currency(const Data* /* r */)
-{
-    return CurrencyModel::instance().GetBaseCurrency();
-}
-
-std::pair<double, double> AssetModel::value(const Data* r)
-{
-    return instance().valueAtDate(r, wxDate::Today());
-}
-
-std::pair<double, double> AssetModel::value(const Data& r)
-{
-    return instance().valueAtDate(&r, wxDate::Today());
-}
-
-std::pair<double, double> AssetModel::valueAtDate(const Data* r, const wxDate& date)
+std::pair<double, double> AssetModel::valueAtDate(const Data& asset_d, const wxDate& date)
 {
     std::pair<double /*initial*/, double /*market*/> balance;
-    if (date < STARTDATE(*r)) return balance;
+    if (date < asset_d.STARTDATE())
+        return balance;
 
     TrxLinkModel::DataA translink_records = TrxLinkModel::instance().find(
-        TrxLinkCol::LINKRECORDID(r->m_id),
+        TrxLinkCol::LINKRECORDID(asset_d.m_id),
         TrxLinkCol::LINKTYPE(this->refTypeName)
     );
 
-    double dailyRate = r->m_change_rate / 36500.0;
-    mmChoiceId changeType = r->m_change.id();
+    double dailyRate = asset_d.m_change_rate / 36500.0;
+    mmChoiceId changeType = asset_d.m_change.id();
 
     auto applyChangeRate = [changeType, dailyRate](double& value, double days) {
         if (changeType == AssetChange::e_appreciates) {
@@ -147,7 +118,10 @@ std::pair<double, double> AssetModel::valueAtDate(const Data* r, const wxDate& d
 
             double accflow = TrxModel::account_flow(tran, tran.ACCOUNTID);
             double amount = -1 * accflow *
-                CurrencyHistoryModel::getDayRate(AccountModel::instance().get_data_n(tran.ACCOUNTID)->m_currency_id, tranDate);
+                CurrencyHistoryModel::getDayRate(
+                    AccountModel::instance().get_data_n(tran.ACCOUNTID)->m_currency_id,
+                    tranDate
+            );
             //double amount = -1 * TrxModel::account_flow(tran, tran.ACCOUNTID) *
             //    CurrencyHistoryModel::getDayRate(AccountModel::instance().get_data_n(tran.ACCOUNTID)->CURRENCYID, tranDate);
 
@@ -172,10 +146,26 @@ std::pair<double, double> AssetModel::valueAtDate(const Data* r, const wxDate& d
 
         applyChangeRate(balance.second, static_cast<double>((date - last).GetDays()));
     }
-    else
-    {
-        balance = {r->m_value, r->m_value};
-        applyChangeRate(balance.second, static_cast<double>((date - STARTDATE(*r)).GetDays()));
+    else {
+        balance = {asset_d.m_value, asset_d.m_value};
+        applyChangeRate(
+            balance.second,
+            static_cast<double>((date - asset_d.STARTDATE()).GetDays())
+        );
+    }
+    return balance;
+}
+
+std::pair<double, double> AssetModel::value(const Data& asset_d)
+{
+    return valueAtDate(asset_d, wxDate::Today());
+}
+
+double AssetModel::balance()
+{
+    double balance = 0.0;
+    for (const auto& asset_d: this->find_all()) {
+        balance += value(asset_d).second;
     }
     return balance;
 }

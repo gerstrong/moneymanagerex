@@ -209,7 +209,7 @@ wxString BalanceReport::getHTMLText()
         idx = NavigatorTypes::instance().getAccountTypeIdx(NavigatorTypes::TYPE_ID_ASSET);
         if (idx > -1) {
             for (const auto& asset : AssetModel::instance().find_all()) {
-                balancePerDay[idx] += AssetModel::instance().valueAtDate(&asset, end_date).second * getCurrencyDateRate(asset.m_currency_id, end_date);
+                balancePerDay[idx] += AssetModel::instance().valueAtDate(asset, end_date).second * getCurrencyDateRate(asset.m_currency_id, end_date);
             }
         }
 

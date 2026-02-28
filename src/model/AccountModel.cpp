@@ -230,7 +230,7 @@ std::pair<double, double> AccountModel::investment_balance(const Data& account_d
         AssetCol::ASSETNAME(account_d.m_name),
         AssetCol::ASSETTYPE(account_d.m_name)
     )) {
-        auto asset_bal = AssetModel::value(asset);
+        auto asset_bal = AssetModel::instance().value(asset);
         sum.first  += asset_bal.second;
         sum.second += asset_bal.first;
     }

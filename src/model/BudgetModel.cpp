@@ -113,7 +113,7 @@ void BudgetModel::getBudgetStats(
     std::map<std::pair<int, int64>, bool> isBudgeted;
     std::map<int64, int> budgetedMonths;
     const wxString year = wxString::Format("%i", start_date.GetYear());
-    int64 budgetYearID = BudgetPeriodModel::instance().Get(year);
+    int64 budgetYearID = BudgetPeriodModel::instance().get_name_id(year);
     for (const Data& budget_d : find(
         BudgetCol::BUDGETYEARID(budgetYearID)
     )) {
@@ -129,7 +129,7 @@ void BudgetModel::getBudgetStats(
     bool budgetDeductMonthly = PrefModel::instance().getBudgetDeductMonthly();
     for (int month = 0; month < 12; month++) {
         const wxString budgetYearMonth = wxString::Format("%s-%02d", year, month + 1);
-        budgetYearID = BudgetPeriodModel::instance().Get(budgetYearMonth);
+        budgetYearID = BudgetPeriodModel::instance().get_name_id(budgetYearMonth);
 
         //fill with amount from monthly budgets first
         for (const Data& budget_d : find(
@@ -199,7 +199,7 @@ void BudgetModel::copyBudgetYear(int64 newYearID, int64 baseYearID)
     if (optionDeductMonthly) {
         for (int month = 0; month < 12; month++) {
             const wxString budgetYearMonth = wxString::Format("%s-%02d", newBudgetYearName.SubString(0,3), month + 1);
-            int64 budgetYearID = BudgetPeriodModel::instance().Get(budgetYearMonth);
+            int64 budgetYearID = BudgetPeriodModel::instance().get_name_id(budgetYearMonth);
             BudgetModel::DataA budget_a = find(
                 BudgetCol::BUDGETYEARID(budgetYearID)
             );

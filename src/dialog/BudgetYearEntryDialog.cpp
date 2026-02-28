@@ -139,8 +139,7 @@ void BudgetYearEntryDialog::OnOk(wxCommandEvent& /*event*/)
     wxString currYearText = wxString() << textYear_->GetValue();
     wxString baseYear = itemChoice_->GetStringSelection();
 
-    if (withMonth_)
-    {
+    if (withMonth_) {
         wxString currMonthText = wxEmptyString;
         currMonthText << textMonth_->GetValue();
         if (currMonthText.length() != 2 )
@@ -149,19 +148,16 @@ void BudgetYearEntryDialog::OnOk(wxCommandEvent& /*event*/)
         currYearText << "-" << currMonthText;
     }
 
-    if (BudgetPeriodModel::instance().Get(currYearText) != -1)
-    {   
+    if (BudgetPeriodModel::instance().get_name_id(currYearText) != -1) {   
         wxMessageBox(_t("Budget Year already exists")
             , _t("Budget Entry Details"), wxICON_WARNING);
         return;
     }
-    else
-    {
-        BudgetPeriodModel::instance().Add(currYearText);
-        if (baseYear != "None" && !baseYear.empty())
-        {
-            int64 baseYearID = BudgetPeriodModel::instance().Get(baseYear);
-            int64 newYearID  = BudgetPeriodModel::instance().Get(currYearText);
+    else {
+        BudgetPeriodModel::instance().ensure_name(currYearText);
+        if (baseYear != "None" && !baseYear.empty()) {
+            int64 baseYearID = BudgetPeriodModel::instance().get_name_id(baseYear);
+            int64 newYearID  = BudgetPeriodModel::instance().get_name_id(currYearText);
             BudgetModel::instance().copyBudgetYear(newYearID, baseYearID);
         }
     }

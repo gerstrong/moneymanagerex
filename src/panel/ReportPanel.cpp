@@ -691,7 +691,9 @@ void ReportPanel::onNewWindow(wxWebViewEvent& evt)
         std::string formattedMonth = oss.str();
 
         //get yearId from year_name
-        int64 budgetYearID = BudgetPeriodModel::instance().Get(parms[3] + "-" + formattedMonth);
+        int64 budgetYearID = BudgetPeriodModel::instance().get_name_id(
+            parms[3] + "-" + formattedMonth
+        );
 
         //if budgetYearID doesn't exist then return
         if (budgetYearID == -1) {

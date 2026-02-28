@@ -59,7 +59,7 @@ wxString mmReportBudgetCategorySummary::getHTMLText()
     long tmp;
     int startYear = wxDateTime::Today().GetYear();
 
-    wxString value = BudgetPeriodModel::instance().Get(m_date_selection);
+    wxString value = BudgetPeriodModel::instance().get_id_name(m_date_selection);
     wxString budget_month, budget_year = value;
 
     wxRegEx pattern("^([0-9]{4})(-([0-9]{2}))?$");

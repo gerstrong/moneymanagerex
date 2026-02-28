@@ -147,7 +147,7 @@ void BudgetYearDialog::OnAddMonth(wxCommandEvent& /*event*/)
 void BudgetYearDialog::OnDelete(wxCommandEvent& /*event*/)
 {
     wxString budgetYearString = m_listBox->GetStringSelection();
-    int64 budgetYearID = BudgetPeriodModel::instance().Get(budgetYearString);
+    int64 budgetYearID = BudgetPeriodModel::instance().get_name_id(budgetYearString);
     BudgetPeriodModel::instance().purge_id(budgetYearID);
     m_listBox->Clear();
     fillControls();

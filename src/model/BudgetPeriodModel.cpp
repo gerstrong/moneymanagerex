@@ -57,45 +57,30 @@ bool BudgetPeriodModel::purge_id(int64 id)
     return unsafe_remove_data(id);
 }
 
-int64 BudgetPeriodModel::Add(const wxString& value)
-{
-    int64 year_id = this->Get(value);
-    if (year_id < 0) {
-        Data new_bp_d = Data();
-        new_bp_d.m_name = value;
-        add_data_n(new_bp_d);
-        year_id = new_bp_d.id();
-    }
-    return year_id;
-}
-
 // Getter
-wxString BudgetPeriodModel::Get(int64 year_id)
+wxString BudgetPeriodModel::get_id_name(int64 year_id)
 {
     const Data* bp_n = get_data_n(year_id);
     return bp_n ? bp_n->m_name : "";
 }
 
-int64 BudgetPeriodModel::Get(const wxString& year_name)
+int64 BudgetPeriodModel::get_name_id(const wxString& year_name)
 {
     for (const auto& bp_d: this->find_all()) {
         if (bp_d.m_name == year_name)
             return bp_d.m_id;
     }
-
     return -1;
 }
 
-bool BudgetPeriodModel::Exists(int64 year_id)
+int64 BudgetPeriodModel::ensure_name(const wxString& year_name)
 {
-    return get_data_n(year_id) != nullptr;
-}
-
-bool BudgetPeriodModel::Exists(const wxString& year_name)
-{
-    for (const auto& bp_d: this->find_all()) {
-        if (bp_d.m_name == year_name) 
-            return true;
+    int64 year_id = get_name_id(year_name);
+    if (year_id < 0) {
+        Data new_bp_d = Data();
+        new_bp_d.m_name = year_name;
+        add_data_n(new_bp_d);
+        year_id = new_bp_d.id();
     }
-    return false;
+    return year_id;
 }

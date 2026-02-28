@@ -165,29 +165,24 @@ void BudgetPanel::OnMouseLeftDown(wxCommandEvent& event)
 
 wxString BudgetPanel::GetPanelTitle() const
 {
-    wxString yearStr = BudgetPeriodModel::instance().Get(budgetYearID_);
-    if ((yearStr.length() < 5))
-    {
-        if (PrefModel::instance().getBudgetFinancialYears())
-        {
+    wxString yearStr = BudgetPeriodModel::instance().get_id_name(budgetYearID_);
+    if ((yearStr.length() < 5)) {
+        if (PrefModel::instance().getBudgetFinancialYears()) {
             long year;
             yearStr.ToLong(&year);
             year++;
             yearStr = wxString::Format(_t("Financial Year: %s - %li"), yearStr, year);
         }
-        else
-        {
+        else {
             yearStr = wxString::Format(_t("Year: %s"), yearStr);
         }
     }
-    else
-    {
+    else {
         yearStr = wxString::Format(_t("Month: %s"), yearStr);
         yearStr += wxString::Format(" (%s)", m_monthName);
     }
 
-    if (PrefModel::instance().getBudgetDaysOffset() != 0)
-    {
+    if (PrefModel::instance().getBudgetDaysOffset() != 0) {
         yearStr = wxString::Format(_t("%1$s    Start Date of: %2$s"), yearStr, mmGetDateTimeForDisplay(m_budget_offset_date));
     }
 
@@ -360,7 +355,7 @@ void BudgetPanel::initVirtualListControl()
     }
 
     currentView_ = InfoModel::instance().getString("BUDGET_FILTER", VIEW_ALL);
-    const wxString budgetYearStr = BudgetPeriodModel::instance().Get(budgetYearID_);
+    const wxString budgetYearStr = BudgetPeriodModel::instance().get_id_name(budgetYearID_);
     long year = 0;
     budgetYearStr.ToLong(&year);
 

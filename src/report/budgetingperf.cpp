@@ -56,13 +56,12 @@ wxString mmReportBudgetingPerformance::getHTMLText()
 
     long startYear;
 
-    wxString value = BudgetPeriodModel::instance().Get(m_date_selection);
+    wxString value = BudgetPeriodModel::instance().get_id_name(m_date_selection);
     wxString budget_year;
     wxString budget_month;
 
     wxRegEx pattern("^([0-9]{4})(-([0-9]{2}))?$");
-    if (pattern.Matches(value))
-    {
+    if (pattern.Matches(value)) {
         budget_year = pattern.GetMatch(value, 1);
         budget_month = pattern.GetMatch(value, 3);
     }

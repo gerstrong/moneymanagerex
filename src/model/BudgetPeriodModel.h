@@ -28,10 +28,6 @@
 class BudgetPeriodModel : public TableFactory<BudgetPeriodTable, BudgetPeriodData>
 {
 public:
-    BudgetPeriodModel();
-    ~BudgetPeriodModel();
-
-public:
     /**
     Initialize the global BudgetPeriodModel table on initial call.
     Resets the global table on subsequent calls.
@@ -47,14 +43,14 @@ public:
     static BudgetPeriodModel& instance();
 
 public:
+    BudgetPeriodModel();
+    ~BudgetPeriodModel();
+
+public:
     bool purge_id(int64 id) override;
 
-    int64 Add(const wxString& value);
-
-    wxString Get(int64 year_id);
-    int64 Get(const wxString& year_name);
-
-    bool Exists(int64 year_id);
-    bool Exists(const wxString& year_name);
+    wxString get_id_name(int64 year_id);
+    int64 get_name_id(const wxString& year_name);
+    int64 ensure_name(const wxString& year_name);
 };
 

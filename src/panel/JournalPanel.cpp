@@ -106,8 +106,8 @@ JournalPanel::JournalPanel(
 {
     if (isAccount()) {
         m_account_id = m_checking_id;
-        m_account_n = AccountModel::instance().get_data_n(m_account_id);
-        m_currency_n = AccountModel::currency_p(*m_account_n);
+        m_account_n = AccountModel::instance().get_id_data_n(m_account_id);
+        m_currency_n = AccountModel::instance().currency_p(*m_account_n);
     }
     else if (isGroup()) {
         m_group_ids = std::set<int64>(group_ids.begin(), group_ids.end());
@@ -159,8 +159,8 @@ void JournalPanel::loadAccount(int64 account_id)
     m_checking_id = account_id;
     m_account_id = account_id;
     m_group_ids = {};
-    m_account_n = AccountModel::instance().get_data_n(m_account_id);
-    m_currency_n = AccountModel::currency_p(*m_account_n);
+    m_account_n = AccountModel::instance().get_id_data_n(m_account_id);
+    m_currency_n = AccountModel::instance().currency_p(*m_account_n);
     m_use_account_specific_filter = PrefModel::instance().getUsePerAccountFilter();
 
     loadFilterSettings();
@@ -399,17 +399,17 @@ void JournalPanel::updateHeader()
     if (m_account_n) {
         wxString summary = wxString::Format("%s%s",
             _t("Account Bal: "),
-            AccountModel::to_currency(m_balance, *m_account_n)
+            AccountModel::instance().to_currency(m_balance, *m_account_n)
         );
         if (m_show_reconciled) summary.Append(wxString::Format("     %s%s     %s%s",
             _t("Reconciled Bal: "),
-            AccountModel::to_currency(m_reconciled_balance, *m_account_n),
+            AccountModel::instance().to_currency(m_reconciled_balance, *m_account_n),
             _t("Diff: "),
-            AccountModel::to_currency(m_balance - m_reconciled_balance, *m_account_n)
+            AccountModel::instance().to_currency(m_balance - m_reconciled_balance, *m_account_n)
         ));
         summary.Append(wxString::Format("     %s%s",
             _t("Filtered Flow: "),
-            AccountModel::to_currency(m_flow, *m_account_n)
+            AccountModel::instance().to_currency(m_flow, *m_account_n)
         ));
         if (m_account_n->m_credit_limit != 0.0) {
             double limit = 100.0 * ((m_balance < 0.0) ? -m_balance / m_account_n->m_credit_limit : 0.0);
@@ -424,14 +424,14 @@ void JournalPanel::updateHeader()
         if (AccountModel::type_id(*m_account_n) == NavigatorTypes::TYPE_ID_INVESTMENT ||
             AccountModel::type_id(*m_account_n) == NavigatorTypes::TYPE_ID_ASSET
         ) {
-            std::pair<double, double> investment_bal = AccountModel::investment_balance(*m_account_n);
+            std::pair<double, double> investment_bal = AccountModel::instance().investment_balance(*m_account_n);
             summary.Append(wxString::Format("     %s%s",
                 _t("Market Value: "),
-                AccountModel::to_currency(investment_bal.first, *m_account_n)
+                AccountModel::instance().to_currency(investment_bal.first, *m_account_n)
             ));
             summary.Append(wxString::Format("     %s%s",
                 _t("Invested: "),
-                AccountModel::to_currency(investment_bal.second, *m_account_n)
+                AccountModel::instance().to_currency(investment_bal.second, *m_account_n)
             ));
         }
         m_header_balance->SetLabelText(summary);
@@ -659,7 +659,7 @@ void JournalPanel::filterList()
         wxDateTime(23, 59, 59, 999).FormatISOCombined();
 
     const auto trans = m_account_n
-        ? AccountModel::transactionsByDateTimeId(*m_account_n)
+        ? AccountModel::instance().find_id_trx_aBySN(m_account_n->m_id)
         : TrxModel::instance().find_allByDateTimeId();
     const auto trans_splits = TrxSplitModel::instance().get_all_id();
     const auto trans_tags = TagLinkModel::instance().get_all_id(tranRefType);
@@ -702,7 +702,7 @@ void JournalPanel::filterList()
         bills_tags = TagLinkModel::instance().get_all_id(billRefType);
         bills_attachments = AttachmentModel::instance().get_reftype(SchedModel::refTypeName);
         bills = m_account_n
-            ? AccountModel::billsdeposits(*m_account_n)
+            ? AccountModel::instance().find_id_sched_a(m_account_n->m_id)
             : SchedModel::instance().find_all();
         for (unsigned int i = 0; i < bills.size(); ++i) {
             int limit = 1000;  // this is enough for daily repetitions for one year
@@ -1422,8 +1422,8 @@ void JournalPanel::setSelectedTransaction(Journal::IdRepeat journal_id)
 void JournalPanel::displaySplitCategories(Journal::IdB journal_id)
 {
     Journal::Data journal = !journal_id.second
-        ? Journal::Data(*TrxModel::instance().get_data_n(journal_id.first))
-        : Journal::Data(*SchedModel::instance().get_data_n(journal_id.first));
+        ? Journal::Data(*TrxModel::instance().get_id_data_n(journal_id.first))
+        : Journal::Data(*SchedModel::instance().get_id_data_n(journal_id.first));
     std::vector<Split> splits;
     for (const auto& split : Journal::split(journal)) {
         Split s;

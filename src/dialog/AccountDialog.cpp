@@ -73,7 +73,7 @@ AccountDialog::AccountDialog(AccountData* account, wxWindow* parent) :
 {
     m_images = navtree_images_list();
     m_currencyID = m_account_n->m_currency_id;
-    [[maybe_unused]] const CurrencyData* currency = CurrencyModel::instance().get_data_n(m_currencyID);
+    [[maybe_unused]] const CurrencyData* currency = CurrencyModel::instance().get_id_data_n(m_currencyID);
     wxASSERT(currency);
 
     this->SetFont(parent->GetFont());
@@ -306,7 +306,7 @@ void AccountDialog::fillControls()
 {
     if (!m_account_n)
         return;
-    const CurrencyData* currency_p = AccountModel::currency_p(*m_account_n);
+    const CurrencyData* currency_p = AccountModel::instance().currency_p(*m_account_n);
 
     m_textAccountName->SetValue(m_account_n->m_name);
 
@@ -397,7 +397,7 @@ void AccountDialog::OnAccountStatus(wxCommandEvent& /*event*/)
 void AccountDialog::OnCurrency(wxCommandEvent& /*event*/)
 {
     if (CurrencyChoiceDialog::Execute(this, m_currencyID)) {
-        const CurrencyData* currency = CurrencyModel::instance().get_data_n(m_currencyID);
+        const CurrencyData* currency = CurrencyModel::instance().get_id_data_n(m_currencyID);
         wxButton* bn = static_cast<wxButton*>(FindWindow(ID_DIALOG_NEWACCT_BUTTON_CURRENCY));
         bn->SetLabelText(currency->m_name);
 
@@ -501,12 +501,12 @@ void AccountDialog::OnCancel(wxCommandEvent& /*event*/)
 void AccountDialog::OnOk(wxCommandEvent& /*event*/)
 {
     wxString acctName = m_textAccountName->GetValue().Trim();
-    if (acctName.IsEmpty() || !AccountModel::instance().find_name_a(acctName).empty()) {
+    if (acctName.IsEmpty() || !AccountModel::instance().find_name_data_a(acctName).empty()) {
         if (m_account_n && m_account_n->m_name.CmpNoCase(acctName) != 0)
             return mmErrorDialogs::MessageInvalid(this, _t("Account Name "));
     }
 
-    const CurrencyData* currency_n = CurrencyModel::instance().get_data_n(m_currencyID);
+    const CurrencyData* currency_n = CurrencyModel::instance().get_id_data_n(m_currencyID);
     if (!currency_n)
         return mmErrorDialogs::MessageInvalid(this, _t("Currency"));
 

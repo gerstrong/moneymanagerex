@@ -335,7 +335,7 @@ void TrxModel::setEmptyData(Data &trx_d, int64 accountID)
 bool TrxModel::is_locked(const Data& trx_d)
 {
     bool val = false;
-    const AccountData* account_n = AccountModel::instance().get_data_n(trx_d.ACCOUNTID);
+    const AccountData* account_n = AccountModel::instance().get_id_data_n(trx_d.ACCOUNTID);
 
     if (account_n->m_stmt_locked) {
         wxDateTime transaction_date;
@@ -357,7 +357,7 @@ bool TrxModel::purge_id(int64 id)
     )) {
         TrxSplitModel::instance().purge_id(ts_d.SPLITTRANSID);
     }
-    if (is_foreign(*instance().get_data_n(id)))
+    if (is_foreign(*instance().get_id_data_n(id)))
         TrxLinkModel::RemoveTranslinkEntry(id);
 
     const wxString& RefType = TrxModel::refTypeName;
@@ -366,12 +366,12 @@ bool TrxModel::purge_id(int64 id)
     // remove all custom fields for the transaction
     FieldValueModel::DeleteAllData(RefType, id);
     TagLinkModel::instance().DeleteAllTags(RefType, id);
-    return unsafe_remove_data(id);
+    return unsafe_remove_id(id);
 }
 
 void TrxModel::save_timestamp(int64 id)
 {
-    Data* trx_n = instance().unsafe_get_data_n(id);
+    Data* trx_n = instance().unsafe_get_id_data_n(id);
     if (trx_n && trx_n->TRANSID == id) {
         trx_n->LASTUPDATEDTIME = wxDateTime::Now().ToUTC().FormatISOCombined();
         unsafe_update_data_n(trx_n);
@@ -482,7 +482,7 @@ void TrxModel::Full_Data::fill_data()
     if (!m_tags.empty()) {
         wxArrayString tagnames;
         for (const auto& gl_d : m_tags)
-            tagnames.Add(TagModel::instance().get_data_n(gl_d.TAGID)->m_name);
+            tagnames.Add(TagModel::instance().get_id_data_n(gl_d.TAGID)->m_name);
         // Sort TAGNAMES
         tagnames.Sort(CaseInsensitiveCmp);
         for (const auto& name : tagnames)
@@ -527,9 +527,9 @@ const wxString TrxModel::Full_Data::get_currency_code(int64 account_id) const
         else
             account_id = this->TOACCOUNTID;
     }
-    const AccountData* account_n = AccountModel::instance().get_data_n(account_id);
+    const AccountData* account_n = AccountModel::instance().get_id_data_n(account_id);
     int64 currency_id = account_n ? account_n->m_currency_id: -1;
-    const CurrencyData* curr = CurrencyModel::instance().get_data_n(currency_id);
+    const CurrencyData* curr = CurrencyModel::instance().get_id_data_n(currency_id);
 
     return curr ? curr->m_symbol : "";
 }
@@ -541,7 +541,7 @@ const wxString TrxModel::Full_Data::get_account_name(int64 account_id) const
             return this->ACCOUNTNAME;
         }
         else {
-            const AccountData* account_n = AccountModel::instance().get_data_n(TOACCOUNTID);
+            const AccountData* account_n = AccountModel::instance().get_id_data_n(TOACCOUNTID);
             return account_n ? account_n->m_name : "";
         }
     }

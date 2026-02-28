@@ -122,8 +122,8 @@ void AssetList::OnMouseRightClick(wxMouseEvent& event)
     }
     else
     {
-        auto asset_account = AccountModel::instance().get_key_data_n(m_panel->m_assets[m_selected_row].m_name);  // ASSETNAME <=> ACCOUNTNAME
-        if (!asset_account) asset_account = AccountModel::instance().get_key_data_n(m_panel->m_assets[m_selected_row].m_type.name());  // ASSETTYPE <=> ACCOUNTNAME
+        auto asset_account = AccountModel::instance().get_name_data_n(m_panel->m_assets[m_selected_row].m_name);  // ASSETNAME <=> ACCOUNTNAME
+        if (!asset_account) asset_account = AccountModel::instance().get_name_data_n(m_panel->m_assets[m_selected_row].m_type.name());  // ASSETTYPE <=> ACCOUNTNAME
         menu.Enable(MENU_TREEPOPUP_GOTOACCOUNT, asset_account);
         menu.Enable(MENU_TREEPOPUP_VIEWTRANS, asset_account);
     }
@@ -777,8 +777,8 @@ void AssetPanel::AddAssetTrans(const int selected_index)
 {
     AssetData* asset = &m_assets[selected_index];
     AssetDialog asset_dialog(this, asset, true);
-    const AccountData* account = AccountModel::instance().get_key_data_n(asset->m_name);
-    const AccountData* account2 = AccountModel::instance().get_key_data_n(asset->m_type.name());
+    const AccountData* account = AccountModel::instance().get_name_data_n(asset->m_name);
+    const AccountData* account2 = AccountModel::instance().get_name_data_n(asset->m_type.name());
     if (account || account2) {
         asset_dialog.SetTransactionAccountName(account ? asset->m_name : asset->m_type.name());
     }
@@ -856,7 +856,7 @@ void AssetPanel::LoadAssetTransactions(wxListCtrl* listCtrl, int64 assetId)
 
     int row = 0;
     for (const auto& asset_d : asset_a) {
-        const TrxData* trx_n = TrxModel::instance().get_data_n(asset_d.CHECKINGACCOUNTID);
+        const TrxData* trx_n = TrxModel::instance().get_id_data_n(asset_d.CHECKINGACCOUNTID);
         if (!trx_n)
             continue;
 
@@ -879,7 +879,7 @@ void AssetPanel::BindAssetListEvents(wxListCtrl* listCtrl)
 {
     listCtrl->Bind(wxEVT_LIST_ITEM_ACTIVATED, [listCtrl, this](wxListEvent& event) {
         long index = event.GetIndex();
-        TrxData* trx_n = TrxModel::instance().unsafe_get_data_n(event.GetData());
+        TrxData* trx_n = TrxModel::instance().unsafe_get_id_data_n(event.GetData());
         if (!trx_n)
             return;
 
@@ -890,8 +890,8 @@ void AssetPanel::BindAssetListEvents(wxListCtrl* listCtrl)
         this->FillAssetListRow(listCtrl, index, *trx_n);
 
         listCtrl->SortItems([](wxIntPtr item1, wxIntPtr item2, wxIntPtr) -> int {
-            auto date1 = TrxModel::getTransDateTime(*TrxModel::instance().get_data_n(item1));
-            auto date2 = TrxModel::getTransDateTime(*TrxModel::instance().get_data_n(item2));
+            auto date1 = TrxModel::getTransDateTime(*TrxModel::instance().get_id_data_n(item1));
+            auto date2 = TrxModel::getTransDateTime(*TrxModel::instance().get_id_data_n(item2));
             return date1.IsEarlierThan(date2) ? -1 : (date1.IsLaterThan(date2) ? 1 : 0);
         }, 0);
     });
@@ -932,16 +932,16 @@ void AssetPanel::CopySelectedRowsToClipboard(wxListCtrl* listCtrl)
 void AssetPanel::GotoAssetAccount(const int selected_index)
 {
     AssetData* asset = &m_assets[selected_index];
-    const AccountData* account_n = AccountModel::instance().get_key_data_n(asset->m_name);
+    const AccountData* account_n = AccountModel::instance().get_name_data_n(asset->m_name);
     if (account_n) {
         SetAccountParameters(account_n);
     }
     else {
         TrxLinkModel::DataA asset_a = TrxLinkModel::TranslinkList<AssetModel>(asset->m_id);
         for (const auto &asset_d : asset_a) {
-            const TrxData* trx_n = TrxModel::instance().get_data_n(asset_d.CHECKINGACCOUNTID);
+            const TrxData* trx_n = TrxModel::instance().get_id_data_n(asset_d.CHECKINGACCOUNTID);
             if (trx_n) {
-                account_n = AccountModel::instance().get_data_n(trx_n->ACCOUNTID);
+                account_n = AccountModel::instance().get_id_data_n(trx_n->ACCOUNTID);
                 SetAccountParameters(account_n);
             }
         }

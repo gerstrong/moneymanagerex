@@ -65,13 +65,13 @@ void  StocksReport::refreshData()
         account_holder.name = a.m_name;
         account_holder.realgainloss = 0.0;
         account_holder.unrealgainloss = 0.0;
-        account_holder.total = AccountModel::investment_balance(a).first;
+        account_holder.total = AccountModel::instance().investment_balance(a).first;
         account_holder.data.clear();
 
         for (const auto& stock_d : StockModel::instance().find(
             StockCol::HELDAT(a.m_id)
         )) {
-            const CurrencyData* currency_n = AccountModel::currency_p(a);
+            const CurrencyData* currency_n = AccountModel::instance().currency_p(a);
             const double today_rate = CurrencyHistoryModel::getDayRate(currency_n->m_id, today);
             m_stock_balance += today_rate * StockModel::CurrentValue(stock_d);
             line.realgainloss = StockModel::RealGainLoss(stock_d);
@@ -131,8 +131,8 @@ wxString StocksReport::getHTMLText()
             hb.endThead();
 
             for (const auto& acct : m_stocks) {
-                const AccountData* account_n = AccountModel::instance().get_data_n(acct.id);
-                const CurrencyData* currency_p = AccountModel::currency_p(*account_n);
+                const AccountData* account_n = AccountModel::instance().get_id_data_n(acct.id);
+                const CurrencyData* currency_p = AccountModel::instance().currency_p(*account_n);
 
                 hb.startThead();
                 {
@@ -153,7 +153,7 @@ wxString StocksReport::getHTMLText()
                             hb.addTableCell(entry.name);
                             hb.addTableCell(entry.symbol);
                             hb.addTableCellDate(entry.date);
-                            hb.addTableCell(AccountModel::to_string(entry.qty, *account_n, trunc(entry.qty) == entry.qty ? 0 : 4), "text-right");
+                            hb.addTableCell(AccountModel::instance().to_string(entry.qty, *account_n, trunc(entry.qty) == entry.qty ? 0 : 4), "text-right");
                             hb.addCurrencyCell(entry.purchase, currency_p, 4);
                             hb.addCurrencyCell(entry.current, currency_p, 4);
                             hb.addCurrencyCell(entry.commission, currency_p, 4);
@@ -270,7 +270,7 @@ wxString mmReportChartStocks::getHTMLText()
     for (const auto& stock_d : StockModel::instance().find_all(
         StockCol::COL_ID_SYMBOL
     )) {
-        const AccountData* account = AccountModel::instance().get_data_n(stock_d.m_account_id);
+        const AccountData* account = AccountModel::instance().get_id_data_n(stock_d.m_account_id);
         if (!account->is_open())
             continue;
         if (symbols.Index(stock_d.m_symbol) != wxNOT_FOUND)

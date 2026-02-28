@@ -291,7 +291,7 @@ void StockList::OnNewStocks(wxCommandEvent& /*event*/)
 {
     StockDialog dlg(this, nullptr, m_stock_panel->m_account_id);
     dlg.ShowModal();
-    if (StockModel::instance().get_data_n(dlg.m_stock_id)) {
+    if (StockModel::instance().get_id_data_n(dlg.m_stock_id)) {
         doRefreshItems(dlg.m_stock_id);
         m_stock_panel->m_frame->RefreshNavigationTree();
     }
@@ -324,7 +324,7 @@ void StockList::OnMoveStocks(wxCommandEvent& /*event*/)
     );
     if (accounts.empty()) return;
 
-    const AccountData* from_account = AccountModel::instance().get_data_n(m_stock_panel->m_account_id);
+    const AccountData* from_account = AccountModel::instance().get_id_data_n(m_stock_panel->m_account_id);
     wxString headerMsg = wxString::Format(_t("Moving Transaction from %s to"),
         from_account->m_name
     );
@@ -336,12 +336,12 @@ void StockList::OnMoveStocks(wxCommandEvent& /*event*/)
     int error_code = scd.ShowModal();
     if (error_code == wxID_OK) {
         wxString acctName = scd.GetStringSelection();
-        const AccountData* to_account = AccountModel::instance().get_key_data_n(acctName);
+        const AccountData* to_account = AccountModel::instance().get_name_data_n(acctName);
         toAccountID = to_account->m_id;
     }
 
     if ( toAccountID != -1 ) {
-        StockData* stock_n = StockModel::instance().unsafe_get_data_n(m_stocks[m_selected_row].m_id);
+        StockData* stock_n = StockModel::instance().unsafe_get_id_data_n(m_stocks[m_selected_row].m_id);
         stock_n->m_account_id = toAccountID;
         StockModel::instance().unsafe_update_data_n(stock_n);
 

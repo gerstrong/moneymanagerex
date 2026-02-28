@@ -63,7 +63,7 @@ bool SchedSplitModel::purge_id(int64 id)
     // remove TagLinkData owned by id
     TagLinkModel::instance().DeleteAllTags(SchedSplitModel::refTypeName, id);
 
-    return unsafe_remove_data(id);
+    return unsafe_remove_id(id);
 }
 
 std::map<int64, SchedSplitModel::DataA> SchedSplitModel::get_all_id()

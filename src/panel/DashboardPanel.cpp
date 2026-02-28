@@ -136,7 +136,7 @@ void DashboardPanel::insertDataIntoTemplate()
 
     // Get curreny details to pass to report for Apexcharts
     int64 baseCurrencyID = PrefModel::instance().getBaseCurrencyID();
-    const CurrencyData* baseCurrency = CurrencyModel::instance().get_data_n(baseCurrencyID);
+    const CurrencyData* baseCurrency = CurrencyModel::instance().get_id_data_n(baseCurrencyID);
 
     // Get locale to pass to reports for Apexcharts
     wxString locale = InfoModel::instance().getString("LOCALE", "en-US"); // Stay blank of not set, currency override handled in Apexcharts call.

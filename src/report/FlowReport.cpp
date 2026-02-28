@@ -52,7 +52,7 @@ double FlowReport::trueAmount(const TrxData& trx)
     ) != m_account_id.end();
     if (!(isAccountFound && isToAccountFound)) {
         const double convRate = CurrencyHistoryModel::getDayRate(
-            AccountModel::instance().get_data_n(trx.ACCOUNTID)->m_currency_id,
+            AccountModel::instance().get_id_data_n(trx.ACCOUNTID)->m_currency_id,
             trx.TRANSDATE
         );
         switch (TrxModel::type_id(trx.TRANSCODE)) {
@@ -67,7 +67,7 @@ double FlowReport::trueAmount(const TrxData& trx)
                 amount = -trx.TRANSAMOUNT * convRate;
             else {
                 const double toConvRate = CurrencyHistoryModel::getDayRate(
-                    AccountModel::instance().get_data_n(trx.TOACCOUNTID)->m_currency_id,
+                    AccountModel::instance().get_id_data_n(trx.TOACCOUNTID)->m_currency_id,
                     trx.TRANSDATE
                 );
                 amount = +trx.TOTRANSAMOUNT * toConvRate;
@@ -104,7 +104,7 @@ void FlowReport::getTransactions()
 
         m_account_id.push_back(account.m_id);
 
-        for (const auto& tran : AccountModel::transactionsByDateTimeId(account)) {
+        for (const auto& tran : AccountModel::instance().find_id_trx_aBySN(account.m_id)) {
             wxString strDate = TrxModel::getTransDateTime(tran).FormatISOCombined();
             // Do not include asset or stock transfers in income expense calculations.
             if (TrxModel::is_foreignAsTransfer(tran) || (strDate > todayString))

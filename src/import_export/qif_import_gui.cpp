@@ -71,7 +71,7 @@ mmQIFImportDialog::mmQIFImportDialog(
 {
     decimal_ = CurrencyModel::GetBaseCurrency()->m_decimal_point;
     payeeIsNotes_ = false;
-    const AccountData* account_n = AccountModel::instance().get_data_n(account_id);
+    const AccountData* account_n = AccountModel::instance().get_id_data_n(account_id);
     if (account_n)
         m_accountNameStr = account_n->m_name;
 
@@ -178,7 +178,7 @@ void mmQIFImportDialog::CreateControls()
     accountDropDown_->SetMinSize(wxSize(180, -1));
     accountDropDown_->Enable(false);
 
-    for (const auto& a : AccountModel::instance().all_checking_account_names()) {
+    for (const auto& a : AccountModel::instance().find_all_name_a()) {
         accountDropDown_->Append(a, new wxStringClientData(a));
         if (a == m_accountNameStr) {
             accountDropDown_->SetStringSelection(a);
@@ -469,7 +469,7 @@ bool mmQIFImportDialog::mmReadQIFFile()
     wxString accName = "";
     if (accountCheckBox_->IsChecked()) {
         accName = accountDropDown_->GetStringSelection();
-        const AccountData* acc = AccountModel::instance().get_key_data_n(accName);
+        const AccountData* acc = AccountModel::instance().get_name_data_n(accName);
         if (acc) {
             m_accountNameStr = acc->m_name;
         }
@@ -802,14 +802,14 @@ void mmQIFImportDialog::refreshTabs(int tabs)
 
             const AccountData* account = (accountNumberCheckBox_->IsChecked())
                 ? AccountModel::instance().get_num_data_n(acc.first)
-                : AccountModel::instance().get_key_data_n(acc.first);
+                : AccountModel::instance().get_name_data_n(acc.first);
 
             wxString status;
             const wxString type = acc.second.find(QIF_ID_AccountType) != acc.second.end()
                 ? acc.second.at(QIF_ID_AccountType) : "";
 
             if (account) {
-                const CurrencyData *currency_n = CurrencyModel::instance().get_data_n(account->m_currency_id);
+                const CurrencyData *currency_n = CurrencyModel::instance().get_id_data_n(account->m_currency_id);
                 if (currency_n && currency_n->m_symbol == currencySymbol)
                     status = _t("OK");
                 else
@@ -985,7 +985,7 @@ void mmQIFImportDialog::OnCheckboxClick(wxCommandEvent& event)
     //{
         t = t | ACC_TAB;
         if (accountCheckBox_->IsChecked()
-            && !AccountModel::instance().all_checking_account_names().empty())
+            && !AccountModel::instance().find_all_name_a().empty())
         {
             accountDropDown_->Enable(true);
             m_accountNameStr = "";
@@ -1146,8 +1146,8 @@ void mmQIFImportDialog::OnOk(wxCommandEvent& WXUNUSED(event))
                 if (dateToCheckBox_->IsChecked() && strDate > end_date)
                     continue;
 
-                AccountData* account = AccountModel::instance().unsafe_get_data_n(trx.ACCOUNTID);
-                AccountData* toAccount = AccountModel::instance().unsafe_get_data_n(trx.TOACCOUNTID);
+                AccountData* account = AccountModel::instance().unsafe_get_id_data_n(trx.ACCOUNTID);
+                AccountData* toAccount = AccountModel::instance().unsafe_get_id_data_n(trx.TOACCOUNTID);
 
                 if ((trx.TRANSDATE < account->m_stmt_date && account->m_stmt_locked) ||
                     (toAccount &&
@@ -1180,7 +1180,7 @@ void mmQIFImportDialog::OnOk(wxCommandEvent& WXUNUSED(event))
                             TagData new_tag_d = TagData();
                             new_tag_d.m_name = tagname;
                             TagModel::instance().add_data_n(new_tag_d);
-                            tag_n = TagModel::instance().get_data_n(new_tag_d.id());
+                            tag_n = TagModel::instance().get_id_data_n(new_tag_d.id());
                         }
                         TagLinkData gl_d = TagLinkData();
                         gl_d.REFTYPE = reftype;
@@ -1534,7 +1534,7 @@ bool mmQIFImportDialog::completeTransaction(
                         TagData new_tag_d = TagData();
                         new_tag_d.m_name = tagname;
                         TagModel::instance().add_data_n(new_tag_d);
-                        tag_n = TagModel::instance().get_data_n(new_tag_d.id());
+                        tag_n = TagModel::instance().get_id_data_n(new_tag_d.id());
                     }
                     TagLinkData gl_d = TagLinkData();
                     gl_d.REFTYPE = reftype;
@@ -1555,7 +1555,7 @@ bool mmQIFImportDialog::completeTransaction(
     {
         wxString categStr = (t.find(QIF_ID_Category) != t.end() ? t.at(QIF_ID_Category).BeforeFirst('/') : "");
         if (categStr.empty()) {
-            const PayeeData* payee_n = PayeeModel::instance().get_data_n(trx->PAYEEID);
+            const PayeeData* payee_n = PayeeModel::instance().get_id_data_n(trx->PAYEEID);
             if (payee_n) {
                 trx->CATEGID = payee_n->m_category_id;
             }
@@ -1661,7 +1661,7 @@ int64 mmQIFImportDialog::getOrCreateAccounts()
         int64 accountID = -1;
         const AccountData* acc = (accountNumberCheckBox_->IsChecked())
             ? AccountModel::instance().get_num_data_n(item.first)
-            : AccountModel::instance().get_key_data_n(item.first);
+            : AccountModel::instance().get_name_data_n(item.first);
 
         if (!acc) {
             AccountData account_d = AccountData();
@@ -1693,7 +1693,7 @@ int64 mmQIFImportDialog::getOrCreateAccounts()
         m_QIFaccountsID[item.first] = accountID;
     }
 
-    const AccountData* acc = AccountModel::instance().get_key_data_n(m_accountNameStr);
+    const AccountData* acc = AccountModel::instance().get_name_data_n(m_accountNameStr);
     if (acc) {
         m_QIFaccountsID[m_accountNameStr] = acc->m_id;
     }
@@ -1740,7 +1740,7 @@ void mmQIFImportDialog::getOrCreateCategories()
                     new_category_d.m_name      = categStr;
                     new_category_d.m_parent_id = parentID;
                     CategoryModel::instance().add_data_n(new_category_d);
-                    category_n = CategoryModel::instance().get_data_n(new_category_d.id());
+                    category_n = CategoryModel::instance().get_id_data_n(new_category_d.id());
                 }
                 temp.Add(categStr + wxString::Format(":%lld", parentID));
             }
@@ -1753,7 +1753,7 @@ void mmQIFImportDialog::getOrCreateCategories()
 int64 mmQIFImportDialog::get_last_imported_acc()
 {
     int64 accID = -1;
-    const AccountData* acc = AccountModel::instance().get_key_data_n(m_accountNameStr);
+    const AccountData* acc = AccountModel::instance().get_name_data_n(m_accountNameStr);
     if (acc)
         accID = acc->m_id;
     return accID;

@@ -66,7 +66,7 @@ AssetCol::STARTDATE AssetModel::STARTDATE(OP op, const mmDate& date)
 
 wxString AssetModel::get_id_name(int64 asset_id)
 {
-    const Data* asset_n = get_data_n(asset_id);
+    const Data* asset_n = get_id_data_n(asset_id);
     if (asset_n)
         return asset_n->m_name;
     else
@@ -105,7 +105,7 @@ std::pair<double, double> AssetModel::valueAtDate(const Data& asset_d, const mmD
 
     TrxModel::DataA trx_a;
     for (const auto& tl_d : tl_a) {
-        const TrxData* trx_n = TrxModel::instance().get_data_n(tl_d.CHECKINGACCOUNTID);
+        const TrxData* trx_n = TrxModel::instance().get_id_data_n(tl_d.CHECKINGACCOUNTID);
         if (trx_n &&
             trx_n->DELETEDTIME.IsEmpty() &&
             // FIXME: ignore Void transactions
@@ -121,7 +121,7 @@ std::pair<double, double> AssetModel::valueAtDate(const Data& asset_d, const mmD
         mmDateN last_n = mmDateN();
         for (const auto& trx_d : trx_a) {
             const mmDate trx_date = mmDate(TrxModel::getTransDateTime(trx_d));
-            const AccountData* account_n = AccountModel::instance().get_data_n(trx_d.ACCOUNTID);
+            const AccountData* account_n = AccountModel::instance().get_id_data_n(trx_d.ACCOUNTID);
             int64 currency_id_n = account_n ? account_n->m_currency_id : -1;
             double currency_rate = CurrencyHistoryModel::getDayRate(currency_id_n, trx_date.getDateTime());
             double account_flow = TrxModel::account_flow(trx_d, trx_d.ACCOUNTID);

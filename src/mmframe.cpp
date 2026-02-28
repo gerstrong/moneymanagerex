@@ -1068,7 +1068,7 @@ void mmGUIFrame::DoRecreateNavTreeControl(bool home_page)
                         for (const auto& stock : stocks) {
                             if (!processedStockNames.insert(stock.m_name).second)
                                 continue;
-                            const AccountData* share_account = AccountModel::instance().get_key_data_n(stock.m_name);
+                            const AccountData* share_account = AccountModel::instance().get_name_data_n(stock.m_name);
                             if (!share_account)
                                 continue;
                             stockItem = m_nav_tree_ctrl->AppendItem(accountItem, stock.m_name, accountImg, accountImg);
@@ -1356,7 +1356,7 @@ void mmGUIFrame::navTreeSelection(wxTreeItemId selectedItem)
     }
 
     case mmTreeItemData::INVESTMENT: {
-        const AccountData* account = AccountModel::instance().get_data_n(iData->getId());
+        const AccountData* account = AccountModel::instance().get_id_data_n(iData->getId());
         gotoAccountID_ = account->m_id;
         return createStocksAccountPage(gotoAccountID_);
     }
@@ -1410,7 +1410,7 @@ void mmGUIFrame::OnLaunchAccountWebsite(wxCommandEvent& /*event*/)
         return;
 
     int64 id = selectedItemData_->getId();
-    const AccountData* acccount_n = AccountModel::instance().get_data_n(id);
+    const AccountData* acccount_n = AccountModel::instance().get_id_data_n(id);
     if (!acccount_n)
         return;
 
@@ -1434,7 +1434,7 @@ void mmGUIFrame::OnAccountAttachments(wxCommandEvent& /*event*/)
 
 void mmGUIFrame::OnReconcileAccount(wxCommandEvent& WXUNUSED(event))
 {
-    const AccountData* account = AccountModel::instance().get_data_n(selectedItemData_->getId());
+    const AccountData* account = AccountModel::instance().get_id_data_n(selectedItemData_->getId());
     if (!account)
         return;
 
@@ -1452,7 +1452,7 @@ void mmGUIFrame::OnPopupEditAccount(wxCommandEvent& /*event*/)
         return;
 
     int64 id = selectedItemData_->getId();
-    AccountData* account = AccountModel::instance().unsafe_get_data_n(id);
+    AccountData* account = AccountModel::instance().unsafe_get_id_data_n(id);
     if (!account)
         return;
 
@@ -1580,7 +1580,7 @@ void mmGUIFrame::OnPopupDeleteAccount(wxCommandEvent& /*event*/)
         return;
 
     int64 id = selectedItemData_->getId();
-    const AccountData* account_n = AccountModel::instance().get_data_n(id);
+    const AccountData* account_n = AccountModel::instance().get_id_data_n(id);
     if (!account_n)
         return;
 
@@ -1663,7 +1663,7 @@ void mmGUIFrame::showTreePopupMenu(const wxTreeItemId& id, const wxPoint& pt)
         break;
     case mmTreeItemData::INVESTMENT: {
         acct_id = iData->getId();
-        const AccountData* account_n = AccountModel::instance().get_data_n(acct_id);
+        const AccountData* account_n = AccountModel::instance().get_id_data_n(acct_id);
         if (account_n) {
             menu.Append(MENU_TREEPOPUP_RECONCILE, _t("&Reconcile Account"));
             menu.AppendSeparator();
@@ -1681,7 +1681,7 @@ void mmGUIFrame::showTreePopupMenu(const wxTreeItemId& id, const wxPoint& pt)
     case mmTreeItemData::CHECKING: {
         acct_id = iData->getId();
         if (acct_id >= 1) { // isAccount
-            const AccountData* account_n = AccountModel::instance().get_data_n(acct_id);
+            const AccountData* account_n = AccountModel::instance().get_id_data_n(acct_id);
             if (!account_n)
                 break;
             menu.Append(MENU_TREEPOPUP_RECONCILE, _t("&Reconcile Account"));;
@@ -2462,14 +2462,14 @@ bool mmGUIFrame::createDataStore(const wxString& fileName, const wxString& pwd, 
                 wxLongLong_t subCatID = 0;
                 if (2 == sscanf(catData.mb_str(),"*%lld:%lld*", &catID, &subCatID)) {
                     if (subCatID == -1) {
-                        CategoryData* cat_n = CategoryModel::instance().unsafe_get_data_n(catID);
+                        CategoryData* cat_n = CategoryModel::instance().unsafe_get_id_data_n(catID);
                         if (cat_n && cat_n->m_id != -1) {
                             cat_n->m_active = false;
                             CategoryModel::instance().unsafe_update_data_n(cat_n);
                         }
                     }
                     else {
-                        CategoryData* subcat_n = CategoryModel::instance().unsafe_get_data_n(subCatID);
+                        CategoryData* subcat_n = CategoryModel::instance().unsafe_get_id_data_n(subCatID);
                         if (subcat_n && subcat_n->m_id != -1) {
                             subcat_n->m_active = false;
                             CategoryModel::instance().unsafe_update_data_n(subcat_n);
@@ -2966,7 +2966,7 @@ void mmGUIFrame::OnImportQIF(wxCommandEvent& /*event*/)
     RefreshNavigationTree();
     if (account_id > 0) {
         setGotoAccountID(account_id);
-        const AccountData* account = AccountModel::instance().get_data_n(account_id);
+        const AccountData* account = AccountModel::instance().get_id_data_n(account_id);
         selectNavTreeItem(account->m_name);
         wxCommandEvent evt(wxEVT_COMMAND_MENU_SELECTED, MENU_GOTOACCOUNT);
         this->GetEventHandler()->AddPendingEvent(evt);
@@ -2998,7 +2998,7 @@ void mmGUIFrame::OnImportUniversalCSV(wxCommandEvent& /*event*/)
     mmUnivCSVDialog univCSVDialog(this, mmUnivCSVDialog::DIALOG_TYPE_IMPORT_CSV, gotoAccountID_);
     univCSVDialog.ShowModal();
     if (univCSVDialog.isImportCompletedSuccessfully()) {
-        const AccountData* account_n = AccountModel::instance().get_data_n(univCSVDialog.ImportedAccountID());
+        const AccountData* account_n = AccountModel::instance().get_id_data_n(univCSVDialog.ImportedAccountID());
         if (account_n) {
             createCheckingPage(account_n->m_id);
             selectNavTreeItem(account_n->m_name);
@@ -3017,7 +3017,7 @@ void mmGUIFrame::OnImportXML(wxCommandEvent& /*event*/)
     mmUnivCSVDialog univCSVDialog(this, mmUnivCSVDialog::DIALOG_TYPE_IMPORT_XML, gotoAccountID_);
     univCSVDialog.ShowModal();
     if (univCSVDialog.isImportCompletedSuccessfully()) {
-        const AccountData* account_n = AccountModel::instance().get_data_n(univCSVDialog.ImportedAccountID());
+        const AccountData* account_n = AccountModel::instance().get_id_data_n(univCSVDialog.ImportedAccountID());
         if (account_n) {
             createCheckingPage(account_n->m_id);
             selectNavTreeItem(account_n->m_name);
@@ -3053,7 +3053,7 @@ void mmGUIFrame::OnNewAccount(wxCommandEvent& /*event*/)
     wizard->RunIt();
 
     if (wizard->acctID_ != -1) {
-        AccountData* account = AccountModel::instance().unsafe_get_data_n(wizard->acctID_);
+        AccountData* account = AccountModel::instance().unsafe_get_id_data_n(wizard->acctID_);
         AccountDialog dlg(account, this);
         dlg.ShowModal();
         if (NavigatorTypes::instance().isAssetAccount(account->m_type_)) {
@@ -3152,7 +3152,7 @@ void mmGUIFrame::OnOrgPayees(wxCommandEvent& /*event*/)
     dlg.ShowModal();
     if (dlg.getAddActionRequested()) { // show transaction report
         std::list<int64> selections = dlg.getSelectedPayees();
-        const PayeeData *payee_n = PayeeModel::instance().get_data_n(selections.front());
+        const PayeeData *payee_n = PayeeModel::instance().get_id_data_n(selections.front());
         wxString filter = wxString::Format("{\"LABEL\":\"%s\",\"PAYEE\":\"%s\"}",
             _t("Transactions per payee"),
             payee_n->m_name
@@ -3189,7 +3189,7 @@ void mmGUIFrame::OnNewTransaction(wxCommandEvent& event)
     if (!m_db)
         return;
 
-    if (AccountModel::instance().all_checking_account_names().empty()) return;
+    if (AccountModel::instance().find_all_name_a().empty()) return;
     TrxDialog dlg(this, gotoAccountID_, {0, false});
 
     int i = dlg.ShowModal();
@@ -3198,7 +3198,7 @@ void mmGUIFrame::OnNewTransaction(wxCommandEvent& event)
 
     gotoAccountID_ = dlg.GetAccountID();
     gotoTransID_ = { dlg.GetTransactionID(), 0 };
-    const AccountData * account_n = AccountModel::instance().get_data_n(gotoAccountID_);
+    const AccountData * account_n = AccountModel::instance().get_id_data_n(gotoAccountID_);
     if (account_n) {
         createCheckingPage(gotoAccountID_);
         selectNavTreeItem(account_n->m_name);
@@ -3692,7 +3692,7 @@ void mmGUIFrame::createCheckingPage(int64 checking_id, const std::vector<int64> 
     // If this differs from before then we need to rebuild
     bool newCreditDisplayed = false;
     if (checking_id >= 1) {
-        const AccountData* account = AccountModel::instance().get_data_n(checking_id);
+        const AccountData* account = AccountModel::instance().get_id_data_n(checking_id);
         newCreditDisplayed = (account->m_credit_limit != 0);
     }
 
@@ -3783,7 +3783,7 @@ void mmGUIFrame::OnGotoAccount(wxCommandEvent& event)
                 wxLongLong_t id = -1;
                 accid.ToLongLong(&id);
                 setGotoAccountID(id);
-                const AccountData* account_n = AccountModel::instance().get_data_n(gotoAccountID_);
+                const AccountData* account_n = AccountModel::instance().get_id_data_n(gotoAccountID_);
                 if (account_n) {
                     if (AccountModel::type_id(*account_n) != NavigatorTypes::TYPE_ID_INVESTMENT) {
                         createCheckingPage(gotoAccountID_);
@@ -3799,7 +3799,7 @@ void mmGUIFrame::OnGotoAccount(wxCommandEvent& event)
                 wxLongLong_t id = -1;
                 accid.ToLongLong(&id);
                 setGotoAccountID(id);
-                const AccountData* account_n = AccountModel::instance().get_data_n(gotoAccountID_);
+                const AccountData* account_n = AccountModel::instance().get_id_data_n(gotoAccountID_);
                 if (account_n) {
                     if (AccountModel::type_id(*account_n) == NavigatorTypes::TYPE_ID_INVESTMENT) {
                         createStocksAccountPage(gotoAccountID_);
@@ -3940,9 +3940,9 @@ void mmGUIFrame::OnEditAccount(wxCommandEvent& /*event*/)
 
     mmSingleChoiceDialog scd(this, _t("Choose Account to Edit"), _t("Accounts"), accounts);
     if (scd.ShowModal() == wxID_OK) {
-        const AccountData* account = AccountModel::instance().get_key_data_n(scd.GetStringSelection());
+        const AccountData* account = AccountModel::instance().get_name_data_n(scd.GetStringSelection());
         AccountData* edit_account = account
-            ? AccountModel::instance().unsafe_get_data_n(account->id())
+            ? AccountModel::instance().unsafe_get_id_data_n(account->id())
             : nullptr;
         AccountDialog dlg(edit_account, this);
         if (dlg.ShowModal() == wxID_OK)
@@ -3961,7 +3961,7 @@ void mmGUIFrame::OnDeleteAccount(wxCommandEvent& /*event*/)
 
     mmSingleChoiceDialog scd(this, _t("Choose Account to Delete"), _t("Accounts"), accounts);
     if (scd.ShowModal() == wxID_OK) {
-        const AccountData* account = AccountModel::instance().get_key_data_n(scd.GetStringSelection());
+        const AccountData* account = AccountModel::instance().get_name_data_n(scd.GetStringSelection());
         wxString deletingAccountName = wxString::Format(
             _t("Do you you want to delete\n%1$s account: %2$s?"),
             wxGetTranslation(account->m_type_),
@@ -3983,11 +3983,11 @@ void mmGUIFrame::OnReallocateAccount(wxCommandEvent& WXUNUSED(event))
     mmSingleChoiceDialog account_choice(
         this,
         _t("Select account"), _t("Change Account Type"),
-        AccountModel::instance().all_checking_account_names()
+        AccountModel::instance().find_all_name_a()
     );
 
     if (account_choice.ShowModal() == wxID_OK) {
-        const AccountData* account = AccountModel::instance().get_key_data_n(account_choice.GetStringSelection());
+        const AccountData* account = AccountModel::instance().get_name_data_n(account_choice.GetStringSelection());
         if (account)
             ReallocateAccount(account->m_id);
     }
@@ -3995,7 +3995,7 @@ void mmGUIFrame::OnReallocateAccount(wxCommandEvent& WXUNUSED(event))
 
 void mmGUIFrame::ReallocateAccount(int64 accountID)
 {
-    AccountData* account = AccountModel::instance().unsafe_get_data_n(accountID);
+    AccountData* account = AccountModel::instance().unsafe_get_id_data_n(accountID);
     wxArrayString types = NavigatorTypes::instance().getAccountSelectionNames(account->m_type_);
 
     mmSingleChoiceDialog type_choice(

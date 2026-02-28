@@ -223,7 +223,7 @@ void mmUnivCSVDialog::CreateControls()
     preset_flex_sizer->Add(itemStaticText6, g_flagsH);
     itemStaticText6->SetFont(staticBoxFontSetting);
 
-    m_choice_account_ = new wxChoice(scrolledWindow, wxID_ACCOUNT, wxDefaultPosition, wxDefaultSize, AccountModel::instance().all_checking_account_names(), 0);
+    m_choice_account_ = new wxChoice(scrolledWindow, wxID_ACCOUNT, wxDefaultPosition, wxDefaultSize, AccountModel::instance().find_all_name_a(), 0);
     m_choice_account_->SetMinSize(wxSize(210, -1));
     preset_flex_sizer->Add(m_choice_account_, g_flagsExpand);
     preset_flex_sizer->AddSpacer(0);
@@ -677,8 +677,8 @@ void mmUnivCSVDialog::CreateControls()
         wxString acct_name = m_choice_account_->GetStringSelection();
         m_checkbox_preset_default->SetLabelText(wxString::Format(_t("Load this Preset when Account is:\n%s"), acct_name));
         *log_field_ << _t("Currency:") << " " <<
-            wxGetTranslation(AccountModel::currency_p(
-                *(AccountModel::instance().get_key_data_n(acct_name))
+            wxGetTranslation(AccountModel::instance().currency_p(
+                *(AccountModel::instance().get_name_data_n(acct_name))
             )->m_name) << "\n";
         if (!init_preset_name.IsEmpty())
             *log_field_ << wxString::Format(_t("Preset '%1$s' loaded because Account '%2$s' selected"), init_preset_name, acct_name) << "\n";
@@ -783,7 +783,7 @@ void mmUnivCSVDialog::SetSettings(const wxString &json_data)
         m_choice_preset_name->SetSelection(-1);
         if (m_account_id > 0)
         {
-            const AccountData* account = AccountModel::instance().get_data_n(m_account_id);
+            const AccountData* account = AccountModel::instance().get_id_data_n(m_account_id);
             if (account)
                 m_choice_account_->SetStringSelection(account->m_name);
         }
@@ -829,7 +829,7 @@ void mmUnivCSVDialog::SetSettings(const wxString &json_data)
     wxString an;
     if (m_account_id > -1)
     {
-        const AccountData* account = AccountModel::instance().get_data_n(m_account_id);
+        const AccountData* account = AccountModel::instance().get_id_data_n(m_account_id);
         if (account)
             an = account->m_name;
         else
@@ -1351,7 +1351,7 @@ bool mmUnivCSVDialog::validateData(tran_holder & holder, wxString& message)
         for (auto& cfdata : holder.customFieldData)
             is_valid &= validateCustomFieldData(cfdata.first, cfdata.second, message);
 
-    const PayeeData* payee_n = PayeeModel::instance().get_data_n(holder.PayeeID);
+    const PayeeData* payee_n = PayeeModel::instance().get_id_data_n(holder.PayeeID);
     if (!payee_n) {
         const PayeeData* unknown_n = PayeeModel::instance().get_key_data_n(_t("Unknown"));
         if (!unknown_n) {
@@ -1406,7 +1406,7 @@ void mmUnivCSVDialog::OnImport(wxCommandEvent& WXUNUSED(event))
     bool is_canceled = false;
     long nImportedLines = 0;
     const wxString acctName = m_choice_account_->GetStringSelection();
-    const AccountData* account = AccountModel::instance().get_key_data_n(acctName);
+    const AccountData* account = AccountModel::instance().get_name_data_n(acctName);
 
     if (!account){
         return mmErrorDialogs::InvalidAccount(m_choice_account_);
@@ -1508,8 +1508,8 @@ void mmUnivCSVDialog::OnImport(wxCommandEvent& WXUNUSED(event))
         }
 
         wxString trxDate = holder.Date.FormatISOCombined();
-        const AccountData* account2 = AccountModel::instance().get_data_n(accountID_);
-        const AccountData* toAccount = AccountModel::instance().get_data_n(holder.ToAccountID);
+        const AccountData* account2 = AccountModel::instance().get_id_data_n(accountID_);
+        const AccountData* toAccount = AccountModel::instance().get_id_data_n(holder.ToAccountID);
         if ((trxDate < account2->m_open_date) ||
             (toAccount && (trxDate < toAccount->m_open_date)))
         {
@@ -1672,7 +1672,7 @@ void mmUnivCSVDialog::OnExport(wxCommandEvent& WXUNUSED(event))
     }
 
     const wxString& acctName = m_choice_account_->GetStringSelection();
-    const AccountData* from_account = AccountModel::instance().get_key_data_n(acctName);
+    const AccountData* from_account = AccountModel::instance().get_name_data_n(acctName);
 
     if (!from_account)
         return mmErrorDialogs::ToolTip4Object(m_choice_account_, _t("Invalid Account"), _t("Error"));
@@ -1682,7 +1682,7 @@ void mmUnivCSVDialog::OnExport(wxCommandEvent& WXUNUSED(event))
     int64 fromAccountID = from_account->m_id;
 
     long numRecords = 0;
-    const CurrencyData* currency = AccountModel::currency_p(*from_account);
+    const CurrencyData* currency = AccountModel::instance().currency_p(*from_account);
 
     wxSharedPtr<ITransactionsFile> pTxFile(CreateFileHandler());
 
@@ -1732,7 +1732,7 @@ void mmUnivCSVDialog::OnExport(wxCommandEvent& WXUNUSED(event))
                 ) {
                     pTxFile->AddNewLine();
 
-                    const CategoryData* category = CategoryModel::instance().get_data_n(splt.CATEGID);
+                    const CategoryData* category = CategoryModel::instance().get_id_data_n(splt.CATEGID);
 
                     double amt = splt.SPLITTRANSAMOUNT;
                     if (TrxModel::type_id(pBankTransaction) == TrxModel::TYPE_ID_WITHDRAWAL
@@ -1820,7 +1820,7 @@ void mmUnivCSVDialog::OnExport(wxCommandEvent& WXUNUSED(event))
                                 if (data)
                                 {
                                     // format date fields
-                                    if (FieldModel::type_id(FieldModel::instance().get_data_n(data->FIELDID)) == FieldModel::TYPE_ID_DATE)
+                                    if (FieldModel::type_id(FieldModel::instance().get_id_data_n(data->FIELDID)) == FieldModel::TYPE_ID_DATE)
                                         entry = mmGetDateTimeForDisplay(data->CONTENT, date_format_);
                                     else
                                         entry = data->CONTENT;
@@ -1844,7 +1844,7 @@ void mmUnivCSVDialog::OnExport(wxCommandEvent& WXUNUSED(event))
         std::sort(stock_a.begin(), stock_a.end());
         std::stable_sort(stock_a.begin(), stock_a.end(), StockData::SorterBySTOCKID());
 
-        const AccountData* account = AccountModel::instance().get_data_n(fromAccountID);
+        const AccountData* account = AccountModel::instance().get_id_data_n(fromAccountID);
         for (const auto& stock_d : stock_a) {
             //If the transaction happened between the dates that the user selected or if the user selected to export all the transactions regardless of date then the row is added to the preview
             if (StockModel::PURCHASEDATE(stock_d).IsBetween(
@@ -1901,7 +1901,7 @@ void mmUnivCSVDialog::OnExport(wxCommandEvent& WXUNUSED(event))
                         entry = account->m_name;
                         break;
                     case UNIV_CSV_CURRENCY:
-                        entry = AccountModel::currency_p(*account)->m_symbol;
+                        entry = AccountModel::instance().currency_p(*account)->m_symbol;
                         break;
                     default:
                         break;
@@ -2072,7 +2072,7 @@ void mmUnivCSVDialog::update_preview()
     // exporter preview
     else {
         const wxString acctName = m_choice_account_->GetStringSelection();
-        const AccountData* from_account = AccountModel::instance().get_key_data_n(acctName);
+        const AccountData* from_account = AccountModel::instance().get_name_data_n(acctName);
 
         if (from_account) {
             const auto split = TrxSplitModel::instance().get_all_id();
@@ -2123,9 +2123,9 @@ void mmUnivCSVDialog::update_preview()
                             buf.Printf("%d", row + 1);
                             m_list_ctrl_->SetItem(itemIndex, col, buf);
                             m_list_ctrl_->SetItemData(itemIndex, row);
-                            const CategoryData* category = CategoryModel::instance().get_data_n(splt.CATEGID);
+                            const CategoryData* category = CategoryModel::instance().get_id_data_n(splt.CATEGID);
 
-                            const CurrencyData* currency = AccountModel::currency_p(*from_account);
+                            const CurrencyData* currency = AccountModel::instance().currency_p(*from_account);
 
                             double amt = splt.SPLITTRANSAMOUNT;
                             if (TrxModel::type_id(pBankTransaction) == TrxModel::TYPE_ID_WITHDRAWAL
@@ -2207,7 +2207,7 @@ void mmUnivCSVDialog::update_preview()
                                         if (data)
                                         {
                                             // Format date fields
-                                            if (FieldModel::type_id(FieldModel::instance().get_data_n(data->FIELDID)) == FieldModel::TYPE_ID_DATE)
+                                            if (FieldModel::type_id(FieldModel::instance().get_id_data_n(data->FIELDID)) == FieldModel::TYPE_ID_DATE)
                                                 text << inQuotes(mmGetDateTimeForDisplay(data->CONTENT, date_format_), delimit);
                                             else
                                                 text << inQuotes(data->CONTENT, delimit);
@@ -2247,7 +2247,7 @@ void mmUnivCSVDialog::update_preview()
                 std::sort(stock_a.begin(), stock_a.end());
                 std::stable_sort(stock_a.begin(), stock_a.end(), StockData::SorterBySTOCKID());
 
-                const AccountData* account = AccountModel::instance().get_data_n(fromAccountID);
+                const AccountData* account = AccountModel::instance().get_id_data_n(fromAccountID);
                 for (const auto& stock_d : stock_a) {
                     // If the transaction happened between the dates that the user selected or if the user selected to export all the transactions regardless of date then the row is added to the preview
                     if (StockModel::PURCHASEDATE(stock_d).IsBetween(m_date_picker_start->GetValue(),m_date_picker_end->GetValue()) ||
@@ -2261,7 +2261,7 @@ void mmUnivCSVDialog::update_preview()
                         m_list_ctrl_->SetItem(itemIndex, col, buf);
                         m_list_ctrl_->SetItemData(itemIndex, row);
 
-                        const CurrencyData* currency = AccountModel::currency_p(*from_account);
+                        const CurrencyData* currency = AccountModel::instance().currency_p(*from_account);
                         const wxString shareTotal = CurrencyModel::toStringNoFormatting(stock_d.m_num_shares, currency);
                         const wxString avgSharePrice = CurrencyModel::toStringNoFormatting(stock_d.m_purchase_price, currency);
                         const wxString totalCost = CurrencyModel::toStringNoFormatting(StockModel::InvestmentValue(stock_d), currency);
@@ -2326,7 +2326,7 @@ void mmUnivCSVDialog::update_preview()
                                 text << inQuotes(account->m_name, delimit);
                                 break;
                             case UNIV_CSV_CURRENCY:
-                                text << inQuotes(AccountModel::currency_p(*account)->m_symbol, delimit);
+                                text << inQuotes(AccountModel::instance().currency_p(*account)->m_symbol, delimit);
                                 break;
                             default:
                                 break;
@@ -2794,7 +2794,7 @@ void mmUnivCSVDialog::parseToken(int index, const wxString& orig_token, tran_hol
                     new_category_d.m_name      = categname;
                     new_category_d.m_parent_id = parentID;
                     CategoryModel::instance().add_data_n(new_category_d);
-                    category_n = CategoryModel::instance().get_data_n(new_category_d.id());
+                    category_n = CategoryModel::instance().get_id_data_n(new_category_d.id());
                 }
                 parentID = category_n->m_id;
             }
@@ -2841,7 +2841,7 @@ void mmUnivCSVDialog::parseToken(int index, const wxString& orig_token, tran_hol
                 TagData new_tag_d = TagData();
                 new_tag_d.m_name = tagname;
                 TagModel::instance().save_data_n(new_tag_d);
-                tag_n = TagModel::instance().get_data_n(new_tag_d.id());
+                tag_n = TagModel::instance().get_id_data_n(new_tag_d.id());
             }
             // add the tagID to the transaction if it isn't already there
             if (std::find(holder.tagIDs.begin(), holder.tagIDs.end(), tag_n->m_id) == holder.tagIDs.end())
@@ -2973,9 +2973,9 @@ void mmUnivCSVDialog::OnChoiceChanged(wxCommandEvent& event)
     else if (i == wxID_ACCOUNT)
     {
         wxString acctName = m_choice_account_->GetStringSelection();
-        const AccountData* account = AccountModel::instance().get_key_data_n(acctName);
+        const AccountData* account = AccountModel::instance().get_name_data_n(acctName);
         m_account_id = account->m_id;
-        const CurrencyData* currency = AccountModel::currency_p(*account);
+        const CurrencyData* currency = AccountModel::instance().currency_p(*account);
         *log_field_ << _t("Currency:") << " " << wxGetTranslation(currency->m_name) << "\n";
 
         m_checkbox_preset_default->Enable(m_choice_preset_name->GetSelection() >= 0);
@@ -3119,7 +3119,7 @@ bool mmUnivCSVDialog::validateCustomFieldData(int64 fieldId, wxString& value, wx
     const wxArrayString bool_false_array(4, bool_false);
 
     if (!value.IsEmpty()) {
-        const FieldData* data = FieldModel::instance().get_data_n(fieldId);
+        const FieldData* data = FieldModel::instance().get_id_data_n(fieldId);
         wxString type_string = FieldModel::type_name(FieldModel::type_id(data));
         switch (FieldModel::type_id(data))
         {

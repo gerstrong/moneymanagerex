@@ -40,9 +40,9 @@ public:
     ~TableFactory<TableType, DataType>() { m_cache.reset(); };
 
     // Methods starting with 'find_' bypass the cache; other methods use the cache.
-    auto unsafe_get_data_n(const int64 id) -> Data*;
-    auto get_data_n(const int64 id) -> const Data*;
-    auto get_data_n(wxLongLong_t id) -> const Data* { return get_data_n(int64(id)); }
+    auto unsafe_get_id_data_n(const int64 id) -> Data*;
+    auto get_id_data_n(const int64 id) -> const Data*;
+    auto get_id_data_n(wxLongLong_t id) -> const Data* { return get_id_data_n(int64(id)); }
     auto add_data_n(Data& data) -> const Data*;
     bool add_data_a(DataA& data);
     auto unsafe_update_data_n(Data* data) -> Data*;
@@ -50,7 +50,7 @@ public:
     auto unsafe_save_data_n(Data* data) -> const Data*;
     auto save_data_n(Data& data) -> const Data*;
     bool save_data_a(DataA& data);
-    bool unsafe_remove_data(const int64 id);
+    bool unsafe_remove_id(const int64 id);
     auto find_all(const COL_ID = Col::PRIMARY_ID, const bool asc = true) -> const DataA;
     void preload_cache(int max_size = 1000);
     void reset_cache() { m_cache.reset(); }
@@ -77,7 +77,7 @@ public:
     // such that id in this table is removed only after all its auxiliary records
     // are removed (otherwise the database will contain dangling references).
     // The complete list of table dependencies can be found in _dependencies.txt
-    virtual bool purge_id(int64 id) { return unsafe_remove_data(id); }
+    virtual bool purge_id(int64 id) { return unsafe_remove_id(id); }
 
     // This is a trivial implementation of indexing in cache, using linear search.
     // It does not require additional storage, other than the cache.

@@ -57,7 +57,7 @@ const TagData* TagModel::get_key(const wxString& name)
 
     DataA tag_a = this->find(TagCol::TAGNAME(name));
     if (!tag_a.empty())
-        tag_n = get_data_n(tag_a[0].m_id);
+        tag_n = get_id_data_n(tag_a[0].m_id);
     return tag_n;
 }
 
@@ -73,14 +73,14 @@ int TagModel::is_used(int64 id)
     for (const auto& link : taglink) {
         // FIXME: do not exclude deleted transactions
         if (link.REFTYPE == TrxModel::refTypeName) {
-            const TrxData* t = TrxModel::instance().get_data_n(link.REFID);
+            const TrxData* t = TrxModel::instance().get_id_data_n(link.REFID);
             if (t && t->DELETEDTIME.IsEmpty())
                 return 1;
         }
         else if (link.REFTYPE == TrxSplitModel::refTypeName) {
-            const TrxSplitData* s = TrxSplitModel::instance().get_data_n(link.REFID);
+            const TrxSplitData* s = TrxSplitModel::instance().get_id_data_n(link.REFID);
             if (s) {
-                const TrxData* t = TrxModel::instance().get_data_n(s->TRANSID);
+                const TrxData* t = TrxModel::instance().get_id_data_n(s->TRANSID);
                 if (t && t->DELETEDTIME.IsEmpty())
                     return 1;
             }

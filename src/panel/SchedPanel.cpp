@@ -480,9 +480,9 @@ wxString SchedPanel::getItem(long item, int col_id)
             }
             else
                 return value;
-            const AccountData* account = AccountModel::instance().get_data_n(accountid);
+            const AccountData* account = AccountModel::instance().get_id_data_n(accountid);
             const CurrencyData* currency = account ?
-                CurrencyModel::instance().get_data_n(account->m_currency_id) : nullptr;
+                CurrencyModel::instance().get_id_data_n(account->m_currency_id) : nullptr;
             if (currency)
                 value = CurrencyModel::toCurrency(transamount, currency);
             if (!value.IsEmpty() && TrxModel::status_id(bill.STATUS) == TrxModel::STATUS_ID_VOID)
@@ -502,9 +502,9 @@ wxString SchedPanel::getItem(long item, int col_id)
             }
             else
                 return value;
-            const AccountData* account = AccountModel::instance().get_data_n(accountid);
+            const AccountData* account = AccountModel::instance().get_id_data_n(accountid);
             const CurrencyData* currency = account ?
-                CurrencyModel::instance().get_data_n(account->m_currency_id) : nullptr;
+                CurrencyModel::instance().get_id_data_n(account->m_currency_id) : nullptr;
             if (currency)
                 value = CurrencyModel::toCurrency(transamount, currency);
             if (!value.IsEmpty() && TrxModel::status_id(bill.STATUS) == TrxModel::STATUS_ID_VOID)
@@ -923,7 +923,7 @@ void SchedList::OnSetUserColour(wxCommandEvent& event)
 
     SchedModel::instance().db_savepoint();
 
-    SchedData* sched_n = SchedModel::instance().unsafe_get_data_n(id);
+    SchedData* sched_n = SchedModel::instance().unsafe_get_id_data_n(id);
     if (sched_n) {
         sched_n->COLOR = user_color_id;
         SchedModel::instance().unsafe_update_data_n(sched_n);

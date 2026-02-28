@@ -106,8 +106,8 @@ const wxString htmlWidgetStocks::getHTMLText()
             continue;
 
         double conv_rate = CurrencyHistoryModel::getDayRate(account_d.m_currency_id, today);
-        auto inv_bal = AccountModel::investment_balance(account_d);
-        double cash_bal = AccountModel::balance(account_d);
+        auto inv_bal = AccountModel::instance().investment_balance(account_d);
+        double cash_bal = AccountModel::instance().balance(account_d);
 
         grand_gain_lost    += (inv_bal.first - inv_bal.second) * conv_rate;
         grand_market_value += inv_bal.first * conv_rate;
@@ -123,19 +123,19 @@ const wxString htmlWidgetStocks::getHTMLText()
         );
         body += wxString::Format("<td class='money' sorttable_customkey='%f'>%s</td>\n",
             inv_bal.first - inv_bal.second,
-            AccountModel::to_currency(inv_bal.first - inv_bal.second, account_d)
+            AccountModel::instance().to_currency(inv_bal.first - inv_bal.second, account_d)
         );
         body += wxString::Format("<td class='money' sorttable_customkey='%f'>%s</td>\n",
             inv_bal.first,
-            AccountModel::to_currency(inv_bal.first, account_d)
+            AccountModel::instance().to_currency(inv_bal.first, account_d)
         );
         body += wxString::Format("<td class='money' sorttable_customkey='%f'>%s</td>\n",
             cash_bal,
-            AccountModel::to_currency(cash_bal, account_d)
+            AccountModel::instance().to_currency(cash_bal, account_d)
         );
         body += wxString::Format("<td colspan='2' class='money' sorttable_customkey='%f'>%s</td>",
             inv_bal.first + cash_bal,
-            AccountModel::to_currency(inv_bal.first + cash_bal, account_d)
+            AccountModel::instance().to_currency(inv_bal.first + cash_bal, account_d)
         );
         body += "</tr>";
     }
@@ -228,7 +228,7 @@ void htmlWidgetTop7Categories::getTopCategoryStats(
 
         bool withdrawal = TrxModel::type_id(trx) == TrxModel::TYPE_ID_WITHDRAWAL;
         double convRate = CurrencyHistoryModel::getDayRate(
-            AccountModel::instance().get_data_n(trx.ACCOUNTID)->m_currency_id,
+            AccountModel::instance().get_id_data_n(trx.ACCOUNTID)->m_currency_id,
             trx.TRANSDATE
         );
 
@@ -319,17 +319,17 @@ const wxString htmlWidgetBillsAndDeposits::getHTMLText()
             daysRemainingStr = "*" + wxString::Format(wxPLURAL("%d day overdue", "%d days overdue", std::abs(daysOverdue)), std::abs(daysOverdue));
 
         wxString accountStr = "";
-        const auto *account = AccountModel::instance().get_data_n(entry.ACCOUNTID);
+        const auto *account = AccountModel::instance().get_id_data_n(entry.ACCOUNTID);
         if (account) accountStr = account->m_name;
 
         wxString payeeStr = "";
         if (SchedModel::type_id(entry) == TrxModel::TYPE_ID_TRANSFER) {
-            const AccountData *to_account = AccountModel::instance().get_data_n(entry.TOACCOUNTID);
+            const AccountData *to_account = AccountModel::instance().get_id_data_n(entry.TOACCOUNTID);
             if (to_account) payeeStr = to_account->m_name;
             payeeStr += " &larr; " + accountStr;
         }
         else {
-            const PayeeData* payee_n = PayeeModel::instance().get_data_n(entry.PAYEEID);
+            const PayeeData* payee_n = PayeeModel::instance().get_id_data_n(entry.PAYEEID);
             payeeStr = accountStr;
             payeeStr += (SchedModel::type_id(entry) == TrxModel::TYPE_ID_WITHDRAWAL ? " &rarr; " : " &larr; ");
             if (payee_n)
@@ -371,7 +371,7 @@ const wxString htmlWidgetBillsAndDeposits::getHTMLText()
 
             output += "</td>";
             output += wxString::Format("<td class='money'>%s</td>\n",
-                AccountModel::to_currency(std::get<3>(item), *(std::get<4>(item)))
+                AccountModel::instance().to_currency(std::get<3>(item), *(std::get<4>(item)))
             );
             output += "<td  class='money'>" + std::get<2>(item) + "</td></tr>\n";
         }
@@ -408,7 +408,7 @@ const wxString htmlWidgetIncomeVsExpenses::getHTMLText()
             continue;
 
         double convRate = CurrencyHistoryModel::getDayRate(
-            AccountModel::instance().get_data_n(pBankTransaction.ACCOUNTID)->m_currency_id,
+            AccountModel::instance().get_id_data_n(pBankTransaction.ACCOUNTID)->m_currency_id,
             pBankTransaction.TRANSDATE
         );
 
@@ -630,8 +630,8 @@ const wxString htmlWidgetAssets::getHTMLText()
         if (!asset_account_d.is_open())
             continue;
 
-        double cash = AccountModel::balance(asset_account_d);
-        auto inv = AccountModel::investment_balance(asset_account_d);
+        double cash = AccountModel::instance().balance(asset_account_d);
+        auto inv = AccountModel::instance().investment_balance(asset_account_d);
         double current = inv.first;
         double initial = inv.second;
 
@@ -742,10 +742,10 @@ const wxString htmlWidgetAccounts::displayAccounts(double& tBalance, double& tRe
     );
     std::stable_sort(account_a.begin(), account_a.end(), AccountData::SorterByACCOUNTNAME());
     for (const auto& account_d : account_a) {
-        const CurrencyData* currency = AccountModel::currency_p(account_d);
+        const CurrencyData* currency = AccountModel::instance().currency_p(account_d);
 
         double currency_rate = CurrencyHistoryModel::getDayRate(account_d.m_currency_id, today);
-        double bal = account_d.m_open_balance + accountStats_[account_d.m_id].second; //AccountModel::balance(account_d);
+        double bal = account_d.m_open_balance + accountStats_[account_d.m_id].second; //AccountModel::instance().balance(account_d);
         double reconciledBal = account_d.m_open_balance + accountStats_[account_d.m_id].first;
         tabBalance += bal * currency_rate;
         tabReconciled += reconciledBal * currency_rate;

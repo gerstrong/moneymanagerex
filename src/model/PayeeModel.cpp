@@ -79,7 +79,7 @@ bool PayeeModel::purge_id(int64 id)
 
     // FIXME: remove AttachmentData owned by id
 
-    return unsafe_remove_data(id);
+    return unsafe_remove_id(id);
 }
 
 const PayeeData* PayeeModel::get_key_data_n(const wxString& name)
@@ -90,13 +90,13 @@ const PayeeData* PayeeModel::get_key_data_n(const wxString& name)
 
     DataA payee_a = this->find(PayeeCol::PAYEENAME(name));
     if (!payee_a.empty())
-        payee_n = get_data_n(payee_a[0].m_id);
+        payee_n = get_id_data_n(payee_a[0].m_id);
     return payee_n;
 }
 
 const wxString PayeeModel::get_id_name(int64 payee_id)
 {
-    const Data* payee_n = get_data_n(payee_id);
+    const Data* payee_n = get_id_data_n(payee_id);
     if (payee_n)
         return payee_n->m_name;
     else

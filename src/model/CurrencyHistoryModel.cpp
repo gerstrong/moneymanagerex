@@ -62,7 +62,7 @@ const CurrencyHistoryData* CurrencyHistoryModel::get_key(const int64& currencyID
         CurrencyHistoryCol::CURRDATE(date.FormatISODate())
     );
     if (!items.empty())
-        ch_n = get_data_n(items[0].id());
+        ch_n = get_id_data_n(items[0].id());
     return ch_n;
 }
 
@@ -97,7 +97,7 @@ int64 CurrencyHistoryModel::addUpdate(
 double CurrencyHistoryModel::getDayRate(int64 currencyID, const wxString& iso_date)
 {
     if (!PrefModel::instance().getUseCurrencyHistory()) {
-        const CurrencyData* c = CurrencyModel::instance().get_data_n(currencyID);
+        const CurrencyData* c = CurrencyModel::instance().get_id_data_n(currencyID);
         return c ? c->m_base_conv_rate : 1.0;
     }
     wxDate Date;
@@ -115,7 +115,7 @@ double CurrencyHistoryModel::getDayRate(int64 currencyID, const wxDate& date)
         return 1;
 
     if (!PrefModel::instance().getUseCurrencyHistory())
-        return CurrencyModel::instance().get_data_n(currencyID)->m_base_conv_rate;
+        return CurrencyModel::instance().get_id_data_n(currencyID)->m_base_conv_rate;
 
     CurrencyHistoryModel::DataA ch_a = CurrencyHistoryModel::instance().find(
         CurrencyHistoryCol::CURRENCYID(OP_EQ, currencyID),
@@ -152,14 +152,14 @@ double CurrencyHistoryModel::getDayRate(int64 currencyID, const wxDate& date)
         }
     }
 
-    return CurrencyModel::instance().get_data_n(currencyID)->m_base_conv_rate;
+    return CurrencyModel::instance().get_id_data_n(currencyID)->m_base_conv_rate;
 }
 
 /** Return the last rate for specified currency */
 double CurrencyHistoryModel::getLastRate(const int64& currencyID)
 {
     if (!PrefModel::instance().getUseCurrencyHistory())
-        return CurrencyModel::instance().get_data_n(currencyID)->m_base_conv_rate;
+        return CurrencyModel::instance().get_id_data_n(currencyID)->m_base_conv_rate;
 
     CurrencyHistoryModel::DataA histData = CurrencyHistoryModel::instance().find(
         CurrencyHistoryCol::CURRENCYID(currencyID)
@@ -170,7 +170,7 @@ double CurrencyHistoryModel::getLastRate(const int64& currencyID)
         return histData.back().m_base_conv_rate;
     else
     {
-        const CurrencyData* currency_n = CurrencyModel::instance().get_data_n(currencyID);
+        const CurrencyData* currency_n = CurrencyModel::instance().get_id_data_n(currencyID);
         return currency_n->m_base_conv_rate;
     }
 }

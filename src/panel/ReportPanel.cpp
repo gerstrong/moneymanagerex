@@ -596,7 +596,7 @@ void ReportPanel::onNewWindow(wxWebViewEvent& evt)
             // include all sub categories
             if (-2 == subCatID) {
                 for (const auto& subcat_d :
-                    CategoryModel::sub_tree(CategoryModel::instance().get_data_n(catID))
+                    CategoryModel::sub_tree(CategoryModel::instance().get_id_data_n(catID))
                 ) {
                     cats.push_back(subcat_d.m_id);
                 }
@@ -618,9 +618,9 @@ void ReportPanel::onNewWindow(wxWebViewEvent& evt)
     else if (uri.StartsWith("trxid:", &sData)) {
         long long transID = -1;
         if (sData.ToLongLong(&transID)) {
-            const TrxData* transaction = TrxModel::instance().get_data_n(transID);
+            const TrxData* transaction = TrxModel::instance().get_id_data_n(transID);
             if (transaction && transaction->TRANSID > -1) {
-                const AccountData* account = AccountModel::instance().get_data_n(transaction->ACCOUNTID);
+                const AccountData* account = AccountModel::instance().get_id_data_n(transaction->ACCOUNTID);
                 if (account) {
                     w_frame->selectNavTreeItem(account->m_name);
                     w_frame->setGotoAccountID(transaction->ACCOUNTID, { transID, 0 });
@@ -633,7 +633,7 @@ void ReportPanel::onNewWindow(wxWebViewEvent& evt)
     else if (uri.StartsWith("trx:", &sData)) {
         long long transId = -1;
         if (sData.ToLongLong(&transId)) {
-            TrxData* transaction = TrxModel::instance().unsafe_get_data_n(transId);
+            TrxData* transaction = TrxModel::instance().unsafe_get_id_data_n(transId);
             if (transaction && transaction->TRANSID > -1) {
                 if (TrxModel::is_foreign(*transaction)) {
                     TrxLinkData translink = TrxLinkModel::TranslinkRecord(transId);

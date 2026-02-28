@@ -273,7 +273,7 @@ void mmGUIFrame::DoUpdateGRMNavigation(wxTreeItemId& parent_item)
             ));
             group_name = report_d.m_group_name;
         }
-        const ReportData* report_n = ReportModel::instance().get_data_n(report_d.m_id);
+        const ReportData* report_n = ReportModel::instance().get_id_data_n(report_d.m_id);
         wxTreeItemId item = m_nav_tree_ctrl->AppendItem(
             no_group ? parent_item : group,
             wxGetTranslation(report_d.m_name),

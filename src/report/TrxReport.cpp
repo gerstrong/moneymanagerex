@@ -51,7 +51,7 @@ void TrxReport::displayTotals(const std::map<int64, double>& total, std::map<int
     double grand_total = 0;
     for (const auto& [curr_id, curr_total]: total)
     {
-        const CurrencyData* curr = CurrencyModel::instance().get_data_n(curr_id);
+        const CurrencyData* curr = CurrencyModel::instance().get_id_data_n(curr_id);
         const bool isBaseCurr = (curr->m_symbol == CurrencyModel::GetBaseCurrency()->m_symbol);
         grand_total += total_in_base_curr[curr_id];
         if (total.size() > 1 || !isBaseCurr)
@@ -92,7 +92,7 @@ wxString TrxReport::getHTMLText()
         accounts_label.clear();
         allAccounts = false;
         for (const auto& acc : selected_accounts) {
-            const AccountData* a = AccountModel::instance().get_data_n(acc);
+            const AccountData* a = AccountModel::instance().get_id_data_n(acc);
             accounts_label += (accounts_label.empty() ? "" : ", ") + a->m_name;
         }
     }
@@ -323,10 +323,10 @@ table {
                         hb.addTableCell(wxGetTranslation(transaction.TRANSCODE));
                 }
 
-                const AccountData* acc = AccountModel::instance().get_data_n(transaction.ACCOUNTID);
+                const AccountData* acc = AccountModel::instance().get_id_data_n(transaction.ACCOUNTID);
 
                 if (acc) {
-                    const CurrencyData* curr = AccountModel::currency_p(*acc);
+                    const CurrencyData* curr = AccountModel::instance().currency_p(*acc);
                     double flow = TrxModel::account_flow(transaction, acc->m_id);
                     if (noOfTrans || (!allAccounts && (std::find(selected_accounts.begin(), selected_accounts.end(), transaction.ACCOUNTID) == selected_accounts.end())))
                         flow = -flow;

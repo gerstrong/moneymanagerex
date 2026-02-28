@@ -434,7 +434,7 @@ bool mmComboBox::mmIsValid() const
 
 void mmComboBoxAccount::init()
 {
-    all_elements_ = AccountModel::instance().all_accounts(excludeClosed_);
+    all_elements_ = AccountModel::instance().find_all_name_id_m(excludeClosed_);
     if (accountID_ > -1)
         all_elements_[AccountModel::instance().get_id_name(accountID_)] = accountID_;
 }

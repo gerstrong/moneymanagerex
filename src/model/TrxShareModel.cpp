@@ -56,7 +56,7 @@ int64 TrxShareModel::find_trx_share_id(const int64 trx_id)
 TrxShareData* TrxShareModel::unsafe_get_trx_share_n(const int64 trx_id)
 {
     int64 ts_id = find_trx_share_id(trx_id);
-    return ts_id > 0 ? unsafe_get_data_n(ts_id) : nullptr;
+    return ts_id > 0 ? unsafe_get_id_data_n(ts_id) : nullptr;
 }
 
 void TrxShareModel::ShareEntry(
@@ -73,7 +73,7 @@ void TrxShareModel::ShareEntry(
     bool save_timestamp = false;
 
     if (ts_id > 0) {
-        new_ts_d = *(TrxShareModel::instance().get_data_n(ts_id));
+        new_ts_d = *(TrxShareModel::instance().get_id_data_n(ts_id));
         old_ts_d = new_ts_d;
     }
     else {

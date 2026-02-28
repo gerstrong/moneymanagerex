@@ -62,7 +62,7 @@ const TagLinkData* TagLinkModel::get_key(const wxString& refType, int64 refId, i
         TagLinkCol::REFTYPE(refType), TagLinkCol::REFID(refId), TagLinkCol::TAGID(tagId)
     );
     if (!items.empty())
-        gl_n = get_data_n(items[0].TAGLINKID);
+        gl_n = get_id_data_n(items[0].TAGLINKID);
     return gl_n;
 }
 
@@ -72,7 +72,7 @@ std::map<wxString, int64> TagLinkModel::get_ref(const wxString& refType, int64 r
     for (const auto& gl_d : instance().find(
         TagLinkCol::REFTYPE(refType), TagLinkCol::REFID(refId)
     ))
-        tags[TagModel::instance().get_data_n(gl_d.TAGID)->m_name] = gl_d.TAGID;
+        tags[TagModel::instance().get_id_data_n(gl_d.TAGID)->m_name] = gl_d.TAGID;
 
     return tags;
 }
@@ -130,7 +130,7 @@ int TagLinkModel::update(const DataA& rows, const wxString& refType, int64 refId
             TrxModel::instance().save_timestamp(refId);
         else if (refType == TrxSplitModel::refTypeName)
             TrxModel::instance().save_timestamp(
-                TrxSplitModel::instance().get_data_n(refId)->TRANSID
+                TrxSplitModel::instance().get_id_data_n(refId)->TRANSID
             );
     }
 

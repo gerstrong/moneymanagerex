@@ -92,10 +92,10 @@ void TrxLinkModel::SetTranslink(
 
     // set the checking entry to recognise it as a foreign transaction
     // set the checking type as AS_INCOME_EXPENSE = 32701 or AS_TRANSFER
-    TrxData* trx_n = TrxModel::instance().unsafe_get_data_n(checking_id);
+    TrxData* trx_n = TrxModel::instance().unsafe_get_id_data_n(checking_id);
     // trx_n->TOACCOUNTID = checking_type;
     TrxModel::instance().unsafe_save_trx(trx_n);
-    //TrxLinkModel::instance().get_data_n(new_tl_d.id());
+    //TrxLinkModel::instance().get_id_data_n(new_tl_d.id());
 }
 
 template <typename T>
@@ -165,12 +165,12 @@ void TrxLinkModel::RemoveTranslinkEntry(const int64 checking_account_id)
     TrxLinkModel::instance().purge_id(translink.TRANSLINKID);
 
     if (translink.LINKTYPE == AssetModel::refTypeName) {
-        AssetData* asset_entry = AssetModel::instance().unsafe_get_data_n(translink.LINKRECORDID);
+        AssetData* asset_entry = AssetModel::instance().unsafe_get_id_data_n(translink.LINKRECORDID);
         UpdateAssetValue(asset_entry);
     }
 
     if (translink.LINKTYPE == StockModel::refTypeName) {
-        StockData* stock_entry = StockModel::instance().unsafe_get_data_n(translink.LINKRECORDID);
+        StockData* stock_entry = StockModel::instance().unsafe_get_id_data_n(translink.LINKRECORDID);
         StockModel::UpdatePosition(stock_entry);
     }
 }
@@ -180,7 +180,7 @@ void TrxLinkModel::UpdateAssetValue(AssetData* asset_n)
     DataA trans_list = TranslinkList<AssetModel>(asset_n->m_id);
     double new_value = 0;
     for (const auto &trans : trans_list) {
-        const TrxData* trx_n = TrxModel::instance().get_data_n(trans.CHECKINGACCOUNTID);
+        const TrxData* trx_n = TrxModel::instance().get_id_data_n(trans.CHECKINGACCOUNTID);
         if (trx_n && trx_n->DELETEDTIME.IsEmpty()
             && TrxModel::status_id(trx_n->STATUS) != TrxModel::STATUS_ID_VOID
         ) {
@@ -217,7 +217,7 @@ bool TrxLinkModel::ShareAccountId(int64& stock_entry_id)
             TrxCol::TRANSID(stock_translink_list.at(0).CHECKINGACCOUNTID));
         if (!checking_entry.empty())
         {
-            const AccountData* account_entry = AccountModel::instance().get_data_n(checking_entry.at(0).ACCOUNTID);
+            const AccountData* account_entry = AccountModel::instance().get_id_data_n(checking_entry.at(0).ACCOUNTID);
             stock_entry_id = account_entry->m_id;
             return true;
         }

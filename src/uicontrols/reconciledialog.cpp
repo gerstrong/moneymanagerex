@@ -52,7 +52,7 @@ mmReconcileDialog::mmReconcileDialog(wxWindow* parent, const AccountData* accoun
     m_account = account;
     m_checkingPanel = cp;
     m_reconciledBalance = cp->GetTodayReconciledBalance();
-    m_currency = CurrencyModel::instance().get_data_n(account->m_currency_id);
+    m_currency = CurrencyModel::instance().get_id_data_n(account->m_currency_id);
     m_ignore  = false;
     this->SetFont(parent->GetFont());
 
@@ -578,7 +578,7 @@ void mmReconcileDialog::newTransaction()
         if (i != wxID_CANCEL) {
             m_checkingPanel->refreshList();
             int64 transid = dlg.GetTransactionID();
-            const TrxData* trx = TrxModel::instance().get_data_n(transid);
+            const TrxData* trx = TrxModel::instance().get_id_data_n(transid);
             addTransaction2List(trx);
         }
     } while (i == wxID_NEW);
@@ -618,7 +618,7 @@ void mmReconcileDialog::editTransaction(wxListCtrl* list, long item)
     TrxDialog dlg(this, transid, {transid, false});
     if (dlg.ShowModal() == wxID_OK) {
         m_checkingPanel->refreshList();
-        const TrxData* trx = TrxModel::instance().get_data_n(transid);
+        const TrxData* trx = TrxModel::instance().get_id_data_n(transid);
         setListItemData(trx, list, item);
         long idx = getListIndexByDate(trx, list);
         if (idx != item) {
@@ -632,7 +632,7 @@ long mmReconcileDialog::getListIndexByDate(const TrxData* trx, wxListCtrl* list)
     long idx = -1;
     for (long i = 0; i < list->GetItemCount(); ++i) {
         int64 other_id = m_itemDataMap[list->GetItemData(i)];
-        const TrxData* other_trx_n = TrxModel::instance().get_data_n(other_id);
+        const TrxData* other_trx_n = TrxModel::instance().get_id_data_n(other_id);
         if (trx->TRANSDATE.Left(10) < other_trx_n->TRANSDATE.Left(10)) {
             idx = i;
             break;
@@ -773,7 +773,7 @@ void mmReconcileDialog::applyColumnSettings()
 void mmReconcileDialog::OnClose(wxCommandEvent& event)
 {
     auto saveItem = [](int64 id, bool state, bool final) {
-        TrxData* trx_n = TrxModel::instance().unsafe_get_data_n(id);
+        TrxData* trx_n = TrxModel::instance().unsafe_get_id_data_n(id);
         if (state) {
             trx_n->STATUS = final ? "R" : "F";
         }

@@ -228,14 +228,14 @@ bool mmWebApp::WebApp_UpdatePayee()
 
     wxString def_category_name, def_subcategory_name;
     for (const auto& payee_d : PayeeModel::instance().find_all(PayeeCol::COL_ID_PAYEENAME)) {
-        const CategoryData* def_category = CategoryModel::instance().get_data_n(payee_d.m_category_id);
+        const CategoryData* def_category = CategoryModel::instance().get_id_data_n(payee_d.m_category_id);
         if (def_category) {
             if (def_category->m_parent_id == -1) {
                 def_category_name = def_category->m_name;
                 def_subcategory_name = "None";
             }
             else {
-                const CategoryData* parent_category = CategoryModel::instance().get_data_n(def_category->m_parent_id);
+                const CategoryData* parent_category = CategoryModel::instance().get_id_data_n(def_category->m_parent_id);
                 if (parent_category != nullptr && parent_category->m_parent_id == -1) {
                     def_category_name = parent_category->m_name;
                     def_subcategory_name = def_category->m_name;
@@ -465,7 +465,7 @@ int64 mmWebApp::MMEX_InsertNewTransaction(webtran_holder& WebAppTrans)
     wxString TrStatus;
 
     //Search Account
-    const AccountData* account_n = AccountModel::instance().get_key_data_n(WebAppTrans.Account);
+    const AccountData* account_n = AccountModel::instance().get_name_data_n(WebAppTrans.Account);
     wxString accountName, accountInitialDate;
     if (account_n != nullptr) {
         AccountID = account_n->m_id;
@@ -501,7 +501,7 @@ int64 mmWebApp::MMEX_InsertNewTransaction(webtran_holder& WebAppTrans)
     // Search ToAccount
     const AccountData* ToAccount = nullptr;
     if (WebAppTrans.ToAccount != "None") {
-        ToAccount = AccountModel::instance().get_key_data_n(WebAppTrans.ToAccount);
+        ToAccount = AccountModel::instance().get_name_data_n(WebAppTrans.ToAccount);
         if (ToAccount)
             ToAccountID = ToAccount->m_id;
     }

@@ -442,7 +442,7 @@ void CategoryManager::OnEndDrag(wxTreeEvent& event)
 
     if (categID == -1 || categID == m_dragSourceCATEGID) return;
 
-    CategoryData* sourceCat = CategoryModel::instance().unsafe_get_data_n(m_dragSourceCATEGID);
+    CategoryData* sourceCat = CategoryModel::instance().unsafe_get_id_data_n(m_dragSourceCATEGID);
 
     if (categID == sourceCat->m_parent_id)
         return;
@@ -514,7 +514,7 @@ void CategoryManager::mmDoDeleteSelectedCategory()
         deletedTrans = TrxModel::instance().find(
             TrxCol::CATEGID(m_categ_id)
         );
-        for (const auto& subcat : CategoryModel::sub_tree(CategoryModel::instance().get_data_n(m_categ_id))) {
+        for (const auto& subcat : CategoryModel::sub_tree(CategoryModel::instance().get_id_data_n(m_categ_id))) {
             TrxModel::DataA trans = TrxModel::instance().find(
                 TrxCol::CATEGID(subcat.m_id)
             );
@@ -523,7 +523,7 @@ void CategoryManager::mmDoDeleteSelectedCategory()
         splits = TrxSplitModel::instance().find(
             TrxSplitCol::CATEGID(m_categ_id)
         );
-        for (const auto& subcat : CategoryModel::sub_tree(CategoryModel::instance().get_data_n(m_categ_id))) {
+        for (const auto& subcat : CategoryModel::sub_tree(CategoryModel::instance().get_id_data_n(m_categ_id))) {
             TrxSplitModel::DataA trans = TrxSplitModel::instance().find(
                 TrxSplitCol::CATEGID(subcat.m_id)
             );
@@ -561,7 +561,7 @@ void CategoryManager::mmDoDeleteSelectedCategory()
             FieldValueModel::instance().db_release_savepoint();
         }
 
-        for (auto& subcat : CategoryModel::sub_tree(CategoryModel::instance().get_data_n(m_categ_id)))
+        for (auto& subcat : CategoryModel::sub_tree(CategoryModel::instance().get_id_data_n(m_categ_id)))
             CategoryModel::instance().purge_id(subcat.m_id);
 
         CategoryModel::instance().purge_id(m_categ_id);
@@ -689,7 +689,7 @@ wxTreeItemId CategoryManager::getTreeItemFor(const wxTreeItemId& itemID, const w
 
 void CategoryManager::setTreeSelection(int64 category_id)
 {
-    const CategoryData* category_n = CategoryModel::instance().get_data_n(category_id);
+    const CategoryData* category_n = CategoryModel::instance().get_id_data_n(category_id);
     if (category_n) {
         setTreeSelection(category_n->m_name, category_n->m_parent_id);
     }
@@ -763,7 +763,7 @@ void CategoryManager::OnMenuSelected(wxCommandEvent& event)
 {
     int id = event.GetId();
 
-    CategoryData* cat = CategoryModel::instance().unsafe_get_data_n(m_categ_id);
+    CategoryData* cat = CategoryModel::instance().unsafe_get_id_data_n(m_categ_id);
     switch (id)
     {
         case MENU_ITEM_EDIT:

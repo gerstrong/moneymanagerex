@@ -55,7 +55,7 @@ bool TrxSplitModel::purge_id(int64 id)
     // remove TagLinkData owned by id
     TagLinkModel::instance().DeleteAllTags(TrxSplitModel::refTypeName, id);
 
-    return unsafe_remove_data(id);
+    return unsafe_remove_id(id);
 }
 
 double TrxSplitModel::get_total(const DataA& rows)

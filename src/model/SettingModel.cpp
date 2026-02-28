@@ -69,7 +69,7 @@ void SettingModel::setRaw(const wxString& key, const wxString& newValue)
         // not found in cache; search in db
         const DataA setting_a = find(SettingCol::SETTINGNAME(key));
         if (!setting_a.empty())
-            setting_n = get_data_n(setting_a[0].m_id);
+            setting_n = get_id_data_n(setting_a[0].m_id);
     }
 
     Data setting_d = setting_n ? *setting_n : Data();
@@ -221,7 +221,7 @@ void SettingModel::prependArrayItem(const wxString& key, const wxString& value, 
     if (!setting_n) { // not cached
         DataA setting_a = find(SettingCol::SETTINGNAME(key));
         if (!setting_a.empty())
-            setting_n = get_data_n(setting_a[0].m_id);
+            setting_n = get_id_data_n(setting_a[0].m_id);
     }
 
     Data setting_d = setting_n ? *setting_n : Data();

@@ -54,7 +54,7 @@ wxString InExReport::getHTMLText()
         if (TrxModel::is_foreignAsTransfer(transaction))
             continue;
 
-        const AccountData *account = AccountModel::instance().get_data_n(transaction.ACCOUNTID);
+        const AccountData *account = AccountModel::instance().get_id_data_n(transaction.ACCOUNTID);
         if (m_account_a) {
             if (!account || wxNOT_FOUND == m_account_a->Index(account->m_name))
                 continue;
@@ -63,7 +63,7 @@ wxString InExReport::getHTMLText()
         // We got this far, get the currency conversion rate for this account
         if (account) {
             convRate = CurrencyHistoryModel::getDayRate(
-                AccountModel::currency_p(*account)->m_id, transaction.TRANSDATE
+                AccountModel::instance().currency_p(*account)->m_id, transaction.TRANSDATE
             );
         }
 
@@ -158,7 +158,7 @@ wxString mmReportIncomeExpensesMonthly::getHTMLText()
         if (TrxModel::is_foreignAsTransfer(transaction))
             continue;
 
-        const AccountData *account = AccountModel::instance().get_data_n(transaction.ACCOUNTID);
+        const AccountData *account = AccountModel::instance().get_id_data_n(transaction.ACCOUNTID);
         if (m_account_a) {
             if (!account || wxNOT_FOUND == m_account_a->Index(account->m_name))
                 continue;
@@ -167,7 +167,7 @@ wxString mmReportIncomeExpensesMonthly::getHTMLText()
         // We got this far, get the currency conversion rate for this account
         if (account) {
             convRate = CurrencyHistoryModel::getDayRate(
-                AccountModel::currency_p(*account)->m_id, transaction.TRANSDATE
+                AccountModel::instance().currency_p(*account)->m_id, transaction.TRANSDATE
             );
         }
         int year = TrxModel::getTransDateTime(transaction).GetYear();

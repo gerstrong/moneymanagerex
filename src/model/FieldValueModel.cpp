@@ -58,7 +58,7 @@ const FieldValueData* FieldValueModel::get_key(int64 FieldID, int64 RefID)
         FieldValueCol::REFID(RefID)
     );
     if (!items.empty())
-        return get_data_n(items[0].FIELDATADID);
+        return get_id_data_n(items[0].FIELDATADID);
     return nullptr;
 }
 

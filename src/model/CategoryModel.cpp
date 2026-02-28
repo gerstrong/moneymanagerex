@@ -74,8 +74,8 @@ const CategoryData* CategoryModel::get_name(const wxString& name, const wxString
     DataA category_a = this->find(CategoryCol::CATEGNAME(name));
     for (const auto& category_d : category_a) {
         if (category_d.m_parent_id != -1) {
-            if (instance().get_data_n(category_d.m_parent_id)->m_name.Lower() == parentname.Lower()) {
-                category_n = get_data_n(category_d.m_id);
+            if (instance().get_id_data_n(category_d.m_parent_id)->m_name.Lower() == parentname.Lower()) {
+                category_n = get_id_data_n(category_d.m_id);
                 break;
             }
         }
@@ -98,7 +98,7 @@ const CategoryData* CategoryModel::get_key(const wxString& name, const int64 par
         CategoryCol::PARENTID(parentid)
     );
     if (!category_a.empty())
-        category_n = get_data_n(category_a[0].m_id);
+        category_n = get_id_data_n(category_a[0].m_id);
     return category_n;
 }
 
@@ -155,10 +155,10 @@ const wxString CategoryModel::full_name(const Data* category_n)
         return category_n->m_name;
     else {
         wxString name = category_n->m_name;
-        const Data* parent_n = instance().get_data_n(category_n->m_parent_id);
+        const Data* parent_n = instance().get_id_data_n(category_n->m_parent_id);
         while (parent_n) {
             name = name.Prepend(delimiter).Prepend(parent_n->m_name);
-            parent_n = instance().get_data_n(parent_n->m_parent_id);
+            parent_n = instance().get_id_data_n(parent_n->m_parent_id);
         }
         return name;
     }
@@ -166,23 +166,23 @@ const wxString CategoryModel::full_name(const Data* category_n)
 
 const wxString CategoryModel::full_name(int64 category_id)
 {
-    const Data* category_n = instance().get_data_n(category_id);
+    const Data* category_n = instance().get_id_data_n(category_id);
     return full_name(category_n);
 }
 
 const wxString CategoryModel::full_name(int64 category_id, wxString delimiter)
 {
-    const Data* category_n = instance().get_data_n(category_id);
+    const Data* category_n = instance().get_id_data_n(category_id);
     if (!category_n)
         return "";
     if (category_n->m_parent_id == -1)
         return category_n->m_name;
     else {
         wxString name = category_n->m_name;
-        const Data* parent_n = instance().get_data_n(category_n->m_parent_id);
+        const Data* parent_n = instance().get_id_data_n(category_n->m_parent_id);
         while (parent_n) {
             name = name.Prepend(delimiter).Prepend(parent_n->m_name);
-            parent_n = instance().get_data_n(parent_n->m_parent_id);
+            parent_n = instance().get_id_data_n(parent_n->m_parent_id);
         }
         return name;
     }
@@ -193,7 +193,7 @@ const wxString CategoryModel::full_name(int64 category_id, wxString delimiter)
 
 bool CategoryModel::is_hidden(int64 catID)
 {
-    const auto category_n = CategoryModel::instance().get_data_n(catID);
+    const auto category_n = CategoryModel::instance().get_id_data_n(catID);
     return (category_n && !category_n->m_active);
 }
 
@@ -214,7 +214,7 @@ bool CategoryModel::is_used(int64 id)
         TrxCol::CATEGID(id)
     );
     for (const auto& split_d : split_a)
-        if (TrxModel::instance().get_data_n(split_d.TRANSID)->DELETEDTIME.IsEmpty())
+        if (TrxModel::instance().get_id_data_n(split_d.TRANSID)->DELETEDTIME.IsEmpty())
             return true;
 
     const auto& sched_a = SchedModel::instance().find(
@@ -326,14 +326,14 @@ void CategoryModel::getCategoryStats(
 
         if (accountArray)
         {
-            const auto account = AccountModel::instance().get_data_n(transaction.ACCOUNTID);
+            const auto account = AccountModel::instance().get_id_data_n(transaction.ACCOUNTID);
             if (wxNOT_FOUND == accountArray->Index(account->m_name)) {
                 continue;
             }
         }
 
         const double convRate = CurrencyHistoryModel::getDayRate(
-            AccountModel::instance().get_data_n(transaction.ACCOUNTID)->m_currency_id,
+            AccountModel::instance().get_id_data_n(transaction.ACCOUNTID)->m_currency_id,
             transaction.TRANSDATE
         );
         wxDateTime d = TrxModel::getTransDateTime(transaction);

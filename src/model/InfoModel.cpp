@@ -72,7 +72,7 @@ void InfoModel::setRaw(const wxString& key, const wxString& newValue)
         // not found in cache; search in db
         DataA info_a = find(InfoCol::INFONAME(key));
         if (!info_a.empty())
-            info_n = get_data_n(info_a[0].m_id);
+            info_n = get_id_data_n(info_a[0].m_id);
     }
 
     Data info_d = info_n ? *info_n : Data();
@@ -314,7 +314,7 @@ void InfoModel::prependArrayItem(const wxString& key, const wxString& value, int
     if (!info_n) {
         DataA info_a = find(InfoCol::INFONAME(key));
         if (!info_a.empty())
-            info_n = get_data_n(info_a[0].m_id);
+            info_n = get_id_data_n(info_a[0].m_id);
     }
 
     Data info_d = info_n ? *info_n : Data();

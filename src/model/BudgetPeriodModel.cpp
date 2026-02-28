@@ -54,13 +54,13 @@ bool BudgetPeriodModel::purge_id(int64 id)
         BudgetCol::BUDGETYEARID(id)
     ))
         BudgetModel::instance().purge_id(budget_d.m_period_id);
-    return unsafe_remove_data(id);
+    return unsafe_remove_id(id);
 }
 
 // Getter
 wxString BudgetPeriodModel::get_id_name(int64 year_id)
 {
-    const Data* bp_n = get_data_n(year_id);
+    const Data* bp_n = get_id_data_n(year_id);
     return bp_n ? bp_n->m_name : "";
 }
 

@@ -417,7 +417,7 @@ void mmPayeeSelectionDialog::OnOK(wxCommandEvent& WXUNUSED(event))
                 new_payee_d.m_category_id = selectedCategoryId;
                 new_payee_d.m_pattern     = regexPattern_;
                 PayeeModel::instance().add_data_n(new_payee_d);
-                payee_n = PayeeModel::instance().unsafe_get_data_n(new_payee_d.id());
+                payee_n = PayeeModel::instance().unsafe_get_id_data_n(new_payee_d.id());
                 wxLogDebug("Saved regex pattern for payee '%s'", selectedPayee_);
             }
             else if (payee_n) {
@@ -439,7 +439,7 @@ void mmPayeeSelectionDialog::OnOK(wxCommandEvent& WXUNUSED(event))
         new_payee_d.m_name        = selectedPayee_;
         new_payee_d.m_category_id = selectedCategoryId;
         PayeeModel::instance().add_data_n(new_payee_d);
-        payee_n = PayeeModel::instance().unsafe_get_data_n(new_payee_d.id());
+        payee_n = PayeeModel::instance().unsafe_get_id_data_n(new_payee_d.id());
         wxLogDebug("Created new payee '%s' with category ID=%lld", selectedPayee_, selectedCategoryId);
     }
 
@@ -495,7 +495,7 @@ void mmPayeeSelectionDialog::LoadRegexPatterns(wxInt64ClientData* payeeIdData)
 
     int64_t payeeId = payeeIdData ? payeeIdData->GetValue() : -1;
     const PayeeData* payee_n = (payeeId >= 0)
-        ? PayeeModel::instance().get_data_n(payeeId)
+        ? PayeeModel::instance().get_id_data_n(payeeId)
         : nullptr;
     if (payee_n && !payee_n->m_pattern.IsEmpty()) {
         rapidjson::Document j_doc;
@@ -826,7 +826,7 @@ void mmPayeeSelectionDialog::OnPayeeChoice(wxCommandEvent& event)
     }
 
     int64_t payeeId = clientData->GetValue();
-    const PayeeData* payee_n = PayeeModel::instance().get_data_n(payeeId);
+    const PayeeData* payee_n = PayeeModel::instance().get_id_data_n(payeeId);
     if (payee_n) {
         // Always update the category to the payee's default, regardless of manual changes
         long long payeeCategoryId = payee_n->m_category_id.GetValue();
@@ -1055,7 +1055,7 @@ void mmOFXImportDialog::OnBrowse(wxCommandEvent& /*event*/)
             if (data) {
                 long long tempAccountId;
                 if (data->GetData().ToLongLong(&tempAccountId)) {
-                    const AccountData* account_n = AccountModel::instance().get_data_n(tempAccountId);
+                    const AccountData* account_n = AccountModel::instance().get_id_data_n(tempAccountId);
                     if (account_n) {
                         wxString accountNum = account_n->m_num;
                         accountNum.Trim(true).Trim(false); // Normalize
@@ -1116,7 +1116,7 @@ void mmOFXImportDialog::OnImport(wxCommandEvent& /*event*/)
     }
     account_id_ = tempAccountId;
 
-    const AccountData* account_n = AccountModel::instance().get_data_n(static_cast<int>(account_id_.GetValue()));
+    const AccountData* account_n = AccountModel::instance().get_id_data_n(static_cast<int>(account_id_.GetValue()));
     if (!account_n) {
         wxMessageBox(wxString::Format(_("Account ID %s does not exist."), account_id_.ToString()), _("Error"), wxOK | wxICON_ERROR);
         return;
@@ -1358,7 +1358,7 @@ wxString mmOFXImportDialog::getPayeeName(const wxString& memo, bool& usedRegex, 
                    matchMethod, matchConfidence);
 
         // Validate the PayeeID and check if it's a true exact match
-        const PayeeData* payee_n = PayeeModel::instance().get_data_n(candidatePayeeID);
+        const PayeeData* payee_n = PayeeModel::instance().get_id_data_n(candidatePayeeID);
         if (payee_n && payee_n->m_id.GetValue() == candidatePayeeID) {
             wxString dbPayeeName = payee_n->m_name;
             if (matchMethod == "Exact" || memo.IsSameAs(dbPayeeName, false)) {
@@ -1436,7 +1436,7 @@ bool mmOFXImportDialog::ImportTransactions(wxXmlNode* banktranlist, wxLongLong a
     if (!banktranlist)
         return false;
 
-    const AccountData* account = AccountModel::instance().get_data_n(accountID);
+    const AccountData* account = AccountModel::instance().get_id_data_n(accountID);
     if (!account)
         return false;
 
@@ -1609,7 +1609,7 @@ bool mmOFXImportDialog::ImportTransactions(wxXmlNode* banktranlist, wxLongLong a
                                 TrxModel::instance().save_trx(existing);
                                 result.imported = true;
                                 result.transType = "Transfer";
-                                result.importedPayee = AccountModel::instance().get_data_n(existing.ACCOUNTID)->m_name;
+                                result.importedPayee = AccountModel::instance().get_id_data_n(existing.ACCOUNTID)->m_name;
                                 result.category = "Transfer";
                                 result.matchMode = "Transfer";
                                 stats.autoImportedCount++;
@@ -1693,7 +1693,7 @@ bool mmOFXImportDialog::ImportTransactions(wxXmlNode* banktranlist, wxLongLong a
                         }
                     }
                     transaction.CATEGID = payeeDlg.GetSelectedCategoryID();
-                    const CategoryData* category_n = CategoryModel::instance().get_data_n(transaction.CATEGID);
+                    const CategoryData* category_n = CategoryModel::instance().get_id_data_n(transaction.CATEGID);
                     result.category = category_n ? category_n->m_name : "Uncategorized";
                     if (payeeDlg.ShouldUpdateRegex() && payee_n) {
                         payee_n->m_pattern = payeeDlg.GetRegexPattern();
@@ -1723,7 +1723,7 @@ bool mmOFXImportDialog::ImportTransactions(wxXmlNode* banktranlist, wxLongLong a
                     transaction.PAYEEID = payee_n->m_id;
                     transaction.CATEGID = payee_n->m_category_id;
                     transaction.STATUS = (matchMethod == "Fuzzy" && markFuzzyFollowUp) ? "F" : "";
-                    const CategoryData* category = CategoryModel::instance().get_data_n(transaction.CATEGID);
+                    const CategoryData* category = CategoryModel::instance().get_id_data_n(transaction.CATEGID);
                     result.category = category ? category->m_name : "Uncategorized";
                     stats.autoImportedCount++;
                     result.imported = true;

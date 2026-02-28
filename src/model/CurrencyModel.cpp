@@ -104,7 +104,7 @@ const wxArrayString CurrencyModel::all_currency_symbols()
 const CurrencyData* CurrencyModel::GetBaseCurrency()
 {
     int64 currency_id = PrefModel::instance().getBaseCurrencyID();
-    const CurrencyData* currency = CurrencyModel::instance().get_data_n(currency_id);
+    const CurrencyData* currency = CurrencyModel::instance().get_id_data_n(currency_id);
     return currency;
 }
 
@@ -141,7 +141,7 @@ const CurrencyData* CurrencyModel::GetCurrencyRecord(const wxString& currency_sy
         CurrencyCol::CURRENCY_SYMBOL(currency_symbol)
     );
     if (items.empty())
-        currency_n = get_data_n(items[0].id());
+        currency_n = get_id_data_n(items[0].id());
 
     return currency_n;
 }
@@ -186,7 +186,7 @@ bool CurrencyModel::purge_id(int64 id)
         CurrencyHistoryModel::instance().purge_id(r.id());
     db_release_savepoint();
 
-    return unsafe_remove_data(id);
+    return unsafe_remove_id(id);
 }
 
 const wxString CurrencyModel::toCurrency(double value, const Data* currency, int precision)
@@ -373,9 +373,9 @@ int CurrencyModel::precision(const Data& r)
 
 int CurrencyModel::precision(int64 account_id)
 {
-    const AccountData* account_n = AccountModel::instance().get_data_n(account_id);
+    const AccountData* account_n = AccountModel::instance().get_id_data_n(account_id);
     if (account_n) {
-        return precision(AccountModel::currency_p(*account_n));
+        return precision(AccountModel::instance().currency_p(*account_n));
     }
     else return 2;
 }

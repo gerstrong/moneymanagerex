@@ -273,7 +273,7 @@ bool FieldValueDialog::FillCustomFields(wxBoxSizer* box_sizer)
     scrolled_window->FitInside();
     scrolled_window->SetScrollRate(6, 6);
     box_sizer_right->Add(scrolled_window, g_flagsExpand);
-    const TrxData* ref_trx_n = TrxModel::instance().get_data_n(m_ref_id);
+    const TrxData* ref_trx_n = TrxModel::instance().get_id_data_n(m_ref_id);
     if (ref_trx_n && !ref_trx_n->DELETEDTIME.IsEmpty()) scrolled_window->Disable();
     m_static_box->Hide();
     mmThemeAutoColour(scrolled_window);
@@ -341,7 +341,7 @@ std::map<int64, wxString> FieldValueDialog::GetActiveCustomFields() const
     std::map<int64, wxString> values;
     for (const auto& entry : m_data_changed) {
         int id = (entry.first - GetBaseID()) / FIELDMULTIPLIER;
-        const FieldData* data_n = FieldModel::instance().get_data_n(m_fields[id].FIELDID);
+        const FieldData* data_n = FieldModel::instance().get_id_data_n(m_fields[id].FIELDID);
         if (data_n) {
             values[data_n->FIELDID] = entry.second;
         }

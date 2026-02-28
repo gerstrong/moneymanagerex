@@ -48,7 +48,7 @@ StockModel& StockModel::instance(wxSQLite3Database* db)
 
 wxString StockModel::get_stock_name(int64 stock_id)
 {
-    const Data* stock = instance().get_data_n(stock_id);
+    const Data* stock = instance().get_id_data_n(stock_id);
     if (stock)
         return stock->m_name;
     else
@@ -99,7 +99,7 @@ double StockModel::CurrentValue(const Data& r)
 */
 bool StockModel::purge_id(int64 id)
 {
-    const StockData *stock_n = get_data_n(id);
+    const StockData *stock_n = get_id_data_n(id);
     const auto& stock_a = StockModel::instance().find(
         StockCol::SYMBOL(stock_n->m_symbol)
     );
@@ -114,7 +114,7 @@ bool StockModel::purge_id(int64 id)
 
     // FIXME: remove AttachmentData owned by id
 
-    return unsafe_remove_data(id);
+    return unsafe_remove_id(id);
 }
 
 /**
@@ -193,7 +193,7 @@ double StockModel::getDailyBalanceAt(const AccountData *account, const wxDate& d
 
         TrxLinkModel::DataA linkrecords = TrxLinkModel::TranslinkList<StockModel>(stock.m_id);
         for (const auto& linkrecord : linkrecords) {
-            const TrxData* txn = TrxModel::instance().get_data_n(linkrecord.CHECKINGACCOUNTID);
+            const TrxData* txn = TrxModel::instance().get_id_data_n(linkrecord.CHECKINGACCOUNTID);
             if (txn->TRANSID > -1 && txn->DELETEDTIME.IsEmpty() && TrxModel::getTransDateTime(*txn).FormatISODate() <= strDate) {
                 numShares += TrxShareModel::instance().unsafe_get_trx_share_n(linkrecord.CHECKINGACCOUNTID)->SHARENUMBER;
             }
@@ -232,7 +232,7 @@ double StockModel::RealGainLoss(const Data* stock_n, bool to_base_curr)
     TrxModel::DataA checking_list;
     for (const auto &trans : trans_list)
     {
-        const TrxData* checking_entry = TrxModel::instance().get_data_n(trans.CHECKINGACCOUNTID);
+        const TrxData* checking_entry = TrxModel::instance().get_id_data_n(trans.CHECKINGACCOUNTID);
         if (checking_entry->TRANSID > -1 && checking_entry->DELETEDTIME.IsEmpty()) checking_list.push_back(*checking_entry);
     }
     std::stable_sort(checking_list.begin(), checking_list.end(), TrxData::SorterByTRANSDATE());
@@ -302,7 +302,7 @@ double StockModel::UnrealGainLoss(const Data* r, bool to_base_curr)
 
         TrxModel::DataA checking_list;
         for (const auto &trans : trans_list) {
-            const TrxData* checking_entry = TrxModel::instance().get_data_n(trans.CHECKINGACCOUNTID);
+            const TrxData* checking_entry = TrxModel::instance().get_id_data_n(trans.CHECKINGACCOUNTID);
             if (checking_entry->TRANSID > -1 && checking_entry->DELETEDTIME.IsEmpty())
                 checking_list.push_back(*checking_entry);
         }
@@ -353,7 +353,7 @@ void StockModel::UpdateCurrentPrice(const wxString& symbol, const double price)
         );
         for (auto& stock_d : stock_a) {
             // CHECK: use stock_d directly
-            StockData* stock_n = StockModel::instance().unsafe_get_data_n(stock_d.m_id);
+            StockData* stock_n = StockModel::instance().unsafe_get_id_data_n(stock_d.m_id);
             stock_n->m_current_price = current_price;
             StockModel::instance().unsafe_update_data_n(stock_n);
         }
@@ -370,7 +370,7 @@ void StockModel::UpdatePosition(StockData* stock_n)
     wxString earliest_date = wxDate::Today().FormatISODate();
     TrxModel::DataA trx_a;
     for (const auto& tl_d : tl_a) {
-        const TrxData* trx_n = TrxModel::instance().get_data_n(tl_d.CHECKINGACCOUNTID);
+        const TrxData* trx_n = TrxModel::instance().get_id_data_n(tl_d.CHECKINGACCOUNTID);
         if (trx_n->TRANSID > -1 && trx_n->DELETEDTIME.IsEmpty() && TrxModel::status_id(trx_n->STATUS) != TrxModel::STATUS_ID_VOID)
             trx_a.push_back(*trx_n);
     }

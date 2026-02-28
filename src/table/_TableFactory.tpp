@@ -38,7 +38,7 @@ const wxString TableFactory<T, D>::DataA::to_json() const
 // The returned pointer can modify the record in cache.
 // This call can be combined with unsafe_update_data_n() for efficiency.
 template<typename T, typename D>
-auto TableFactory<T, D>::unsafe_get_data_n(const int64 id) -> Data*
+auto TableFactory<T, D>::unsafe_get_id_data_n(const int64 id) -> Data*
 {
     if (id <= 0)
         return nullptr;
@@ -70,12 +70,12 @@ auto TableFactory<T, D>::unsafe_get_data_n(const int64 id) -> Data*
     return data_n;
 }
 
-// Same as unsafe_get_data_n(const int64), except that
+// Same as unsafe_get_id_data_n(const int64), except that
 // the returned pointer cannot modify the record in cache.
 template<typename T, typename D>
-auto TableFactory<T, D>::get_data_n(const int64 id) -> const Data*
+auto TableFactory<T, D>::get_id_data_n(const int64 id) -> const Data*
 {
-    return unsafe_get_data_n(id);
+    return unsafe_get_id_data_n(id);
 }
 
 // Add a new Data record in database and in cache.
@@ -131,7 +131,7 @@ bool TableFactory<T, D>::add_data_a(DataA& data_a)
 // Update an existing Data record in database with the value already in cache.
 // data shall be a valid (not nullptr) pointer into cache.
 // Return data, or nullptr in case of error.
-// This call can be combined with unsafe_get_data_n() for efficiency.
+// This call can be combined with unsafe_get_id_data_n() for efficiency.
 template<typename T, typename D>
 auto TableFactory<T, D>::unsafe_update_data_n(Data* data) -> Data*
 {
@@ -239,7 +239,7 @@ bool TableFactory<T, D>::save_data_a(DataA& data_a)
 // Before calling this function, the caller shall remove all auxiliary data
 // belonging to id from other tables. See the comments in virtual remove_id().
 template<typename T, typename D>
-bool TableFactory<T, D>::unsafe_remove_data(const int64 id)
+bool TableFactory<T, D>::unsafe_remove_id(const int64 id)
 {
     if (id <= 0) {
         wxLogError("%s: Cannot remove id %lld", this->m_table_name, id.GetValue());

@@ -114,8 +114,8 @@ void DiagnosticsDialog::RefreshView()
     html << "<br>";
     html << "<table>";
     // Accounts info
-    auto all_accounts = AccountModel::instance().all_accounts(false);
-    auto all_accounts_open = AccountModel::instance().all_accounts(true);
+    auto all_accounts = AccountModel::instance().find_all_name_id_m(false);
+    auto all_accounts_open = AccountModel::instance().find_all_name_id_m(true);
     html << "<tr><td><b>Accounts</b></td><td>open: " << all_accounts_open.size() 
          << ", closed: " << all_accounts.size() - all_accounts_open.size()
          << "</td></tr>";

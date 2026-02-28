@@ -803,7 +803,7 @@ int PrefModel::AccountImageId(const int64 account_id, const bool def, const bool
     NavigatorTypes::TYPE_ID acctType = NavigatorTypes::TYPE_ID_CHECKING;
     int selectedImage = img::SAVINGS_ACC_NORMAL_PNG; //Default value
 
-    const AccountData* account_n = AccountModel::instance().get_data_n(account_id);
+    const AccountData* account_n = AccountModel::instance().get_id_data_n(account_id);
     if (account_n) {
         acctType = AccountModel::type_id(*account_n);
         acctStatus = account_n->m_status.name();

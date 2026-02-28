@@ -39,55 +39,50 @@ public:
     static const wxString refTypeName;
 
 public:
-    /**
-    Initialize the global AccountModel table on initial call.
-    Resets the global table on subsequent calls.
-    * Return the static instance address for AccountModel table
-    * Note: Assigning the address to a local variable can destroy the instance.
-    */
-    static AccountModel& instance(wxSQLite3Database* db);
-
-    /**
-    * Return the static instance address for AccountModel table
-    * Note: Assigning the address to a local variable can destroy the instance.
-    */
-    static AccountModel& instance();
-
-public:
-    static AccountCol::STATUS STATUS(OP op, AccountStatus status);
-
-    static const CurrencyData* currency_p(const Data& account_d);
-    static wxString to_currency(double value, const Data& account_d);
-    static wxString to_string(double value, const Data& account_d, int precision = 2);
-
-    static const TrxModel::DataA transactionsByDateTimeId(const Data& account_d);
-    static const SchedModel::DataA billsdeposits(const Data& account_d);
-    static double balance(const Data& account_d);
-    static std::pair<double, double> investment_balance(const Data& account_d);
-
-    static NavigatorTypes::TYPE_ID type_id(const Data& account_d);
-
-public:
     AccountModel();
     ~AccountModel();
 
 public:
+    static AccountModel& instance(wxSQLite3Database* db);
+    static AccountModel& instance();
+
+    // TODO: move to AccountData
+    static NavigatorTypes::TYPE_ID type_id(const Data& account_d);
+
+    static AccountCol::STATUS STATUS(OP op, AccountStatus status);
+
+public:
     // Remove the Data record from memory and the database. */
-    bool purge_id(int64 id) override;
+    bool purge_id(int64 account_id) override;
 
-    const Data* get_key_data_n(const wxString& name);
-    const Data* get_num_data_n(const wxString& num);
-    const wxString get_id_name(int64 account_id);
-    const CurrencyData* get_id_currency_p(int64 account_id);
-    DataA find_name_a(const wxString& name);
+    // lookup for an account id
+    auto get_id_name(int64 account_id) -> const wxString;
+    auto get_id_currency_p(int64 account_id) -> const CurrencyData*;
+    auto find_id_trx_aBySN(int64 account_id) -> const TrxModel::DataA;
+    auto find_id_sched_a(int64 account_id) -> const SchedModel::DataA;
 
-    wxArrayString all_checking_account_names(bool skip_closed = false);
-    const std::map<wxString, int64> all_accounts(bool skip_closed = false);
-    const DataA FilterAccounts(const wxString& account_pattern, bool skip_closed = false);
+    // lookup for an account field
+    auto get_name_data_n(const wxString& name) -> const Data*;
+    auto find_name_data_a(const wxString& name) -> DataA;
+    auto get_num_data_n(const wxString& num) -> const Data*;
+
+    // lookup for all accounts
+    auto find_all_name_a(bool skip_closed = false) -> wxArrayString;
+    auto find_all_name_id_m(bool skip_closed = false) -> const std::map<wxString, int64>;
+
+    //
+    auto currency_p(const Data& account_d) -> const CurrencyData*;
+    auto to_currency(double value, const Data& account_d) -> const wxString;
+    auto to_string(double value, const Data& account_d, int precision = 2) -> const wxString;
+    auto balance(const Data& account_d) -> double;
+    auto investment_balance(const Data& account_d) -> std::pair<double, double>;
+    //
+    auto FilterAccounts(const wxString& pattern, bool skip_closed = false) -> const DataA;
     void resetAccountType(wxString oldtype);
     void resetUnknownAccountTypes();
-    wxArrayString getUsedAccountTypes(bool skip_closed = true);
-    int money_accounts_num();
+    auto getUsedAccountTypes(bool skip_closed = true) -> wxArrayString;
+    int  money_accounts_num();
+
 };
 
 //----------------------------------------------------------------------------

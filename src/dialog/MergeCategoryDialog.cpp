@@ -94,7 +94,7 @@ void MergeCategoryDialog::CreateControls()
 
     cbSourceCategory_ = new mmComboBoxCategory(this, wxID_LAST);
     cbSourceCategory_->SetMinSize(wxSize(200, -1));
-    const CategoryData* category_n = CategoryModel::instance().get_data_n(m_sourceCatID);
+    const CategoryData* category_n = CategoryModel::instance().get_id_data_n(m_sourceCatID);
     if (category_n)
         cbSourceCategory_->SetValue(CategoryModel::full_name(m_sourceCatID));
 
@@ -213,7 +213,7 @@ void MergeCategoryDialog::OnOk(wxCommandEvent& WXUNUSED(event))
 
         if (cbDeleteSourceCategory_->IsChecked()) {
             if (m_sourceSubCatID == -1) {
-                if (CategoryModel::sub_category(CategoryModel::instance().get_data_n(m_sourceCatID)).empty())
+                if (CategoryModel::sub_category(CategoryModel::instance().get_id_data_n(m_sourceCatID)).empty())
                     CategoryModel::instance().purge_id(m_sourceCatID);
             }
 

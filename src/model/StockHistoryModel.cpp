@@ -61,7 +61,7 @@ const StockHistoryData* StockHistoryModel::get_key(const wxString& symbol, const
         StockHistoryCol::DATE(date.FormatISODate())
     );
     if (!items.empty())
-        sh_n = get_data_n(items[0].id());
+        sh_n = get_id_data_n(items[0].id());
     return sh_n;
 }
 

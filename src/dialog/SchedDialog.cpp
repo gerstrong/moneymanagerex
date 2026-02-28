@@ -115,7 +115,7 @@ SchedDialog::SchedDialog(
     m_dup_bill(duplicate),
     m_enter_occur(enterOccur)
 {
-    const SchedData* bill = SchedModel::instance().get_data_n(bdID);
+    const SchedData* bill = SchedModel::instance().get_id_data_n(bdID);
     m_new_bill = bill ? false : true;
 
     if (!m_new_bill) {
@@ -280,7 +280,7 @@ void SchedDialog::dataToControls()
     m_choice_transaction_type->SetSelection(TrxModel::type_id(m_sched_d.TRANSCODE));
     updateControlsForTransType();
 
-    const AccountData* account_n = AccountModel::instance().get_data_n(m_sched_d.ACCOUNTID);
+    const AccountData* account_n = AccountModel::instance().get_id_data_n(m_sched_d.ACCOUNTID);
     cbAccount_->ChangeValue(account_n ? account_n->m_name : "");
 
     tagTextCtrl_->SetTags(m_sched_d.TAGS);
@@ -340,7 +340,7 @@ void SchedDialog::SetDialogParameters(int64 trx_id)
     const auto split = TrxSplitModel::instance().get_all_id();
     const auto tags = TagLinkModel::instance().get_all_id(SchedModel::refTypeName);
     //const auto trx = TrxModel::instance().find(TrxCol::TRANSID(trx_id)).at(0);
-    const TrxData* trx = TrxModel::instance().get_data_n(trx_id);
+    const TrxData* trx = TrxModel::instance().get_id_data_n(trx_id);
     TrxModel::Full_Data t(*trx, split, tags);
     m_sched_d.ACCOUNTID = t.ACCOUNTID;
     cbAccount_->SetValue(t.ACCOUNTNAME);
@@ -708,7 +708,7 @@ void SchedDialog::OnCancel(wxCommandEvent& WXUNUSED(event))
 
 void SchedDialog::OnPayee(wxCommandEvent& WXUNUSED(event))
 {
-    const PayeeData* payee_n = PayeeModel::instance().get_data_n(cbPayee_->mmGetId());
+    const PayeeData* payee_n = PayeeModel::instance().get_id_data_n(cbPayee_->mmGetId());
     if (!payee_n || !m_new_bill)
         return;
 
@@ -727,13 +727,13 @@ void SchedDialog::OnPayee(wxCommandEvent& WXUNUSED(event))
 
 void SchedDialog::SetAmountCurrencies(int64 accountID, int64 toAccountID)
 {
-    const AccountData* account_n = AccountModel::instance().get_data_n(accountID);
+    const AccountData* account_n = AccountModel::instance().get_id_data_n(accountID);
     if (account_n)
-        textAmount_->SetCurrency(CurrencyModel::instance().get_data_n(account_n->m_currency_id));
+        textAmount_->SetCurrency(CurrencyModel::instance().get_id_data_n(account_n->m_currency_id));
 
-    account_n = AccountModel::instance().get_data_n(toAccountID);
+    account_n = AccountModel::instance().get_id_data_n(toAccountID);
     if (account_n)
-        toTextAmount_->SetCurrency(CurrencyModel::instance().get_data_n(account_n->m_currency_id));
+        toTextAmount_->SetCurrency(CurrencyModel::instance().get_id_data_n(account_n->m_currency_id));
 }
 
 void SchedDialog::OnCategs(wxCommandEvent& WXUNUSED(event))
@@ -763,7 +763,7 @@ void SchedDialog::OnComboKey(wxKeyEvent& event)
                 if (dlg.getRefreshRequested())
                     cbPayee_->mmDoReInitialize();
                 int64 payee_id = dlg.getPayeeId();
-                const PayeeData* payee_n = PayeeModel::instance().get_data_n(payee_id);
+                const PayeeData* payee_n = PayeeModel::instance().get_id_data_n(payee_id);
                 if (payee_n) {
                     cbPayee_->ChangeValue(payee_n->m_name);
                     cbPayee_->SelectAll();
@@ -903,7 +903,7 @@ void SchedDialog::OnOk(wxCommandEvent& WXUNUSED(event))
         return mmErrorDialogs::InvalidAccount(cbAccount_, m_transfer, mmErrorDialogs::MESSAGE_DROPDOWN_BOX);
     }
     m_sched_d.ACCOUNTID = cbAccount_->mmGetId();
-    const AccountData* acc = AccountModel::instance().get_data_n(m_sched_d.ACCOUNTID);
+    const AccountData* acc = AccountModel::instance().get_id_data_n(m_sched_d.ACCOUNTID);
 
     if (!textAmount_->checkValue(m_sched_d.TRANSAMOUNT)) return;
 
@@ -943,7 +943,7 @@ void SchedDialog::OnOk(wxCommandEvent& WXUNUSED(event))
                 PayeeData new_payee_d = PayeeData();
                 new_payee_d.m_name = payee_name;
                 PayeeModel::instance().add_data_n(new_payee_d);
-                payee_n = PayeeModel::instance().get_data_n(new_payee_d.id());
+                payee_n = PayeeModel::instance().get_id_data_n(new_payee_d.id());
                 mmWebApp::MMEX_WebApp_UpdatePayee();
             }
             else
@@ -972,10 +972,10 @@ void SchedDialog::OnOk(wxCommandEvent& WXUNUSED(event))
         // subsequent edits will not allow automatic update of the amount
         if (m_new_bill) {
             if (m_sched_d.TOACCOUNTID != -1) {
-                const AccountData* to_account = AccountModel::instance().get_data_n(m_sched_d.TOACCOUNTID);
+                const AccountData* to_account = AccountModel::instance().get_id_data_n(m_sched_d.TOACCOUNTID);
 
-                const CurrencyData* from_currency = AccountModel::currency_p(*acc);
-                const CurrencyData* to_currency = AccountModel::currency_p(*to_account);
+                const CurrencyData* from_currency = AccountModel::instance().currency_p(*acc);
+                const CurrencyData* to_currency = AccountModel::instance().currency_p(*to_account);
 
                 double rateFrom = CurrencyHistoryModel::getDayRate(from_currency->m_id, m_sched_d.TRANSDATE);
                 double rateTo = CurrencyHistoryModel::getDayRate(to_currency->m_id, m_sched_d.TRANSDATE);
@@ -1029,8 +1029,8 @@ void SchedDialog::OnOk(wxCommandEvent& WXUNUSED(event))
     else
         m_sched_d.COLOR = -1;
 
-    const AccountData* account = AccountModel::instance().get_data_n(m_sched_d.ACCOUNTID);
-    const AccountData* toAccount = AccountModel::instance().get_data_n(m_sched_d.TOACCOUNTID);
+    const AccountData* account = AccountModel::instance().get_id_data_n(m_sched_d.ACCOUNTID);
+    const AccountData* toAccount = AccountModel::instance().get_id_data_n(m_sched_d.TOACCOUNTID);
     if (m_sched_d.TRANSDATE < account->m_open_date)
         return mmErrorDialogs::ToolTip4Object(cbAccount_, _t("The opening date for the account is later than the date of this transaction"), _t("Invalid Date"));
 
@@ -1039,7 +1039,7 @@ void SchedDialog::OnOk(wxCommandEvent& WXUNUSED(event))
 
     if (!m_enter_occur) {
         SchedData sched_d = (!m_new_bill && !m_dup_bill)
-            ? *(SchedModel::instance().get_data_n(m_sched_d.BDID))
+            ? *(SchedModel::instance().get_id_data_n(m_sched_d.BDID))
             : SchedData();
         sched_d.ACCOUNTID          = m_sched_d.ACCOUNTID;
         sched_d.TOACCOUNTID        = m_sched_d.TOACCOUNTID;
@@ -1427,9 +1427,9 @@ void SchedDialog::setTooltips()
     if (!this->m_sched_d.local_splits.empty())
     {
         const CurrencyData* currency = CurrencyModel::GetBaseCurrency();
-        const AccountData* account = AccountModel::instance().get_data_n(m_sched_d.ACCOUNTID);
+        const AccountData* account = AccountModel::instance().get_id_data_n(m_sched_d.ACCOUNTID);
         if (account) {
-            currency = AccountModel::currency_p(*account);
+            currency = AccountModel::instance().currency_p(*account);
         }
 
         bSplit_->SetToolTip(TrxSplitModel::get_tooltip(m_sched_d.local_splits, currency));
@@ -1503,7 +1503,7 @@ void SchedDialog::OnMoreFields(wxCommandEvent& WXUNUSED(event))
 void SchedDialog::OnAccountUpdated(wxCommandEvent& WXUNUSED(event))
 {
     int64 acc_id = cbAccount_->mmGetId();
-    const AccountData* account_n = AccountModel::instance().get_data_n(acc_id);
+    const AccountData* account_n = AccountModel::instance().get_id_data_n(acc_id);
     if (account_n) {
         SetAmountCurrencies(acc_id, -1);
         if (textAmount_->Calculate()) {

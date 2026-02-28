@@ -58,7 +58,7 @@ public:
         if (m_is_payee)
             this->AutoComplete(PayeeModel::instance().find_name_a());
         else
-            this->AutoComplete(AccountModel::instance().all_checking_account_names());
+            this->AutoComplete(AccountModel::instance().find_all_name_a());
 
     }
 
@@ -103,7 +103,7 @@ public:
             }
         }
         else {
-            const AccountData* account_n = AccountModel::instance().get_key_data_n(this->GetValue());
+            const AccountData* account_n = AccountModel::instance().get_name_data_n(this->GetValue());
             if (account_n) {
                 id = account_n->m_id;
             }

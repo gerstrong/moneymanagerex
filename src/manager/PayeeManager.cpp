@@ -735,7 +735,7 @@ void mmPayeeDialog::EditPayee()
         return;
 
     RowData* rdata = reinterpret_cast<RowData*>(payeeListBox_->GetItemData(sel));
-    PayeeData* payee_n = PayeeModel::instance().unsafe_get_data_n(rdata->payeeId);
+    PayeeData* payee_n = PayeeModel::instance().unsafe_get_id_data_n(rdata->payeeId);
     PayeeManager dlg(this, payee_n);
     if (dlg.ShowModal() == wxID_OK) {
         rdata->active = payee_n->m_active;
@@ -754,7 +754,7 @@ void mmPayeeDialog::DeletePayee()
 {
     FindSelectedPayees();
     for(RowData* rdata : m_selectedItems) {
-        const PayeeData* payee_n = PayeeModel::instance().get_data_n(rdata->payeeId);
+        const PayeeData* payee_n = PayeeModel::instance().get_id_data_n(rdata->payeeId);
         if (PayeeModel::instance().is_used(rdata->payeeId)) {
             wxString deletePayeeErrMsg = _t("Payee in use.");
             deletePayeeErrMsg
@@ -812,11 +812,11 @@ void mmPayeeDialog::DefineDefaultCategory()
     FindSelectedPayees();
     int nb = size(m_selectedItems);
     if (nb > 0) {
-        const PayeeData* sel_payee_n = PayeeModel::instance().get_data_n(m_selectedItems.front()->payeeId);
+        const PayeeData* sel_payee_n = PayeeModel::instance().get_id_data_n(m_selectedItems.front()->payeeId);
         CategoryManager dlg(this, true, nb == 1 ? sel_payee_n->m_category_id : -1);
         if (dlg.ShowModal() == wxID_OK) {
             for (RowData* rdata : m_selectedItems) {
-                PayeeData* payee_n = PayeeModel::instance().unsafe_get_data_n(rdata->payeeId);
+                PayeeData* payee_n = PayeeModel::instance().unsafe_get_id_data_n(rdata->payeeId);
                 payee_n->m_category_id = dlg.getCategId();
                 PayeeModel::instance().unsafe_update_data_n(payee_n);
                 mmWebApp::MMEX_WebApp_UpdatePayee();
@@ -834,7 +834,7 @@ void mmPayeeDialog::RemoveDefaultCategory()
 {
     FindSelectedPayees();
     for (RowData* rdata : m_selectedItems) {
-        PayeeData* payee_n = PayeeModel::instance().unsafe_get_data_n(rdata->payeeId);
+        PayeeData* payee_n = PayeeModel::instance().unsafe_get_id_data_n(rdata->payeeId);
         payee_n->m_category_id = -1;
         PayeeModel::instance().unsafe_update_data_n(payee_n);
         mmWebApp::MMEX_WebApp_UpdatePayee();
@@ -926,7 +926,7 @@ void mmPayeeDialog::ToggleHide(long idx, bool state) {
     RowData* rdata = reinterpret_cast<RowData*>(payeeListBox_->GetItemData(idx));
     if (rdata->payeeId > -1) {
         rdata->active = state;
-        PayeeData *payee_n = PayeeModel::instance().unsafe_get_data_n(rdata->payeeId);
+        PayeeData *payee_n = PayeeModel::instance().unsafe_get_id_data_n(rdata->payeeId);
         payee_n->m_active = state;
         PayeeModel::instance().unsafe_update_data_n(payee_n);
         payeeListBox_->SetItemTextColour(idx, state ? m_normalColor : m_hiddenColor);

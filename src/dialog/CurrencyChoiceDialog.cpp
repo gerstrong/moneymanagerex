@@ -350,7 +350,7 @@ void CurrencyChoiceDialog::OnBtnAdd()
 
 void CurrencyChoiceDialog::OnBtnEdit()
 {
-    const CurrencyData *data_n = CurrencyModel::instance().get_data_n(m_currency_id);
+    const CurrencyData *data_n = CurrencyModel::instance().get_id_data_n(m_currency_id);
     if (data_n)
         CurrencyManager(this, data_n).ShowModal();
     fillControls();
@@ -367,7 +367,7 @@ void CurrencyChoiceDialog::OnBtnDelete()
     int selected_index = currencyListBox_->GetSelectedRow();
     if (selected_index < 0) return;
 
-    const CurrencyData* data_n = CurrencyModel::instance().get_data_n(m_currency_id);
+    const CurrencyData* data_n = CurrencyModel::instance().get_id_data_n(m_currency_id);
     if (!data_n) return;
     if (wxMessageBox(_t("Do you want to delete the selected currency?")
         , _t("Currency Manager")
@@ -420,7 +420,7 @@ void CurrencyChoiceDialog::OnListItemSelected(wxDataViewEvent& event)
     if (is_selected) {
         wxDataViewItem item = event.GetItem();
         m_currency_id = static_cast<int64>(currencyListBox_->GetItemData(item));
-        const CurrencyData* data_n = CurrencyModel::instance().get_data_n(m_currency_id);
+        const CurrencyData* data_n = CurrencyModel::instance().get_id_data_n(m_currency_id);
         if (data_n) {
 
             // prevent user deleting currencies when editing accounts.
@@ -431,7 +431,7 @@ void CurrencyChoiceDialog::OnListItemSelected(wxDataViewEvent& event)
                     buttonDelUnusedHistory_->Enable(m_currency_id != baseCurrencyID);
                     valueDatePicker_->Enable(m_currency_id != baseCurrencyID);
                     valueTextBox_->Enable(m_currency_id != baseCurrencyID);
-                    valueTextBox_->SetValue(0, CurrencyModel::instance().get_data_n(m_currency_id), 6);
+                    valueTextBox_->SetValue(0, CurrencyModel::instance().get_id_data_n(m_currency_id), 6);
                 }
                 else if (CurrencyHistoryModel::instance().find(
                     CurrencyHistoryCol::CURRENCYID(m_currency_id)
@@ -562,7 +562,7 @@ void CurrencyChoiceDialog::OnItemRightClick(wxDataViewEvent& event)
     mainMenu->Enable(MENU_ITEM1, baseCurrencyID != m_currency_id && is_selected);
     mainMenu->Enable(MENU_ITEM2, baseCurrencyID != m_currency_id && is_selected);
 
-    const CurrencyData* currency_n = CurrencyModel::instance().get_data_n(m_currency_id);
+    const CurrencyData* currency_n = CurrencyModel::instance().get_id_data_n(m_currency_id);
     mainMenu->Enable(wxID_REMOVE, !CurrencyModel::is_used(currency_n->m_id) && is_selected);
 
     mainMenu->Enable(wxID_EDIT, is_selected);
@@ -599,7 +599,7 @@ void CurrencyChoiceDialog::ShowCurrencyHistory()
         historyButtonDelete_->Enable();
     }
 
-    const CurrencyData* currency = CurrencyModel::instance().get_data_n(m_currency_id);
+    const CurrencyData* currency = CurrencyModel::instance().get_id_data_n(m_currency_id);
     CurrencyHistoryModel::DataA histData = CurrencyHistoryModel::instance().find(
         CurrencyHistoryCol::CURRENCYID(m_currency_id)
     );
@@ -635,7 +635,7 @@ void CurrencyChoiceDialog::OnHistoryAdd(wxCommandEvent& /*event*/)
     wxString currentPriceStr = valueTextBox_->GetValue().Trim();
     if (!CurrencyModel::fromString(
         currentPriceStr, dPrice,
-        CurrencyModel::instance().get_data_n(m_currency_id)
+        CurrencyModel::instance().get_id_data_n(m_currency_id)
     ) || dPrice < 0.0)
         return mmErrorDialogs::ToolTip4Object(valueTextBox_, _t("Invalid Entry"), _t("Amount"));
     CurrencyHistoryModel::instance().addUpdate(m_currency_id, valueDatePicker_->GetValue(), dPrice, CurrencyHistoryModel::MANUAL);
@@ -665,7 +665,7 @@ void CurrencyChoiceDialog::OnHistoryDelete(wxCommandEvent& WXUNUSED(event))
 void CurrencyChoiceDialog::OnHistoryUpdate(wxCommandEvent& WXUNUSED(event))
 {
     if (m_static_dialog) return;    //Abort when trying to set base currency
-    const CurrencyData* currency_n = CurrencyModel::instance().get_data_n(m_currency_id);
+    const CurrencyData* currency_n = CurrencyModel::instance().get_id_data_n(m_currency_id);
     if (!currency_n) {
         return mmErrorDialogs::MessageError(this, _t("No currency selected!"), _t("Currency history error"));
     }
@@ -775,7 +775,7 @@ void CurrencyChoiceDialog::OnHistorySelected(wxListEvent& event)
 {
     long selectedIndex = event.GetIndex();
     int64 histId = valueListBox_->GetItemData(selectedIndex);
-    const CurrencyHistoryData* ch_n = CurrencyHistoryModel::instance().get_data_n(histId);
+    const CurrencyHistoryData* ch_n = CurrencyHistoryModel::instance().get_id_data_n(histId);
 
     if (ch_n->m_id > 0) {
         valueDatePicker_->SetValue(CurrencyHistoryModel::CURRDATE(*ch_n));

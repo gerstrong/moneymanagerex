@@ -76,7 +76,7 @@ AssetDialog::AssetDialog(
 {
     if (transfer_entry) {
         m_dialog_heading = _t("Edit Asset Transaction");
-        m_asset_n = AssetModel::instance().unsafe_get_data_n(transfer_entry->LINKRECORDID);
+        m_asset_n = AssetModel::instance().unsafe_get_id_data_n(transfer_entry->LINKRECORDID);
     }
 
     Create(parent, wxID_ANY, m_dialog_heading);
@@ -112,11 +112,11 @@ void AssetDialog::dataToControls()
         return;
 
     w_assetName->SetValue(m_asset_n->m_name);
-    if (AccountModel::instance().get_key_data_n(m_asset_n->m_name))
+    if (AccountModel::instance().get_name_data_n(m_asset_n->m_name))
         w_assetName->Enable(false);
     w_dpc->SetValue(m_asset_n->m_start_date_p.getDateTimeN());
     w_assetType->SetSelection(m_asset_n->m_type.id());
-    if (AccountModel::instance().get_key_data_n(m_asset_n->m_type.name()))
+    if (AccountModel::instance().get_name_data_n(m_asset_n->m_type.name()))
         w_assetType->Enable(false);
 
     auto bal = AssetModel::instance().value(*m_asset_n);
@@ -460,7 +460,7 @@ void AssetDialog::OnOk(wxCommandEvent& /*event*/)
         return;
     }
 
-    const AccountData* asset_account = AccountModel::instance().get_key_data_n(asset_name);
+    const AccountData* asset_account = AccountModel::instance().get_name_data_n(asset_name);
     if (is_new && !asset_account) {
         if (wxMessageBox(
             _t("Asset account not found.") + "\n\n" + _t("Do you want to create one?"),

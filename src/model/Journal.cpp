@@ -176,7 +176,7 @@ void Journal::setEmptyData(Journal::Data &data, int64 accountID)
 bool Journal::setJournalData(Journal::Data &data, Journal::IdB journal_id)
 {
     if (!journal_id.second) {
-        const TrxData *trx_n = TrxModel::instance().get_data_n(journal_id.first);
+        const TrxData *trx_n = TrxModel::instance().get_id_data_n(journal_id.first);
         if (!trx_n)
             return false;
         data.m_repeat_num = 0;
@@ -199,7 +199,7 @@ bool Journal::setJournalData(Journal::Data &data, Journal::IdB journal_id)
         data.COLOR             = trx_n->COLOR;
     }
     else {
-        const SchedData *sched_n = SchedModel::instance().get_data_n(journal_id.first);
+        const SchedData *sched_n = SchedModel::instance().get_id_data_n(journal_id.first);
         if (!sched_n)
             return false;
         data.m_repeat_num = 1;

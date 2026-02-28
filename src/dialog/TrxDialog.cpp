@@ -245,15 +245,15 @@ void TrxDialog::dataToControls()
     //Account
     if (!skip_account_init_)
     {
-        const AccountData* acc_n = AccountModel::instance().get_data_n(m_journal_data.ACCOUNTID);
+        const AccountData* acc_n = AccountModel::instance().get_id_data_n(m_journal_data.ACCOUNTID);
         if (acc_n) {
             cbAccount_->ChangeValue(acc_n->m_name);
-            m_textAmount->SetCurrency(CurrencyModel::instance().get_data_n(acc_n->m_currency_id));
+            m_textAmount->SetCurrency(CurrencyModel::instance().get_id_data_n(acc_n->m_currency_id));
         }
-        const AccountData* to_acc = AccountModel::instance().get_data_n(m_journal_data.TOACCOUNTID);
+        const AccountData* to_acc = AccountModel::instance().get_id_data_n(m_journal_data.TOACCOUNTID);
         if (to_acc) {
             cbToAccount_->ChangeValue(to_acc->m_name);
-            toTextAmount_->SetCurrency(CurrencyModel::instance().get_data_n(to_acc->m_currency_id));
+            toTextAmount_->SetCurrency(CurrencyModel::instance().get_id_data_n(to_acc->m_currency_id));
         }
 
         skip_account_init_ = true;
@@ -315,7 +315,7 @@ void TrxDialog::dataToControls()
                     TrxCol::ACCOUNTID(OP_EQ, accountID));
 
                 if (!transactions.empty()) {
-                    const PayeeData* payee_n = PayeeModel::instance().get_data_n(transactions.back().PAYEEID);
+                    const PayeeData* payee_n = PayeeModel::instance().get_id_data_n(transactions.back().PAYEEID);
                     cbPayee_->ChangeValue(payee_n->m_name);
                 }
             }
@@ -333,7 +333,7 @@ void TrxDialog::dataToControls()
                 cbPayee_->ChangeValue(_t("Unknown"));
             }
             else {
-                const PayeeData* payee_n = PayeeModel::instance().get_data_n(m_journal_data.PAYEEID);
+                const PayeeData* payee_n = PayeeModel::instance().get_id_data_n(m_journal_data.PAYEEID);
                 if (payee_n)
                     cbPayee_->ChangeValue(payee_n->m_name);
             }
@@ -694,7 +694,7 @@ bool TrxDialog::ValidateData()
         return false;
     }
     m_journal_data.ACCOUNTID = cbAccount_->mmGetId();
-    const AccountData* account = AccountModel::instance().get_data_n(m_journal_data.ACCOUNTID);
+    const AccountData* account = AccountModel::instance().get_id_data_n(m_journal_data.ACCOUNTID);
 
     if (m_journal_data.TRANSDATE < account->m_open_date) {
         mmErrorDialogs::ToolTip4Object(cbAccount_, _t("The opening date for the account is later than the date of this transaction"), _t("Invalid Date"));
@@ -733,7 +733,7 @@ bool TrxDialog::ValidateData()
                 PayeeData new_payee_d = PayeeData();
                 new_payee_d.m_name = payee_name;
                 PayeeModel::instance().add_data_n(new_payee_d);
-                payee_n = PayeeModel::instance().get_data_n(new_payee_d.id());
+                payee_n = PayeeModel::instance().get_id_data_n(new_payee_d.id());
                 mmWebApp::MMEX_WebApp_UpdatePayee();
             }
             else
@@ -756,7 +756,7 @@ bool TrxDialog::ValidateData()
     }
     else //transfer
     {
-        const AccountData *to_account = AccountModel::instance().get_key_data_n(cbToAccount_->GetValue());
+        const AccountData *to_account = AccountModel::instance().get_name_data_n(cbToAccount_->GetValue());
 
         if (!to_account || to_account->m_id == m_journal_data.ACCOUNTID)
         {
@@ -800,7 +800,7 @@ bool TrxDialog::ValidateData()
              m_journal_data.TRANSCODE == TrxModel::TYPE_NAME_TRANSFER) &&
             (account->m_min_balance != 0 || account->m_credit_limit != 0))
         {
-            const double fromAccountBalance = AccountModel::balance(*account);
+            const double fromAccountBalance = AccountModel::instance().balance(*account);
             const double new_value = fromAccountBalance - m_journal_data.TRANSAMOUNT;
 
             bool abort_transaction =
@@ -907,7 +907,7 @@ void TrxDialog::OnFocusChange(wxChildFocusEvent& event)
     }
     else
     {
-        const AccountData* to_account_n = AccountModel::instance().get_data_n(cbToAccount_->mmGetId());
+        const AccountData* to_account_n = AccountModel::instance().get_id_data_n(cbToAccount_->mmGetId());
         if (to_account_n)
             m_journal_data.TOACCOUNTID = to_account_n->m_id;
     }
@@ -971,7 +971,7 @@ void TrxDialog::OnComboKey(wxKeyEvent& event)
                 if (dlg.getRefreshRequested())
                     cbPayee_->mmDoReInitialize();
                 int64 payee_id = dlg.getPayeeId();
-                const PayeeData* payee_n = PayeeModel::instance().get_data_n(payee_id);
+                const PayeeData* payee_n = PayeeModel::instance().get_id_data_n(payee_id);
                 if (payee_n) {
                     cbPayee_->ChangeValue(payee_n->m_name);
                     cbPayee_->SetInsertionPointEnd();
@@ -1024,7 +1024,7 @@ void TrxDialog::SetCategoryForPayee(const PayeeData *payee_n)
             CategoryData new_category_d = CategoryData();
             new_category_d.m_name = _t("Unknown");
             CategoryModel::instance().add_data_n(new_category_d);
-            category_n = CategoryModel::instance().get_data_n(new_category_d.id());
+            category_n = CategoryModel::instance().get_id_data_n(new_category_d.id());
             cbCategory_->mmDoReInitialize();
         }
 
@@ -1047,7 +1047,7 @@ void TrxDialog::SetCategoryForPayee(const PayeeData *payee_n)
         && (!CategoryModel::is_hidden(payee_n->m_category_id))
     ) {
         // if payee has memory of last category used then display last category for payee
-        const CategoryData* category_n = CategoryModel::instance().get_data_n(payee_n->m_category_id);
+        const CategoryData* category_n = CategoryModel::instance().get_id_data_n(payee_n->m_category_id);
         if (category_n) {
             m_journal_data.CATEGID = payee_n->m_category_id;
             cbCategory_->ChangeValue(CategoryModel::full_name(payee_n->m_category_id));
@@ -1245,7 +1245,7 @@ void TrxDialog::OnOk(wxCommandEvent& event)
     TrxData* trx_n;
     TrxData trx_d;
     if (m_mode == MODE_EDIT) {
-        trx_n = TrxModel::instance().unsafe_get_data_n(m_journal_data.TRANSID);
+        trx_n = TrxModel::instance().unsafe_get_id_data_n(m_journal_data.TRANSID);
     }
     else {
         trx_d = TrxData();
@@ -1343,9 +1343,9 @@ void TrxDialog::SetTooltips()
         mmToolTip(bSplit_, _t("Use split Categories"));
     else {
         const CurrencyData* currency = CurrencyModel::GetBaseCurrency();
-        const AccountData* account_n = AccountModel::instance().get_data_n(m_journal_data.ACCOUNTID);
+        const AccountData* account_n = AccountModel::instance().get_id_data_n(m_journal_data.ACCOUNTID);
         if (account_n)
-            currency = AccountModel::currency_p(*account_n);
+            currency = AccountModel::instance().currency_p(*account_n);
 
         bSplit_->SetToolTip(TrxSplitModel::get_tooltip(m_local_splits, currency));
     }

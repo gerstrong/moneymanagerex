@@ -66,9 +66,9 @@ bool StockPanel::Create(wxWindow *parent
     strLastUpdate_ = InfoModel::instance().getString("STOCKS_LAST_REFRESH_DATETIME", "");
     this->windowsFreezeThaw();
 
-    const AccountData* account_n = AccountModel::instance().get_data_n(m_account_id);
+    const AccountData* account_n = AccountModel::instance().get_id_data_n(m_account_id);
     if (account_n)
-        m_currency = AccountModel::currency_p(*account_n);
+        m_currency = AccountModel::instance().currency_p(*account_n);
     else
         m_currency = CurrencyModel::GetBaseCurrency();
 
@@ -287,7 +287,7 @@ void StockPanel::LoadStockTransactions(wxListCtrl* listCtrl, wxString symbol, in
     }
 
     for (const auto& trans : stock_list) {
-        const TrxData* checking_entry = TrxModel::instance().get_data_n(trans.CHECKINGACCOUNTID);
+        const TrxData* checking_entry = TrxModel::instance().get_id_data_n(trans.CHECKINGACCOUNTID);
         if (checking_entry && checking_entry->DELETEDTIME.IsEmpty()) {
             checking_list.push_back(*checking_entry);
         }
@@ -326,7 +326,7 @@ void StockPanel::BindListEvents(wxListCtrl* listCtrl)
 {
     listCtrl->Bind(wxEVT_LIST_ITEM_ACTIVATED, [listCtrl, this](wxListEvent& event) {
         long index = event.GetIndex();
-        TrxData* txn = TrxModel::instance().unsafe_get_data_n(event.GetData());
+        TrxData* txn = TrxModel::instance().unsafe_get_id_data_n(event.GetData());
         if (!txn)
             return;
 
@@ -343,10 +343,10 @@ void StockPanel::BindListEvents(wxListCtrl* listCtrl)
         // Re-sort the list
         listCtrl->SortItems([](wxIntPtr item1, wxIntPtr item2, wxIntPtr) -> int {
             auto date1 = TrxModel::getTransDateTime(
-                *TrxModel::instance().get_data_n(item1)
+                *TrxModel::instance().get_id_data_n(item1)
             );
             auto date2 = TrxModel::getTransDateTime(
-                *TrxModel::instance().get_data_n(item2)
+                *TrxModel::instance().get_id_data_n(item2)
             );
             return date1.IsEarlierThan(date2) ? -1 : (date1.IsLaterThan(date2) ? 1 : 0);
         }, 0);
@@ -393,7 +393,7 @@ wxString StockPanel::GetPanelTitle(const AccountData& account) const
 
 wxString StockPanel::BuildPage() const
 {
-    const AccountData* account = AccountModel::instance().get_data_n(m_account_id);
+    const AccountData* account = AccountModel::instance().get_id_data_n(m_account_id);
     return m_lc->BuildPage((account ? GetPanelTitle(*account) : ""));
 }
 
@@ -420,11 +420,11 @@ void StockPanel::updateHeader()
     wxString lbl;
 
     if (m_account_id > -1) {
-        const AccountData* account_n = AccountModel::instance().get_data_n(m_account_id);
+        const AccountData* account_n = AccountModel::instance().get_id_data_n(m_account_id);
         if (account_n) {
             header_text_->SetLabelText(GetPanelTitle(*account_n));
-            cashBalance = AccountModel::balance(*account_n);
-            std::pair<double, double> investment_balance = AccountModel::investment_balance(*account_n);
+            cashBalance = AccountModel::instance().balance(*account_n);
+            std::pair<double, double> investment_balance = AccountModel::instance().investment_balance(*account_n);
             marketValue = investment_balance.first;
             InvestedVal = investment_balance.second;
         }
@@ -687,8 +687,8 @@ void StockPanel::DisplayAccountDetails(int64 accountID)
     m_account_id = accountID;
 
     if (m_account_id > -1){
-        const AccountData* account_n = AccountModel::instance().get_data_n(m_account_id);
-        m_currency = AccountModel::currency_p(*account_n);
+        const AccountData* account_n = AccountModel::instance().get_id_data_n(m_account_id);
+        m_currency = AccountModel::instance().currency_p(*account_n);
     }
 
     enableEditDeleteButtons(false);

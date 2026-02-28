@@ -327,7 +327,7 @@ void TrxLinkDialog::SetLastPayeeAndCategory(const int64 account_id)
         if (!trans_list.empty()) {
             int last_trans_pos = trans_list.size() - 1;
 
-            const PayeeData* last_payee_n = PayeeModel::instance().get_data_n(
+            const PayeeData* last_payee_n = PayeeModel::instance().get_id_data_n(
                 trans_list.at(last_trans_pos).PAYEEID
             );
             if (last_payee_n) {
@@ -346,7 +346,7 @@ void TrxLinkDialog::SetLastPayeeAndCategory(const int64 account_id)
 
 void TrxLinkDialog::OnTransAccountButton(wxCommandEvent& WXUNUSED(event))
 {
-    const auto& accounts = AccountModel::instance().all_checking_account_names();
+    const auto& accounts = AccountModel::instance().find_all_name_a();
     mmSingleChoiceDialog scd(this
         , _t("Select the required account")
         , _t("Account Selection")
@@ -364,7 +364,7 @@ void TrxLinkDialog::OnTransPayeeButton(wxCommandEvent& WXUNUSED(event))
     if (dlg.ShowModal() == wxID_OK)
     {
         m_payee_id = dlg.getPayeeId();
-        const PayeeData* payee_n = PayeeModel::instance().get_data_n(m_payee_id);
+        const PayeeData* payee_n = PayeeModel::instance().get_id_data_n(m_payee_id);
         if (payee_n) {
             m_payee->SetLabelText(payee_n->m_name);
 
@@ -470,7 +470,7 @@ void TrxLinkDialog::SetTransactionStatus(const int trans_status_enum)
 void TrxLinkDialog::SetTransactionPayee(const int64 payeeid)
 {
     m_payee_id = payeeid;
-    const PayeeData* payee_n = PayeeModel::instance().get_data_n(m_payee_id);
+    const PayeeData* payee_n = PayeeModel::instance().get_id_data_n(m_payee_id);
     if (payee_n)
         m_payee->SetLabelText(payee_n->m_name);
 }
@@ -483,12 +483,12 @@ void TrxLinkDialog::SetTransactionCategory(const int64 categid)
 
 void TrxLinkDialog::SetTransactionAccount(const wxString& trans_account)
 {
-    const AccountData* account = AccountModel::instance().get_key_data_n(trans_account);
+    const AccountData* account = AccountModel::instance().get_name_data_n(trans_account);
     if (account) {
         m_account->SetLabelText(account->m_name);
         m_account_id = account->m_id;
         SetLastPayeeAndCategory(m_account_id);
-        const CurrencyData* currency = CurrencyModel::instance().get_data_n(account->m_currency_id);
+        const CurrencyData* currency = CurrencyModel::instance().get_id_data_n(account->m_currency_id);
         m_entered_amount->SetCurrency(currency);
         m_trans_currency->SetLabelText(currency->m_symbol);
     }
@@ -515,7 +515,7 @@ int64 TrxLinkDialog::SaveChecking()
     double initial_amount = 0;
     m_entered_amount->checkValue(initial_amount);
 
-    const AccountData* account = AccountModel::instance().get_data_n(m_account_id);
+    const AccountData* account = AccountModel::instance().get_id_data_n(m_account_id);
     wxDateTime trxDate = m_date_selector->GetValue();
     if (trxDate.FormatISODate() < account->m_open_date) {
         mmErrorDialogs::ToolTip4Object(m_account,

@@ -68,7 +68,7 @@ TrxUpdateDialog::TrxUpdateDialog(wxWindow* parent
 
     // Determine the mix of transaction that have been selected
     for (const auto& id : m_transaction_id) {
-        const TrxData *trx = TrxModel::instance().get_data_n(id);
+        const TrxData *trx = TrxModel::instance().get_id_data_n(id);
         const bool isTransfer = TrxModel::is_transfer(*trx);
 
         if (!m_hasSplits) {
@@ -388,7 +388,7 @@ void TrxUpdateDialog::OnOk(wxCommandEvent& WXUNUSED(event))
     TrxModel::instance().db_savepoint();
     TagLinkModel::instance().db_savepoint();
     for (const auto& id : m_transaction_id) {
-        TrxData* trx_n = TrxModel::instance().unsafe_get_data_n(id);
+        TrxData* trx_n = TrxModel::instance().unsafe_get_id_data_n(id);
         bool is_locked = TrxModel::is_locked(*trx_n);
 
         if (is_locked) {
@@ -414,8 +414,8 @@ void TrxUpdateDialog::OnOk(wxCommandEvent& WXUNUSED(event))
             wxString date = trx_n->TRANSDATE;
             if (m_date_checkbox->IsChecked()) {
                 date.replace(0, 10, m_dpc->GetValue().FormatISODate());
-                const AccountData* account = AccountModel::instance().get_data_n(trx_n->ACCOUNTID);
-                const AccountData* to_account = AccountModel::instance().get_data_n(trx_n->TOACCOUNTID);
+                const AccountData* account = AccountModel::instance().get_id_data_n(trx_n->ACCOUNTID);
+                const AccountData* to_account = AccountModel::instance().get_id_data_n(trx_n->TOACCOUNTID);
                 if ((date < account->m_open_date) ||
                     (to_account && (date < to_account->m_open_date)))
                 {
@@ -503,10 +503,10 @@ void TrxUpdateDialog::OnOk(wxCommandEvent& WXUNUSED(event))
                 trx_n->TOTRANSAMOUNT = trx_n->TRANSAMOUNT;
             }
             else {
-                const auto acc = AccountModel::instance().get_data_n(trx_n->ACCOUNTID);
-                const auto curr = CurrencyModel::instance().get_data_n(acc->m_currency_id);
-                const auto to_acc = AccountModel::instance().get_data_n(trx_n->TOACCOUNTID);
-                const auto to_curr = CurrencyModel::instance().get_data_n(to_acc->m_currency_id);
+                const auto acc = AccountModel::instance().get_id_data_n(trx_n->ACCOUNTID);
+                const auto curr = CurrencyModel::instance().get_id_data_n(acc->m_currency_id);
+                const auto to_acc = AccountModel::instance().get_id_data_n(trx_n->TOACCOUNTID);
+                const auto to_curr = CurrencyModel::instance().get_id_data_n(to_acc->m_currency_id);
                 if (curr == to_curr) {
                     trx_n->TOTRANSAMOUNT = trx_n->TRANSAMOUNT;
                 }
@@ -647,7 +647,7 @@ void TrxUpdateDialog::OnComboKey(wxKeyEvent& event)
                 if (dlg.getRefreshRequested())
                     cbPayee_->mmDoReInitialize();
                 int64 payee_id = dlg.getPayeeId();
-                const PayeeData* payee_n = PayeeModel::instance().get_data_n(payee_id);
+                const PayeeData* payee_n = PayeeModel::instance().get_id_data_n(payee_id);
                 if (payee_n) {
                     cbPayee_->ChangeValue(payee_n->m_name);
                     cbPayee_->SelectAll();

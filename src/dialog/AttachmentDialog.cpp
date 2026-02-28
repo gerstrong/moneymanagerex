@@ -236,7 +236,7 @@ void AttachmentDialog::AddAttachment(wxString FilePath)
 
 void AttachmentDialog::OpenAttachment()
 {
-    const AttachmentData *data_n = AttachmentModel::instance().get_data_n(m_attachment_id);
+    const AttachmentData *data_n = AttachmentModel::instance().get_id_data_n(m_attachment_id);
     wxString path = mmex::getPathAttachment(mmAttachmentManage::InfotablePathSetting())
         + data_n->REFTYPE + m_PathSep + data_n->FILENAME;
 
@@ -245,7 +245,7 @@ void AttachmentDialog::OpenAttachment()
 
 void AttachmentDialog::EditAttachment()
 {
-    AttachmentData *att_n = AttachmentModel::instance().unsafe_get_data_n(m_attachment_id);
+    AttachmentData *att_n = AttachmentModel::instance().unsafe_get_id_data_n(m_attachment_id);
     if (!att_n)
         return;
 
@@ -275,7 +275,7 @@ void AttachmentDialog::EditAttachment()
 
 void AttachmentDialog::DeleteAttachment()
 {
-    const AttachmentData *data_n = AttachmentModel::instance().get_data_n(m_attachment_id);
+    const AttachmentData *data_n = AttachmentModel::instance().get_id_data_n(m_attachment_id);
     if (!data_n)
         return;
 
@@ -325,7 +325,7 @@ void AttachmentDialog::OnListItemSelected(wxDataViewEvent& event)
 
 void AttachmentDialog::OnListItemActivated(wxDataViewEvent& WXUNUSED(event))
 {
-    const AttachmentData* data_n = AttachmentModel::instance().get_data_n(m_attachment_id);
+    const AttachmentData* data_n = AttachmentModel::instance().get_id_data_n(m_attachment_id);
     const wxString path = mmex::getPathAttachment(
         mmAttachmentManage::InfotablePathSetting()
     ) + data_n->REFTYPE + m_PathSep + data_n->FILENAME;
@@ -356,7 +356,7 @@ void AttachmentDialog::OnItemRightClick(wxDataViewEvent& event)
     wxCommandEvent evt(wxEVT_COMMAND_MENU_SELECTED, wxID_ANY) ;
     evt.SetEventObject( this );
 
-    const AttachmentData* data_n = AttachmentModel::instance().get_data_n(m_attachment_id);
+    const AttachmentData* data_n = AttachmentModel::instance().get_id_data_n(m_attachment_id);
 
     wxMenu* mainMenu = new wxMenu;
     if (data_n)

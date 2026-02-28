@@ -286,7 +286,7 @@ void mmQIFExportDialog::OnAccountsButton(wxCommandEvent& WXUNUSED(event))
         {
             int index = entry;
             const wxString accounts_name = m_accounts_name[index];
-            const auto account = AccountModel::instance().get_key_data_n(accounts_name);
+            const auto account = AccountModel::instance().get_name_data_n(accounts_name);
             if (account) selected_accounts_id_.push_back(account->m_id);
             baloon += accounts_name + "\n";
         }
@@ -298,7 +298,7 @@ void mmQIFExportDialog::OnAccountsButton(wxCommandEvent& WXUNUSED(event))
     }
     else if (selected_accounts_id_.size() == 1) {
         int64 account_id = accounts_id_[selected_items[0]];
-        const AccountData* account = AccountModel::instance().get_data_n(account_id);
+        const AccountData* account = AccountModel::instance().get_id_data_n(account_id);
         if (account) bSelectedAccounts_->SetLabelText(account->m_name);
     }
     else if (selected_accounts_id_.size() > 1) {

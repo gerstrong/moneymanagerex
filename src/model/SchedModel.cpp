@@ -267,7 +267,7 @@ SchedModel::~SchedModel()
 bool SchedModel::purge_id(int64 id)
 {
     // purge SchedSplitData owned by id
-    for (auto& split_d : SchedModel::split(*get_data_n(id)))
+    for (auto& split_d : SchedModel::split(*get_id_data_n(id)))
         SchedSplitModel::instance().purge_id(split_d.SPLITTRANSID);
 
     // remove TagLinkData owned by id
@@ -276,7 +276,7 @@ bool SchedModel::purge_id(int64 id)
     // FIXME: remove FieldValueData owned by id
     // FIXME: remove AttachmentData owned by id
 
-    return unsafe_remove_data(id);
+    return unsafe_remove_id(id);
 }
 
 bool SchedModel::AllowTransaction(const Data& r)
@@ -287,12 +287,12 @@ bool SchedModel::AllowTransaction(const Data& r)
         return true;
 
     const int64 acct_id = r.ACCOUNTID;
-    const AccountData* account_n = AccountModel::instance().get_data_n(acct_id);
+    const AccountData* account_n = AccountModel::instance().get_id_data_n(acct_id);
 
     if (account_n->m_min_balance == 0 && account_n->m_credit_limit == 0)
         return true;
 
-    double current_balance = AccountModel::balance(*account_n);
+    double current_balance = AccountModel::instance().balance(*account_n);
     double new_balance = current_balance - r.TRANSAMOUNT;
 
     bool allow_transaction = true;
@@ -327,7 +327,7 @@ bool SchedModel::AllowTransaction(const Data& r)
 
 void SchedModel::completeBDInSeries(int64 bdID)
 {
-    Data* sched_n = unsafe_get_data_n(bdID);
+    Data* sched_n = unsafe_get_id_data_n(bdID);
     if (!sched_n)
         return;
 
@@ -370,7 +370,7 @@ SchedModel::Full_Data::Full_Data(const Data& r) :
     if (!m_tags.empty()) {
         wxArrayString tagnames;
         for (const auto& gl_d : m_tags)
-            tagnames.Add(TagModel::instance().get_data_n(gl_d.TAGID)->m_name);
+            tagnames.Add(TagModel::instance().get_id_data_n(gl_d.TAGID)->m_name);
         // Sort TAGNAMES
         tagnames.Sort();
         for (const auto& name : tagnames)
@@ -398,7 +398,6 @@ SchedModel::Full_Data::Full_Data(const Data& r) :
     if (SchedModel::type_id(r) == TrxModel::TYPE_ID_TRANSFER) {
         PAYEENAME = AccountModel::instance().get_id_name(r.TOACCOUNTID);
     }
-
 }
 
 wxString SchedModel::Full_Data::real_payee_name() const

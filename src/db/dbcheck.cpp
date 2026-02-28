@@ -41,9 +41,9 @@ bool dbCheck::checkAccounts()
     // Transactions
     const auto& trx_a = TrxModel::instance().find_all();
     for (const auto& trx_d : trx_a)
-        if (!AccountModel::instance().get_data_n(trx_d.ACCOUNTID) || (
+        if (!AccountModel::instance().get_id_data_n(trx_d.ACCOUNTID) || (
             TrxModel::type_id(trx_d) == TrxModel::TYPE_ID_TRANSFER &&
-            !AccountModel::instance().get_data_n(trx_d.TOACCOUNTID)
+            !AccountModel::instance().get_id_data_n(trx_d.TOACCOUNTID)
         )) {
             result = false;
         }
@@ -51,9 +51,9 @@ bool dbCheck::checkAccounts()
     // BillsDeposits
     const auto& sched_a = SchedModel::instance().find_all();
     for (const auto& sched_d : sched_a)
-        if (!AccountModel::instance().get_data_n(sched_d.ACCOUNTID) || (
+        if (!AccountModel::instance().get_id_data_n(sched_d.ACCOUNTID) || (
             SchedModel::type_id(sched_d) == TrxModel::TYPE_ID_TRANSFER &&
-            !AccountModel::instance().get_data_n(sched_d.TOACCOUNTID)
+            !AccountModel::instance().get_id_data_n(sched_d.TOACCOUNTID)
         )) {
             result = false;
         }
@@ -61,7 +61,7 @@ bool dbCheck::checkAccounts()
     // Stocks
     const auto& stock_a = StockModel::instance().find_all();
     for (const auto& stock_d : stock_a) {
-        const auto& account_n = AccountModel::instance().get_data_n(stock_d.m_account_id);
+        const auto& account_n = AccountModel::instance().get_id_data_n(stock_d.m_account_id);
         if (!account_n ||
             AccountModel::type_id(*account_n) != NavigatorTypes::TYPE_ID_INVESTMENT
         ) {

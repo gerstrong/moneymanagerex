@@ -79,7 +79,7 @@ TrxShareDialog::TrxShareDialog(
     m_translink_entry(translink_entry)
 {
     if (m_translink_entry) {
-        m_stock_n = StockModel::instance().unsafe_get_data_n(m_translink_entry->LINKRECORDID);
+        m_stock_n = StockModel::instance().unsafe_get_id_data_n(m_translink_entry->LINKRECORDID);
         if (m_translink_entry->LINKTYPE == StockModel::refTypeName) {
             m_share_entry = TrxShareModel::instance().unsafe_get_trx_share_n(m_translink_entry->CHECKINGACCOUNTID);
             if (m_share_entry->SHARELOT.IsEmpty())
@@ -178,7 +178,7 @@ void TrxShareDialog::DataToControls()
             m_share_lot_ctrl->SetValue(m_share_entry->SHARELOT);
 
             if (m_translink_entry) {
-                const TrxData* checking_entry = TrxModel::instance().get_data_n(m_translink_entry->CHECKINGACCOUNTID);
+                const TrxData* checking_entry = TrxModel::instance().get_id_data_n(m_translink_entry->CHECKINGACCOUNTID);
                 if (checking_entry) {
                     m_transaction_panel->TransactionDate(TrxModel::getTransDateTime(*checking_entry));
                     m_transaction_panel->SetTransactionValue(GetAmount(std::abs(m_share_entry->SHARENUMBER)
@@ -511,7 +511,7 @@ void TrxShareDialog::OnDeductibleSplit(wxCommandEvent&)
             CategoryData new_category_d = CategoryData();
             new_category_d.m_name = _("Investment");
             CategoryModel::instance().add_data_n(new_category_d);
-            category_n = CategoryModel::instance().get_data_n(new_category_d.id());
+            category_n = CategoryModel::instance().get_id_data_n(new_category_d.id());
         }
         m_local_deductible_splits.push_back({category_n->m_id, commission, wxArrayInt64(), ""});
     }

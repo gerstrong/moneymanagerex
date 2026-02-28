@@ -189,16 +189,6 @@ bool CurrencyModel::purge_id(int64 id)
     return unsafe_remove_id(id);
 }
 
-const wxString CurrencyModel::toCurrency(double value, const Data* currency, int precision)
-{
-    wxString d2s = toString(value, currency, precision);
-    if (currency) {
-        d2s.Prepend(currency->m_prefix_symbol);
-        d2s.Append(currency->m_suffix_symbol);
-    }
-    return d2s;
-}
-
 const wxString CurrencyModel::toStringNoFormatting(double value, const Data* currency, int precision)
 {
     const Data* curr = currency ? currency : GetBaseCurrency();
@@ -316,6 +306,16 @@ const wxString CurrencyModel::toString(double value, const Data* currency, int p
     return wxString(s);
 }
 
+const wxString CurrencyModel::toCurrency(double value, const Data* currency, int precision)
+{
+    wxString d2s = toString(value, currency, precision);
+    if (currency) {
+        d2s.Prepend(currency->m_prefix_symbol);
+        d2s.Append(currency->m_suffix_symbol);
+    }
+    return d2s;
+}
+
 const wxString CurrencyModel::fromString2CLocale(const wxString &s, const Data* currency)
 {
     if (s.empty()) return s;
@@ -375,7 +375,7 @@ int CurrencyModel::precision(int64 account_id)
 {
     const AccountData* account_n = AccountModel::instance().get_id_data_n(account_id);
     if (account_n) {
-        return precision(AccountModel::instance().currency_p(*account_n));
+        return precision(AccountModel::instance().get_data_currency_p(*account_n));
     }
     else return 2;
 }

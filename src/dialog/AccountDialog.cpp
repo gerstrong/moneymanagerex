@@ -306,7 +306,7 @@ void AccountDialog::fillControls()
 {
     if (!m_account_n)
         return;
-    const CurrencyData* currency_p = AccountModel::instance().currency_p(*m_account_n);
+    const CurrencyData* currency_p = AccountModel::instance().get_data_currency_p(*m_account_n);
 
     m_textAccountName->SetValue(m_account_n->m_name);
 

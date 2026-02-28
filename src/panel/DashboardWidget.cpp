@@ -106,8 +106,8 @@ const wxString htmlWidgetStocks::getHTMLText()
             continue;
 
         double conv_rate = CurrencyHistoryModel::getDayRate(account_d.m_currency_id, today);
-        auto inv_bal = AccountModel::instance().investment_balance(account_d);
-        double cash_bal = AccountModel::instance().balance(account_d);
+        auto inv_bal = AccountModel::instance().get_data_investment_balance(account_d);
+        double cash_bal = AccountModel::instance().get_data_balance(account_d);
 
         grand_gain_lost    += (inv_bal.first - inv_bal.second) * conv_rate;
         grand_market_value += inv_bal.first * conv_rate;
@@ -123,19 +123,21 @@ const wxString htmlWidgetStocks::getHTMLText()
         );
         body += wxString::Format("<td class='money' sorttable_customkey='%f'>%s</td>\n",
             inv_bal.first - inv_bal.second,
-            AccountModel::instance().to_currency(inv_bal.first - inv_bal.second, account_d)
+            AccountModel::instance().value_number_currency(
+                account_d, inv_bal.first - inv_bal.second
+            )
         );
         body += wxString::Format("<td class='money' sorttable_customkey='%f'>%s</td>\n",
             inv_bal.first,
-            AccountModel::instance().to_currency(inv_bal.first, account_d)
+            AccountModel::instance().value_number_currency(account_d, inv_bal.first)
         );
         body += wxString::Format("<td class='money' sorttable_customkey='%f'>%s</td>\n",
             cash_bal,
-            AccountModel::instance().to_currency(cash_bal, account_d)
+            AccountModel::instance().value_number_currency(account_d, cash_bal)
         );
         body += wxString::Format("<td colspan='2' class='money' sorttable_customkey='%f'>%s</td>",
             inv_bal.first + cash_bal,
-            AccountModel::instance().to_currency(inv_bal.first + cash_bal, account_d)
+            AccountModel::instance().value_number_currency(account_d, inv_bal.first + cash_bal)
         );
         body += "</tr>";
     }
@@ -371,7 +373,9 @@ const wxString htmlWidgetBillsAndDeposits::getHTMLText()
 
             output += "</td>";
             output += wxString::Format("<td class='money'>%s</td>\n",
-                AccountModel::instance().to_currency(std::get<3>(item), *(std::get<4>(item)))
+                AccountModel::instance().value_number_currency(
+                    *(std::get<4>(item)), std::get<3>(item)
+                )
             );
             output += "<td  class='money'>" + std::get<2>(item) + "</td></tr>\n";
         }
@@ -630,8 +634,8 @@ const wxString htmlWidgetAssets::getHTMLText()
         if (!asset_account_d.is_open())
             continue;
 
-        double cash = AccountModel::instance().balance(asset_account_d);
-        auto inv = AccountModel::instance().investment_balance(asset_account_d);
+        double cash = AccountModel::instance().get_data_balance(asset_account_d);
+        auto inv = AccountModel::instance().get_data_investment_balance(asset_account_d);
         double current = inv.first;
         double initial = inv.second;
 
@@ -742,10 +746,10 @@ const wxString htmlWidgetAccounts::displayAccounts(double& tBalance, double& tRe
     );
     std::stable_sort(account_a.begin(), account_a.end(), AccountData::SorterByACCOUNTNAME());
     for (const auto& account_d : account_a) {
-        const CurrencyData* currency = AccountModel::instance().currency_p(account_d);
+        const CurrencyData* currency = AccountModel::instance().get_data_currency_p(account_d);
 
         double currency_rate = CurrencyHistoryModel::getDayRate(account_d.m_currency_id, today);
-        double bal = account_d.m_open_balance + accountStats_[account_d.m_id].second; //AccountModel::instance().balance(account_d);
+        double bal = account_d.m_open_balance + accountStats_[account_d.m_id].second; //AccountModel::instance().get_data_balance(account_d);
         double reconciledBal = account_d.m_open_balance + accountStats_[account_d.m_id].first;
         tabBalance += bal * currency_rate;
         tabReconciled += reconciledBal * currency_rate;

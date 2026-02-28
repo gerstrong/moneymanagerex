@@ -677,7 +677,7 @@ void mmUnivCSVDialog::CreateControls()
         wxString acct_name = m_choice_account_->GetStringSelection();
         m_checkbox_preset_default->SetLabelText(wxString::Format(_t("Load this Preset when Account is:\n%s"), acct_name));
         *log_field_ << _t("Currency:") << " " <<
-            wxGetTranslation(AccountModel::instance().currency_p(
+            wxGetTranslation(AccountModel::instance().get_data_currency_p(
                 *(AccountModel::instance().get_name_data_n(acct_name))
             )->m_name) << "\n";
         if (!init_preset_name.IsEmpty())
@@ -1682,7 +1682,7 @@ void mmUnivCSVDialog::OnExport(wxCommandEvent& WXUNUSED(event))
     int64 fromAccountID = from_account->m_id;
 
     long numRecords = 0;
-    const CurrencyData* currency = AccountModel::instance().currency_p(*from_account);
+    const CurrencyData* currency = AccountModel::instance().get_data_currency_p(*from_account);
 
     wxSharedPtr<ITransactionsFile> pTxFile(CreateFileHandler());
 
@@ -1901,7 +1901,7 @@ void mmUnivCSVDialog::OnExport(wxCommandEvent& WXUNUSED(event))
                         entry = account->m_name;
                         break;
                     case UNIV_CSV_CURRENCY:
-                        entry = AccountModel::instance().currency_p(*account)->m_symbol;
+                        entry = AccountModel::instance().get_data_currency_p(*account)->m_symbol;
                         break;
                     default:
                         break;
@@ -2125,7 +2125,7 @@ void mmUnivCSVDialog::update_preview()
                             m_list_ctrl_->SetItemData(itemIndex, row);
                             const CategoryData* category = CategoryModel::instance().get_id_data_n(splt.CATEGID);
 
-                            const CurrencyData* currency = AccountModel::instance().currency_p(*from_account);
+                            const CurrencyData* currency = AccountModel::instance().get_data_currency_p(*from_account);
 
                             double amt = splt.SPLITTRANSAMOUNT;
                             if (TrxModel::type_id(pBankTransaction) == TrxModel::TYPE_ID_WITHDRAWAL
@@ -2261,7 +2261,7 @@ void mmUnivCSVDialog::update_preview()
                         m_list_ctrl_->SetItem(itemIndex, col, buf);
                         m_list_ctrl_->SetItemData(itemIndex, row);
 
-                        const CurrencyData* currency = AccountModel::instance().currency_p(*from_account);
+                        const CurrencyData* currency = AccountModel::instance().get_data_currency_p(*from_account);
                         const wxString shareTotal = CurrencyModel::toStringNoFormatting(stock_d.m_num_shares, currency);
                         const wxString avgSharePrice = CurrencyModel::toStringNoFormatting(stock_d.m_purchase_price, currency);
                         const wxString totalCost = CurrencyModel::toStringNoFormatting(StockModel::InvestmentValue(stock_d), currency);
@@ -2326,7 +2326,7 @@ void mmUnivCSVDialog::update_preview()
                                 text << inQuotes(account->m_name, delimit);
                                 break;
                             case UNIV_CSV_CURRENCY:
-                                text << inQuotes(AccountModel::instance().currency_p(*account)->m_symbol, delimit);
+                                text << inQuotes(AccountModel::instance().get_data_currency_p(*account)->m_symbol, delimit);
                                 break;
                             default:
                                 break;
@@ -2975,7 +2975,7 @@ void mmUnivCSVDialog::OnChoiceChanged(wxCommandEvent& event)
         wxString acctName = m_choice_account_->GetStringSelection();
         const AccountData* account = AccountModel::instance().get_name_data_n(acctName);
         m_account_id = account->m_id;
-        const CurrencyData* currency = AccountModel::instance().currency_p(*account);
+        const CurrencyData* currency = AccountModel::instance().get_data_currency_p(*account);
         *log_field_ << _t("Currency:") << " " << wxGetTranslation(currency->m_name) << "\n";
 
         m_checkbox_preset_default->Enable(m_choice_preset_name->GetSelection() >= 0);

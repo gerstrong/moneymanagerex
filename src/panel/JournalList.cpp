@@ -763,7 +763,10 @@ void JournalList::onMouseRightClick(wxMouseEvent& event)
             menu.Enable(MENU_ON_DUPLICATE_TRANSACTION, false);
 
         menu.Append(MENU_TREEPOPUP_MOVE2, (1 == selected) ? _tu("&Move Transaction…") : _tu("&Move Transactions…"));
-        if (is_nothing_selected || type_transfer || (AccountModel::instance().money_accounts_num() < 2) || is_foreign)
+        if (is_nothing_selected || type_transfer ||
+            AccountModel::instance().cnt_money_type() < 2 ||
+            is_foreign
+        )
             menu.Enable(MENU_TREEPOPUP_MOVE2, false);
 
         menu.AppendSeparator();

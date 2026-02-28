@@ -800,7 +800,7 @@ bool TrxDialog::ValidateData()
              m_journal_data.TRANSCODE == TrxModel::TYPE_NAME_TRANSFER) &&
             (account->m_min_balance != 0 || account->m_credit_limit != 0))
         {
-            const double fromAccountBalance = AccountModel::instance().balance(*account);
+            const double fromAccountBalance = AccountModel::instance().get_data_balance(*account);
             const double new_value = fromAccountBalance - m_journal_data.TRANSAMOUNT;
 
             bool abort_transaction =
@@ -1345,7 +1345,7 @@ void TrxDialog::SetTooltips()
         const CurrencyData* currency = CurrencyModel::GetBaseCurrency();
         const AccountData* account_n = AccountModel::instance().get_id_data_n(m_journal_data.ACCOUNTID);
         if (account_n)
-            currency = AccountModel::instance().currency_p(*account_n);
+            currency = AccountModel::instance().get_data_currency_p(*account_n);
 
         bSplit_->SetToolTip(TrxSplitModel::get_tooltip(m_local_splits, currency));
     }

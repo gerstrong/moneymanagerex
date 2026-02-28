@@ -201,8 +201,11 @@ void DashboardPanel::insertDataIntoTemplate()
     }
 
     htmlWidgetGrandTotals grand_totals;
-    m_frames["GRAND_TOTAL"] = grand_totals.getHTMLText(tBalance, tReconciled
-                                                , AssetModel::instance().balance(), stocks_widget.get_total());
+    m_frames["GRAND_TOTAL"] = grand_totals.getHTMLText(
+        tBalance, tReconciled,
+        AssetModel::instance().balance(),
+        stocks_widget.get_total()
+    );
 
     //
     htmlWidgetIncomeVsExpenses income_vs_expenses;

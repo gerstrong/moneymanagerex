@@ -232,7 +232,7 @@ table {
 
         const AccountData* acc = AccountModel::instance().get_id_data_n(transaction.ACCOUNTID);
         if (acc) {
-            const CurrencyData* curr = AccountModel::instance().currency_p(*acc);
+            const CurrencyData* curr = AccountModel::instance().get_data_currency_p(*acc);
             double flow = TrxModel::account_flow(transaction, acc->m_id);
             hb.addCurrencyCell(flow, curr);
         }

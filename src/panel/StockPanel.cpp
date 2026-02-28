@@ -68,7 +68,7 @@ bool StockPanel::Create(wxWindow *parent
 
     const AccountData* account_n = AccountModel::instance().get_id_data_n(m_account_id);
     if (account_n)
-        m_currency = AccountModel::instance().currency_p(*account_n);
+        m_currency = AccountModel::instance().get_data_currency_p(*account_n);
     else
         m_currency = CurrencyModel::GetBaseCurrency();
 
@@ -423,8 +423,8 @@ void StockPanel::updateHeader()
         const AccountData* account_n = AccountModel::instance().get_id_data_n(m_account_id);
         if (account_n) {
             header_text_->SetLabelText(GetPanelTitle(*account_n));
-            cashBalance = AccountModel::instance().balance(*account_n);
-            std::pair<double, double> investment_balance = AccountModel::instance().investment_balance(*account_n);
+            cashBalance = AccountModel::instance().get_data_balance(*account_n);
+            std::pair<double, double> investment_balance = AccountModel::instance().get_data_investment_balance(*account_n);
             marketValue = investment_balance.first;
             InvestedVal = investment_balance.second;
         }
@@ -688,7 +688,7 @@ void StockPanel::DisplayAccountDetails(int64 accountID)
 
     if (m_account_id > -1){
         const AccountData* account_n = AccountModel::instance().get_id_data_n(m_account_id);
-        m_currency = AccountModel::instance().currency_p(*account_n);
+        m_currency = AccountModel::instance().get_data_currency_p(*account_n);
     }
 
     enableEditDeleteButtons(false);

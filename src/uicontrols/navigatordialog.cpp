@@ -186,7 +186,10 @@ void mmNavigatorDialog::closeAction()
 void mmNavigatorDialog::setDefault()
 {
     NavigatorTypes::instance().SetToDefault();
-    AccountModel::instance().resetUnknownAccountTypes();
+    // FIXME: The application is not ready for dynamic account types.
+    // Much of the code assumes well known and fixed account types.
+    // See also the commeent in NavigatorTypes::DeleteEntry
+    AccountModel::instance().dangerous_reset_unknown_types();
 }
 
 void mmNavigatorDialog::OnNameReset(wxCommandEvent&)

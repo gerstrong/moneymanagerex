@@ -52,41 +52,44 @@ public:
     static AccountCol::STATUS STATUS(OP op, AccountStatus status);
 
 public:
-    // Remove the Data record from memory and the database. */
+    // override methods
     bool purge_id(int64 account_id) override;
 
-    // lookup for an account id
+    // lookup for given Data
+    auto get_data_currency_p(const Data& account_d) -> const CurrencyData*;
+    auto get_data_balance(const Data& account_d) -> double;
+    auto get_data_investment_balance(const Data& account_d) -> std::pair<double, double>;
+
+    // lookup for given id
     auto get_id_name(int64 account_id) -> const wxString;
     auto get_id_currency_p(int64 account_id) -> const CurrencyData*;
     auto find_id_trx_aBySN(int64 account_id) -> const TrxModel::DataA;
     auto find_id_sched_a(int64 account_id) -> const SchedModel::DataA;
 
-    // lookup for an account field
+    // lookup for given field
     auto get_name_data_n(const wxString& name) -> const Data*;
-    auto find_name_data_a(const wxString& name) -> DataA;
+    auto find_name_data_a(const wxString& name) -> const DataA;
+    auto find_pattern_data_a(const wxString& pattern, bool skip_closed = false) -> const DataA;
     auto get_num_data_n(const wxString& num) -> const Data*;
 
-    // lookup for all accounts
-    auto find_all_name_a(bool skip_closed = false) -> wxArrayString;
+    // lookup for all Data
+    auto find_all_name_a(bool skip_closed = false) -> const wxArrayString;
     auto find_all_name_id_m(bool skip_closed = false) -> const std::map<wxString, int64>;
+    auto find_all_type_a(bool skip_closed = true) -> const wxArrayString;
+    int  cnt_money_type();
 
-    //
-    auto currency_p(const Data& account_d) -> const CurrencyData*;
-    auto to_currency(double value, const Data& account_d) -> const wxString;
-    auto to_string(double value, const Data& account_d, int precision = 2) -> const wxString;
-    auto balance(const Data& account_d) -> double;
-    auto investment_balance(const Data& account_d) -> std::pair<double, double>;
-    //
-    auto FilterAccounts(const wxString& pattern, bool skip_closed = false) -> const DataA;
-    void resetAccountType(wxString oldtype);
-    void resetUnknownAccountTypes();
-    auto getUsedAccountTypes(bool skip_closed = true) -> wxArrayString;
-    int  money_accounts_num();
+    // wrapper for value format
+    auto value_number(const Data& account_d, double value, int precision = 2) -> const wxString;
+    auto value_number_currency(const Data& account_d, double value) -> const wxString;
 
+    // modify Data (see FIXME comments in .cpp)
+    void dangerous_reset_type(wxString old_type);
+    void dangerous_reset_unknown_types();
 };
 
 //----------------------------------------------------------------------------
 
+// TODO: move to AccountData
 inline NavigatorTypes::TYPE_ID AccountModel::type_id(const Data& account)
 {
     return static_cast<NavigatorTypes::TYPE_ID>(NavigatorTypes::instance().getTypeIdFromDBName(account.m_type_));

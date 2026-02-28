@@ -107,7 +107,7 @@ JournalPanel::JournalPanel(
     if (isAccount()) {
         m_account_id = m_checking_id;
         m_account_n = AccountModel::instance().get_id_data_n(m_account_id);
-        m_currency_n = AccountModel::instance().currency_p(*m_account_n);
+        m_currency_n = AccountModel::instance().get_data_currency_p(*m_account_n);
     }
     else if (isGroup()) {
         m_group_ids = std::set<int64>(group_ids.begin(), group_ids.end());
@@ -160,7 +160,7 @@ void JournalPanel::loadAccount(int64 account_id)
     m_account_id = account_id;
     m_group_ids = {};
     m_account_n = AccountModel::instance().get_id_data_n(m_account_id);
-    m_currency_n = AccountModel::instance().currency_p(*m_account_n);
+    m_currency_n = AccountModel::instance().get_data_currency_p(*m_account_n);
     m_use_account_specific_filter = PrefModel::instance().getUsePerAccountFilter();
 
     loadFilterSettings();
@@ -399,17 +399,17 @@ void JournalPanel::updateHeader()
     if (m_account_n) {
         wxString summary = wxString::Format("%s%s",
             _t("Account Bal: "),
-            AccountModel::instance().to_currency(m_balance, *m_account_n)
+            AccountModel::instance().value_number_currency(*m_account_n, m_balance)
         );
         if (m_show_reconciled) summary.Append(wxString::Format("     %s%s     %s%s",
             _t("Reconciled Bal: "),
-            AccountModel::instance().to_currency(m_reconciled_balance, *m_account_n),
+            AccountModel::instance().value_number_currency(*m_account_n, m_reconciled_balance),
             _t("Diff: "),
-            AccountModel::instance().to_currency(m_balance - m_reconciled_balance, *m_account_n)
+            AccountModel::instance().value_number_currency(*m_account_n, m_balance - m_reconciled_balance)
         ));
         summary.Append(wxString::Format("     %s%s",
             _t("Filtered Flow: "),
-            AccountModel::instance().to_currency(m_flow, *m_account_n)
+            AccountModel::instance().value_number_currency(*m_account_n, m_flow)
         ));
         if (m_account_n->m_credit_limit != 0.0) {
             double limit = 100.0 * ((m_balance < 0.0) ? -m_balance / m_account_n->m_credit_limit : 0.0);
@@ -424,14 +424,14 @@ void JournalPanel::updateHeader()
         if (AccountModel::type_id(*m_account_n) == NavigatorTypes::TYPE_ID_INVESTMENT ||
             AccountModel::type_id(*m_account_n) == NavigatorTypes::TYPE_ID_ASSET
         ) {
-            std::pair<double, double> investment_bal = AccountModel::instance().investment_balance(*m_account_n);
+            std::pair<double, double> investment_bal = AccountModel::instance().get_data_investment_balance(*m_account_n);
             summary.Append(wxString::Format("     %s%s",
                 _t("Market Value: "),
-                AccountModel::instance().to_currency(investment_bal.first, *m_account_n)
+                AccountModel::instance().value_number_currency(*m_account_n, investment_bal.first)
             ));
             summary.Append(wxString::Format("     %s%s",
                 _t("Invested: "),
-                AccountModel::instance().to_currency(investment_bal.second, *m_account_n)
+                AccountModel::instance().value_number_currency(*m_account_n, investment_bal.second)
             ));
         }
         m_header_balance->SetLabelText(summary);

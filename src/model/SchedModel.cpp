@@ -292,7 +292,7 @@ bool SchedModel::AllowTransaction(const Data& r)
     if (account_n->m_min_balance == 0 && account_n->m_credit_limit == 0)
         return true;
 
-    double current_balance = AccountModel::instance().balance(*account_n);
+    double current_balance = AccountModel::instance().get_data_balance(*account_n);
     double new_balance = current_balance - r.TRANSAMOUNT;
 
     bool allow_transaction = true;

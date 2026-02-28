@@ -974,8 +974,8 @@ void SchedDialog::OnOk(wxCommandEvent& WXUNUSED(event))
             if (m_sched_d.TOACCOUNTID != -1) {
                 const AccountData* to_account = AccountModel::instance().get_id_data_n(m_sched_d.TOACCOUNTID);
 
-                const CurrencyData* from_currency = AccountModel::instance().currency_p(*acc);
-                const CurrencyData* to_currency = AccountModel::instance().currency_p(*to_account);
+                const CurrencyData* from_currency = AccountModel::instance().get_data_currency_p(*acc);
+                const CurrencyData* to_currency = AccountModel::instance().get_data_currency_p(*to_account);
 
                 double rateFrom = CurrencyHistoryModel::getDayRate(from_currency->m_id, m_sched_d.TRANSDATE);
                 double rateTo = CurrencyHistoryModel::getDayRate(to_currency->m_id, m_sched_d.TRANSDATE);
@@ -1429,7 +1429,7 @@ void SchedDialog::setTooltips()
         const CurrencyData* currency = CurrencyModel::GetBaseCurrency();
         const AccountData* account = AccountModel::instance().get_id_data_n(m_sched_d.ACCOUNTID);
         if (account) {
-            currency = AccountModel::instance().currency_p(*account);
+            currency = AccountModel::instance().get_data_currency_p(*account);
         }
 
         bSplit_->SetToolTip(TrxSplitModel::get_tooltip(m_sched_d.local_splits, currency));

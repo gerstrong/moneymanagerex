@@ -96,6 +96,52 @@ bool AccountModel::purge_id(int64 account_id)
     return unsafe_remove_id(account_id);
 }
 
+const CurrencyData* AccountModel::get_data_currency_p(const Data& account_d)
+{
+    const CurrencyData* currency_n = CurrencyModel::instance().get_id_data_n(
+        account_d.m_currency_id
+    );
+    if (currency_n)
+        return currency_n;
+    else {
+        wxASSERT(false);
+        return CurrencyModel::GetBaseCurrency();
+    }
+}
+
+double AccountModel::get_data_balance(const Data& account_d)
+{
+    double sum = account_d.m_open_balance;
+    // FIXME: skip Void and deleted transactions
+    for (const auto& trx_a: find_id_trx_aBySN(account_d.m_id)) {
+        sum += TrxModel::account_flow(trx_a, account_d.m_id);
+    }
+    return sum;
+}
+
+std::pair<double, double> AccountModel::get_data_investment_balance(const Data& account_d)
+{
+    std::pair<double /*market value*/, double /*invest value*/> sum;
+
+    for (const auto& stock_d : StockModel::instance().find(
+        StockCol::HELDAT(account_d.m_id)
+    )) {
+        sum.first  += StockModel::CurrentValue(stock_d);
+        sum.second += StockModel::InvestmentValue(stock_d);
+    }
+
+    for (const auto& asset_d : AssetModel::instance().find_or(
+        AssetCol::ASSETNAME(account_d.m_name),
+        AssetCol::ASSETTYPE(account_d.m_name)
+    )) {
+        auto asset_bal = AssetModel::instance().value(asset_d);
+        sum.first  += asset_bal.second;
+        sum.second += asset_bal.first;
+    }
+
+    return sum;
+}
+
 // Get the Data name of a given id
 const wxString AccountModel::get_id_name(int64 account_id)
 {
@@ -111,7 +157,7 @@ const CurrencyData* AccountModel::get_id_currency_p(int64 account_id)
 {
     const Data* account_n = get_id_data_n(account_id);
     if (account_n)
-        return AccountModel::currency_p(*account_n);
+        return AccountModel::get_data_currency_p(*account_n);
     else {
         wxASSERT(false);
         return CurrencyModel::GetBaseCurrency();
@@ -155,9 +201,27 @@ const AccountData* AccountModel::get_name_data_n(const wxString& name)
     return account_n;
 }
 
-AccountModel::DataA AccountModel::find_name_data_a(const wxString& name)
+const AccountModel::DataA AccountModel::find_name_data_a(const wxString& name)
 {
     return find(AccountCol::ACCOUNTNAME(name));
+}
+
+const AccountModel::DataA AccountModel::find_pattern_data_a(
+    const wxString& name_pattern,
+    bool skip_closed
+) {
+    DataA account_a;
+    for (auto &account_d : find_all(
+        AccountCol::COL_ID_ACCOUNTNAME
+    )) {
+        if (skip_closed && account_d.is_closed())
+            continue;
+        if (type_id(account_d) == NavigatorTypes::TYPE_ID_INVESTMENT)
+            continue;
+        if (account_d.m_name.Lower().Matches(name_pattern.Lower().Append("*")))
+            account_a.push_back(account_d);
+    }
+    return account_a;
 }
 
 // Get a Data record with given num
@@ -173,7 +237,7 @@ const AccountData* AccountModel::get_num_data_n(const wxString& num)
     return account_n;
 }
 
-wxArrayString AccountModel::find_all_name_a(bool skip_closed)
+const wxArrayString AccountModel::find_all_name_a(bool skip_closed)
 {
     wxArrayString name_a;
     for (const auto& account_d : find_all(Col::COL_ID_ACCOUNTNAME)) {
@@ -203,58 +267,24 @@ const std::map<wxString, int64> AccountModel::find_all_name_id_m(bool skip_close
     return name_id_m;
 }
 
-const CurrencyData* AccountModel::currency_p(const Data& account_d)
+const wxArrayString AccountModel::find_all_type_a(bool skip_closed)
 {
-    const CurrencyData* currency_n = CurrencyModel::instance().get_id_data_n(
-        account_d.m_currency_id
-    );
-    if (currency_n)
-        return currency_n;
-    else {
-        wxASSERT(false);
-        return CurrencyModel::GetBaseCurrency();
-    }
-}
-
-double AccountModel::balance(const Data& account_d)
-{
-    double sum = account_d.m_open_balance;
-    for (const auto& trx_a: find_id_trx_aBySN(account_d.m_id)) {
-        sum += TrxModel::account_flow(trx_a, account_d.m_id);
-    }
-    return sum;
-}
-
-std::pair<double, double> AccountModel::investment_balance(const Data& account_d)
-{
-    std::pair<double /*market value*/, double /*invest value*/> sum;
-    for (const auto& stock: StockModel::instance().find(StockCol::HELDAT(account_d.m_id))) {
-        sum.first  += StockModel::CurrentValue(stock);
-        sum.second += StockModel::InvestmentValue(stock);
-    }
-
-    for (const auto& asset: AssetModel::instance().find_or(
-        AssetCol::ASSETNAME(account_d.m_name),
-        AssetCol::ASSETTYPE(account_d.m_name)
+    wxArrayString usedTypes;
+    for (auto& account_d : find_all(
+        AccountCol::COL_ID_ACCOUNTTYPE
     )) {
-        auto asset_bal = AssetModel::instance().value(asset);
-        sum.first  += asset_bal.second;
-        sum.second += asset_bal.first;
+        if (skip_closed && account_d.is_closed())
+            continue;
+        if (type_id(account_d) == NavigatorTypes::TYPE_ID_INVESTMENT)
+            continue;
+        if (usedTypes.Index(account_d.m_type_) == wxNOT_FOUND) {
+            usedTypes.Add(account_d.m_type_);
+        }
     }
-    return sum;
+    return usedTypes;
 }
 
-const wxString AccountModel::to_currency(double value, const Data& account_d)
-{
-    return CurrencyModel::toCurrency(value, AccountModel::currency_p(account_d));
-}
-
-const wxString AccountModel::to_string(double value, const Data& account_d, int precision)
-{
-    return CurrencyModel::toString(value, AccountModel::currency_p(account_d), precision);
-}
-
-int AccountModel::money_accounts_num()
+int AccountModel::cnt_money_type()
 {
     return
         find(
@@ -274,36 +304,26 @@ int AccountModel::money_accounts_num()
         ).size();
 }
 
-const AccountModel::DataA AccountModel::FilterAccounts(const wxString& account_pattern, bool skip_closed)
+// FIXME: see comments in NavigatorTypes::DeleteEntry()
+void AccountModel::dangerous_reset_type(wxString old_type)
 {
-    DataA accounts;
-    for (auto &account_d : this->find_all(AccountCol::COL_ID_ACCOUNTNAME))
-    {
-        if (skip_closed && account_d.is_closed())
-            continue;
-        if (type_id(account_d) == NavigatorTypes::TYPE_ID_INVESTMENT)
-            continue;
-        if (account_d.m_name.Lower().Matches(account_pattern.Lower().Append("*")))
-            accounts.push_back(account_d);
-    }
-    return accounts;
-}
-
-void AccountModel::resetAccountType(wxString oldtype)
-{
-    for (auto& account_d : AccountModel::instance().find(
-        AccountCol::ACCOUNTTYPE(oldtype)
+    for (auto& account_d : find(
+        AccountCol::ACCOUNTTYPE(old_type)
     )) {
-        // CHECK: use account_d directly
-        AccountData acc_d = *(get_name_data_n(account_d.m_name));
-        acc_d.m_type_ = "Checking";
-        save_data_n(acc_d);
+        AccountData* account_n = unsafe_get_id_data_n(account_d.m_id);
+        account_n->m_type_ = "Checking";
+        unsafe_save_data_n(account_n);
     }
 }
 
-void AccountModel::resetUnknownAccountTypes()
+// FIXME: see comments in mmNavigatorDialog::setDefault()
+void AccountModel::dangerous_reset_unknown_types()
 {
-    for (const auto& account_d : find_all(Col::COL_ID_ACCOUNTNAME)) {
+    for (const auto& account_d : find_all(
+        Col::COL_ID_ACCOUNTNAME
+    )) {
+        // FIXME: cannot use NavigatorTypes::instance() here.
+        // *Model is lower level than the GUI; it must be independent of GUI.
         if (NavigatorTypes::instance().getTypeIdFromDBName(account_d.m_type_, -1) == -1) {
             // CHECK: use account_d directly
             AccountData acc_d = *(get_name_data_n(account_d.m_name));
@@ -313,17 +333,12 @@ void AccountModel::resetUnknownAccountTypes()
     }
 }
 
-wxArrayString AccountModel::getUsedAccountTypes(bool skip_closed)
+const wxString AccountModel::value_number(const Data& account_d, double value, int precision)
 {
-    wxArrayString usedTypes;
-    for (auto& account_d : this->find_all(AccountCol::COL_ID_ACCOUNTTYPE)) {
-        if (skip_closed && account_d.is_closed())
-            continue;
-        if (type_id(account_d) == NavigatorTypes::TYPE_ID_INVESTMENT)
-            continue;
-        if (usedTypes.Index(account_d.m_type_) == wxNOT_FOUND) {
-            usedTypes.Add(account_d.m_type_);
-        }
-    }
-    return usedTypes;
+    return CurrencyModel::toString(value, AccountModel::get_data_currency_p(account_d), precision);
+}
+
+const wxString AccountModel::value_number_currency(const Data& account_d, double value)
+{
+    return CurrencyModel::toCurrency(value, AccountModel::get_data_currency_p(account_d));
 }

@@ -121,7 +121,7 @@ void StockDialog::DataToControls()
     const AccountData* account_n = AccountModel::instance().get_id_data_n(m_stock_n->m_account_id);
     const CurrencyData *currency = CurrencyModel::GetBaseCurrency();
     if (account_n)
-        currency = AccountModel::instance().currency_p(*account_n);
+        currency = AccountModel::instance().get_data_currency_p(*account_n);
     int currency_precision = CurrencyModel::precision(currency);
     if (currency_precision < PrefModel::instance().getSharePrecision())
         currency_precision = PrefModel::instance().getSharePrecision();
@@ -139,9 +139,9 @@ void StockDialog::UpdateControls()
     if (m_account_id > -1) {  // do not use for overview
         const AccountData* account_n = AccountModel::instance().get_id_data_n(m_account_id);
         if (m_stock_n) {
-            m_value_investment->SetLabelText(AccountModel::instance().to_currency(
-                StockModel::instance().CurrentValue(m_stock_n),
-                *account_n
+            m_value_investment->SetLabelText(AccountModel::instance().value_number_currency(
+                *account_n,
+                StockModel::instance().CurrentValue(m_stock_n)
             ));
         }
     }
@@ -544,10 +544,8 @@ void StockDialog::OnListItemSelected(wxListEvent& event)
 
     if (sh_n->m_id > 0) {
         m_history_date_ctrl->SetValue(StockHistoryModel::DATE(*sh_n));
-        m_history_price_ctrl->SetValue(AccountModel::instance().to_string(
-            sh_n->m_price,
-            *account_n,
-            PrefModel::instance().getSharePrecision()
+        m_history_price_ctrl->SetValue(AccountModel::instance().value_number(
+            *account_n, sh_n->m_price, PrefModel::instance().getSharePrecision()
         ));
     }
 }
@@ -563,7 +561,7 @@ void StockDialog::OnHistoryImportButton(wxCommandEvent& /*event*/)
         "*.csv", wxFD_FILE_MUST_EXIST
     );
     const AccountData *account_n = AccountModel::instance().get_id_data_n(m_stock_n->m_account_id);
-    const CurrencyData *currency = AccountModel::instance().currency_p(*account_n);
+    const CurrencyData *currency = AccountModel::instance().get_data_currency_p(*account_n);
 
     if (!fileName.IsEmpty()) {
         wxFileName csv_file(fileName);
@@ -872,7 +870,7 @@ void StockDialog::OnHistoryAddButton(wxCommandEvent& /*event*/)
     wxDateTime dt;
     double dPrice = 0.0;
     const AccountData* account = AccountModel::instance().get_id_data_n(m_stock_n->m_account_id);
-    const CurrencyData* currency = AccountModel::instance().currency_p(*account);
+    const CurrencyData* currency = AccountModel::instance().get_data_currency_p(*account);
     wxString currentPriceStr = m_history_price_ctrl->GetValue().Trim();
     if (!CurrencyModel::fromString(currentPriceStr, dPrice, currency) || (dPrice < 0.0))
         return;
@@ -900,7 +898,9 @@ void StockDialog::OnHistoryAddButton(wxCommandEvent& /*event*/)
         m_price_listbox->InsertItem(item);
     }
     if (i != m_price_listbox->GetItemCount()) {
-        listStr = AccountModel::instance().to_string(dPrice, *account, PrefModel::instance().getSharePrecision());
+        listStr = AccountModel::instance().value_number(
+            *account, dPrice, PrefModel::instance().getSharePrecision()
+        );
         m_price_listbox->SetItem(i, 0, mmGetDateTimeForDisplay(m_history_date_ctrl->GetValue().FormatISODate()));
         m_price_listbox->SetItem(i, 1, listStr);
     }
@@ -908,14 +908,12 @@ void StockDialog::OnHistoryAddButton(wxCommandEvent& /*event*/)
     if (i == m_price_listbox->GetNextItem(-1)) {
         // refresh m_stock_n to get updated attributes
         m_stock_n = StockModel::instance().unsafe_get_id_data_n(m_stock_n->m_id);
-        m_current_price_ctrl->SetValue(AccountModel::instance().to_string(
-            m_stock_n->m_current_price,
-            *account,
-            PrefModel::instance().getSharePrecision()
+        m_current_price_ctrl->SetValue(AccountModel::instance().value_number(
+            *account, m_stock_n->m_current_price, PrefModel::instance().getSharePrecision()
         ));
-        m_value_investment->SetLabelText(AccountModel::instance().to_currency(
-            StockModel::instance().CurrentValue(m_stock_n),
-            *account
+        m_value_investment->SetLabelText(AccountModel::instance().value_number_currency(
+            *account,
+            StockModel::instance().CurrentValue(m_stock_n)
         ));
     }
 }
@@ -962,10 +960,8 @@ void StockDialog::ShowStockHistory()
         item.SetData(reinterpret_cast<void*>(sh_a.at(idx).m_id.GetValue()));
         m_price_listbox->InsertItem(item);
         const wxDate dtdt = StockHistoryModel::DATE(sh_a.at(idx));
-        const wxString dispAmount = AccountModel::instance().to_string(
-            sh_a.at(idx).m_price,
-            *account,
-            PrefModel::instance().getSharePrecision()
+        const wxString dispAmount = AccountModel::instance().value_number(
+            *account, sh_a.at(idx).m_price, PrefModel::instance().getSharePrecision()
         );
         m_price_listbox->SetItem(static_cast<long>(idx), 0, mmGetDateTimeForDisplay(sh_a.at(idx).m_date));
         m_price_listbox->SetItem(static_cast<long>(idx), 1, dispAmount);
@@ -977,9 +973,9 @@ void StockDialog::ShowStockHistory()
             if (m_stock_n->m_current_price != sh_a.at(idx).m_price) {
                 StockModel::UpdateCurrentPrice(m_stock_n->m_symbol, sh_a.at(idx).m_price);
                 m_stock_n = StockModel::instance().unsafe_get_id_data_n(m_stock_n->m_id);
-                m_value_investment->SetLabelText(AccountModel::instance().to_currency(
-                    StockModel::instance().CurrentValue(m_stock_n),
-                    *(AccountModel::instance().get_id_data_n(m_stock_n->m_account_id))
+                m_value_investment->SetLabelText(AccountModel::instance().value_number_currency(
+                    *(AccountModel::instance().get_id_data_n(m_stock_n->m_account_id)),
+                    StockModel::instance().CurrentValue(m_stock_n)
                 ));
             }
         }

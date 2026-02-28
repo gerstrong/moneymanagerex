@@ -30,7 +30,7 @@ struct AssetData
     AssetType       m_type;
     AssetStatus     m_status;
     wxString        m_name;
-    wxString        m_start_date;
+    wxString        m_start_date_;
     int64           m_currency_id;
     double          m_value;
     AssetChange     m_change;
@@ -60,7 +60,7 @@ struct AssetData
     bool operator< (const AssetData& other) const { return id() < other.id(); }
     bool operator< (const AssetData* other) const { return id() < other->id(); }
 
-    wxDateTime STARTDATE() const { return parseDateTime(m_start_date); }
+    wxDateTime STARTDATE() const { return parseDateTime(m_start_date_); }
 
     struct SorterByASSETID
     {
@@ -74,7 +74,7 @@ struct AssetData
     {
         bool operator()(const AssetData& x, const AssetData& y)
         {
-            return x.m_start_date < y.m_start_date;
+            return x.m_start_date_ < y.m_start_date_;
         }
     };
 

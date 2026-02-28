@@ -43,10 +43,11 @@ struct mmDate
     friend struct mmDateN;
 
 protected:
-    wxDateTime dateTime;
+    wxDateTime m_dateTime;
 
 public:
-    mmDate(wxDateTime dateTime_new);
+    mmDate(wxDateTime dateTime);
+    mmDate(const wxString& isoDateTime);
 
 public:
     static const wxTimeSpan htol; // half-day tolerance
@@ -75,13 +76,13 @@ struct mmDateN
     friend struct mmDate;
 
 private:
-    wxDateTime dateTimeN;
+    wxDateTime m_dateTimeN;
 
 public:
     mmDateN() = default;
-    mmDateN(mmDate dateDay_new);
-    mmDateN(wxDateTime dateTimeN_new);
-    mmDateN(const wxString& isoDateN_new);
+    mmDateN(mmDate dateDay);
+    mmDateN(wxDateTime dateTimeN);
+    mmDateN(const wxString& isoDateN);
 
 public:
     bool has_value() const;
@@ -124,12 +125,12 @@ inline mmDate mmDate::max()
 
 inline wxDateTime mmDate::getDateTime() const
 {
-    return dateTime;
+    return m_dateTime;
 }
 
 inline const wxString mmDate::isoDate() const
 {
-    return dateTime.FormatISODate();
+    return m_dateTime.FormatISODate();
 }
 
 // Let `isoDate` be a date or date+time string in ISO format.
@@ -155,7 +156,7 @@ inline const wxString mmDate::isoEnd() const
 inline void mmDate::addSpan(wxDateSpan spanDay)
 {
     // assumption: spanDay has granularity of a day or larger
-    dateTime += spanDay;
+    m_dateTime += spanDay;
 }
 
 // the dateTime in both operands is set to noon, therefore
@@ -163,45 +164,45 @@ inline void mmDate::addSpan(wxDateSpan spanDay)
 // for more robustness we compare with a tolerance of half day.
 inline bool mmDate::operator== (const mmDate& other) const
 {
-    return (dateTime < other.dateTime + htol && dateTime + htol >= other.dateTime);
+    return (m_dateTime < other.m_dateTime + htol && m_dateTime + htol >= other.m_dateTime);
 }
 inline bool mmDate::operator!= (const mmDate& other) const
 {
-    return (dateTime >= other.dateTime + htol || dateTime + htol < other.dateTime);
+    return (m_dateTime >= other.m_dateTime + htol || m_dateTime + htol < other.m_dateTime);
 }
 inline bool mmDate::operator< (const mmDate& other) const
 {
-    return dateTime + htol < other.dateTime;
+    return m_dateTime + htol < other.m_dateTime;
 }
 inline bool mmDate::operator> (const mmDate& other) const
 {
-    return dateTime >= other.dateTime + htol;
+    return m_dateTime >= other.m_dateTime + htol;
 }
 inline bool mmDate::operator<= (const mmDate& other) const
 {
-    return (dateTime < other.dateTime + htol);
+    return (m_dateTime < other.m_dateTime + htol);
 }
 inline bool mmDate::operator>= (const mmDate& other) const
 {
-    return (dateTime + htol >= other.dateTime);
+    return (m_dateTime + htol >= other.m_dateTime);
 }
 
 inline bool mmDateN::has_value() const
 {
-    return dateTimeN.IsValid();
+    return m_dateTimeN.IsValid();
 }
 inline mmDate mmDateN::value() const
 {
-    return mmDate(dateTimeN);
+    return mmDate(m_dateTimeN);
 }
 inline mmDate mmDateN::value_or(mmDate defDateDay) const
 {
-    return dateTimeN.IsValid() ? mmDate(dateTimeN) : defDateDay;
+    return m_dateTimeN.IsValid() ? mmDate(m_dateTimeN) : defDateDay;
 }
 
 inline wxDateTime mmDateN::getDateTimeN() const
 {
-    return dateTimeN;
+    return m_dateTimeN;
 }
 inline const wxString mmDateN::isoDateN() const
 {

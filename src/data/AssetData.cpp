@@ -36,7 +36,7 @@ AssetRow AssetData::to_row() const
     AssetRow row;
 
     row.ASSETID         = m_id;
-    row.STARTDATE       = m_start_date;
+    row.STARTDATE       = m_start_date_;
     row.ASSETNAME       = m_name;
     row.ASSETSTATUS     = m_status.name();
     row.CURRENCYID      = m_currency_id;
@@ -57,7 +57,7 @@ AssetData& AssetData::from_row(const AssetRow& row)
     m_type        = AssetType(row.ASSETTYPE);             // wxString
     m_status      = AssetStatus(row.ASSETSTATUS);         // wxString
     m_name        = row.ASSETNAME;                        // wxString
-    m_start_date  = row.STARTDATE;                        // wxString
+    m_start_date_ = row.STARTDATE;                        // wxString
     m_currency_id = row.CURRENCYID;                       // int64
     m_value       = row.VALUE;                            // double
     m_change      = AssetChange(row.VALUECHANGE);         // wxString
@@ -74,7 +74,7 @@ bool AssetData::equals(const AssetData* other) const
     if ( m_type.id()        != other->m_type.id())        return false;
     if ( m_status.id()      != other->m_status.id())      return false;
     if (!m_name.IsSameAs(other->m_name))                  return false;
-    if (!m_start_date.IsSameAs(other->m_start_date))      return false;
+    if (!m_start_date_.IsSameAs(other->m_start_date_))    return false;
     if ( m_currency_id      != other->m_currency_id)      return false;
     if ( m_value            != other->m_value)            return false;
     if ( m_change.id()      != other->m_change.id())      return false;

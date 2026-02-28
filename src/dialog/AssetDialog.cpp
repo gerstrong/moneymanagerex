@@ -427,7 +427,7 @@ void AssetDialog::OnOk(wxCommandEvent& /*event*/)
     m_asset_n->m_type        = AssetType(asset_type);
     m_asset_n->m_status      = AssetStatus();
     m_asset_n->m_name        = name;
-    m_asset_n->m_start_date  = w_dpc->GetValue().FormatISODate();
+    m_asset_n->m_start_date_ = w_dpc->GetValue().FormatISODate();
     m_asset_n->m_currency_id = -1;
     m_asset_n->m_value       = value;
     m_asset_n->m_change      = AssetChange(valueChangeType);
@@ -489,7 +489,7 @@ void AssetDialog::CreateAssetAccount()
     new_account_d.m_name         = m_asset_n->m_type.name();
     new_account_d.m_type_        = NavigatorTypes::instance().getAssetAccountStr();
     new_account_d.m_open_balance = 0;
-    new_account_d.m_open_date    = m_asset_n->m_start_date;
+    new_account_d.m_open_date    = m_asset_n->m_start_date_;
     new_account_d.m_currency_id  = CurrencyModel::GetBaseCurrency()->m_id;
     AccountModel::instance().add_data_n(new_account_d);
 

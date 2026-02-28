@@ -641,7 +641,7 @@ wxString AssetPanel::getItem(long item, int col_id)
     case AssetList::LIST_ID_VALUE_CURRENT:
         return CurrencyModel::toCurrency(AssetModel::instance().value(asset).second);
     case AssetList::LIST_ID_DATE:
-        return mmGetDateTimeForDisplay(asset.m_start_date);
+        return mmGetDateTimeForDisplay(asset.m_start_date_);
     case AssetList::LIST_ID_NOTES: {
         wxString full_notes = asset.m_notes;
         full_notes.Replace("\n", " ");

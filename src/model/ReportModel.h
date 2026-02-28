@@ -27,9 +27,16 @@
 
 class ReportModel : public TableFactory<ReportTable, ReportData>
 {
-public:
-    ReportModel(); 
-    ~ReportModel();
+private:
+    struct Values
+    {
+        wxString label;
+        wxString type;
+        wxString def_value;
+        int ID;
+        wxString name;
+    };
+    static const std::vector<Values> SqlPlaceHolders();
 
 public:
     /**
@@ -46,26 +53,19 @@ public:
     */
     static ReportModel& instance();
 
+    static const std::vector<std::pair<wxString, wxString>> getParamNames();
+    static bool prepare_sql(wxString& sql, std::map <wxString, wxString>& rep_params);
+
 public:
+    ReportModel(); 
+    ~ReportModel();
+
+public:
+    const Data* get_key_data_n(const wxString& name);
+
+    wxArrayString find_group_name_a();
     bool get_objects_from_sql(const wxString& query, PrettyWriter<StringBuffer>& json_writer);
-    wxArrayString allGroupNames();
     int get_html(const Data* r, wxString& out);
     //wxString get_html(const Data& r);
-
-public:
-    const Data* get_key(const wxString& name);
-    static bool PrepareSQL(wxString& sql, std::map <wxString, wxString>& rep_params);
-    static const std::vector<std::pair<wxString, wxString>> getParamNames();
-
-private:
-    struct Values
-    {
-        wxString label;
-        wxString type;
-        wxString def_value;
-        int ID;
-        wxString name;
-    };
-    static const std::vector<Values> SqlPlaceHolders();
 };
 

@@ -49,35 +49,6 @@ public:
     }
 };
 
-ReportModel::ReportModel() :
-    TableFactory<ReportTable, ReportData>()
-{
-}
-
-ReportModel::~ReportModel() 
-{
-}
-
-/** Return the static instance of ReportModel table */
-ReportModel& ReportModel::instance()
-{
-    return Singleton<ReportModel>::instance();
-}
-
-/**
-* Initialize the global ReportModel table.
-* Reset the ReportModel table or create the table if it does not exist.
-*/
-ReportModel& ReportModel::instance(wxSQLite3Database* db)
-{
-    ReportModel& ins = Singleton<ReportModel>::instance();
-    ins.reset_cache();
-    ins.m_db = db;
-    ins.ensure_table();
-
-    return ins;
-}
-
 const std::vector<ReportModel::Values> ReportModel::SqlPlaceHolders()
 {
     const wxString def_date = wxDateTime::Today().FormatISODate();
@@ -101,46 +72,136 @@ const std::vector<ReportModel::Values> ReportModel::SqlPlaceHolders()
 const std::vector<std::pair<wxString, wxString>> ReportModel::getParamNames()
 {
     std::vector<std::pair<wxString, wxString>> v;
-    for (const auto& entry : SqlPlaceHolders())
-    {
+    for (const auto& entry : SqlPlaceHolders()) {
         v.emplace_back(entry.label, entry.name);
     }
     return v;
 }
 
-bool ReportModel::get_objects_from_sql(const wxString& query, PrettyWriter<StringBuffer>& json_writer)
+bool ReportModel::prepare_sql(wxString& sql, std::map <wxString, wxString>& rep_params)
 {
+    sql.Trim();
+    if (sql.empty()) return false;
+    if (sql.Last() != ';') sql += ';';
+
+    for (const auto& entry : SqlPlaceHolders()) {
+        wxString value;
+        int pos = sql.Lower().Find(entry.label);
+        size_t len = wxString(entry.label).size();
+
+        if (pos != wxNOT_FOUND) {
+            value = entry.def_value;
+
+            const auto w = wxWindow::FindWindowById(entry.ID);
+            //const auto name = w->GetClassInfo()->GetClassName();
+            if (w && entry.type == "mmDatePickerCtrl") {
+                mmDatePickerCtrl* date = static_cast<mmDatePickerCtrl*>(w);
+                value = date->GetValue().FormatISODate();
+            }
+            if (w && entry.type == "wxTimePickerCtrl") {
+                wxTimePickerCtrl* time = static_cast<wxTimePickerCtrl*>(w);
+                value = time->GetValue().FormatISOTime();
+            }
+            if (w && entry.type == "wxChoice") {
+                wxChoice* year = static_cast<wxChoice*>(w);
+                value = year->GetStringSelection();
+            }
+
+            rep_params[entry.label.Mid(1)] = value;
+
+            while (pos != wxNOT_FOUND) {
+                sql.replace(pos, len, value);
+                pos = sql.Lower().Find(entry.label);
+            }
+        }
+    }
+
+    return true;
+}
+
+ReportModel::ReportModel() :
+    TableFactory<ReportTable, ReportData>()
+{
+}
+
+ReportModel::~ReportModel() 
+{
+}
+
+/**
+* Initialize the global ReportModel table.
+* Reset the ReportModel table or create the table if it does not exist.
+*/
+ReportModel& ReportModel::instance(wxSQLite3Database* db)
+{
+    ReportModel& ins = Singleton<ReportModel>::instance();
+    ins.reset_cache();
+    ins.m_db = db;
+    ins.ensure_table();
+
+    return ins;
+}
+
+/** Return the static instance of ReportModel table */
+ReportModel& ReportModel::instance()
+{
+    return Singleton<ReportModel>::instance();
+}
+
+const ReportData* ReportModel::get_key_data_n(const wxString& name)
+{
+    const Data* report_n = search_cache_n(ReportCol::REPORTNAME(name));
+    if (report_n)
+        return report_n;
+
+    DataA report_a = find(ReportCol::REPORTNAME(name));
+    if (!report_a.empty())
+        report_n = get_data_n(report_a[0].id());
+    return report_n;
+}
+
+wxArrayString ReportModel::find_group_name_a()
+{
+    wxArrayString group_name_a;
+    wxString previous_group_name;
+    for (const auto& report_d : this->find_all(Col::COL_ID_GROUPNAME)) {
+        if (report_d.m_group_name != previous_group_name) {
+            group_name_a.Add(report_d.m_group_name);
+            previous_group_name = report_d.m_group_name;
+        }
+    }
+    return group_name_a;
+}
+
+bool ReportModel::get_objects_from_sql(
+    const wxString& query,
+    PrettyWriter<StringBuffer>& json_writer
+) {
     wxSQLite3Statement stmt;
-    try
-    {
+    try {
         stmt = this->m_db->PrepareStatement(query);
-        if (!stmt.IsReadOnly())
-        {
+        if (!stmt.IsReadOnly()) {
             json_writer.Key("msg");
             json_writer.String("the sql is not readonly");
             return false;
         }
     }
-    catch (const wxSQLite3Exception& e)
-    {
+    catch (const wxSQLite3Exception& e) {
         json_writer.Key("msg");
         json_writer.String(e.GetMessage().utf8_str());
         return false;
     }
 
-    try
-    {
+    try {
         json_writer.Key("results");
         json_writer.StartArray();
 
         wxSQLite3ResultSet q = stmt.ExecuteQuery();
         int columns = q.GetColumnCount();
-        while (q.NextRow())
-        {
+        while (q.NextRow()) {
             json_writer.StartObject();
 
-            for (int i = 0; i < columns; ++i)
-            {
+            for (int i = 0; i < columns; ++i) {
                 wxString column_name = q.GetColumnName(i);
 
                 switch (q.GetColumnType(i))
@@ -166,71 +227,10 @@ bool ReportModel::get_objects_from_sql(const wxString& query, PrettyWriter<Strin
 
         json_writer.EndArray();
     }
-    catch (const wxSQLite3Exception& e)
-    {
+    catch (const wxSQLite3Exception& e) {
         json_writer.Key("msg");
         json_writer.String(e.GetMessage().utf8_str());
         return false;
-    }
-
-    return true;
-}
-
-wxArrayString ReportModel::allGroupNames()
-{
-    wxArrayString groups;
-    wxString PreviousGroup;
-    for (const auto& report_d : this->find_all(Col::COL_ID_GROUPNAME)) {
-        if (report_d.m_group_name != PreviousGroup) {
-            groups.Add(report_d.m_group_name);
-            PreviousGroup = report_d.m_group_name;
-        }
-    }
-    return groups;
-}
-
-bool ReportModel::PrepareSQL(wxString& sql, std::map <wxString, wxString>& rep_params)
-{
-    sql.Trim();
-    if (sql.empty()) return false;
-    if (sql.Last() != ';') sql += ';';
-
-    for (const auto& entry : SqlPlaceHolders())
-    {
-        wxString value;
-        int pos = sql.Lower().Find(entry.label);
-        size_t len = wxString(entry.label).size();
-
-        if (pos != wxNOT_FOUND)
-        {
-            value = entry.def_value;
-
-            const auto w = wxWindow::FindWindowById(entry.ID);
-            //const auto name = w->GetClassInfo()->GetClassName();
-            if (w && entry.type == "mmDatePickerCtrl")
-            {
-                mmDatePickerCtrl* date = static_cast<mmDatePickerCtrl*>(w);
-                value = date->GetValue().FormatISODate();
-            }
-            if (w && entry.type == "wxTimePickerCtrl")
-            {
-                wxTimePickerCtrl* time = static_cast<wxTimePickerCtrl*>(w);
-                value = time->GetValue().FormatISOTime();
-            }
-            if (w && entry.type == "wxChoice")
-            {
-                wxChoice* year = static_cast<wxChoice*>(w);
-                value = year->GetStringSelection();
-            }
-
-            rep_params[entry.label.Mid(1)] = value;
-
-            while (pos != wxNOT_FOUND)
-            {
-                sql.replace(pos, len, value);
-                pos = sql.Lower().Find(entry.label);
-            }
-        }
     }
 
     return true;
@@ -249,7 +249,7 @@ int ReportModel::get_html(const Data* report_n, wxString& out)
     int columnCount = 0;
     std::map <wxString, wxString> rep_params;
     try {
-        PrepareSQL(sql, rep_params);
+        prepare_sql(sql, rep_params);
 
         wxSQLite3Statement stmt = this->m_db->PrepareStatement(sql);
         if (!stmt.IsReadOnly()) {
@@ -297,47 +297,40 @@ int ReportModel::get_html(const Data* report_n, wxString& out)
 
     bool lua_status = state.doString(std::string(report_n->m_lua_content.ToUTF8()));
     if (!skip_lua && !lua_status) {
-        error(L"ERROR") = wxString("failed to doString : ") + report_n->m_lua_content + wxString(" err: ") + wxString(state.lastError());
+        error(L"ERROR") = wxString("failed to doString : ") +
+            report_n->m_lua_content + wxString(" err: ") + wxString(state.lastError());
         errors += error;
     }
     else {
         //state.doString(R"(sys_locale=os.setlocale("", "numeric"); print(os.setlocale("C", "numeric"));)");
     }
 
-    while (q.NextRow())
-    {
+    while (q.NextRow()) {
         Record rec;
-        for (int i = 0; i < columnCount; ++i)
-        {
+        for (int i = 0; i < columnCount; ++i) {
             const wxString column_name = q.GetColumnName(i);
             rec[column_name.ToStdWstring()] = q.GetAsString(i);
         }
 
-        if (lua_status && !skip_lua)
-        {
-            try
-            {
+        if (lua_status && !skip_lua) {
+            try {
                 state.invokeVoidFunction("handle_record", &rec);
             }
-            catch (const std::runtime_error& e)
-            {
+            catch (const std::runtime_error& e) {
                 error(L"ERROR") = wxString("failed to call handle_record : ") + wxString(e.what());
                 errors += error;
             }
-            catch (const std::exception& e)
-            {
+            catch (const std::exception& e) {
                 error(L"ERROR") = wxString("failed to call handle_record : ") + wxString(e.what());
                 errors += error;
             }
-            catch (...)
-            {
+            catch (...) {
                 error(L"ERROR") = L"failed to call handle_record ";
                 errors += error;
             }
         }
         row_t row;
-        for (const auto& item : rec)
-        {
+        for (const auto& item : rec) {
             row(item.first) = item.second;
         }
         contents += row;
@@ -346,24 +339,19 @@ int ReportModel::get_html(const Data* report_n, wxString& out)
     q.Finalize();
 
     Record result;
-    if (lua_status && !skip_lua)
-    {
-        try
-        {
+    if (lua_status && !skip_lua) {
+        try {
             state.invokeVoidFunction("complete", &result);
         }
-        catch (const std::runtime_error& e)
-        {
+        catch (const std::runtime_error& e) {
             error(L"ERROR") = wxString("failed to call complete: ") + wxString(e.what());
             errors += error;
         }
-        catch (const std::exception& e)
-        {
+        catch (const std::exception& e) {
             error(L"ERROR") = wxString("failed to call complete: ") + wxString(e.what());
             errors += error;
         }
-        catch (...)
-        {
+        catch (...) {
             error(L"ERROR") = L"failed to call complete";
             errors += error;
         }
@@ -378,8 +366,7 @@ int ReportModel::get_html(const Data* report_n, wxString& out)
 
     report(L"CONTENTS") = contents;
     {
-        for (const auto& item : rep_params)
-        {
+        for (const auto& item : rep_params) {
             report(item.first.Upper().ToStdWstring()) = item.second;
         }
         auto p = mmex::getPathAttachment(mmAttachmentManage::InfotablePathSetting());
@@ -394,33 +381,18 @@ int ReportModel::get_html(const Data* report_n, wxString& out)
     }
     report(L"ERRORS") = errors;
 
-    try
-    {
+    try {
         out = report.Process();
         formatHTML(out);
     }
-    catch (const syntax_ex& e)
-    {
+    catch (const syntax_ex& e) {
         out = e.what();
         return 1;
     }
-    catch (...)
-    {
+    catch (...) {
         out = _t("Caught exception");
         return 2;
     }
 
     return 0;
-}
-
-const ReportData* ReportModel::get_key(const wxString& name)
-{
-    const Data* report_n = search_cache_n(ReportCol::REPORTNAME(name));
-    if (report_n)
-        return report_n;
-
-    DataA items = this->find(ReportCol::REPORTNAME(name));
-    if (!items.empty())
-        report_n = get_data_n(items[0].id());
-    return report_n;
 }

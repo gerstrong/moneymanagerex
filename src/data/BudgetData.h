@@ -55,6 +55,11 @@ struct BudgetData
     bool operator< (const BudgetData& other) const { return id() < other.id(); }
     bool operator< (const BudgetData* other) const { return id() < other->id(); }
 
+    double get_estimate(bool monthly) const {
+        double estimate = m_amount * m_frequency.times_per_year();
+        return monthly ? estimate / 12 : estimate;
+    }
+
     struct SorterByBUDGETENTRYID
     {
         bool operator()(const BudgetData& x, const BudgetData& y)

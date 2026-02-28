@@ -162,7 +162,7 @@ void BudgetYearEntryDialog::OnOk(wxCommandEvent& /*event*/)
         {
             int64 baseYearID = BudgetPeriodModel::instance().Get(baseYear);
             int64 newYearID  = BudgetPeriodModel::instance().Get(currYearText);
-            BudgetModel::copyBudgetYear(newYearID, baseYearID);
+            BudgetModel::instance().copyBudgetYear(newYearID, baseYearID);
         }
     }
 

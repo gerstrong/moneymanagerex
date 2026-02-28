@@ -61,21 +61,30 @@ BudgetCol::PERIOD BudgetModel::FREQUENCY(OP op, BudgetFrequency freq)
     return BudgetCol::PERIOD(op, freq.name());
 }
 
+double BudgetModel::getEstimate(
+    bool is_monthly,
+    const BudgetFrequency freq,
+    double amount
+) {
+    double estimated = amount * freq.times_per_year();
+    if (is_monthly)
+        estimated = estimated / 12;
+    return estimated;
+}
+
 void BudgetModel::getBudgetEntry(
     int64 budgetYearID,
     std::map<int64, BudgetFrequency>& budgetFreq,
-    std::map<int64, double> &budgetAmt,
-    std::map<int64, wxString> &budgetNotes
+    std::map<int64, double>& budgetAmt,
+    std::map<int64, wxString>& budgetNotes
 ) {
     //Set std::map with zerros
-    double value = 0;
     for (const auto& category_d : CategoryModel::instance().find_all()) {
         budgetFreq[category_d.m_id] = BudgetFrequency(BudgetFrequency::e_none);
-        budgetAmt[category_d.m_id]  = value;
-
+        budgetAmt[category_d.m_id]  = 0.0;
     }
 
-    for (const auto& budget_d : instance().find(
+    for (const auto& budget_d : find(
         BudgetCol::BUDGETYEARID(budgetYearID)
     )) {
         budgetFreq[budget_d.m_category_id]  = budget_d.m_frequency;
@@ -85,22 +94,19 @@ void BudgetModel::getBudgetEntry(
 }
 
 void BudgetModel::getBudgetStats(
-    std::map<int64, std::map<int, double>> &budgetStats,
+    std::map<int64, std::map<int, double>>& budgetStats,
     mmDateRange* date_range,
     bool groupByMonth
 ) {
-    //Initialization
     //Set std::map with zeros
-    double value = 0;
-    const wxDateTime start_date(date_range->start_date());
-
     for (const auto& category_d : CategoryModel::instance().find_all()) {
         for (int month = 0; month < 12; month++) {
-            budgetStats[category_d.m_id][month] = value;
+            budgetStats[category_d.m_id][month] = 0.0;
         }
     }
 
     //Calculations
+    const wxDateTime start_date(date_range->start_date());
     std::map<int64, double> monthlyBudgetValue;
     std::map<int64, double> yearlyBudgetValue;
     std::map<int64, double> yearDeduction;
@@ -108,7 +114,7 @@ void BudgetModel::getBudgetStats(
     std::map<int64, int> budgetedMonths;
     const wxString year = wxString::Format("%i", start_date.GetYear());
     int64 budgetYearID = BudgetPeriodModel::instance().Get(year);
-    for (const Data& budget_d : instance().find(
+    for (const Data& budget_d : find(
         BudgetCol::BUDGETYEARID(budgetYearID)
     )) {
         int64 category_id = budget_d.m_category_id;
@@ -126,7 +132,7 @@ void BudgetModel::getBudgetStats(
         budgetYearID = BudgetPeriodModel::instance().Get(budgetYearMonth);
 
         //fill with amount from monthly budgets first
-        for (const Data& budget_d : instance().find(
+        for (const Data& budget_d : find(
             BudgetCol::BUDGETYEARID(budgetYearID)
         )) {
             int64 category_id = budget_d.m_category_id;
@@ -194,10 +200,11 @@ void BudgetModel::copyBudgetYear(int64 newYearID, int64 baseYearID)
         for (int month = 0; month < 12; month++) {
             const wxString budgetYearMonth = wxString::Format("%s-%02d", newBudgetYearName.SubString(0,3), month + 1);
             int64 budgetYearID = BudgetPeriodModel::instance().Get(budgetYearMonth);
-            BudgetModel::DataA budget_a = instance().find(
+            BudgetModel::DataA budget_a = find(
                 BudgetCol::BUDGETYEARID(budgetYearID)
             );
-            if (!budget_a.empty()) budgetedMonths++;
+            if (!budget_a.empty())
+                budgetedMonths++;
             //calculate deduction
             for (const auto& budget_d : budget_a) {
                 yearDeduction[budget_d.m_category_id] += getEstimate(true, budget_d.m_frequency, budget_d.m_amount);
@@ -205,7 +212,7 @@ void BudgetModel::copyBudgetYear(int64 newYearID, int64 baseYearID)
         }
     }
 
-    for (const Data& budget_d : instance().find(
+    for (const Data& budget_d : find(
         BudgetCol::BUDGETYEARID(baseYearID)
     )) {
         Data new_budget_d = Data();
@@ -218,17 +225,6 @@ void BudgetModel::copyBudgetYear(int64 newYearID, int64 baseYearID)
                 ? (yearAmount - yearDeduction[new_budget_d.m_category_id]) / (12 - budgetedMonths)
                 : 0;
         }
-        instance().add_data_n(new_budget_d);
+        add_data_n(new_budget_d);
     }
-}
-
-double BudgetModel::getEstimate(
-    bool is_monthly,
-    const BudgetFrequency freq,
-    const double amount
-) {
-    double estimated = amount * freq.times_per_year();
-    if (is_monthly)
-        estimated = estimated / 12;
-    return estimated;
 }

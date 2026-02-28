@@ -49,19 +49,22 @@ public:
 public:
     static BudgetCol::PERIOD FREQUENCY(OP op, BudgetFrequency freq);
 
-    static void getBudgetEntry(int64 budgetYearID,
-        std::map<int64, BudgetFrequency>& budgetFreq,
-        std::map<int64, double> &budgetAmt,
-        std::map<int64, wxString> &budgetNotes);
-    static void getBudgetStats(
-        std::map<int64, std::map<int, double>>& budgetStats,
-        mmDateRange* date_range,
-        bool groupByMonth
-    );
-    static void copyBudgetYear(int64 newYearID, int64 baseYearID);
-    static double getEstimate(bool is_monthly, const BudgetFrequency freq, const double amount);
+    static double getEstimate(bool is_monthly, const BudgetFrequency freq, double amount);
 
 public:
     BudgetModel();
     ~BudgetModel();
+
+    void getBudgetEntry(
+        int64 budgetYearID,
+        std::map<int64, BudgetFrequency>& budgetFreq,
+        std::map<int64, double> &budgetAmt,
+        std::map<int64, wxString> &budgetNotes
+    );
+    void getBudgetStats(
+        std::map<int64, std::map<int, double>>& budgetStats,
+        mmDateRange* date_range,
+        bool groupByMonth
+    );
+    void copyBudgetYear(int64 newYearID, int64 baseYearID);
 };

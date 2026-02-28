@@ -31,8 +31,8 @@ struct AssetData
     AssetType       m_type;
     AssetStatus     m_status;
     wxString        m_name;
-    mmDateN         m_start_date_n;
-    int64           m_currency_id;
+    mmDateN         m_start_date_p;  // non-null after initialization
+    int64           m_currency_id_n; // -1 means base currency (no conversion)
     double          m_value;
     AssetChange     m_change;
     AssetChangeMode m_change_mode;
@@ -73,7 +73,7 @@ struct AssetData
     {
         bool operator()(const AssetData& x, const AssetData& y)
         {
-            return x.m_start_date_n.value() < y.m_start_date_n.value();
+            return x.m_start_date_p.value() < y.m_start_date_p.value();
         }
     };
 
@@ -97,7 +97,7 @@ struct AssetData
     {
         bool operator()(const AssetData& x, const AssetData& y)
         {
-            return x.m_currency_id < y.m_currency_id;
+            return x.m_currency_id_n < y.m_currency_id_n;
         }
     };
 

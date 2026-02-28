@@ -73,96 +73,104 @@ wxString AssetModel::get_id_name(int64 asset_id)
         return _t("Asset Error");
 }
 
-std::pair<double, double> AssetModel::valueAtDate(const Data& asset_d, const wxDate& date)
+std::pair<double, double> AssetModel::valueAtDate(const Data& asset_d, const mmDate& date)
 {
     std::pair<double /*initial*/, double /*market*/> balance;
-    if (date < asset_d.m_start_date_n.getDateTimeN())
+
+    if (date < asset_d.m_start_date_p.value())
         return balance;
 
-    TrxLinkModel::DataA translink_records = TrxLinkModel::instance().find(
+    mmChoiceId change_id = asset_d.m_change.id();
+    double daily_rate = asset_d.m_change_rate / 36500.0;
+    auto apply_change = [change_id, daily_rate](double& value, mmDate from_date, mmDate to_date) {
+        if (change_id == AssetChange::e_none)
+            return;
+
+        double days = static_cast<double>(
+            (to_date.getDateTime() - from_date.getDateTime()).GetDays()
+        );
+
+        if (change_id == AssetChange::e_appreciates) {
+            value *= exp(daily_rate * days);
+        }
+        else if (change_id == AssetChange::e_depreciates) {
+            value *= exp(-daily_rate * days);
+        }
+    };
+
+    TrxLinkModel::DataA tl_a = TrxLinkModel::instance().find(
         TrxLinkCol::LINKRECORDID(asset_d.m_id),
         TrxLinkCol::LINKTYPE(this->refTypeName)
     );
 
-    double dailyRate = asset_d.m_change_rate / 36500.0;
-    mmChoiceId changeType = asset_d.m_change.id();
-
-    auto applyChangeRate = [changeType, dailyRate](double& value, double days) {
-        if (changeType == AssetChange::e_appreciates) {
-            value *= exp(dailyRate * days);
+    TrxModel::DataA trx_a;
+    for (const auto& tl_d : tl_a) {
+        const TrxData* trx_n = TrxModel::instance().get_data_n(tl_d.CHECKINGACCOUNTID);
+        if (trx_n &&
+            trx_n->DELETEDTIME.IsEmpty() &&
+            // FIXME: ignore Void transactions
+            trx_n->ACCOUNTID >= 0 &&
+            date < mmDate(TrxModel::getTransDateTime(*trx_n))
+        ) {
+            trx_a.push_back(*trx_n);
         }
-        else if (changeType == AssetChange::e_depreciates) {
-            value *= exp(-dailyRate * days);
-        }
-    };
+    }
+    std::stable_sort(trx_a.begin(), trx_a.end(), TrxData::SorterByTRANSDATE());
 
-    if (!translink_records.empty()) {
-        TrxModel::DataA trans;
-        for (const auto& link : translink_records) {
-            const TrxData* tran = TrxModel::instance().get_data_n(link.CHECKINGACCOUNTID);
-            if(tran && tran->DELETEDTIME.IsEmpty()) trans.push_back(*tran);
-        }
+    if (!tl_a.empty()) {
+        mmDateN last_n = mmDateN();
+        for (const auto& trx_d : trx_a) {
+            const mmDate trx_date = mmDate(TrxModel::getTransDateTime(trx_d));
+            const AccountData* account_n = AccountModel::instance().get_data_n(trx_d.ACCOUNTID);
+            int64 currency_id_n = account_n ? account_n->m_currency_id : -1;
+            double currency_rate = CurrencyHistoryModel::getDayRate(currency_id_n, trx_date.getDateTime());
+            double account_flow = TrxModel::account_flow(trx_d, trx_d.ACCOUNTID);
+            double base_amount = -(account_flow * currency_rate);
 
-        std::stable_sort(trans.begin(), trans.end(), TrxData::SorterByTRANSDATE());
-
-        wxDate last = date;
-        for (const auto& tran: trans) {
-            if (tran.ACCOUNTID < 0) {
-              continue;
+            if (!last_n.has_value())
+                last_n = trx_date;
+            else if (last_n.value() < trx_date) {
+                apply_change(balance.second, last_n.value(), trx_date);
+                last_n = trx_date;
             }
 
-            const wxDate tranDate = TrxModel::getTransDateTime(tran);
-            if (tranDate > date) break;
-
-            if (last == date) last = tranDate;
-            if (last < tranDate) {
-                applyChangeRate(balance.second, static_cast<double>((tranDate - last).GetDays()));
-                last = tranDate;
-            }
-
-            double accflow = TrxModel::account_flow(tran, tran.ACCOUNTID);
-            double amount = -1 * accflow *
-                CurrencyHistoryModel::getDayRate(
-                    AccountModel::instance().get_data_n(tran.ACCOUNTID)->m_currency_id,
-                    tranDate
-            );
-            //double amount = -1 * TrxModel::account_flow(tran, tran.ACCOUNTID) *
-            //    CurrencyHistoryModel::getDayRate(AccountModel::instance().get_data_n(tran.ACCOUNTID)->CURRENCYID, tranDate);
-
-            if (amount >= 0) {
-                balance.first += amount;
+            // FIXME: if (base_amount >= 0 || balance.second < balance.first)
+            if (base_amount >= 0) {
+                // cash flow from account to asset
+                balance.first += base_amount;
             }
             else {
+                // cash flow from asset to account
                 double unrealized_gl = balance.second - balance.first;
-                balance.first += std::min(unrealized_gl + amount, 0.0);
+                balance.first += std::min(unrealized_gl + base_amount, 0.0);
             }
 
-            balance.second += amount;
+            balance.second += base_amount;
 
             // Self Transfer as Revaluation
-            if (tran.ACCOUNTID == tran.TOACCOUNTID &&
-                TrxModel::type_id(tran.TRANSCODE) == TrxModel::TYPE_ID_TRANSFER
+            // FIXME: missing currency conversion
+            if (trx_d.ACCOUNTID == trx_d.TOACCOUNTID &&
+                TrxModel::type_id(trx_d.TRANSCODE) == TrxModel::TYPE_ID_TRANSFER
             ) {
                 // TODO honor TRANSAMOUNT => TOTRANSAMOUNT
-                balance.second = tran.TOTRANSAMOUNT;
+                balance.second = trx_d.TOTRANSAMOUNT;
             }
         }
 
-        applyChangeRate(balance.second, static_cast<double>((date - last).GetDays()));
+        if (last_n.has_value()) {
+            apply_change(balance.second, last_n.value(), date);
+        }
     }
     else {
         balance = {asset_d.m_value, asset_d.m_value};
-        applyChangeRate(
-            balance.second,
-            static_cast<double>((date - asset_d.m_start_date_n.getDateTimeN()).GetDays())
-        );
+        apply_change(balance.second, asset_d.m_start_date_p.value(), date);
     }
     return balance;
 }
 
 std::pair<double, double> AssetModel::value(const Data& asset_d)
 {
-    return valueAtDate(asset_d, wxDate::Today());
+    return valueAtDate(asset_d, mmDate::today());
 }
 
 double AssetModel::balance()

@@ -114,7 +114,7 @@ void AssetDialog::dataToControls()
     w_assetName->SetValue(m_asset_n->m_name);
     if (AccountModel::instance().get_key_data_n(m_asset_n->m_name))
         w_assetName->Enable(false);
-    w_dpc->SetValue(m_asset_n->m_start_date_n.getDateTimeN());
+    w_dpc->SetValue(m_asset_n->m_start_date_p.getDateTimeN());
     w_assetType->SetSelection(m_asset_n->m_type.id());
     if (AccountModel::instance().get_key_data_n(m_asset_n->m_type.name()))
         w_assetType->Enable(false);
@@ -377,13 +377,13 @@ void AssetDialog::OnChangeCompounding(wxCommandEvent& /*event*/)
     if (selection == m_compounding)
         return;
 
-    mmChoiceId valueChangeType = w_valueChange->GetSelection();
-    double valueChangeRate = 0;
-    if (valueChangeType != AssetChange::e_none &&
-        w_valueChangeRate->checkValue(valueChangeRate)
+    mmChoiceId change_id = w_valueChange->GetSelection();
+    double change_rate = 0;
+    if (change_id != AssetChange::e_none &&
+        w_valueChangeRate->checkValue(change_rate)
     ) {
-        valueChangeRate = convertRate(valueChangeType, valueChangeRate, m_compounding, selection);
-        w_valueChangeRate->SetValue(valueChangeRate, 3);
+        change_rate = convertRate(change_id, change_rate, m_compounding, selection);
+        w_valueChangeRate->SetValue(change_rate, 3);
     }
 
     m_compounding = static_cast<PrefModel::COMPOUNDING_ID>(selection);
@@ -391,32 +391,32 @@ void AssetDialog::OnChangeCompounding(wxCommandEvent& /*event*/)
 
 void AssetDialog::OnOk(wxCommandEvent& /*event*/)
 {
-    const wxString name = w_assetName->GetValue().Trim();
-    if (name.empty()) {
-        mmErrorDialogs::InvalidName(w_assetName);
-        return;
-    }
-
-    double value = 0;
-    if (!w_value->checkValue(value))
-        return;
-
-    mmChoiceId valueChangeType = w_valueChange->GetSelection();
-    double valueChangeRate = 0.0;
-    if (valueChangeType != AssetChange::e_none) {
-        if (!w_valueChangeRate->checkValue(valueChangeRate))
-            return;
-        if (m_compounding != PrefModel::COMPOUNDING_ID_DAY) {
-            valueChangeRate = convertRate(valueChangeType, valueChangeRate, m_compounding);
-        }
-    }
-
-    wxString asset_type = "";
+    AssetType asset_type = AssetType();
     wxStringClientData* type_obj = static_cast<wxStringClientData *>(
         w_assetType->GetClientObject(w_assetType->GetSelection())
     );
     if (type_obj)
-        asset_type = type_obj->GetData();
+        asset_type = AssetType(type_obj->GetData());
+
+    const wxString asset_name = w_assetName->GetValue().Trim();
+    if (asset_name.empty()) {
+        mmErrorDialogs::InvalidName(w_assetName);
+        return;
+    }
+
+    double asset_value = 0.0;
+    if (!w_value->checkValue(asset_value))
+        return;
+
+    mmChoiceId asset_change_id = w_valueChange->GetSelection();
+    double asset_change_rate = 0.0;
+    if (asset_change_id != AssetChange::e_none) {
+        if (!w_valueChangeRate->checkValue(asset_change_rate))
+            return;
+        if (m_compounding != PrefModel::COMPOUNDING_ID_DAY) {
+            asset_change_rate = convertRate(asset_change_id, asset_change_rate, m_compounding);
+        }
+    }
 
     bool is_new = !m_asset_n;
     if (!m_asset_n) {
@@ -424,16 +424,16 @@ void AssetDialog::OnOk(wxCommandEvent& /*event*/)
         m_asset_n = &m_asset_d;
     }
 
-    m_asset_n->m_type         = AssetType(asset_type);
-    m_asset_n->m_status       = AssetStatus();
-    m_asset_n->m_name         = name;
-    m_asset_n->m_start_date_n = mmDateN(w_dpc->GetValue());
-    m_asset_n->m_currency_id  = -1;
-    m_asset_n->m_value        = value;
-    m_asset_n->m_change       = AssetChange(valueChangeType);
-    m_asset_n->m_change_mode  = AssetChangeMode();
-    m_asset_n->m_change_rate  = valueChangeRate;
-    m_asset_n->m_notes        = w_notes->GetValue().Trim();
+    m_asset_n->m_type          = asset_type;
+    m_asset_n->m_status        = AssetStatus();
+    m_asset_n->m_name          = asset_name;
+    m_asset_n->m_start_date_p  = mmDate(w_dpc->GetValue());
+    m_asset_n->m_currency_id_n = -1;
+    m_asset_n->m_value         = asset_value;
+    m_asset_n->m_change        = AssetChange(asset_change_id);
+    m_asset_n->m_change_mode   = AssetChangeMode();
+    m_asset_n->m_change_rate   = asset_change_rate;
+    m_asset_n->m_notes         = w_notes->GetValue().Trim();
 
     int64 old_asset_id = m_asset_n->id();
     AssetModel::instance().unsafe_save_data_n(m_asset_n);
@@ -460,7 +460,7 @@ void AssetDialog::OnOk(wxCommandEvent& /*event*/)
         return;
     }
 
-    const AccountData* asset_account = AccountModel::instance().get_key_data_n(name);
+    const AccountData* asset_account = AccountModel::instance().get_key_data_n(asset_name);
     if (is_new && !asset_account) {
         if (wxMessageBox(
             _t("Asset account not found.") + "\n\n" + _t("Do you want to create one?"),
@@ -489,7 +489,7 @@ void AssetDialog::CreateAssetAccount()
     new_account_d.m_name         = m_asset_n->m_type.name();
     new_account_d.m_type_        = NavigatorTypes::instance().getAssetAccountStr();
     new_account_d.m_open_balance = 0;
-    new_account_d.m_open_date    = m_asset_n->m_start_date_n.value().isoDate();
+    new_account_d.m_open_date    = m_asset_n->m_start_date_p.value().isoDate();
     new_account_d.m_currency_id  = CurrencyModel::GetBaseCurrency()->m_id;
     AccountModel::instance().add_data_n(new_account_d);
 

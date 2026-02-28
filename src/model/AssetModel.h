@@ -51,7 +51,7 @@ public:
     wxString get_id_name(int64 asset_id);
 
     // Return the value of an asset at a given date
-    std::pair<double, double> valueAtDate(const Data& asset_d, const wxDate& date);
+    std::pair<double, double> valueAtDate(const Data& asset_d, const mmDate& date);
     // Return the current value of an asset
     std::pair<double, double> value(const Data& asset_d);
     // Return the current value of all assets

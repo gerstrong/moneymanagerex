@@ -94,14 +94,14 @@ int64 CurrencyHistoryModel::addUpdate(
 }
 
 /** Return the rate for a specific currency in a specific day*/
-double CurrencyHistoryModel::getDayRate(int64 currencyID, const wxString& DateISO)
+double CurrencyHistoryModel::getDayRate(int64 currencyID, const wxString& iso_date)
 {
     if (!PrefModel::instance().getUseCurrencyHistory()) {
         const CurrencyData* c = CurrencyModel::instance().get_data_n(currencyID);
         return c ? c->m_base_conv_rate : 1.0;
     }
     wxDate Date;
-    if (Date.ParseDate(DateISO))
+    if (Date.ParseDate(iso_date))
         return CurrencyHistoryModel::getDayRate(currencyID, Date);
     else {
         wxASSERT(false);
@@ -109,7 +109,7 @@ double CurrencyHistoryModel::getDayRate(int64 currencyID, const wxString& DateIS
     }
 }
 
-double CurrencyHistoryModel::getDayRate(int64 currencyID, const wxDate& Date)
+double CurrencyHistoryModel::getDayRate(int64 currencyID, const wxDate& date)
 {
     if (currencyID == CurrencyModel::GetBaseCurrency()->m_id || currencyID == -1)
         return 1;
@@ -117,14 +117,13 @@ double CurrencyHistoryModel::getDayRate(int64 currencyID, const wxDate& Date)
     if (!PrefModel::instance().getUseCurrencyHistory())
         return CurrencyModel::instance().get_data_n(currencyID)->m_base_conv_rate;
 
-    CurrencyHistoryModel::DataA Data = CurrencyHistoryModel::instance().find(
+    CurrencyHistoryModel::DataA ch_a = CurrencyHistoryModel::instance().find(
         CurrencyHistoryCol::CURRENCYID(OP_EQ, currencyID),
-        CurrencyHistoryModel::CURRDATE(OP_EQ, Date)
+        CurrencyHistoryModel::CURRDATE(OP_EQ, date)
     );
-    if (!Data.empty())
-    {
+    if (!ch_a.empty()) {
         //Rate found for specified day
-        return Data.back().m_base_conv_rate;
+        return ch_a.back().m_base_conv_rate;
     }
     else if (CurrencyHistoryModel::instance().find(
         CurrencyHistoryCol::CURRENCYID(currencyID)
@@ -132,26 +131,23 @@ double CurrencyHistoryModel::getDayRate(int64 currencyID, const wxDate& Date)
         //Rate not found for specified day, look at previous and next
         CurrencyHistoryModel::DataA DataPrevious = CurrencyHistoryModel::instance().find(
             CurrencyHistoryCol::CURRENCYID(currencyID),
-            CurrencyHistoryModel::CURRDATE(OP_LE, Date)
+            CurrencyHistoryModel::CURRDATE(OP_LE, date)
         );
         CurrencyHistoryModel::DataA DataNext = CurrencyHistoryModel::instance().find(
             CurrencyHistoryCol::CURRENCYID(currencyID),
-            CurrencyHistoryModel::CURRDATE(OP_GE, Date)
+            CurrencyHistoryModel::CURRDATE(OP_GE, date)
         );
 
-        if (!DataPrevious.empty() && !DataNext.empty())
-        {
-            const wxTimeSpan spanPast = Date.Subtract(parseDateTime(DataPrevious.back().m_date));
-            const wxTimeSpan spanFuture = parseDateTime(DataNext[0].m_date).Subtract(Date);
+        if (!DataPrevious.empty() && !DataNext.empty()) {
+            const wxTimeSpan spanPast = date.Subtract(parseDateTime(DataPrevious.back().m_date));
+            const wxTimeSpan spanFuture = parseDateTime(DataNext[0].m_date).Subtract(date);
 
             return spanPast <= spanFuture ? DataPrevious.back().m_base_conv_rate : DataNext[0].m_base_conv_rate;
         }
-        else if (!DataPrevious.empty())
-        {
+        else if (!DataPrevious.empty()) {
             return DataPrevious.back().m_base_conv_rate;
         }
-        else if (!DataNext.empty())
-        {
+        else if (!DataNext.empty()) {
             return DataNext[0].m_base_conv_rate;
         }
     }

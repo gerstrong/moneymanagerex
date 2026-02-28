@@ -179,7 +179,7 @@ wxString BalanceReport::getHTMLText()
     }
     std::reverse(arDates.begin(), arDates.end());
 
-    for (const auto & end_date : arDates) {
+    for (const auto& end_date : arDates) {
         double total = 0.0;
         BalanceEntry totBalanceEntry;
         totBalanceEntry.date = end_date;
@@ -209,7 +209,9 @@ wxString BalanceReport::getHTMLText()
         idx = NavigatorTypes::instance().getAccountTypeIdx(NavigatorTypes::TYPE_ID_ASSET);
         if (idx > -1) {
             for (const auto& asset : AssetModel::instance().find_all()) {
-                balancePerDay[idx] += AssetModel::instance().valueAtDate(asset, end_date).second * getCurrencyDateRate(asset.m_currency_id, end_date);
+                balancePerDay[idx] += AssetModel::instance().valueAtDate(
+                    asset, mmDate(end_date)
+                ).second * getCurrencyDateRate(asset.m_currency_id_n, end_date);
             }
         }
 

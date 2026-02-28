@@ -444,9 +444,13 @@ void StockDialog::OnSave(wxCommandEvent & /*event*/)
         return;
     }
 
-    const wxString pdate = m_purchase_date_ctrl->GetValue().FormatISODate();
+    mmDate pdate = mmDate(m_purchase_date_ctrl->GetValue());
     if (pdate < account_n->m_open_date)
-        return mmErrorDialogs::ToolTip4Object(m_purchase_date_ctrl, _t("The opening date for the account is later than the date of this transaction"), _t("Invalid Date"));
+        return mmErrorDialogs::ToolTip4Object(
+            m_purchase_date_ctrl,
+            _t("The opening date for the account is later than the date of this transaction"),
+            _t("Invalid Date")
+        );
 
     const wxString stockName = m_stock_name_ctrl->GetValue();
     const wxString notes = m_notes_ctrl->GetValue();
@@ -487,7 +491,7 @@ void StockDialog::OnSave(wxCommandEvent & /*event*/)
     m_stock_n->m_name           = stockName;
     m_stock_n->m_symbol         = stockSymbol;
     m_stock_n->m_num_shares     = numShares;
-    m_stock_n->m_purchase_date  = pdate;
+    m_stock_n->m_purchase_date  = pdate.isoDate();
     m_stock_n->m_purchase_price = initPrice;
     m_stock_n->m_current_price  = currentPrice;
     m_stock_n->m_purchase_value = initValue;
@@ -524,11 +528,11 @@ void StockDialog::CreateShareAccount(
         return;
 
     AccountData new_account_d = AccountData();
-    new_account_d.m_name         = name;
-    new_account_d.m_type_        = NavigatorTypes::instance().getShareAccountStr();
-    new_account_d.m_open_balance = 0;
-    new_account_d.m_open_date    = openingDate;
-    new_account_d.m_currency_id  = stock_account->m_currency_id;
+    new_account_d.m_name          = name;
+    new_account_d.m_type_         = NavigatorTypes::instance().getShareAccountStr();
+    new_account_d.m_currency_id_p = stock_account->m_currency_id_p;
+    new_account_d.m_open_date     = mmDate(openingDate);
+    new_account_d.m_open_balance  = 0;
     AccountModel::instance().add_data_n(new_account_d);
 
     TrxShareDialog share_dialog(this, m_stock_n);

@@ -73,14 +73,16 @@ double BalanceReport::getCheckingBalance(const AccountData* account, const wxDat
     return account->m_open_balance;
 }
 
-std::pair<double, double> BalanceReport::getBalance(const AccountData* account, const wxDate& date)
-{
+std::pair<double, double> BalanceReport::getBalance(
+    const AccountData* account,
+    const wxDate& date
+) {
     std::pair<double /*cash bal*/, double /*market bal*/> bal = { 0.0, 0.0 };
-    if (date.FormatISODate() >= account->m_open_date) {
-        bal.first = getCheckingBalance(account, date);
-        if (AccountModel::type_id(*account) == NavigatorTypes::TYPE_ID_INVESTMENT) {
-            bal.second = StockModel::instance().getDailyBalanceAt(account, date);
-        }
+    if (mmDate(date) < account->m_open_date)
+        return bal;
+    bal.first = getCheckingBalance(account, date);
+    if (AccountModel::type_id(*account) == NavigatorTypes::TYPE_ID_INVESTMENT) {
+        bal.second = StockModel::instance().getDailyBalanceAt(account, date);
     }
     return bal;
 }
@@ -131,7 +133,7 @@ wxString BalanceReport::getHTMLText()
     dateStart = wxDate::Today();
     // Calculate the report date
     for (const auto& account: AccountModel::instance().find_all()) {
-        const wxDate accountOpeningDate = parseDateTime(account.m_open_date);
+        const wxDate accountOpeningDate = account.m_open_date.getDateTime();
         if (accountOpeningDate.IsEarlierThan(dateStart))
             dateStart = accountOpeningDate;
         m_account_date_balance[account.m_id] = loadCheckingDateBalance(account);
@@ -199,9 +201,9 @@ wxString BalanceReport::getHTMLText()
             }
             if (idx > -1) {
                 std::pair<double, double> dailybal = getBalance(&account, end_date);
-                balancePerDay[idx] += dailybal.first * getCurrencyDateRate(account.m_currency_id, end_date);
+                balancePerDay[idx] += dailybal.first * getCurrencyDateRate(account.m_currency_id_p, end_date);
                 if (AccountModel::type_id(account) == NavigatorTypes::TYPE_ID_INVESTMENT) {
-                    balancePerDay[idx] += dailybal.second * getCurrencyDateRate(account.m_currency_id, end_date);
+                    balancePerDay[idx] += dailybal.second * getCurrencyDateRate(account.m_currency_id_p, end_date);
                 }
             }
         }

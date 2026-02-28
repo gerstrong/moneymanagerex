@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include "util/mmDate.h"
 #include "_DataEnum.h"
 #include "table/_TableBase.h"
 #include "table/AccountTable.h"
@@ -27,24 +28,24 @@ struct AccountData
 {
     int64           m_id;
     wxString        m_name;
-    wxString        m_type_;
-    wxString        m_num;
+    wxString        m_type_;              // TODO: restore account types
+    int64           m_currency_id_p;      // non-null (> 0) after initialization
     AccountStatus   m_status;
+    AccountFavorite m_favorite;
+    wxString        m_num;
     wxString        m_notes;
     wxString        m_held_at;
     wxString        m_website;
     wxString        m_contact_info;
     wxString        m_access_info;
+    mmDate          m_open_date;          // non-null
     double          m_open_balance;
-    wxString        m_open_date;
-    AccountFavorite m_favorite;
-    int64           m_currency_id;
     bool            m_stmt_locked;
-    wxString        m_stmt_date;
+    mmDateN         m_stmt_date_n;        // optional (can be null)
     double          m_min_balance;
     double          m_credit_limit;
     double          m_interest_rate;
-    wxString        m_payment_due_date;
+    mmDateN         m_payment_due_date_n; // optional (can be null)
     double          m_min_payment;
 
     explicit AccountData();
@@ -72,6 +73,11 @@ struct AccountData
     bool is_open() const { return m_status.id() == AccountStatus::e_open; }
     bool is_closed() const { return m_status.id() == AccountStatus::e_closed; }
     bool is_favorite() const { return m_favorite.id() == AccountFavorite::e_true; }
+    bool is_locked_for(const mmDate& date) const {
+        // the statement date is inclusive for lock, i.e., new transactions
+        // are not allowed within the statement date or before the statement date
+        return m_stmt_locked && m_stmt_date_n.has_value() && date <= m_stmt_date_n.value();
+    }
 
     struct SorterByACCOUNTID
     {
@@ -182,7 +188,7 @@ struct AccountData
     {
         bool operator()(const AccountData& x, const AccountData& y)
         {
-            return x.m_currency_id < y.m_currency_id;
+            return x.m_currency_id_p < y.m_currency_id_p;
         }
     };
 
@@ -198,7 +204,10 @@ struct AccountData
     {
         bool operator()(const AccountData& x, const AccountData& y)
         {
-            return x.m_stmt_date < y.m_stmt_date;
+            return x.m_stmt_date_n.has_value() && (
+                !y.m_stmt_date_n.has_value() ||
+                x.m_stmt_date_n.value() < y.m_stmt_date_n.value()
+            );
         }
     };
 
@@ -230,7 +239,10 @@ struct AccountData
     {
         bool operator()(const AccountData& x, const AccountData& y)
         {
-            return x.m_payment_due_date < y.m_payment_due_date;
+            return x.m_payment_due_date_n.has_value() && (
+                !y.m_payment_due_date_n.has_value() ||
+                x.m_payment_due_date_n.value() < y.m_payment_due_date_n.value()
+            );
         }
     };
 
@@ -243,7 +255,8 @@ struct AccountData
     };
 };
 
-inline AccountData::AccountData(wxSQLite3ResultSet& q)
+inline AccountData::AccountData(wxSQLite3ResultSet& q) :
+    AccountData()
 {
     from_select_result(q);
 }

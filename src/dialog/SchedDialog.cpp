@@ -729,11 +729,11 @@ void SchedDialog::SetAmountCurrencies(int64 accountID, int64 toAccountID)
 {
     const AccountData* account_n = AccountModel::instance().get_id_data_n(accountID);
     if (account_n)
-        textAmount_->SetCurrency(CurrencyModel::instance().get_id_data_n(account_n->m_currency_id));
+        textAmount_->SetCurrency(CurrencyModel::instance().get_id_data_n(account_n->m_currency_id_p));
 
     account_n = AccountModel::instance().get_id_data_n(toAccountID);
     if (account_n)
-        toTextAmount_->SetCurrency(CurrencyModel::instance().get_id_data_n(account_n->m_currency_id));
+        toTextAmount_->SetCurrency(CurrencyModel::instance().get_id_data_n(account_n->m_currency_id_p));
 }
 
 void SchedDialog::OnCategs(wxCommandEvent& WXUNUSED(event))
@@ -1031,11 +1031,19 @@ void SchedDialog::OnOk(wxCommandEvent& WXUNUSED(event))
 
     const AccountData* account = AccountModel::instance().get_id_data_n(m_sched_d.ACCOUNTID);
     const AccountData* toAccount = AccountModel::instance().get_id_data_n(m_sched_d.TOACCOUNTID);
-    if (m_sched_d.TRANSDATE < account->m_open_date)
-        return mmErrorDialogs::ToolTip4Object(cbAccount_, _t("The opening date for the account is later than the date of this transaction"), _t("Invalid Date"));
+    if (mmDate(m_sched_d.TRANSDATE) < account->m_open_date)
+        return mmErrorDialogs::ToolTip4Object(
+            cbAccount_,
+            _t("The opening date for the account is later than the date of this transaction"),
+            _t("Invalid Date")
+        );
 
-    if (toAccount && (m_sched_d.TRANSDATE < toAccount->m_open_date))
-        return mmErrorDialogs::ToolTip4Object(cbToAccount_, _t("The opening date for the account is later than the date of this transaction"), _t("Invalid Date"));
+    if (toAccount && (mmDate(m_sched_d.TRANSDATE) < toAccount->m_open_date))
+        return mmErrorDialogs::ToolTip4Object(
+            cbToAccount_,
+            _t("The opening date for the account is later than the date of this transaction"),
+            _t("Invalid Date")
+        );
 
     if (!m_enter_occur) {
         SchedData sched_d = (!m_new_bill && !m_dup_bill)

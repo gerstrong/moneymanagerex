@@ -122,7 +122,7 @@ std::pair<double, double> AssetModel::valueAtDate(const Data& asset_d, const mmD
         for (const auto& trx_d : trx_a) {
             const mmDate trx_date = mmDate(TrxModel::getTransDateTime(trx_d));
             const AccountData* account_n = AccountModel::instance().get_id_data_n(trx_d.ACCOUNTID);
-            int64 currency_id_n = account_n ? account_n->m_currency_id : -1;
+            int64 currency_id_n = account_n ? account_n->m_currency_id_p : -1;
             double currency_rate = CurrencyHistoryModel::getDayRate(currency_id_n, trx_date.getDateTime());
             double account_flow = TrxModel::account_flow(trx_d, trx_d.ACCOUNTID);
             double base_amount = -(account_flow * currency_rate);

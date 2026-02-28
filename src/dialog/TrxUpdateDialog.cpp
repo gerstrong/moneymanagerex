@@ -416,8 +416,8 @@ void TrxUpdateDialog::OnOk(wxCommandEvent& WXUNUSED(event))
                 date.replace(0, 10, m_dpc->GetValue().FormatISODate());
                 const AccountData* account = AccountModel::instance().get_id_data_n(trx_n->ACCOUNTID);
                 const AccountData* to_account = AccountModel::instance().get_id_data_n(trx_n->TOACCOUNTID);
-                if ((date < account->m_open_date) ||
-                    (to_account && (date < to_account->m_open_date)))
+                if ((mmDate(date) < account->m_open_date) ||
+                    (to_account && (mmDate(date) < to_account->m_open_date)))
                 {
                     skip_trx.push_back(trx_n->TRANSID);
                     continue;
@@ -504,9 +504,9 @@ void TrxUpdateDialog::OnOk(wxCommandEvent& WXUNUSED(event))
             }
             else {
                 const auto acc = AccountModel::instance().get_id_data_n(trx_n->ACCOUNTID);
-                const auto curr = CurrencyModel::instance().get_id_data_n(acc->m_currency_id);
+                const auto curr = CurrencyModel::instance().get_id_data_n(acc->m_currency_id_p);
                 const auto to_acc = AccountModel::instance().get_id_data_n(trx_n->TOACCOUNTID);
-                const auto to_curr = CurrencyModel::instance().get_id_data_n(to_acc->m_currency_id);
+                const auto to_curr = CurrencyModel::instance().get_id_data_n(to_acc->m_currency_id_p);
                 if (curr == to_curr) {
                     trx_n->TOTRANSAMOUNT = trx_n->TRANSAMOUNT;
                 }

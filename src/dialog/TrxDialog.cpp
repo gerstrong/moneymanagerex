@@ -209,12 +209,21 @@ bool TrxDialog::Create(
 
 void TrxDialog::dataToControls()
 {
+    // short names for model instances
+    CurrencyModel& U  = CurrencyModel::instance();
+    AccountModel&  A  = AccountModel::instance();
+    PayeeModel&    P  = PayeeModel::instance();
+    TrxModel&      T  = TrxModel::instance();
+    TagLinkModel&  GL = TagLinkModel::instance();
+
     TrxModel::getFrequentUsedNotes(frequentNotes_, m_journal_data.ACCOUNTID);
-    wxButton* bFrequentUsedNotes = static_cast<wxButton*>(FindWindow(ID_DIALOG_TRANS_BUTTON_FREQENTNOTES));
+    wxButton* bFrequentUsedNotes = static_cast<wxButton*>(
+        FindWindow(ID_DIALOG_TRANS_BUTTON_FREQENTNOTES)
+    );
     bFrequentUsedNotes->Enable(!frequentNotes_.empty());
 
-    if (!skip_date_init_) //Date
-    {
+    //Date
+    if (!skip_date_init_) {
         wxDateTime trx_date;
         if (previousDate.IsValid()) {
             trx_date = previousDate;
@@ -231,10 +240,13 @@ void TrxDialog::dataToControls()
         skip_date_init_ = true;
     }
 
-    if (!skip_status_init_) //Status
-    {
-        bool useOriginalState = m_mode != MODE_DUP || SettingModel::instance().getBool(INIDB_USE_ORG_STATE_DUPLICATE_PASTE, false);
-        m_status = useOriginalState? m_journal_data.STATUS : TrxModel::status_key(PrefModel::instance().getTransStatusReconciled());
+    //Status
+    if (!skip_status_init_) {
+        bool useOriginalState = m_mode != MODE_DUP ||
+            SettingModel::instance().getBool(INIDB_USE_ORG_STATE_DUPLICATE_PASTE, false);
+        m_status = useOriginalState
+            ? m_journal_data.STATUS
+            : TrxModel::status_key(PrefModel::instance().getTransStatusReconciled());
         choiceStatus_->SetSelection(TrxModel::status_id(m_status));
         skip_status_init_ = true;
     }
@@ -243,17 +255,16 @@ void TrxDialog::dataToControls()
     transaction_type_->SetSelection(TrxModel::type_id(m_journal_data.TRANSCODE));
 
     //Account
-    if (!skip_account_init_)
-    {
-        const AccountData* acc_n = AccountModel::instance().get_id_data_n(m_journal_data.ACCOUNTID);
+    if (!skip_account_init_) {
+        const AccountData* acc_n = A.get_id_data_n(m_journal_data.ACCOUNTID);
         if (acc_n) {
             cbAccount_->ChangeValue(acc_n->m_name);
-            m_textAmount->SetCurrency(CurrencyModel::instance().get_id_data_n(acc_n->m_currency_id));
+            m_textAmount->SetCurrency(U.get_id_data_n(acc_n->m_currency_id_p));
         }
-        const AccountData* to_acc = AccountModel::instance().get_id_data_n(m_journal_data.TOACCOUNTID);
+        const AccountData* to_acc = A.get_id_data_n(m_journal_data.TOACCOUNTID);
         if (to_acc) {
             cbToAccount_->ChangeValue(to_acc->m_name);
-            toTextAmount_->SetCurrency(CurrencyModel::instance().get_id_data_n(to_acc->m_currency_id));
+            toTextAmount_->SetCurrency(U.get_id_data_n(to_acc->m_currency_id_p));
         }
 
         skip_account_init_ = true;
@@ -281,8 +292,7 @@ void TrxDialog::dataToControls()
     bSwitch_->Show(m_transfer);
 
     //Amounts
-    if (!skip_amount_init_)
-    {
+    if (!skip_amount_init_) {
         if (m_transfer && m_advanced)
             toTextAmount_->SetValue(m_journal_data.TOTRANSAMOUNT);
         else
@@ -293,14 +303,13 @@ void TrxDialog::dataToControls()
         skip_amount_init_ = true;
     }
 
-    if (!skip_payee_init_) //Payee
-    {
+    //Payee
+    if (!skip_payee_init_) {
         cbPayee_->SetEvtHandlerEnabled(false);
 
         cbAccount_->UnsetToolTip();
         cbPayee_->UnsetToolTip();
-        if (!m_transfer)
-        {
+        if (!m_transfer) {
             if (!TrxModel::is_foreign(m_journal_data)) {
                 m_journal_data.TOACCOUNTID = -1;
             }
@@ -310,30 +319,30 @@ void TrxDialog::dataToControls()
                 && PrefModel::instance().getTransPayeeNone() == PrefModel::LASTUSED
                 && (accountID != -1)
             ) {
-                TrxModel::DataA transactions = TrxModel::instance().find(
+                TrxModel::DataA transactions = T.find(
                     TrxModel::TRANSCODE(OP_NE, TrxModel::TYPE_ID_TRANSFER),
                     TrxCol::ACCOUNTID(OP_EQ, accountID));
 
                 if (!transactions.empty()) {
-                    const PayeeData* payee_n = PayeeModel::instance().get_id_data_n(transactions.back().PAYEEID);
+                    const PayeeData* payee_n = P.get_id_data_n(transactions.back().PAYEEID);
                     cbPayee_->ChangeValue(payee_n->m_name);
                 }
             }
             else if (m_mode == MODE_NEW
                 && PrefModel::instance().getTransPayeeNone() == PrefModel::UNUSED
             ) {
-                const PayeeData* payee_n = PayeeModel::instance().get_key_data_n(_t("Unknown"));
+                const PayeeData* payee_n = P.get_key_data_n(_t("Unknown"));
                 if (!payee_n) {
                     PayeeData new_payee_d = PayeeData();
                     new_payee_d.m_name = _t("Unknown");
-                    PayeeModel::instance().add_data_n(new_payee_d);
+                    P.add_data_n(new_payee_d);
                     cbPayee_->mmDoReInitialize();
                 }
 
                 cbPayee_->ChangeValue(_t("Unknown"));
             }
             else {
-                const PayeeData* payee_n = PayeeModel::instance().get_id_data_n(m_journal_data.PAYEEID);
+                const PayeeData* payee_n = P.get_id_data_n(m_journal_data.PAYEEID);
                 if (payee_n)
                     cbPayee_->ChangeValue(payee_n->m_name);
             }
@@ -351,8 +360,7 @@ void TrxDialog::dataToControls()
     Layout();
 
     bool has_split = !m_local_splits.empty();
-    if (!skip_category_init_)
-    {
+    if (!skip_category_init_) {
         bSplit_->UnsetToolTip();
         if (has_split)
         {
@@ -361,21 +369,21 @@ void TrxDialog::dataToControls()
             m_textAmount->SetValue(TrxSplitModel::get_total(m_local_splits));
             m_journal_data.CATEGID = -1;
         }
-        else if (m_mode == MODE_NEW && m_transfer
-            && PrefModel::instance().getTransCategoryTransferNone() == PrefModel::LASTUSED)
-        {
-            TrxModel::DataA transactions = TrxModel::instance().find(
+        else if (m_mode == MODE_NEW && m_transfer &&
+            PrefModel::instance().getTransCategoryTransferNone() == PrefModel::LASTUSED
+        ) {
+            TrxModel::DataA transactions = T.find(
                 TrxModel::TRANSCODE(OP_EQ, TrxModel::TYPE_ID_TRANSFER)
             );
 
-            if (!transactions.empty()
-                && (!CategoryModel::is_hidden(transactions.back().CATEGID)))
-            {
+            if (!transactions.empty() &&
+                !CategoryModel::is_hidden(transactions.back().CATEGID)
+            ) {
                 const int64 cat = transactions.back().CATEGID;
                 cbCategory_->ChangeValue(CategoryModel::full_name(cat));
             }
-        } else
-        {
+        }
+        else {
             auto fullCategoryName = CategoryModel::full_name(m_journal_data.CATEGID);
             cbCategory_->ChangeValue(fullCategoryName);
         }
@@ -388,10 +396,9 @@ void TrxDialog::dataToControls()
     bSplit_->Enable(!m_transfer);
 
     // Tags
-    if (!skip_tag_init_)
-    {
+    if (!skip_tag_init_) {
         wxArrayInt64 tagIds;
-        for (const auto& tag : TagLinkModel::instance().find(
+        for (const auto& tag : GL.find(
             TagLinkCol::REFTYPE((m_journal_data.m_repeat_num == 0) ?
                 TrxModel::refTypeName :
                 SchedModel::refTypeName),
@@ -404,8 +411,8 @@ void TrxDialog::dataToControls()
         skip_tag_init_ = true;
     }
 
-    if (!skip_notes_init_) //Notes & Transaction Number
-    {
+    //Notes & Transaction Number
+    if (!skip_notes_init_) {
         textNumber_->SetValue(m_journal_data.TRANSACTIONNUMBER);
         textNotes_->SetValue(m_journal_data.NOTES);
         skip_notes_init_ = true;
@@ -696,8 +703,12 @@ bool TrxDialog::ValidateData()
     m_journal_data.ACCOUNTID = cbAccount_->mmGetId();
     const AccountData* account = AccountModel::instance().get_id_data_n(m_journal_data.ACCOUNTID);
 
-    if (m_journal_data.TRANSDATE < account->m_open_date) {
-        mmErrorDialogs::ToolTip4Object(cbAccount_, _t("The opening date for the account is later than the date of this transaction"), _t("Invalid Date"));
+    if (mmDate(m_journal_data.TRANSDATE) < account->m_open_date) {
+        mmErrorDialogs::ToolTip4Object(
+            cbAccount_,
+            _t("The opening date for the account is later than the date of this transaction"),
+            _t("Invalid Date")
+        );
         return false;
     }
 
@@ -758,21 +769,18 @@ bool TrxDialog::ValidateData()
     {
         const AccountData *to_account = AccountModel::instance().get_name_data_n(cbToAccount_->GetValue());
 
-        if (!to_account || to_account->m_id == m_journal_data.ACCOUNTID)
-        {
+        if (!to_account || to_account->m_id == m_journal_data.ACCOUNTID) {
             mmErrorDialogs::InvalidAccount(cbToAccount_, true);
             return false;
         }
         m_journal_data.TOACCOUNTID = to_account->m_id;
 
-        if (m_journal_data.TRANSDATE < to_account->m_open_date)
-        {
+        if (mmDate(m_journal_data.TRANSDATE) < to_account->m_open_date) {
             mmErrorDialogs::ToolTip4Object(cbToAccount_, _t("The opening date for the account is later than the date of this transaction"), _t("Invalid Date"));
             return false;
         }
 
-        if (m_advanced)
-        {
+        if (m_advanced) {
             if (!toTextAmount_->checkValue(m_journal_data.TOTRANSAMOUNT))
                 return false;
         }
@@ -780,21 +788,19 @@ bool TrxDialog::ValidateData()
     }
 
     /* Check if transaction is to proceed.*/
-    if (account->m_stmt_locked) {
-        if (dpc_->GetValue() <= parseDateTime(account->m_stmt_date)) {
-            if (wxMessageBox(wxString::Format(
-                _t("Lock transaction to date: %s") + "\n\n" + _t("Do you want to continue?")
-                , mmGetDateTimeForDisplay(account->m_stmt_date))
-                , _t("MMEX Transaction Check"), wxYES_NO | wxICON_WARNING) == wxNO)
-            {
-                return false;
-            }
+    if (account->is_locked_for(mmDate(dpc_->GetValue()))) {
+        if (wxMessageBox(wxString::Format(
+            _t("Lock transaction to date: %s") + "\n\n" + _t("Do you want to continue?"),
+            mmGetDateTimeForDisplay(account->m_stmt_date_n.value().isoDate())),
+            _t("MMEX Transaction Check"),
+            wxYES_NO | wxICON_WARNING
+        ) == wxNO) {
+            return false;
         }
     }
 
     //Checking account does not exceed limits
-    if (m_mode != MODE_EDIT)
-    {
+    if (m_mode != MODE_EDIT) {
         if (m_journal_data.STATUS != TrxModel::STATUS_KEY_VOID &&
             (m_journal_data.TRANSCODE == TrxModel::TYPE_NAME_WITHDRAWAL ||
              m_journal_data.TRANSCODE == TrxModel::TYPE_NAME_TRANSFER) &&

@@ -865,7 +865,7 @@ void JournalList::onMouseRightClick(wxMouseEvent& event)
         case LIST_ID_WITHDRAWAL: {
             columnIsAmount = true;
             const AccountData* account = AccountModel::instance().get_id_data_n(m_trans[row].ACCOUNTID_W);
-            const CurrencyData* currency = account ? CurrencyModel::instance().get_id_data_n(account->m_currency_id) : nullptr;
+            const CurrencyData* currency = account ? CurrencyModel::instance().get_id_data_n(account->m_currency_id_p) : nullptr;
             if (currency) {
                 copyText_ = CurrencyModel::toString(m_trans[row].TRANSAMOUNT_W, currency);
                 menuItemText = wxString::Format("%.2f", m_trans[row].TRANSAMOUNT_W);
@@ -876,7 +876,7 @@ void JournalList::onMouseRightClick(wxMouseEvent& event)
         case LIST_ID_DEPOSIT: {
             columnIsAmount = true;
             const AccountData* account = AccountModel::instance().get_id_data_n(m_trans[row].ACCOUNTID_D);
-            const CurrencyData* currency = account ? CurrencyModel::instance().get_id_data_n(account->m_currency_id) : nullptr;
+            const CurrencyData* currency = account ? CurrencyModel::instance().get_id_data_n(account->m_currency_id_p) : nullptr;
             if (currency) {
                 copyText_ = CurrencyModel::toString(m_trans[row].TRANSAMOUNT_D, currency);
                 menuItemText = wxString::Format("%.2f", m_trans[row].TRANSAMOUNT_D);
@@ -1410,10 +1410,10 @@ void JournalList::onMoveTransaction(wxCommandEvent& /*event*/)
             for (const auto& id : m_selected_id) {
                 if (!id.second) {
                     TrxData* trx_n = TrxModel::instance().unsafe_get_id_data_n(id.first);
-                    if (checkTransactionLocked(trx_n->ACCOUNTID, trx_n->TRANSDATE)
-                            || TrxModel::is_foreign(*trx_n)
-                            || TrxModel::type_id(trx_n->TRANSCODE) == TrxModel::TYPE_ID_TRANSFER
-                            || trx_n->TRANSDATE < dest_account->m_open_date
+                    if (checkTransactionLocked(trx_n->ACCOUNTID, trx_n->TRANSDATE) ||
+                        TrxModel::is_foreign(*trx_n) ||
+                        TrxModel::type_id(trx_n->TRANSCODE) == TrxModel::TYPE_ID_TRANSFER ||
+                        mmDate(trx_n->TRANSDATE) < dest_account->m_open_date
                     ) {
                         skip_trx.push_back(trx_n->TRANSID);
                     } else {
@@ -1547,17 +1547,18 @@ void JournalList::onMarkTransaction(wxCommandEvent& event)
     TrxModel::instance().db_savepoint();
 
     for (int row = 0; row < GetItemCount(); row++) {
-        if (GetItemState(row, wxLIST_STATE_SELECTED) == wxLIST_STATE_SELECTED) {
-            const AccountData* account = AccountModel::instance().get_id_data_n(m_trans[row].ACCOUNTID);
-            const auto statement_date = parseDateTime(account->m_stmt_date).FormatISODate();
-            wxString strDate = TrxModel::getTransDateTime(m_trans[row]).FormatISODate();
-            if (!account->m_stmt_locked || strDate > statement_date) {
-                //bRefreshRequired |= (status == TrxModel::STATUS_KEY_VOID) || (m_trans[row].STATUS == TrxModel::STATUS_KEY_VOID);
-                if (!m_trans[row].m_repeat_num) {
-                    m_trans[row].STATUS = status;
-                    TrxModel::instance().save_trx(m_trans[row]);
-                }
-            }
+        if (GetItemState(row, wxLIST_STATE_SELECTED) != wxLIST_STATE_SELECTED)
+            continue;
+        const AccountData* account_n = AccountModel::instance().get_id_data_n(
+            m_trans[row].ACCOUNTID
+        );
+        mmDateN trx_date_n = mmDateN(TrxModel::getTransDateTime(m_trans[row]));
+        if (trx_date_n.has_value() && account_n->is_locked_for(trx_date_n.value()))
+            continue;
+        //bRefreshRequired |= (status == TrxModel::STATUS_KEY_VOID) || (m_trans[row].STATUS == TrxModel::STATUS_KEY_VOID);
+        if (!m_trans[row].m_repeat_num) {
+            m_trans[row].STATUS = status;
+            TrxModel::instance().save_trx(m_trans[row]);
         }
     }
 
@@ -1971,7 +1972,7 @@ const wxString JournalList::getItem(long item, int col_id) const
         if (!m_cp->isAccount()) {
             const AccountData* account = AccountModel::instance().get_id_data_n(journal.ACCOUNTID_W);
             const CurrencyData* currency = account ?
-                CurrencyModel::instance().get_id_data_n(account->m_currency_id) : nullptr;
+                CurrencyModel::instance().get_id_data_n(account->m_currency_id_p) : nullptr;
             if (currency)
                 value = CurrencyModel::toCurrency(journal.TRANSAMOUNT_W, currency);
         }
@@ -1985,7 +1986,7 @@ const wxString JournalList::getItem(long item, int col_id) const
         if (!m_cp->isAccount()) {
             const AccountData* account = AccountModel::instance().get_id_data_n(journal.ACCOUNTID_D);
             const CurrencyData* currency = account ?
-                CurrencyModel::instance().get_id_data_n(account->m_currency_id) : nullptr;
+                CurrencyModel::instance().get_id_data_n(account->m_currency_id_p) : nullptr;
             if (currency)
                 value = CurrencyModel::toCurrency(journal.TRANSAMOUNT_D, currency);
         }
@@ -2264,27 +2265,20 @@ bool JournalList::checkForClosedAccounts()
     return false;
 }
 
-bool JournalList::checkTransactionLocked(int64 accountID, const wxString& transdate)
+bool JournalList::checkTransactionLocked(int64 accountID, const wxString& iso_date)
 {
     const AccountData* account_n = AccountModel::instance().get_id_data_n(accountID);
-    if (!account_n->m_stmt_locked)
+    mmDateN date_n = mmDateN(iso_date);
+    if (!date_n.has_value() || !account_n->is_locked_for(date_n.value()))
         return false;
 
-    wxDateTime transaction_date;
-    if (transaction_date.ParseDate(transdate) &&
-        transaction_date <= parseDateTime(account_n->m_stmt_date)
-    ) {
-        wxMessageBox(
-            wxString::Format(
-                _t("Locked transaction to date: %s\n\n"
-                    "Reconciled transactions."
-                ),
-                mmGetDateTimeForDisplay(account_n->m_stmt_date)
-            ),
-            _t("MMEX Transaction Check"),
-            wxOK | wxICON_WARNING
-        );
-        return true;
-    }
-    return false;
+    wxMessageBox(
+        wxString::Format(
+            _t("Locked transaction to date: %s\n\n" "Reconciled transactions."),
+            mmGetDateTimeForDisplay(account_n->m_stmt_date_n.value().isoDate())
+        ),
+        _t("MMEX Transaction Check"),
+        wxOK | wxICON_WARNING
+    );
+    return true;
 }

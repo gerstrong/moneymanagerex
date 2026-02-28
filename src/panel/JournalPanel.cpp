@@ -500,7 +500,7 @@ void JournalPanel::setFilterDate(mmDateRange2::Range& range)
     m_filter_id = FILTER_ID_DATE;
     m_current_date_range = mmDateRange2();
     if (isAccount()) {
-        m_current_date_range.setSDateN(mmDateN(m_account_n->m_stmt_date));
+        m_current_date_range.setSDateN(m_account_n->m_stmt_date_n);
     }
     m_current_date_range.setRange(range);
     m_scheduled_enable = !isDeletedTrans() && m_current_date_range.rangeEnd().has_value();
@@ -550,7 +550,7 @@ void JournalPanel::loadFilterSettings()
             }
         }
         if (isAccount()) {
-            m_current_date_range.setSDateN(mmDateN(m_account_n->m_stmt_date));
+            m_current_date_range.setSDateN(m_account_n->m_stmt_date_n);
         }
     }
     else if (m_filter_id == FILTER_ID_DATE_PICKER) {
@@ -1143,7 +1143,7 @@ void JournalPanel::onFilterDate(wxCommandEvent& event)
     m_filter_id = FILTER_ID_DATE_RANGE;
     m_current_date_range = mmDateRange2();
     if (isAccount()) {
-        m_current_date_range.setSDateN(mmDateN(m_account_n->m_stmt_date));
+        m_current_date_range.setSDateN(m_account_n->m_stmt_date_n);
     }
     m_current_date_range.setRange(m_date_range_a[i]);
     updateScheduledEnable();

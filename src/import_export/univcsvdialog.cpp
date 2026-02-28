@@ -1507,14 +1507,16 @@ void mmUnivCSVDialog::OnImport(wxCommandEvent& WXUNUSED(event))
             continue;
         }
 
-        wxString trxDate = holder.Date.FormatISOCombined();
+        wxDateTime trx_datetime = holder.Date;
         const AccountData* account2 = AccountModel::instance().get_id_data_n(accountID_);
         const AccountData* toAccount = AccountModel::instance().get_id_data_n(holder.ToAccountID);
-        if ((trxDate < account2->m_open_date) ||
-            (toAccount && (trxDate < toAccount->m_open_date)))
+        if ((mmDate(trx_datetime) < account2->m_open_date) ||
+            (toAccount && (mmDate(trx_datetime) < toAccount->m_open_date)))
         {
-            wxString msg = wxString::Format(_t("Line %ld: %s"), nLines + 1,
-                _t("The opening date for the account is later than the date of this transaction"));
+            wxString msg = wxString::Format(_t("Line %ld: %s"),
+                nLines + 1,
+                _t("The opening date for the account is later than the date of this transaction")
+            );
             log << msg << endl;
             *log_field_ << msg << "\n";
             // row was rejected so save it to rejectedRows
@@ -1523,7 +1525,7 @@ void mmUnivCSVDialog::OnImport(wxCommandEvent& WXUNUSED(event))
         }
 
         TrxData new_trx_d = TrxData();
-        new_trx_d.TRANSDATE         = trxDate;
+        new_trx_d.TRANSDATE         = trx_datetime.FormatISOCombined();
         new_trx_d.ACCOUNTID         = accountID_;
         new_trx_d.TOACCOUNTID       = holder.ToAccountID;
         new_trx_d.PAYEEID           = holder.PayeeID;

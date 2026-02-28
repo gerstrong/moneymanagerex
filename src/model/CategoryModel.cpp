@@ -333,7 +333,7 @@ void CategoryModel::getCategoryStats(
         }
 
         const double convRate = CurrencyHistoryModel::getDayRate(
-            AccountModel::instance().get_id_data_n(transaction.ACCOUNTID)->m_currency_id,
+            AccountModel::instance().get_id_data_n(transaction.ACCOUNTID)->m_currency_id_p,
             transaction.TRANSDATE
         );
         wxDateTime d = TrxModel::getTransDateTime(transaction);

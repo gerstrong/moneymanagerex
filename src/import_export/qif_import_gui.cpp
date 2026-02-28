@@ -809,7 +809,7 @@ void mmQIFImportDialog::refreshTabs(int tabs)
                 ? acc.second.at(QIF_ID_AccountType) : "";
 
             if (account) {
-                const CurrencyData *currency_n = CurrencyModel::instance().get_id_data_n(account->m_currency_id);
+                const CurrencyData *currency_n = CurrencyModel::instance().get_id_data_n(account->m_currency_id_p);
                 if (currency_n && currency_n->m_symbol == currencySymbol)
                     status = _t("OK");
                 else
@@ -1149,19 +1149,17 @@ void mmQIFImportDialog::OnOk(wxCommandEvent& WXUNUSED(event))
                 AccountData* account = AccountModel::instance().unsafe_get_id_data_n(trx.ACCOUNTID);
                 AccountData* toAccount = AccountModel::instance().unsafe_get_id_data_n(trx.TOACCOUNTID);
 
-                if ((trx.TRANSDATE < account->m_stmt_date && account->m_stmt_locked) ||
-                    (toAccount &&
-                        (trx.TRANSDATE < toAccount->m_stmt_date && toAccount->m_stmt_locked)
-                    )
+                if (account->is_locked_for(mmDate(trx.TRANSDATE)) ||
+                    (toAccount && toAccount->is_locked_for(mmDate(trx.TRANSDATE)))
                 )
                     continue;
 
-                if (trx.TRANSDATE < account->m_open_date) {
+                if (mmDate(trx.TRANSDATE) < account->m_open_date) {
                     // FIXME: account is changed but not saved
                     account->m_open_date = trx.TRANSDATE;
                 }
-                if (toAccount && (trx.TRANSDATE < toAccount->m_open_date)) {
-                    // FIXME: account is changed but not saved
+                if (toAccount && (mmDate(trx.TRANSDATE) < toAccount->m_open_date)) {
+                    // FIXME: toAccount is changed but not saved
                     toAccount->m_open_date = trx.TRANSDATE;
                 }
 
@@ -1670,14 +1668,17 @@ int64 mmQIFImportDialog::getOrCreateAccounts()
             const auto type = item.second.find(QIF_ID_AccountType) != item.second.end() ? item.second.at(QIF_ID_AccountType) : "";
             account_d.m_type_ = mmExportTransaction::mm_acc_type(type);
             //NavigatorTypes::TYPE_NAME_CHECKING;
-            account_d.m_name         = item.first;
-            account_d.m_open_balance = 0;
-            account_d.m_open_date    = wxDate::Today().FormatISODate();
-            account_d.m_currency_id  = CurrencyModel::GetBaseCurrency()->m_id;
-            const wxString c = (item.second.find(QIF_ID_Description) == item.second.end() ? "" : item.second.at(QIF_ID_Description));
+            account_d.m_name          = item.first;
+            account_d.m_open_balance  = 0;
+            account_d.m_open_date     = mmDate::today();
+            account_d.m_currency_id_p = CurrencyModel::GetBaseCurrency()->m_id;
+            const wxString c = (item.second.find(QIF_ID_Description) == item.second.end()
+                ? ""
+                : item.second.at(QIF_ID_Description)
+            );
             for (const auto& curr : CurrencyModel::instance().find_all()) {
                 if (wxString::Format("[%s]", curr.m_symbol) == c) {
-                    account_d.m_currency_id = curr.m_id;
+                    account_d.m_currency_id_p = curr.m_id;
                     break;
                 }
             }

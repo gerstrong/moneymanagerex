@@ -105,7 +105,7 @@ const wxString htmlWidgetStocks::getHTMLText()
         if (!account_d.is_open())
             continue;
 
-        double conv_rate = CurrencyHistoryModel::getDayRate(account_d.m_currency_id, today);
+        double conv_rate = CurrencyHistoryModel::getDayRate(account_d.m_currency_id_p, today);
         auto inv_bal = AccountModel::instance().get_data_investment_balance(account_d);
         double cash_bal = AccountModel::instance().get_data_balance(account_d);
 
@@ -230,7 +230,7 @@ void htmlWidgetTop7Categories::getTopCategoryStats(
 
         bool withdrawal = TrxModel::type_id(trx) == TrxModel::TYPE_ID_WITHDRAWAL;
         double convRate = CurrencyHistoryModel::getDayRate(
-            AccountModel::instance().get_id_data_n(trx.ACCOUNTID)->m_currency_id,
+            AccountModel::instance().get_id_data_n(trx.ACCOUNTID)->m_currency_id_p,
             trx.TRANSDATE
         );
 
@@ -412,7 +412,7 @@ const wxString htmlWidgetIncomeVsExpenses::getHTMLText()
             continue;
 
         double convRate = CurrencyHistoryModel::getDayRate(
-            AccountModel::instance().get_id_data_n(pBankTransaction.ACCOUNTID)->m_currency_id,
+            AccountModel::instance().get_id_data_n(pBankTransaction.ACCOUNTID)->m_currency_id_p,
             pBankTransaction.TRANSDATE
         );
 
@@ -748,7 +748,7 @@ const wxString htmlWidgetAccounts::displayAccounts(double& tBalance, double& tRe
     for (const auto& account_d : account_a) {
         const CurrencyData* currency = AccountModel::instance().get_data_currency_p(account_d);
 
-        double currency_rate = CurrencyHistoryModel::getDayRate(account_d.m_currency_id, today);
+        double currency_rate = CurrencyHistoryModel::getDayRate(account_d.m_currency_id_p, today);
         double bal = account_d.m_open_balance + accountStats_[account_d.m_id].second; //AccountModel::instance().get_data_balance(account_d);
         double reconciledBal = account_d.m_open_balance + accountStats_[account_d.m_id].first;
         tabBalance += bal * currency_rate;

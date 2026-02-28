@@ -334,18 +334,10 @@ void TrxModel::setEmptyData(Data &trx_d, int64 accountID)
 
 bool TrxModel::is_locked(const Data& trx_d)
 {
-    bool val = false;
+    // FIXME: check if TOACCOUNTID is locked
     const AccountData* account_n = AccountModel::instance().get_id_data_n(trx_d.ACCOUNTID);
-
-    if (account_n->m_stmt_locked) {
-        wxDateTime transaction_date;
-        if (transaction_date.ParseDate(trx_d.TRANSDATE)) {
-            if (transaction_date <= parseDateTime(account_n->m_stmt_date)) {
-                val = true;
-            }
-        }
-    }
-    return val;
+    mmDateN trx_date_n = mmDateN(trx_d.TRANSDATE);
+    return trx_date_n.has_value() && account_n->is_locked_for(trx_date_n.value());
 }
 
 bool TrxModel::purge_id(int64 id)
@@ -528,7 +520,7 @@ const wxString TrxModel::Full_Data::get_currency_code(int64 account_id) const
             account_id = this->TOACCOUNTID;
     }
     const AccountData* account_n = AccountModel::instance().get_id_data_n(account_id);
-    int64 currency_id = account_n ? account_n->m_currency_id: -1;
+    int64 currency_id = account_n ? account_n->m_currency_id_p: -1;
     const CurrencyData* curr = CurrencyModel::instance().get_id_data_n(currency_id);
 
     return curr ? curr->m_symbol : "";

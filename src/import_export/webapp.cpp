@@ -466,7 +466,8 @@ int64 mmWebApp::MMEX_InsertNewTransaction(webtran_holder& WebAppTrans)
 
     //Search Account
     const AccountData* account_n = AccountModel::instance().get_name_data_n(WebAppTrans.Account);
-    wxString accountName, accountInitialDate;
+    wxString accountName;
+    mmDateN accountInitialDate = mmDateN();
     if (account_n != nullptr) {
         AccountID = account_n->m_id;
         accountName = account_n->m_name;
@@ -547,18 +548,20 @@ int64 mmWebApp::MMEX_InsertNewTransaction(webtran_holder& WebAppTrans)
 
     // Create New Transaction
     TrxData new_trx_d = TrxData();
-    wxString trxDate = WebAppTrans.Date.FormatISOCombined();
-    if ((trxDate < accountInitialDate) || (ToAccount && trxDate < ToAccount->m_open_date)) {
+    wxDateTime trx_datetime = WebAppTrans.Date;
+    if ((mmDate(trx_datetime) < accountInitialDate.value()) ||
+        (ToAccount && mmDate(trx_datetime) < ToAccount->m_open_date)
+    ) {
         wxString msgStr = wxString::Format("%s: %s / %s: %s\n\n%s\n%s",
             _t("Account"), accountName,
-            _t("Date"), trxDate,
+            _t("Date"), mmDate(trx_datetime).isoDate(),
             _t("The opening date for the account is later than the date of this transaction"),
             _t("Today will be used as the transaction date")
         );
         wxMessageBox(msgStr, _t("Invalid Date"), wxICON_ERROR);
-        trxDate = wxDate::Today().FormatISOCombined();
+        trx_datetime = wxDate::Today();
     }
-    new_trx_d.TRANSDATE         = trxDate;
+    new_trx_d.TRANSDATE         = trx_datetime.FormatISOCombined();
     new_trx_d.STATUS            = TrStatus;
     new_trx_d.TRANSCODE         = WebAppTrans.Type;
     new_trx_d.TRANSAMOUNT       = WebAppTrans.Amount;

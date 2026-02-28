@@ -488,7 +488,7 @@ void TrxLinkDialog::SetTransactionAccount(const wxString& trans_account)
         m_account->SetLabelText(account->m_name);
         m_account_id = account->m_id;
         SetLastPayeeAndCategory(m_account_id);
-        const CurrencyData* currency = CurrencyModel::instance().get_id_data_n(account->m_currency_id);
+        const CurrencyData* currency = CurrencyModel::instance().get_id_data_n(account->m_currency_id_p);
         m_entered_amount->SetCurrency(currency);
         m_trans_currency->SetLabelText(currency->m_symbol);
     }
@@ -516,8 +516,8 @@ int64 TrxLinkDialog::SaveChecking()
     m_entered_amount->checkValue(initial_amount);
 
     const AccountData* account = AccountModel::instance().get_id_data_n(m_account_id);
-    wxDateTime trxDate = m_date_selector->GetValue();
-    if (trxDate.FormatISODate() < account->m_open_date) {
+    wxDateTime trx_datetime = m_date_selector->GetValue();
+    if (mmDate(trx_datetime) < account->m_open_date) {
         mmErrorDialogs::ToolTip4Object(m_account,
             _t("The opening date for the account is later than the date of this transaction"),
             _t("Invalid Date")
@@ -546,7 +546,7 @@ int64 TrxLinkDialog::SaveChecking()
     m_transaction_n->TRANSACTIONNUMBER = m_entered_number->GetValue();
     m_transaction_n->NOTES             = m_entered_notes->GetValue();
     m_transaction_n->CATEGID           = m_category_id;
-    m_transaction_n->TRANSDATE         = trxDate.FormatISOCombined();
+    m_transaction_n->TRANSDATE         = trx_datetime.FormatISOCombined();
     m_transaction_n->TOTRANSAMOUNT     = m_transaction_n->TRANSAMOUNT;
     TrxModel::instance().unsafe_save_trx(m_transaction_n);
     return m_transaction_n->id();

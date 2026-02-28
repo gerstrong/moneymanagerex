@@ -61,7 +61,7 @@ void TrxFilter::setAccountList(wxSharedPtr<wxArrayString> accountList)
     if (accountList) {
         m_account_a.clear();
         for (const auto &entry : *accountList) {
-            const auto account = AccountModel::instance().get_key(entry);
+            const auto account = AccountModel::instance().get_key_data_n(entry);
             if (account)
                 m_account_a.push_back(account->m_id);
         }
@@ -232,7 +232,7 @@ table {
 
         const AccountData* acc = AccountModel::instance().get_data_n(transaction.ACCOUNTID);
         if (acc) {
-            const CurrencyData* curr = AccountModel::currency(acc);
+            const CurrencyData* curr = AccountModel::currency_p(*acc);
             double flow = TrxModel::account_flow(transaction, acc->m_id);
             hb.addCurrencyCell(flow, curr);
         }

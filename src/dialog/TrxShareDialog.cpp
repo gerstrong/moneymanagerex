@@ -183,7 +183,7 @@ void TrxShareDialog::DataToControls()
                     m_transaction_panel->TransactionDate(TrxModel::getTransDateTime(*checking_entry));
                     m_transaction_panel->SetTransactionValue(GetAmount(std::abs(m_share_entry->SHARENUMBER)
                         , m_share_entry->SHAREPRICE, m_share_entry->SHARECOMMISSION), true);
-                    m_transaction_panel->SetTransactionAccount(AccountModel::get_id_name(checking_entry->ACCOUNTID));
+                    m_transaction_panel->SetTransactionAccount(AccountModel::instance().get_id_name(checking_entry->ACCOUNTID));
                     m_transaction_panel->SetTransactionStatus(TrxModel::status_id(*checking_entry));
                     m_transaction_panel->SetTransactionPayee(checking_entry->PAYEEID);
                     m_transaction_panel->SetTransactionCategory(checking_entry->CATEGID);
@@ -352,7 +352,7 @@ void TrxShareDialog::CreateControls()
     }
     else
     {
-        wxString acc_held = AccountModel::get_id_name(m_stock_n->m_account_id);
+        wxString acc_held = AccountModel::instance().get_id_name(m_stock_n->m_account_id);
         m_transaction_panel->SetTransactionNumber(m_stock_n->m_name + "_" + m_stock_n->m_symbol);
         m_transaction_panel->SetTransactionAccount(acc_held);
     }

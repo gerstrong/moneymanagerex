@@ -106,15 +106,15 @@ JournalPanel::JournalPanel(
 {
     if (isAccount()) {
         m_account_id = m_checking_id;
-        m_account = AccountModel::instance().get_data_n(m_account_id);
-        m_currency = AccountModel::currency(*m_account);
+        m_account_n = AccountModel::instance().get_data_n(m_account_id);
+        m_currency_n = AccountModel::currency_p(*m_account_n);
     }
     else if (isGroup()) {
         m_group_ids = std::set<int64>(group_ids.begin(), group_ids.end());
-        m_currency = CurrencyModel::GetBaseCurrency();
+        m_currency_n = CurrencyModel::GetBaseCurrency();
     }
     else {
-        m_currency = CurrencyModel::GetBaseCurrency();
+        m_currency_n = CurrencyModel::GetBaseCurrency();
     }
     m_use_account_specific_filter = PrefModel::instance().getUsePerAccountFilter();
     loadDateRanges(&m_date_range_a, &m_date_range_m, isAccount());
@@ -159,8 +159,8 @@ void JournalPanel::loadAccount(int64 account_id)
     m_checking_id = account_id;
     m_account_id = account_id;
     m_group_ids = {};
-    m_account = AccountModel::instance().get_data_n(m_account_id);
-    m_currency = AccountModel::currency(*m_account);
+    m_account_n = AccountModel::instance().get_data_n(m_account_id);
+    m_currency_n = AccountModel::currency_p(*m_account_n);
     m_use_account_specific_filter = PrefModel::instance().getUsePerAccountFilter();
 
     loadFilterSettings();
@@ -396,24 +396,23 @@ void JournalPanel::updateHeader()
 {
     m_header_text->SetLabelText(getPanelTitle());
     m_header_credit->Hide();
-    if (m_account)
-    {
+    if (m_account_n) {
         wxString summary = wxString::Format("%s%s",
             _t("Account Bal: "),
-            AccountModel::toCurrency(m_balance, m_account)
+            AccountModel::to_currency(m_balance, *m_account_n)
         );
         if (m_show_reconciled) summary.Append(wxString::Format("     %s%s     %s%s",
             _t("Reconciled Bal: "),
-            AccountModel::toCurrency(m_reconciled_balance, m_account),
+            AccountModel::to_currency(m_reconciled_balance, *m_account_n),
             _t("Diff: "),
-            AccountModel::toCurrency(m_balance - m_reconciled_balance, m_account)
+            AccountModel::to_currency(m_balance - m_reconciled_balance, *m_account_n)
         ));
         summary.Append(wxString::Format("     %s%s",
             _t("Filtered Flow: "),
-            AccountModel::toCurrency(m_flow, m_account)
+            AccountModel::to_currency(m_flow, *m_account_n)
         ));
-        if (m_account->m_credit_limit != 0.0) {
-            double limit = 100.0 * ((m_balance < 0.0) ? -m_balance / m_account->m_credit_limit : 0.0);
+        if (m_account_n->m_credit_limit != 0.0) {
+            double limit = 100.0 * ((m_balance < 0.0) ? -m_balance / m_account_n->m_credit_limit : 0.0);
             summary.Append(wxString::Format("   %s %.1f%%",
                 _t("Credit Limit:"),
                 limit
@@ -422,11 +421,18 @@ void JournalPanel::updateHeader()
             m_header_credit->SetValue(limit);
             m_header_credit->Show();
         }
-        if (AccountModel::type_id(m_account) == NavigatorTypes::TYPE_ID_INVESTMENT || AccountModel::type_id(m_account) == NavigatorTypes::TYPE_ID_ASSET)
-        {
-            std::pair<double, double> investment_bal = AccountModel::investment_balance(m_account);
-            summary.Append(wxString::Format("     %s%s", _t("Market Value: "), AccountModel::toCurrency(investment_bal.first, m_account)));
-            summary.Append(wxString::Format("     %s%s", _t("Invested: "), AccountModel::toCurrency(investment_bal.second, m_account)));
+        if (AccountModel::type_id(*m_account_n) == NavigatorTypes::TYPE_ID_INVESTMENT ||
+            AccountModel::type_id(*m_account_n) == NavigatorTypes::TYPE_ID_ASSET
+        ) {
+            std::pair<double, double> investment_bal = AccountModel::investment_balance(*m_account_n);
+            summary.Append(wxString::Format("     %s%s",
+                _t("Market Value: "),
+                AccountModel::to_currency(investment_bal.first, *m_account_n)
+            ));
+            summary.Append(wxString::Format("     %s%s",
+                _t("Invested: "),
+                AccountModel::to_currency(investment_bal.second, *m_account_n)
+            ));
         }
         m_header_balance->SetLabelText(summary);
     }
@@ -494,7 +500,7 @@ void JournalPanel::setFilterDate(mmDateRange2::Range& range)
     m_filter_id = FILTER_ID_DATE;
     m_current_date_range = mmDateRange2();
     if (isAccount()) {
-        m_current_date_range.setSDateN(mmDateN(m_account->m_stmt_date));
+        m_current_date_range.setSDateN(mmDateN(m_account_n->m_stmt_date));
     }
     m_current_date_range.setRange(range);
     m_scheduled_enable = !isDeletedTrans() && m_current_date_range.rangeEnd().has_value();
@@ -544,7 +550,7 @@ void JournalPanel::loadFilterSettings()
             }
         }
         if (isAccount()) {
-            m_current_date_range.setSDateN(mmDateN(m_account->m_stmt_date));
+            m_current_date_range.setSDateN(mmDateN(m_account_n->m_stmt_date));
         }
     }
     else if (m_filter_id == FILTER_ID_DATE_PICKER) {
@@ -622,7 +628,7 @@ void JournalPanel::filterList()
 
     int sn = 0; // sequence number
     m_flow = 0.0;
-    m_balance = m_account ? m_account->m_open_balance : 0.0;
+    m_balance = m_account_n ? m_account_n->m_open_balance : 0.0;
     m_reconciled_balance = m_today_reconciled_balance = m_balance;
     m_show_reconciled = false;
 
@@ -652,8 +658,8 @@ void JournalPanel::filterList()
         wxDateTime::Now().FormatISOCombined() :
         wxDateTime(23, 59, 59, 999).FormatISOCombined();
 
-    const auto trans = m_account
-        ? AccountModel::transactionsByDateTimeId(m_account)
+    const auto trans = m_account_n
+        ? AccountModel::transactionsByDateTimeId(*m_account_n)
         : TrxModel::instance().find_allByDateTimeId();
     const auto trans_splits = TrxSplitModel::instance().get_all_id();
     const auto trans_tags = TagLinkModel::instance().get_all_id(tranRefType);
@@ -695,8 +701,8 @@ void JournalPanel::filterList()
         bills_splits = SchedSplitModel::instance().get_all_id();
         bills_tags = TagLinkModel::instance().get_all_id(billRefType);
         bills_attachments = AttachmentModel::instance().get_reftype(SchedModel::refTypeName);
-        bills = m_account
-            ? AccountModel::billsdeposits(m_account)
+        bills = m_account_n
+            ? AccountModel::billsdeposits(*m_account_n)
             : SchedModel::instance().find_all();
         for (unsigned int i = 0; i < bills.size(); ++i) {
             int limit = 1000;  // this is enough for daily repetitions for one year
@@ -996,12 +1002,12 @@ void JournalPanel::updateExtraTransactionData(bool single, int repeat_num, bool 
             while (true) {
                 item = m_lc->GetNextItem(item, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
                 if (item == -1) break;
-                const CurrencyData* curr = AccountModel::currency(
-                    AccountModel::instance().get_data_n(m_lc->m_trans[item].ACCOUNTID)
+                const CurrencyData* curr = AccountModel::instance().get_id_currency_p(
+                    m_lc->m_trans[item].ACCOUNTID
                 );
                 if ((m_account_id < 0) && TrxModel::is_transfer(m_lc->m_trans[item].TRANSCODE))
                     continue;
-                double convrate = (curr != m_currency)
+                double convrate = (curr != m_currency_n)
                     ? CurrencyHistoryModel::getDayRate(curr->m_id, m_lc->m_trans[item].TRANSDATE)
                     : 1.0;
                 flow += convrate * TrxModel::account_flow(m_lc->m_trans[item], (m_account_id < 0) ? m_lc->m_trans[item].ACCOUNTID : m_account_id);
@@ -1016,7 +1022,7 @@ void JournalPanel::updateExtraTransactionData(bool single, int repeat_num, bool 
             int days = max_date.Subtract(min_date).GetDays();
 
             wxString msg;
-            wxString selectedBal = CurrencyModel::toCurrency(flow, m_currency);
+            wxString selectedBal = CurrencyModel::toCurrency(flow, m_currency_n);
             m_info_panel_selectedbal = selectedBal;
             msg = wxString::Format(_t("Transactions selected: %zu"), selected.size());
             msg += "\n";
@@ -1137,7 +1143,7 @@ void JournalPanel::onFilterDate(wxCommandEvent& event)
     m_filter_id = FILTER_ID_DATE_RANGE;
     m_current_date_range = mmDateRange2();
     if (isAccount()) {
-        m_current_date_range.setSDateN(mmDateN(m_account->m_stmt_date));
+        m_current_date_range.setSDateN(mmDateN(m_account_n->m_stmt_date));
     }
     m_current_date_range.setRange(m_date_range_a[i]);
     updateScheduledEnable();
@@ -1362,7 +1368,7 @@ void JournalPanel::onInfoPanelClick(wxMouseEvent& event, wxStaticText* infoPanel
 
 void JournalPanel::onReconcile(wxCommandEvent& WXUNUSED(event))
 {
-    mmReconcileDialog dlg(wxGetTopLevelParent(this), m_account, this);
+    mmReconcileDialog dlg(wxGetTopLevelParent(this), m_account_n, this);
     if (dlg.ShowModal() == wxID_OK) {
         refreshList();
     }
@@ -1387,15 +1393,15 @@ wxString JournalPanel::getPanelTitle() const
             return NavigatorTypes::instance().getAccountSectionName(account_Type);
         }
     }
-    else if (m_account)
-        return wxString::Format(_t("Account View: %s"), m_account->m_name);
+    else if (m_account_n)
+        return wxString::Format(_t("Account View: %s"), m_account_n->m_name);
     else
         return "";
 }
 
 wxString JournalPanel::BuildPage() const
 {
-    return m_lc->BuildPage((m_account ? getPanelTitle() : ""));
+    return m_lc->BuildPage((m_account_n ? getPanelTitle() : ""));
 }
 
 void JournalPanel::resetColumnView()

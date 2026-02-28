@@ -2257,7 +2257,7 @@ void TrxFilterDialog::OnAccountsButton(wxCommandEvent& WXUNUSED(event))
         for (const auto& entry : selected_items) {
             int index = entry;
             const wxString accounts_name = m_accounts_name[index];
-            const auto account = AccountModel::instance().get_key(accounts_name);
+            const auto account = AccountModel::instance().get_key_data_n(accounts_name);
             if (account)
                 m_selected_accounts_id.push_back(account->m_id);
             baloon += accounts_name + "\n";

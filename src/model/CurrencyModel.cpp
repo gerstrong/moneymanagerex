@@ -373,10 +373,19 @@ int CurrencyModel::precision(const Data& r)
 
 int CurrencyModel::precision(int64 account_id)
 {
-    const AccountData* trans_account = AccountModel::instance().get_data_n(account_id);
-    if (account_id > 0)
-    {
-        return precision(AccountModel::currency(trans_account));
+    const AccountData* account_n = AccountModel::instance().get_data_n(account_id);
+    if (account_n) {
+        return precision(AccountModel::currency_p(*account_n));
     }
     else return 2;
 }
+
+bool CurrencyModel::is_used(int64 currency_id)
+{
+    const auto& account_a = AccountModel::instance().find(
+        AccountCol::CURRENCYID(currency_id),
+        AccountModel::STATUS(OP_NE, AccountStatus(AccountStatus::e_closed))
+    );
+    return !account_a.empty();
+}
+

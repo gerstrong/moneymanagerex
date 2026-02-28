@@ -460,10 +460,10 @@ TrxModel::Full_Data::Full_Data(
 void TrxModel::Full_Data::fill_data()
 {
     displayID = wxString::Format("%lld", TRANSID);
-    ACCOUNTNAME = AccountModel::get_id_name(ACCOUNTID);
+    ACCOUNTNAME = AccountModel::instance().get_id_name(ACCOUNTID);
 
     if (TrxModel::type_id(TRANSCODE) == TrxModel::TYPE_ID_TRANSFER) {
-        TOACCOUNTNAME = AccountModel::get_id_name(TOACCOUNTID);
+        TOACCOUNTNAME = AccountModel::instance().get_id_name(TOACCOUNTID);
         PAYEENAME = TOACCOUNTNAME;
     }
     else {

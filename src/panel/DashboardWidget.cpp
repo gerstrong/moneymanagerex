@@ -123,19 +123,19 @@ const wxString htmlWidgetStocks::getHTMLText()
         );
         body += wxString::Format("<td class='money' sorttable_customkey='%f'>%s</td>\n",
             inv_bal.first - inv_bal.second,
-            AccountModel::toCurrency(inv_bal.first - inv_bal.second, &account_d)
+            AccountModel::to_currency(inv_bal.first - inv_bal.second, account_d)
         );
         body += wxString::Format("<td class='money' sorttable_customkey='%f'>%s</td>\n",
             inv_bal.first,
-            AccountModel::toCurrency(inv_bal.first, &account_d)
+            AccountModel::to_currency(inv_bal.first, account_d)
         );
         body += wxString::Format("<td class='money' sorttable_customkey='%f'>%s</td>\n",
             cash_bal,
-            AccountModel::toCurrency(cash_bal, &account_d)
+            AccountModel::to_currency(cash_bal, account_d)
         );
         body += wxString::Format("<td colspan='2' class='money' sorttable_customkey='%f'>%s</td>",
             inv_bal.first + cash_bal,
-            AccountModel::toCurrency(inv_bal.first + cash_bal, &account_d)
+            AccountModel::to_currency(inv_bal.first + cash_bal, account_d)
         );
         body += "</tr>";
     }
@@ -370,8 +370,9 @@ const wxString htmlWidgetBillsAndDeposits::getHTMLText()
                 output += wxString::Format("<br><i>%s</i>", notes);
 
             output += "</td>";
-            output += wxString::Format("<td class='money'>%s</td>\n"
-                , AccountModel::toCurrency(std::get<3>(item), std::get<4>(item)));
+            output += wxString::Format("<td class='money'>%s</td>\n",
+                AccountModel::to_currency(std::get<3>(item), *(std::get<4>(item)))
+            );
             output += "<td  class='money'>" + std::get<2>(item) + "</td></tr>\n";
         }
         output += "</table>\n";
@@ -741,7 +742,7 @@ const wxString htmlWidgetAccounts::displayAccounts(double& tBalance, double& tRe
     );
     std::stable_sort(account_a.begin(), account_a.end(), AccountData::SorterByACCOUNTNAME());
     for (const auto& account_d : account_a) {
-        const CurrencyData* currency = AccountModel::currency(account_d);
+        const CurrencyData* currency = AccountModel::currency_p(account_d);
 
         double currency_rate = CurrencyHistoryModel::getDayRate(account_d.m_currency_id, today);
         double bal = account_d.m_open_balance + accountStats_[account_d.m_id].second; //AccountModel::balance(account_d);
@@ -824,9 +825,8 @@ const wxString htmlWidgetCurrency::getHtmlText()
     std::map<wxString, double> usedRates;
     const auto currencies = CurrencyModel::instance().find_all();
 
-    for (const auto &currency : currencies)
-    {
-        if (AccountModel::is_used(currency)) {
+    for (const auto &currency : currencies) {
+        if (CurrencyModel::is_used(currency.m_id)) {
 
             double convertionRate = CurrencyHistoryModel::getDayRate(currency.m_id
                 , today);

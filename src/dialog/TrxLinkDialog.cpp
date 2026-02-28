@@ -157,7 +157,7 @@ bool TrxLinkDialog::Create(
 
     const CurrencyData* currency = CurrencyModel::GetBaseCurrency();
     if (m_account_id > 0) {
-        currency = AccountModel::currency(AccountModel::instance().get_data_n(m_account_id));
+        currency = AccountModel::instance().get_id_currency_p(m_account_id);
     }
     m_trans_currency = new wxButton(this, ID_TRANS_CURRENCY_BUTTON, currency->m_symbol
         , wxDefaultPosition, std_half_size);
@@ -255,11 +255,11 @@ void TrxLinkDialog::DataToControls()
 
     m_transaction_id = m_transaction_n->TRANSID;
     m_account_id = m_transaction_n->ACCOUNTID;
-    m_account->SetLabelText(AccountModel::get_id_name(m_account_id));
+    m_account->SetLabelText(AccountModel::instance().get_id_name(m_account_id));
     m_type_selector->SetSelection(TrxModel::type_id(m_transaction_n->TRANSCODE));
 
     if (m_account_id > 0) {
-        const CurrencyData* currency = AccountModel::currency(AccountModel::instance().get_data_n(m_account_id));
+        const CurrencyData* currency = AccountModel::instance().get_id_currency_p(m_account_id);
         m_trans_currency->SetLabelText(currency->m_symbol);
         m_entered_amount->SetCurrency(currency);
     }
@@ -483,7 +483,7 @@ void TrxLinkDialog::SetTransactionCategory(const int64 categid)
 
 void TrxLinkDialog::SetTransactionAccount(const wxString& trans_account)
 {
-    const AccountData* account = AccountModel::instance().get_key(trans_account);
+    const AccountData* account = AccountModel::instance().get_key_data_n(trans_account);
     if (account) {
         m_account->SetLabelText(account->m_name);
         m_account_id = account->m_id;

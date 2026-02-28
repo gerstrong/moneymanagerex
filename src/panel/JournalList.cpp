@@ -309,7 +309,7 @@ void JournalList::setColumnsInfo()
 
     if (!PrefModel::instance().UseTransDateTime())
         m_col_disabled_id.insert(LIST_ID_TIME);
-    if (m_cp->isAccount() && m_cp->m_account->m_credit_limit == 0)
+    if (m_cp->isAccount() && m_cp->m_account_n->m_credit_limit == 0)
         m_col_disabled_id.insert(LIST_ID_CREDIT);
 
     m_col_id_nr.push_back(LIST_ID_ICON);
@@ -763,7 +763,7 @@ void JournalList::onMouseRightClick(wxMouseEvent& event)
             menu.Enable(MENU_ON_DUPLICATE_TRANSACTION, false);
 
         menu.Append(MENU_TREEPOPUP_MOVE2, (1 == selected) ? _tu("&Move Transaction…") : _tu("&Move Transactions…"));
-        if (is_nothing_selected || type_transfer || (AccountModel::money_accounts_num() < 2) || is_foreign)
+        if (is_nothing_selected || type_transfer || (AccountModel::instance().money_accounts_num() < 2) || is_foreign)
             menu.Enable(MENU_TREEPOPUP_MOVE2, false);
 
         menu.AppendSeparator();
@@ -882,12 +882,12 @@ void JournalList::onMouseRightClick(wxMouseEvent& event)
             break;
         }
         case LIST_ID_BALANCE:
-            copyText_ = CurrencyModel::toString(m_trans[row].ACCOUNT_BALANCE, m_cp->m_currency);
+            copyText_ = CurrencyModel::toString(m_trans[row].ACCOUNT_BALANCE, m_cp->m_currency_n);
             break;
         case LIST_ID_CREDIT:
             copyText_ = CurrencyModel::toString(
-                m_cp->m_account->m_credit_limit + m_trans[row].ACCOUNT_BALANCE,
-                m_cp->m_currency
+                m_cp->m_account_n->m_credit_limit + m_trans[row].ACCOUNT_BALANCE,
+                m_cp->m_currency_n
             );
             break;
         case LIST_ID_NOTES:
@@ -1397,7 +1397,7 @@ void JournalList::onMoveTransaction(wxCommandEvent& /*event*/)
         if (scd.ShowModal() == wxID_OK) {
             int64 dest_account_id = -1;
             wxString dest_account_name = scd.GetStringSelection();
-            const AccountData* dest_account = AccountModel::instance().get_key(dest_account_name);
+            const AccountData* dest_account = AccountModel::instance().get_key_data_n(dest_account_name);
             if (dest_account)
                 dest_account_id = dest_account->m_id;
             else
@@ -1973,7 +1973,7 @@ const wxString JournalList::getItem(long item, int col_id) const
                 value = CurrencyModel::toCurrency(journal.TRANSAMOUNT_W, currency);
         }
         else if (journal.ACCOUNTID_W == m_cp->m_account_id) {
-            value = CurrencyModel::toString(journal.TRANSAMOUNT_W, m_cp->m_currency);
+            value = CurrencyModel::toString(journal.TRANSAMOUNT_W, m_cp->m_currency_n);
         }
         if (!value.IsEmpty() && TrxModel::status_id(journal.STATUS) == TrxModel::STATUS_ID_VOID)
             value = "* " + value;
@@ -1987,19 +1987,19 @@ const wxString JournalList::getItem(long item, int col_id) const
                 value = CurrencyModel::toCurrency(journal.TRANSAMOUNT_D, currency);
         }
         else if (journal.ACCOUNTID_D == m_cp->m_account_id) {
-            value = CurrencyModel::toString(journal.TRANSAMOUNT_D, m_cp->m_currency);
+            value = CurrencyModel::toString(journal.TRANSAMOUNT_D, m_cp->m_currency_n);
         }
         if (!value.IsEmpty() && TrxModel::status_id(journal.STATUS) == TrxModel::STATUS_ID_VOID)
             value = "* " + value;
         return value;
     case LIST_ID_BALANCE:
         if (m_balance_valid)
-            value = CurrencyModel::toString(journal.ACCOUNT_BALANCE, m_cp->m_currency);
+            value = CurrencyModel::toString(journal.ACCOUNT_BALANCE, m_cp->m_currency_n);
         return value;
     case LIST_ID_CREDIT:
         return CurrencyModel::toString(
-            m_cp->m_account->m_credit_limit + journal.ACCOUNT_BALANCE,
-            m_cp->m_currency
+            m_cp->m_account_n->m_credit_limit + journal.ACCOUNT_BALANCE,
+            m_cp->m_currency_n
         );
     }
 

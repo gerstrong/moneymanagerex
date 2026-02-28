@@ -126,14 +126,16 @@ void CurrencyChoiceDialog::fillControls()
     }
 
     bool skip_unused = !cbShowAll_->IsChecked();
-    for (const auto& currency : CurrencyModel::instance().find_all(CurrencyCol::COL_ID_CURRENCYNAME))
-    {
+    for (const auto& currency : CurrencyModel::instance().find_all(
+        CurrencyCol::COL_ID_CURRENCYNAME
+    )) {
         int64 currencyID = currency.m_id;
 
-        if (skip_unused && !(AccountModel::is_used(currency) || currencyID == base_currency_id))
+        if (skip_unused &&
+            !(CurrencyModel::is_used(currency.m_id) || currencyID == base_currency_id)
+        )
             continue;
-        if (!m_maskStr.IsEmpty())
-        {
+        if (!m_maskStr.IsEmpty()) {
             if (!currency.m_name.Lower().Matches(m_maskStr) && !currency.m_symbol.Lower().Matches(m_maskStr))
                 continue;
         }
@@ -560,8 +562,8 @@ void CurrencyChoiceDialog::OnItemRightClick(wxDataViewEvent& event)
     mainMenu->Enable(MENU_ITEM1, baseCurrencyID != m_currency_id && is_selected);
     mainMenu->Enable(MENU_ITEM2, baseCurrencyID != m_currency_id && is_selected);
 
-    const CurrencyData* currency = CurrencyModel::instance().get_data_n(m_currency_id);
-    mainMenu->Enable(wxID_REMOVE, !AccountModel::is_used(currency) && is_selected);
+    const CurrencyData* currency_n = CurrencyModel::instance().get_data_n(m_currency_id);
+    mainMenu->Enable(wxID_REMOVE, !CurrencyModel::is_used(currency_n->m_id) && is_selected);
 
     mainMenu->Enable(wxID_EDIT, is_selected);
 
@@ -745,7 +747,7 @@ void CurrencyChoiceDialog::OnHistoryDeleteUnused(wxCommandEvent& WXUNUSED(event)
     CurrencyHistoryModel::instance().Savepoint();
     auto currencies = CurrencyModel::instance().find_all();
     for (auto &currency : currencies) {
-        if (!AccountModel::is_used(currency)) {
+        if (!CurrencyModel::is_used(currency.m_id)) {
             for (const auto& ch_d : CurrencyHistoryModel::instance().find(
                 CurrencyHistoryCol::CURRENCYID(currency.m_id)
             ))

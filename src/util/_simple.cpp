@@ -436,7 +436,7 @@ void mmComboBoxAccount::init()
 {
     all_elements_ = AccountModel::instance().all_accounts(excludeClosed_);
     if (accountID_ > -1)
-        all_elements_[AccountModel::get_id_name(accountID_)] = accountID_;
+        all_elements_[AccountModel::instance().get_id_name(accountID_)] = accountID_;
 }
 
 // accountID = always include this account even if it would have been excluded as closed

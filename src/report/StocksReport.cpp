@@ -71,7 +71,7 @@ void  StocksReport::refreshData()
         for (const auto& stock_d : StockModel::instance().find(
             StockCol::HELDAT(a.m_id)
         )) {
-            const CurrencyData* currency_n = AccountModel::currency(a);
+            const CurrencyData* currency_n = AccountModel::currency_p(a);
             const double today_rate = CurrencyHistoryModel::getDayRate(currency_n->m_id, today);
             m_stock_balance += today_rate * StockModel::CurrentValue(stock_d);
             line.realgainloss = StockModel::RealGainLoss(stock_d);
@@ -130,10 +130,9 @@ wxString StocksReport::getHTMLText()
             }
             hb.endThead();
 
-            for (const auto& acct : m_stocks)
-            {
-                const AccountData* account = AccountModel::instance().get_data_n(acct.id);
-                const CurrencyData* currency = AccountModel::currency(account);
+            for (const auto& acct : m_stocks) {
+                const AccountData* account_n = AccountModel::instance().get_data_n(acct.id);
+                const CurrencyData* currency_p = AccountModel::currency_p(*account_n);
 
                 hb.startThead();
                 {
@@ -154,13 +153,13 @@ wxString StocksReport::getHTMLText()
                             hb.addTableCell(entry.name);
                             hb.addTableCell(entry.symbol);
                             hb.addTableCellDate(entry.date);
-                            hb.addTableCell(AccountModel::toString(entry.qty, account, trunc(entry.qty) == entry.qty ? 0 : 4), "text-right");
-                            hb.addCurrencyCell(entry.purchase, currency, 4);
-                            hb.addCurrencyCell(entry.current, currency, 4);
-                            hb.addCurrencyCell(entry.commission, currency, 4);
-                            hb.addCurrencyCell(entry.realgainloss, currency);
-                            hb.addCurrencyCell(entry.unrealgainloss, currency);
-                            hb.addCurrencyCell(entry.value, currency);
+                            hb.addTableCell(AccountModel::to_string(entry.qty, *account_n, trunc(entry.qty) == entry.qty ? 0 : 4), "text-right");
+                            hb.addCurrencyCell(entry.purchase, currency_p, 4);
+                            hb.addCurrencyCell(entry.current, currency_p, 4);
+                            hb.addCurrencyCell(entry.commission, currency_p, 4);
+                            hb.addCurrencyCell(entry.realgainloss, currency_p);
+                            hb.addCurrencyCell(entry.unrealgainloss, currency_p);
+                            hb.addCurrencyCell(entry.value, currency_p);
                         }
                         hb.endTableRow();
                     }
@@ -168,9 +167,9 @@ wxString StocksReport::getHTMLText()
                     {
                         hb.addTableCell(_t("Total:"));
                         hb.addEmptyTableCell(6);
-                        hb.addCurrencyCell(acct.realgainloss, currency);
-                        hb.addCurrencyCell(acct.unrealgainloss, currency);
-                        hb.addCurrencyCell(acct.total, currency);
+                        hb.addCurrencyCell(acct.realgainloss, currency_p);
+                        hb.addCurrencyCell(acct.unrealgainloss, currency_p);
+                        hb.addCurrencyCell(acct.total, currency_p);
                     }
                     hb.endTableRow();
                     hb.addEmptyTableRow(9);

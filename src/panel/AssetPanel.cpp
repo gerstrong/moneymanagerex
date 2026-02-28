@@ -122,8 +122,8 @@ void AssetList::OnMouseRightClick(wxMouseEvent& event)
     }
     else
     {
-        auto asset_account = AccountModel::instance().get_key(m_panel->m_assets[m_selected_row].m_name);  // ASSETNAME <=> ACCOUNTNAME
-        if (!asset_account) asset_account = AccountModel::instance().get_key(m_panel->m_assets[m_selected_row].m_type.name());  // ASSETTYPE <=> ACCOUNTNAME
+        auto asset_account = AccountModel::instance().get_key_data_n(m_panel->m_assets[m_selected_row].m_name);  // ASSETNAME <=> ACCOUNTNAME
+        if (!asset_account) asset_account = AccountModel::instance().get_key_data_n(m_panel->m_assets[m_selected_row].m_type.name());  // ASSETTYPE <=> ACCOUNTNAME
         menu.Enable(MENU_TREEPOPUP_GOTOACCOUNT, asset_account);
         menu.Enable(MENU_TREEPOPUP_VIEWTRANS, asset_account);
     }
@@ -777,8 +777,8 @@ void AssetPanel::AddAssetTrans(const int selected_index)
 {
     AssetData* asset = &m_assets[selected_index];
     AssetDialog asset_dialog(this, asset, true);
-    const AccountData* account = AccountModel::instance().get_key(asset->m_name);
-    const AccountData* account2 = AccountModel::instance().get_key(asset->m_type.name());
+    const AccountData* account = AccountModel::instance().get_key_data_n(asset->m_name);
+    const AccountData* account2 = AccountModel::instance().get_key_data_n(asset->m_type.name());
     if (account || account2) {
         asset_dialog.SetTransactionAccountName(account ? asset->m_name : asset->m_type.name());
     }
@@ -868,7 +868,7 @@ void AssetPanel::LoadAssetTransactions(wxListCtrl* listCtrl, int64 assetId)
 
 void AssetPanel::FillAssetListRow(wxListCtrl* listCtrl, long index, const TrxData& txn)
 {
-    listCtrl->SetItem(index, 0, AccountModel::get_id_name(txn.ACCOUNTID));
+    listCtrl->SetItem(index, 0, AccountModel::instance().get_id_name(txn.ACCOUNTID));
     listCtrl->SetItem(index, 1, mmGetDateTimeForDisplay(txn.TRANSDATE));
     listCtrl->SetItem(index, 2, TrxModel::trade_type_name(TrxModel::type_id(txn.TRANSCODE)));
     listCtrl->SetItem(index, 3, CurrencyModel::toString(txn.TRANSAMOUNT));
@@ -932,7 +932,7 @@ void AssetPanel::CopySelectedRowsToClipboard(wxListCtrl* listCtrl)
 void AssetPanel::GotoAssetAccount(const int selected_index)
 {
     AssetData* asset = &m_assets[selected_index];
-    const AccountData* account_n = AccountModel::instance().get_key(asset->m_name);
+    const AccountData* account_n = AccountModel::instance().get_key_data_n(asset->m_name);
     if (account_n) {
         SetAccountParameters(account_n);
     }

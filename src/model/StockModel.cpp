@@ -217,12 +217,12 @@ Returns the realized gain/loss of the stock due to sold shares.
 If the optional parameter to_base_curr = true is passed values are converted
 to base currency.
 */
-double StockModel::RealGainLoss(const Data* r, bool to_base_curr)
+double StockModel::RealGainLoss(const Data* stock_n, bool to_base_curr)
 {
-    const CurrencyData* currency = AccountModel::currency(
-        AccountModel::instance().get_data_n(r->m_account_id)
+    const CurrencyData* currency = AccountModel::instance().get_id_currency_p(
+        stock_n->m_account_id
     );
-    TrxLinkModel::DataA trans_list = TrxLinkModel::TranslinkList<StockModel>(r->m_id);
+    TrxLinkModel::DataA trans_list = TrxLinkModel::TranslinkList<StockModel>(stock_n->m_id);
     double real_gain_loss = 0;
     double total_shares = 0;
     double total_initial_value = 0;
@@ -290,8 +290,8 @@ double StockModel::UnrealGainLoss(const Data* r, bool to_base_curr)
     if (!to_base_curr)
         return CurrentValue(r) - InvestmentValue(r);
 
-    const CurrencyData* currency = AccountModel::currency(
-        AccountModel::instance().get_data_n(r->m_account_id)
+    const CurrencyData* currency = AccountModel::instance().get_id_currency_p(
+        r->m_account_id
     );
     double conv_rate = CurrencyHistoryModel::getDayRate(currency->m_id);
     TrxLinkModel::DataA trans_list = TrxLinkModel::TranslinkList<StockModel>(r->m_id);

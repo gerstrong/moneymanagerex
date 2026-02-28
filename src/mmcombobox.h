@@ -103,7 +103,7 @@ public:
             }
         }
         else {
-            const AccountData* account_n = AccountModel::instance().get_key(this->GetValue());
+            const AccountData* account_n = AccountModel::instance().get_key_data_n(this->GetValue());
             if (account_n) {
                 id = account_n->m_id;
             }

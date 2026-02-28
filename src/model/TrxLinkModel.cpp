@@ -184,8 +184,8 @@ void TrxLinkModel::UpdateAssetValue(AssetData* asset_n)
         if (trx_n && trx_n->DELETEDTIME.IsEmpty()
             && TrxModel::status_id(trx_n->STATUS) != TrxModel::STATUS_ID_VOID
         ) {
-            const CurrencyData* currency_n = AccountModel::currency(
-                AccountModel::instance().get_data_n(trx_n->ACCOUNTID)
+            const CurrencyData* currency_n = AccountModel::instance().get_id_currency_p(
+                trx_n->ACCOUNTID
             );
             const double conv_rate = CurrencyHistoryModel::getDayRate(
                 currency_n->m_id,

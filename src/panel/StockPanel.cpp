@@ -66,9 +66,9 @@ bool StockPanel::Create(wxWindow *parent
     strLastUpdate_ = InfoModel::instance().getString("STOCKS_LAST_REFRESH_DATETIME", "");
     this->windowsFreezeThaw();
 
-    const AccountData *account = AccountModel::instance().get_data_n(m_account_id);
-    if (account)
-        m_currency = AccountModel::currency(account);
+    const AccountData* account_n = AccountModel::instance().get_data_n(m_account_id);
+    if (account_n)
+        m_currency = AccountModel::currency_p(*account_n);
     else
         m_currency = CurrencyModel::GetBaseCurrency();
 
@@ -225,7 +225,7 @@ void StockPanel::ViewStockTransactions(int selectedIndex)
 
     wxDialog dlg(this, wxID_ANY,
                  _t("View Stock Transactions") + ": "
-                 + (m_account_id > -1 ? (AccountModel::get_id_name(stock->m_account_id) + " - ") : "")
+                 + (m_account_id > -1 ? (AccountModel::instance().get_id_name(stock->m_account_id) + " - ") : "")
                  + stock->m_symbol,
                  wxDefaultPosition, wxSize(800, 400),
                  wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER);
@@ -420,11 +420,11 @@ void StockPanel::updateHeader()
     wxString lbl;
 
     if (m_account_id > -1) {
-        const AccountData* account = AccountModel::instance().get_data_n(m_account_id);
-        if (account) {
-            header_text_->SetLabelText(GetPanelTitle(*account));
-            cashBalance = AccountModel::balance(account);
-            std::pair<double, double> investment_balance = AccountModel::investment_balance(account);
+        const AccountData* account_n = AccountModel::instance().get_data_n(m_account_id);
+        if (account_n) {
+            header_text_->SetLabelText(GetPanelTitle(*account_n));
+            cashBalance = AccountModel::balance(*account_n);
+            std::pair<double, double> investment_balance = AccountModel::investment_balance(*account_n);
             marketValue = investment_balance.first;
             InvestedVal = investment_balance.second;
         }
@@ -687,8 +687,8 @@ void StockPanel::DisplayAccountDetails(int64 accountID)
     m_account_id = accountID;
 
     if (m_account_id > -1){
-        const AccountData* account = AccountModel::instance().get_data_n(m_account_id);
-        m_currency = AccountModel::currency(account);
+        const AccountData* account_n = AccountModel::instance().get_data_n(m_account_id);
+        m_currency = AccountModel::currency_p(*account_n);
     }
 
     enableEditDeleteButtons(false);

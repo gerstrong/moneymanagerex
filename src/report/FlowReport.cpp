@@ -441,9 +441,9 @@ wxString mmReportCashFlowTransactions::getHTMLText()
         else
             hb.startAltTableRow();
         hb.addTableCellDate(trx.TRANSDATE);
-        hb.addTableCell(AccountModel::get_id_name(trx.ACCOUNTID));
+        hb.addTableCell(AccountModel::instance().get_id_name(trx.ACCOUNTID));
         hb.addTableCell((trx.TOACCOUNTID == -1) ? PayeeModel::get_payee_name(trx.PAYEEID)
-            : "> " + AccountModel::get_id_name(trx.TOACCOUNTID));
+            : "> " + AccountModel::instance().get_id_name(trx.TOACCOUNTID));
         hb.addTableCell(CategoryModel::full_name(trx.CATEGID));
         double amount = trx.TRANSAMOUNT;
         hb.addMoneyCell(amount);

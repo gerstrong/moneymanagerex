@@ -87,7 +87,7 @@ const std::map<wxString, int64> AccountModel::all_accounts(bool skip_closed)
 }
 
 /** Get the Data record instance in memory. */
-const AccountData* AccountModel::get_key(const wxString& name)
+const AccountData* AccountModel::get_key_data_n(const wxString& name)
 {
     const Data* account_n = search_cache_n(AccountCol::ACCOUNTNAME(name));
     if (account_n)
@@ -100,7 +100,7 @@ const AccountData* AccountModel::get_key(const wxString& name)
 }
 
 /** Get the Data record instance in memory. */
-const AccountData* AccountModel::get_num(const wxString& num)
+const AccountData* AccountModel::get_num_data_n(const wxString& num)
 {
     const Data* account_n = search_cache_n(AccountCol::ACCOUNTNUM(num));
     if (account_n)
@@ -112,9 +112,9 @@ const AccountData* AccountModel::get_num(const wxString& num)
     return account_n;
 }
 
-wxString AccountModel::get_id_name(int64 account_id)
+const wxString AccountModel::get_id_name(int64 account_id)
 {
-    const Data* account_n = instance().get_data_n(account_id);
+    const Data* account_n = get_data_n(account_id);
     if (account_n)
         return account_n->m_name;
     else
@@ -158,160 +158,118 @@ bool AccountModel::purge_id(int64 id)
     return unsafe_remove_data(id);
 }
 
-const CurrencyData* AccountModel::currency(const Data* account_n)
+AccountCol::STATUS AccountModel::STATUS(OP op, AccountStatus status)
 {
-    const CurrencyData * currency_n = CurrencyModel::instance().get_data_n(account_n->m_currency_id);
+    return AccountCol::STATUS(op, status.name());
+}
+
+const CurrencyData* AccountModel::currency_p(const Data& account_d)
+{
+    const CurrencyData* currency_n = CurrencyModel::instance().get_data_n(
+        account_d.m_currency_id
+    );
     if (currency_n)
         return currency_n;
-    else
-    {
+    else {
         wxASSERT(false);
         return CurrencyModel::GetBaseCurrency();
     }
 }
 
-const CurrencyData* AccountModel::currency(const Data& account_d)
+const CurrencyData* AccountModel::get_id_currency_p(int64 account_id)
 {
-    return currency(&account_d);
-}
-
-const TrxModel::DataA AccountModel::transactionsByDateTimeId(const Data* account_n)
-{
-    auto trans = TrxModel::instance().find_or(
-        TrxCol::ACCOUNTID(account_n->m_id),
-        TrxCol::TOACCOUNTID(account_n->m_id)
-    );
-    std::sort(trans.begin(), trans.end());
-    if (PrefModel::instance().UseTransDateTime())
-        std::stable_sort(trans.begin(), trans.end(), TrxData::SorterByTRANSDATE());
-    else
-        std::stable_sort(trans.begin(), trans.end(), TrxModel::SorterByTRANSDATE_DATE());
-    return trans;
+    const Data* account_n = get_data_n(account_id);
+    if (account_n)
+        return AccountModel::currency_p(*account_n);
+    else {
+        wxASSERT(false);
+        return CurrencyModel::GetBaseCurrency();
+    }
 }
 
 const TrxModel::DataA AccountModel::transactionsByDateTimeId(const Data& account_d)
 {
-    return transactionsByDateTimeId(&account_d);
-}
-
-const SchedModel::DataA AccountModel::billsdeposits(const Data* account_n)
-{
-    return SchedModel::instance().find_or(
-        SchedCol::ACCOUNTID(account_n->m_id),
-        SchedCol::TOACCOUNTID(account_n->m_id)
+    auto trx_a = TrxModel::instance().find_or(
+        TrxCol::ACCOUNTID(account_d.m_id),
+        TrxCol::TOACCOUNTID(account_d.m_id)
     );
+    std::sort(trx_a.begin(), trx_a.end());
+    if (PrefModel::instance().UseTransDateTime())
+        std::stable_sort(trx_a.begin(), trx_a.end(), TrxData::SorterByTRANSDATE());
+    else
+        std::stable_sort(trx_a.begin(), trx_a.end(), TrxModel::SorterByTRANSDATE_DATE());
+    return trx_a;
 }
 
 const SchedModel::DataA AccountModel::billsdeposits(const Data& account_d)
 {
-    return billsdeposits(&account_d);
-}
-
-double AccountModel::balance(const Data* account_n)
-{
-    double sum = account_n->m_open_balance;
-    for (const auto& tran: transactionsByDateTimeId(account_n)) {
-        sum += TrxModel::account_flow(tran, account_n->m_id);
-    }
-
-    return sum;
+    return SchedModel::instance().find_or(
+        SchedCol::ACCOUNTID(account_d.m_id),
+        SchedCol::TOACCOUNTID(account_d.m_id)
+    );
 }
 
 double AccountModel::balance(const Data& account_d)
 {
-    return balance(&account_d);
-}
-
-std::pair<double, double> AccountModel::investment_balance(const Data* account_n)
-{
-    std::pair<double /*market value*/, double /*invest value*/> sum;
-    for (const auto& stock: StockModel::instance().find(StockCol::HELDAT(account_n->m_id))) {
-        sum.first += StockModel::CurrentValue(stock);
-        sum.second += StockModel::InvestmentValue(stock);
-    }
-
-    for (const auto& asset: AssetModel::instance().find_or(
-        AssetCol::ASSETNAME(account_n->m_name),
-        AssetCol::ASSETTYPE(account_n->m_name)
-    )) {
-        auto asset_bal = AssetModel::value(asset);
-        sum.first += asset_bal.second;
-        sum.second += asset_bal.first;
+    double sum = account_d.m_open_balance;
+    for (const auto& trx_a: transactionsByDateTimeId(account_d)) {
+        sum += TrxModel::account_flow(trx_a, account_d.m_id);
     }
     return sum;
 }
 
 std::pair<double, double> AccountModel::investment_balance(const Data& account_d)
 {
-    return investment_balance(&account_d);
+    std::pair<double /*market value*/, double /*invest value*/> sum;
+    for (const auto& stock: StockModel::instance().find(StockCol::HELDAT(account_d.m_id))) {
+        sum.first  += StockModel::CurrentValue(stock);
+        sum.second += StockModel::InvestmentValue(stock);
+    }
+
+    for (const auto& asset: AssetModel::instance().find_or(
+        AssetCol::ASSETNAME(account_d.m_name),
+        AssetCol::ASSETTYPE(account_d.m_name)
+    )) {
+        auto asset_bal = AssetModel::value(asset);
+        sum.first  += asset_bal.second;
+        sum.second += asset_bal.first;
+    }
+    return sum;
 }
 
-wxString AccountModel::toCurrency(double value, const Data* account_n)
+wxString AccountModel::to_currency(double value, const Data& account_d)
 {
-    return CurrencyModel::toCurrency(value, currency(account_n));
+    return CurrencyModel::toCurrency(value, AccountModel::currency_p(account_d));
 }
 
-wxString AccountModel::toString(double value, const Data* account_n, int precision)
+wxString AccountModel::to_string(double value, const Data& account_d, int precision)
 {
-    return CurrencyModel::toString(value, currency(account_n), precision);
-}
-
-wxString AccountModel::toString(double value, const Data& account_d, int precision)
-{
-    return toString(value, &account_d, precision);
-}
-
-AccountCol::STATUS AccountModel::STATUS(OP op, AccountStatus status)
-{
-    return AccountCol::STATUS(op, status.name());
-}
-
-bool AccountModel::is_used(const CurrencyData* currency_n)
-{
-    if (!currency_n)
-        return false;
-    const auto& account_a = AccountModel::instance().find(
-        AccountCol::CURRENCYID(currency_n->m_id),
-        AccountModel::STATUS(OP_NE, AccountStatus(AccountStatus::e_closed))
-    );
-    return !account_a.empty();
-}
-
-bool AccountModel::is_used(const CurrencyData& currency_n)
-{
-    return is_used(&currency_n);
+    return CurrencyModel::toString(value, AccountModel::currency_p(account_d), precision);
 }
 
 int AccountModel::money_accounts_num()
 {
     return
-        AccountModel::instance().find(
+        find(
             AccountCol::ACCOUNTTYPE(NavigatorTypes::instance().type_name(NavigatorTypes::TYPE_ID_CASH))
-        ).size() + AccountModel::instance().find(
+        ).size() + find(
             AccountCol::ACCOUNTTYPE(NavigatorTypes::instance().type_name(NavigatorTypes::TYPE_ID_CHECKING))
-        ).size() + AccountModel::instance().find(
+        ).size() + find(
             AccountCol::ACCOUNTTYPE(NavigatorTypes::instance().type_name(NavigatorTypes::TYPE_ID_CREDIT_CARD))
-        ).size() + AccountModel::instance().find(
+        ).size() + find(
             AccountCol::ACCOUNTTYPE(NavigatorTypes::instance().type_name(NavigatorTypes::TYPE_ID_LOAN))
-        ).size() + AccountModel::instance().find(
+        ).size() + find(
             AccountCol::ACCOUNTTYPE(NavigatorTypes::instance().type_name(NavigatorTypes::TYPE_ID_TERM))
-        ).size() + AccountModel::instance().find(
+        ).size() + find(
             AccountCol::ACCOUNTTYPE(NavigatorTypes::instance().type_name(NavigatorTypes::TYPE_ID_ASSET))
-        ).size() + AccountModel::instance().find(
+        ).size() + find(
             AccountCol::ACCOUNTTYPE(NavigatorTypes::instance().type_name(NavigatorTypes::TYPE_ID_SHARES))
         ).size();
 }
 
-bool AccountModel::Exist(const wxString& account_name)
+AccountModel::DataA AccountModel::find_name_a(const wxString& name)
 {
-    DataA list = instance().find(AccountCol::ACCOUNTNAME(account_name));
-
-    return !list.empty();
-}
-
-bool AccountModel::BoolOf(int64 value)
-{
-    return value > 0 ? true : false;
+    find(AccountCol::ACCOUNTNAME(name));
 }
 
 const AccountModel::DataA AccountModel::FilterAccounts(const wxString& account_pattern, bool skip_closed)
@@ -335,7 +293,7 @@ void AccountModel::resetAccountType(wxString oldtype)
         AccountCol::ACCOUNTTYPE(oldtype)
     )) {
         // CHECK: use account_d directly
-        AccountData acc_d = *(get_key(account_d.m_name));
+        AccountData acc_d = *(get_key_data_n(account_d.m_name));
         acc_d.m_type_ = "Checking";
         save_data_n(acc_d);
     }
@@ -346,7 +304,7 @@ void AccountModel::resetUnknownAccountTypes()
     for (const auto& account_d : find_all(Col::COL_ID_ACCOUNTNAME)) {
         if (NavigatorTypes::instance().getTypeIdFromDBName(account_d.m_type_, -1) == -1) {
             // CHECK: use account_d directly
-            AccountData acc_d = *(get_key(account_d.m_name));
+            AccountData acc_d = *(get_key_data_n(account_d.m_name));
             acc_d.m_type_ = "Checking";
             save_data_n(acc_d);
         }

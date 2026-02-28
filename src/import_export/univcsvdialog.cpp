@@ -673,12 +673,13 @@ void mmUnivCSVDialog::CreateControls()
 
     SetSettings(GetStoredSettings(m_choice_preset_name->GetSelection()));
 
-    if (m_choice_account_->GetSelection() >= 0)
-    {
+    if (m_choice_account_->GetSelection() >= 0) {
         wxString acct_name = m_choice_account_->GetStringSelection();
         m_checkbox_preset_default->SetLabelText(wxString::Format(_t("Load this Preset when Account is:\n%s"), acct_name));
         *log_field_ << _t("Currency:") << " " <<
-            wxGetTranslation(AccountModel::currency(AccountModel::instance().get_key(acct_name))->m_name) << "\n";
+            wxGetTranslation(AccountModel::currency_p(
+                *(AccountModel::instance().get_key_data_n(acct_name))
+            )->m_name) << "\n";
         if (!init_preset_name.IsEmpty())
             *log_field_ << wxString::Format(_t("Preset '%1$s' loaded because Account '%2$s' selected"), init_preset_name, acct_name) << "\n";
     }
@@ -1405,7 +1406,7 @@ void mmUnivCSVDialog::OnImport(wxCommandEvent& WXUNUSED(event))
     bool is_canceled = false;
     long nImportedLines = 0;
     const wxString acctName = m_choice_account_->GetStringSelection();
-    const AccountData* account = AccountModel::instance().get_key(acctName);
+    const AccountData* account = AccountModel::instance().get_key_data_n(acctName);
 
     if (!account){
         return mmErrorDialogs::InvalidAccount(m_choice_account_);
@@ -1671,7 +1672,7 @@ void mmUnivCSVDialog::OnExport(wxCommandEvent& WXUNUSED(event))
     }
 
     const wxString& acctName = m_choice_account_->GetStringSelection();
-    const AccountData* from_account = AccountModel::instance().get_key(acctName);
+    const AccountData* from_account = AccountModel::instance().get_key_data_n(acctName);
 
     if (!from_account)
         return mmErrorDialogs::ToolTip4Object(m_choice_account_, _t("Invalid Account"), _t("Error"));
@@ -1681,7 +1682,7 @@ void mmUnivCSVDialog::OnExport(wxCommandEvent& WXUNUSED(event))
     int64 fromAccountID = from_account->m_id;
 
     long numRecords = 0;
-    const CurrencyData* currency = AccountModel::currency(from_account);
+    const CurrencyData* currency = AccountModel::currency_p(*from_account);
 
     wxSharedPtr<ITransactionsFile> pTxFile(CreateFileHandler());
 
@@ -1900,7 +1901,7 @@ void mmUnivCSVDialog::OnExport(wxCommandEvent& WXUNUSED(event))
                         entry = account->m_name;
                         break;
                     case UNIV_CSV_CURRENCY:
-                        entry = AccountModel::currency(account)->m_symbol;
+                        entry = AccountModel::currency_p(*account)->m_symbol;
                         break;
                     default:
                         break;
@@ -2071,7 +2072,7 @@ void mmUnivCSVDialog::update_preview()
     // exporter preview
     else {
         const wxString acctName = m_choice_account_->GetStringSelection();
-        const AccountData* from_account = AccountModel::instance().get_key(acctName);
+        const AccountData* from_account = AccountModel::instance().get_key_data_n(acctName);
 
         if (from_account) {
             const auto split = TrxSplitModel::instance().get_all_id();
@@ -2124,7 +2125,7 @@ void mmUnivCSVDialog::update_preview()
                             m_list_ctrl_->SetItemData(itemIndex, row);
                             const CategoryData* category = CategoryModel::instance().get_data_n(splt.CATEGID);
 
-                            const CurrencyData* currency = AccountModel::currency(from_account);
+                            const CurrencyData* currency = AccountModel::currency_p(*from_account);
 
                             double amt = splt.SPLITTRANSAMOUNT;
                             if (TrxModel::type_id(pBankTransaction) == TrxModel::TYPE_ID_WITHDRAWAL
@@ -2260,7 +2261,7 @@ void mmUnivCSVDialog::update_preview()
                         m_list_ctrl_->SetItem(itemIndex, col, buf);
                         m_list_ctrl_->SetItemData(itemIndex, row);
 
-                        const CurrencyData* currency = AccountModel::currency(from_account);
+                        const CurrencyData* currency = AccountModel::currency_p(*from_account);
                         const wxString shareTotal = CurrencyModel::toStringNoFormatting(stock_d.m_num_shares, currency);
                         const wxString avgSharePrice = CurrencyModel::toStringNoFormatting(stock_d.m_purchase_price, currency);
                         const wxString totalCost = CurrencyModel::toStringNoFormatting(StockModel::InvestmentValue(stock_d), currency);
@@ -2325,7 +2326,7 @@ void mmUnivCSVDialog::update_preview()
                                 text << inQuotes(account->m_name, delimit);
                                 break;
                             case UNIV_CSV_CURRENCY:
-                                text << inQuotes(AccountModel::currency(account)->m_symbol, delimit);
+                                text << inQuotes(AccountModel::currency_p(*account)->m_symbol, delimit);
                                 break;
                             default:
                                 break;
@@ -2972,9 +2973,9 @@ void mmUnivCSVDialog::OnChoiceChanged(wxCommandEvent& event)
     else if (i == wxID_ACCOUNT)
     {
         wxString acctName = m_choice_account_->GetStringSelection();
-        const AccountData* account = AccountModel::instance().get_key(acctName);
+        const AccountData* account = AccountModel::instance().get_key_data_n(acctName);
         m_account_id = account->m_id;
-        const CurrencyData* currency = AccountModel::currency(account);
+        const CurrencyData* currency = AccountModel::currency_p(*account);
         *log_field_ << _t("Currency:") << " " << wxGetTranslation(currency->m_name) << "\n";
 
         m_checkbox_preset_default->Enable(m_choice_preset_name->GetSelection() >= 0);

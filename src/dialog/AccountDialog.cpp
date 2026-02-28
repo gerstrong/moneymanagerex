@@ -197,7 +197,7 @@ void AccountDialog::CreateControls()
     grid_sizer2->AddGrowableCol(1, 1);
     others_sizer->Add(grid_sizer2, g_flagsExpand);
 
-    grid_sizer2->Add(new wxStaticText(others_tab, wxID_STATIC, (AccountModel::type_id(m_account_n) == NavigatorTypes::TYPE_ID_CREDIT_CARD ? _t("Card Number:") : _t("Account Number:"))), g_flagsH);
+    grid_sizer2->Add(new wxStaticText(others_tab, wxID_STATIC, (AccountModel::type_id(*m_account_n) == NavigatorTypes::TYPE_ID_CREDIT_CARD ? _t("Card Number:") : _t("Account Number:"))), g_flagsH);
     wxTextCtrl* itemTextCtrl6 = new wxTextCtrl(others_tab, ID_ACCTNUMBER, "", wxDefaultPosition, wxDefaultSize);
     mmToolTip(itemTextCtrl6, _t("Enter the Account Number associated with this account."));
     grid_sizer2->Add(itemTextCtrl6, g_flagsExpand);
@@ -306,6 +306,7 @@ void AccountDialog::fillControls()
 {
     if (!m_account_n)
         return;
+    const CurrencyData* currency_p = AccountModel::currency_p(*m_account_n);
 
     m_textAccountName->SetValue(m_account_n->m_name);
 
@@ -335,10 +336,10 @@ void AccountDialog::fillControls()
     itemCheckBox->SetValue(m_account_n->is_favorite());
 
     wxButton* bn = static_cast<wxButton*>(FindWindow(ID_DIALOG_NEWACCT_BUTTON_CURRENCY));
-    bn->SetLabelText(AccountModel::currency(m_account_n)->m_name);
+    bn->SetLabelText(currency_p->m_name);
 
     double initBal = m_account_n->m_open_balance;
-    m_initbalance_ctrl->SetCurrency(AccountModel::currency(m_account_n));
+    m_initbalance_ctrl->SetCurrency(currency_p);
     m_initbalance_ctrl->SetValue(initBal);
 
     if (!m_account_n->m_open_date.empty()) {
@@ -352,7 +353,7 @@ void AccountDialog::fillControls()
 
     m_accessInfo = m_account_n->m_access_info;
 
-    m_credit_limit_ctrl->SetCurrency(AccountModel::currency(m_account_n));
+    m_credit_limit_ctrl->SetCurrency(currency_p);
     m_credit_limit_ctrl->SetValue(m_account_n->m_credit_limit);
 
     m_interest_rate_ctrl->SetValue(m_account_n->m_interest_rate, 2);
@@ -361,7 +362,7 @@ void AccountDialog::fillControls()
         m_payment_due_date_ctrl->SetValue(parseDateTime(m_account_n->m_payment_due_date));
     }
 
-    m_minimum_payment_ctrl->SetCurrency(AccountModel::currency(m_account_n));
+    m_minimum_payment_ctrl->SetCurrency(currency_p);
     m_minimum_payment_ctrl->SetValue(m_account_n->m_min_payment);
 
     m_statement_lock_ctrl->SetValue(m_account_n->m_stmt_locked);
@@ -369,7 +370,7 @@ void AccountDialog::fillControls()
     if (!m_account_n->m_stmt_date.empty()) {
         m_statement_date_ctrl->SetValue(parseDateTime(m_account_n->m_stmt_date));
     }
-    m_minimum_balance_ctrl->SetCurrency(AccountModel::currency(m_account_n));
+    m_minimum_balance_ctrl->SetCurrency(currency_p);
     m_minimum_balance_ctrl->SetValue(m_account_n->m_min_balance);
 }
 
@@ -500,7 +501,7 @@ void AccountDialog::OnCancel(wxCommandEvent& /*event*/)
 void AccountDialog::OnOk(wxCommandEvent& /*event*/)
 {
     wxString acctName = m_textAccountName->GetValue().Trim();
-    if (acctName.IsEmpty() || AccountModel::Exist(acctName)) {
+    if (acctName.IsEmpty() || !AccountModel::instance().find_name_a(acctName).empty()) {
         if (m_account_n && m_account_n->m_name.CmpNoCase(acctName) != 0)
             return mmErrorDialogs::MessageInvalid(this, _t("Account Name "));
     }

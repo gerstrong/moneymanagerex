@@ -827,11 +827,10 @@ bool getOnlineCurrencyRates(wxString& msg,const int64 curr_id, const bool used_o
     auto currency_a = CurrencyModel::instance().find(
         CurrencyCol::CURRENCY_SYMBOL(OP_NE, base_currency_symbol)
     );
-    for (const auto& currency : currency_a)
-    {
+    for (const auto& currency : currency_a) {
         if (curr_id > 0 && currency.m_id != curr_id)
             continue;
-        if (curr_id < 0 && !AccountModel::is_used(currency))
+        if (curr_id < 0 && !CurrencyModel::is_used(currency.m_id))
             continue;
         const auto symbol = currency.m_symbol;
         if (symbol.IsEmpty())
@@ -894,7 +893,7 @@ bool getOnlineCurrencyRates(wxString& msg,const int64 curr_id, const bool used_o
     CurrencyModel::instance().Savepoint();
     CurrencyHistoryModel::instance().Savepoint();
     for (auto& currency_d : currency_a) {
-        if (!used_only && !AccountModel::is_used(currency_d))
+        if (!used_only && !CurrencyModel::is_used(currency_d.m_id))
             continue;
 
         const wxString currency_symbol = currency_d.m_symbol;

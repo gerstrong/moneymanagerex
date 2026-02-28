@@ -756,7 +756,7 @@ bool TrxDialog::ValidateData()
     }
     else //transfer
     {
-        const AccountData *to_account = AccountModel::instance().get_key(cbToAccount_->GetValue());
+        const AccountData *to_account = AccountModel::instance().get_key_data_n(cbToAccount_->GetValue());
 
         if (!to_account || to_account->m_id == m_journal_data.ACCOUNTID)
         {
@@ -800,7 +800,7 @@ bool TrxDialog::ValidateData()
              m_journal_data.TRANSCODE == TrxModel::TYPE_NAME_TRANSFER) &&
             (account->m_min_balance != 0 || account->m_credit_limit != 0))
         {
-            const double fromAccountBalance = AccountModel::balance(account);
+            const double fromAccountBalance = AccountModel::balance(*account);
             const double new_value = fromAccountBalance - m_journal_data.TRANSAMOUNT;
 
             bool abort_transaction =
@@ -1230,8 +1230,8 @@ void TrxDialog::OnOk(wxCommandEvent& event)
         m_journal_data.TOTRANSAMOUNT = m_journal_data.TRANSAMOUNT;
 
     if (m_transfer && !m_advanced && (
-        AccountModel::currency(AccountModel::instance().get_data_n(m_journal_data.ACCOUNTID))
-        != AccountModel::currency(AccountModel::instance().get_data_n(m_journal_data.TOACCOUNTID))
+        AccountModel::instance().get_id_currency_p(m_journal_data.ACCOUNTID) !=
+        AccountModel::instance().get_id_currency_p(m_journal_data.TOACCOUNTID)
     )) {
         wxMessageDialog msgDlg(this,
             _t("The two accounts have different currencies, but no advanced transaction is defined. Is this correct?"),
@@ -1345,7 +1345,7 @@ void TrxDialog::SetTooltips()
         const CurrencyData* currency = CurrencyModel::GetBaseCurrency();
         const AccountData* account_n = AccountModel::instance().get_data_n(m_journal_data.ACCOUNTID);
         if (account_n)
-            currency = AccountModel::currency(account_n);
+            currency = AccountModel::currency_p(*account_n);
 
         bSplit_->SetToolTip(TrxSplitModel::get_tooltip(m_local_splits, currency));
     }

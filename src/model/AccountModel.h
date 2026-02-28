@@ -56,75 +56,44 @@ public:
 public:
     static AccountCol::STATUS STATUS(OP op, AccountStatus status);
 
-    static wxString get_id_name(int64 account_id);
+    static const CurrencyData* currency_p(const Data& account_d);
+    static wxString to_currency(double value, const Data& account_d);
+    static wxString to_string(double value, const Data& account_d, int precision = 2);
 
-    static const CurrencyData* currency(const Data* r);
-    static const CurrencyData* currency(const Data& r);
+    static const TrxModel::DataA transactionsByDateTimeId(const Data& account_d);
+    static const SchedModel::DataA billsdeposits(const Data& account_d);
+    static double balance(const Data& account_d);
+    static std::pair<double, double> investment_balance(const Data& account_d);
 
-    static const TrxModel::DataA transactionsByDateTimeId(const Data* r);
-    static const TrxModel::DataA transactionsByDateTimeId(const Data& r);
-
-    static const SchedModel::DataA billsdeposits(const Data* r);
-    static const SchedModel::DataA billsdeposits(const Data& r);
-
-    static double balance(const Data* r);
-    static double balance(const Data& r);
-
-    static std::pair<double, double> investment_balance(const Data* r);
-    static std::pair<double, double> investment_balance(const Data& r);
-    static wxString toCurrency(double value, const Data* r);
-
-    static wxString toString(double value, const Data* r, int precision = 2);
-    static wxString toString(double value, const Data& r, int precision = 2);
-
-    static NavigatorTypes::TYPE_ID type_id(const Data* account);
-    static NavigatorTypes::TYPE_ID type_id(const Data& account);
-
-    static bool is_used(const CurrencyData* c);
-    static bool is_used(const CurrencyData& c);
-
-    static int money_accounts_num();
-
-    static bool Exist(const wxString& account_name);
-
-    static bool BoolOf(int64 value);
-    static bool is_positive(int value);
+    static NavigatorTypes::TYPE_ID type_id(const Data& account_d);
 
 public:
     AccountModel();
     ~AccountModel();
 
 public:
-    // Return the Data record for the given account name */
-    const Data* get_key(const wxString& name);
-    // Return the Data record for the given account num */
-    const Data* get_num(const wxString& num);
     // Remove the Data record from memory and the database. */
     bool purge_id(int64 id) override;
 
+    const Data* get_key_data_n(const wxString& name);
+    const Data* get_num_data_n(const wxString& num);
+    const wxString get_id_name(int64 account_id);
+    const CurrencyData* get_id_currency_p(int64 account_id);
+    DataA find_name_a(const wxString& name);
+
     wxArrayString all_checking_account_names(bool skip_closed = false);
     const std::map<wxString, int64> all_accounts(bool skip_closed = false);
-
     const DataA FilterAccounts(const wxString& account_pattern, bool skip_closed = false);
-
     void resetAccountType(wxString oldtype);
     void resetUnknownAccountTypes();
     wxArrayString getUsedAccountTypes(bool skip_closed = true);
+    int money_accounts_num();
 };
 
 //----------------------------------------------------------------------------
 
-inline NavigatorTypes::TYPE_ID AccountModel::type_id(const Data* account)
-{
-    return static_cast<NavigatorTypes::TYPE_ID>(NavigatorTypes::instance().getTypeIdFromDBName(account->m_type_));
-}
 inline NavigatorTypes::TYPE_ID AccountModel::type_id(const Data& account)
 {
-    return type_id(&account);
-}
-
-inline bool AccountModel::is_positive(int value)
-{
-    return value > 0 ? true : false;
+    return static_cast<NavigatorTypes::TYPE_ID>(NavigatorTypes::instance().getTypeIdFromDBName(account.m_type_));
 }
 

@@ -78,7 +78,7 @@ std::pair<double, double> BalanceReport::getBalance(const AccountData* account, 
     std::pair<double /*cash bal*/, double /*market bal*/> bal = { 0.0, 0.0 };
     if (date.FormatISODate() >= account->m_open_date) {
         bal.first = getCheckingBalance(account, date);
-        if (AccountModel::type_id(account) == NavigatorTypes::TYPE_ID_INVESTMENT) {
+        if (AccountModel::type_id(*account) == NavigatorTypes::TYPE_ID_INVESTMENT) {
             bal.second = StockModel::instance().getDailyBalanceAt(account, date);
         }
     }

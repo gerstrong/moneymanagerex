@@ -55,8 +55,8 @@ public:
 
 private:
     Split* m_split = nullptr;
-    const CurrencyData* m_currency = nullptr;
-    wxTextCtrl* m_Notes = nullptr;
+    const CurrencyData* m_currency_n = nullptr;
+    wxTextCtrl* w_notes = nullptr;
 
     void CreateControls();
     void fillControls();
@@ -116,7 +116,7 @@ private:
     std::vector<SplitWidget> m_splits_widgets;
     std::vector<Split> m_orig_splits, m_splits;
     int row_num_ = 0;
-    const CurrencyData* m_currency = nullptr;
+    const CurrencyData* m_currency_n = nullptr;
     bool is_view_only_;
 
     wxButton* itemButtonOK_ = nullptr;

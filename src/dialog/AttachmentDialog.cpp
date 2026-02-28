@@ -101,7 +101,7 @@ void AttachmentDialog::Create(wxWindow* parent, const wxString& name)
             RefName = AssetModel::get_asset_name(m_RefId);
             break;
         case ModelBase::REFTYPE_ID_BANKACCOUNT:
-            RefName = AccountModel::get_id_name(m_RefId);
+            RefName = AccountModel::instance().get_id_name(m_RefId);
             break;
         case ModelBase::REFTYPE_ID_PAYEE:
             RefName = PayeeModel::get_payee_name(m_RefId);

@@ -287,26 +287,26 @@ bool SchedModel::AllowTransaction(const Data& r)
         return true;
 
     const int64 acct_id = r.ACCOUNTID;
-    const AccountData* account = AccountModel::instance().get_data_n(acct_id);
+    const AccountData* account_n = AccountModel::instance().get_data_n(acct_id);
 
-    if (account->m_min_balance == 0 && account->m_credit_limit == 0)
+    if (account_n->m_min_balance == 0 && account_n->m_credit_limit == 0)
         return true;
 
-    double current_balance = AccountModel::balance(account);
+    double current_balance = AccountModel::balance(*account_n);
     double new_balance = current_balance - r.TRANSAMOUNT;
 
     bool allow_transaction = true;
     wxString limitDescription;
     double limitAmount{ 0.0L };
-    if (account->m_min_balance != 0 && new_balance < account->m_min_balance) {
+    if (account_n->m_min_balance != 0 && new_balance < account_n->m_min_balance) {
         allow_transaction = false;
         limitDescription = _t("Minimum Balance");
-        limitAmount = account->m_min_balance;
+        limitAmount = account_n->m_min_balance;
     }
-    else if (account->m_credit_limit != 0 && new_balance < -(account->m_credit_limit)) {
+    else if (account_n->m_credit_limit != 0 && new_balance < -(account_n->m_credit_limit)) {
         allow_transaction = false;
         limitDescription = _t("Credit Limit");
-        limitAmount = account->m_credit_limit;
+        limitAmount = account_n->m_credit_limit;
     }
 
     if (!allow_transaction) {
@@ -316,7 +316,7 @@ bool SchedModel::AllowTransaction(const Data& r)
             "Transaction amount: %3$6.2f\n"
             "%4$s: %5$6.2f") + "\n\n" +
             _t("Do you want to continue?");
-        message.Printf(message, account->m_name, current_balance, r.TRANSAMOUNT, limitDescription, limitAmount);
+        message.Printf(message, account_n->m_name, current_balance, r.TRANSAMOUNT, limitDescription, limitAmount);
 
         if (wxMessageBox(message, _t("MMEX Scheduled Transaction Check"), wxYES_NO | wxICON_WARNING) == wxYES)
             allow_transaction = true;
@@ -392,11 +392,11 @@ SchedModel::Full_Data::Full_Data(const Data& r) :
     else
         CATEGNAME = CategoryModel::full_name(r.CATEGID);
 
-    ACCOUNTNAME = AccountModel::get_id_name(r.ACCOUNTID);
+    ACCOUNTNAME = AccountModel::instance().get_id_name(r.ACCOUNTID);
 
     PAYEENAME = PayeeModel::get_payee_name(r.PAYEEID);
     if (SchedModel::type_id(r) == TrxModel::TYPE_ID_TRANSFER) {
-        PAYEENAME = AccountModel::get_id_name(r.TOACCOUNTID);
+        PAYEENAME = AccountModel::instance().get_id_name(r.TOACCOUNTID);
     }
 
 }

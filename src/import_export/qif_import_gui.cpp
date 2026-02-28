@@ -469,7 +469,7 @@ bool mmQIFImportDialog::mmReadQIFFile()
     wxString accName = "";
     if (accountCheckBox_->IsChecked()) {
         accName = accountDropDown_->GetStringSelection();
-        const AccountData* acc = AccountModel::instance().get_key(accName);
+        const AccountData* acc = AccountModel::instance().get_key_data_n(accName);
         if (acc) {
             m_accountNameStr = acc->m_name;
         }
@@ -725,7 +725,7 @@ void mmQIFImportDialog::refreshTabs(int tabs)
         dataListBox_->DeleteAllItems();
         for (const auto& trx : vQIF_trxs_) {
             wxVector<wxVariant> data;
-            const AccountData* account = AccountModel::instance().get_num(trx.at(QIF_ID_AccountName));
+            const AccountData* account = AccountModel::instance().get_num_data_n(trx.at(QIF_ID_AccountName));
             data.push_back(wxVariant(wxString::Format("%i", num + 1)));
             data.push_back(
                 wxVariant(
@@ -801,8 +801,8 @@ void mmQIFImportDialog::refreshTabs(int tabs)
             currencySymbol = currencySymbol.SubString(1, currencySymbol.length() - 2);
 
             const AccountData* account = (accountNumberCheckBox_->IsChecked())
-                ? AccountModel::instance().get_num(acc.first)
-                : AccountModel::instance().get_key(acc.first);
+                ? AccountModel::instance().get_num_data_n(acc.first)
+                : AccountModel::instance().get_key_data_n(acc.first);
 
             wxString status;
             const wxString type = acc.second.find(QIF_ID_AccountType) != acc.second.end()
@@ -1660,8 +1660,8 @@ int64 mmQIFImportDialog::getOrCreateAccounts()
     for (auto &item : m_QIFaccounts) {
         int64 accountID = -1;
         const AccountData* acc = (accountNumberCheckBox_->IsChecked())
-            ? AccountModel::instance().get_num(item.first)
-            : AccountModel::instance().get_key(item.first);
+            ? AccountModel::instance().get_num_data_n(item.first)
+            : AccountModel::instance().get_key_data_n(item.first);
 
         if (!acc) {
             AccountData account_d = AccountData();
@@ -1693,7 +1693,7 @@ int64 mmQIFImportDialog::getOrCreateAccounts()
         m_QIFaccountsID[item.first] = accountID;
     }
 
-    const AccountData* acc = AccountModel::instance().get_key(m_accountNameStr);
+    const AccountData* acc = AccountModel::instance().get_key_data_n(m_accountNameStr);
     if (acc) {
         m_QIFaccountsID[m_accountNameStr] = acc->m_id;
     }
@@ -1753,7 +1753,7 @@ void mmQIFImportDialog::getOrCreateCategories()
 int64 mmQIFImportDialog::get_last_imported_acc()
 {
     int64 accID = -1;
-    const AccountData* acc = AccountModel::instance().get_key(m_accountNameStr);
+    const AccountData* acc = AccountModel::instance().get_key_data_n(m_accountNameStr);
     if (acc)
         accID = acc->m_id;
     return accID;

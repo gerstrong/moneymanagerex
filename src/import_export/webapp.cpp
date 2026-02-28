@@ -465,7 +465,7 @@ int64 mmWebApp::MMEX_InsertNewTransaction(webtran_holder& WebAppTrans)
     wxString TrStatus;
 
     //Search Account
-    const AccountData* account_n = AccountModel::instance().get_key(WebAppTrans.Account);
+    const AccountData* account_n = AccountModel::instance().get_key_data_n(WebAppTrans.Account);
     wxString accountName, accountInitialDate;
     if (account_n != nullptr) {
         AccountID = account_n->m_id;
@@ -501,7 +501,7 @@ int64 mmWebApp::MMEX_InsertNewTransaction(webtran_holder& WebAppTrans)
     // Search ToAccount
     const AccountData* ToAccount = nullptr;
     if (WebAppTrans.ToAccount != "None") {
-        ToAccount = AccountModel::instance().get_key(WebAppTrans.ToAccount);
+        ToAccount = AccountModel::instance().get_key_data_n(WebAppTrans.ToAccount);
         if (ToAccount)
             ToAccountID = ToAccount->m_id;
     }

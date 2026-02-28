@@ -607,7 +607,7 @@ void mmPayeeDialog::fillControls()
     payeeListBox_->DeleteAllItems();
     m_rowData.clear();
 
-    PayeeModel::DataA payees = PayeeModel::instance().FilterPayees(m_maskStr, m_showHiddenPayees);
+    PayeeModel::DataA payees = PayeeModel::instance().filter_name(m_maskStr, m_showHiddenPayees);
 
     if (m_sort != PAYEE_USED) {
         switch (m_sort)

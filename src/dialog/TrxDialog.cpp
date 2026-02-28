@@ -322,7 +322,7 @@ void TrxDialog::dataToControls()
             else if (m_mode == MODE_NEW
                 && PrefModel::instance().getTransPayeeNone() == PrefModel::UNUSED
             ) {
-                const PayeeData* payee_n = PayeeModel::instance().get_key(_t("Unknown"));
+                const PayeeData* payee_n = PayeeModel::instance().get_key_data_n(_t("Unknown"));
                 if (!payee_n) {
                     PayeeData new_payee_d = PayeeData();
                     new_payee_d.m_name = _t("Unknown");
@@ -722,7 +722,7 @@ bool TrxDialog::ValidateData()
         if (payee_loc != wxNOT_FOUND)
             payee_name = cbPayee_->GetString(payee_loc);
 
-        const PayeeData* payee_n = PayeeModel::instance().get_key(payee_name);
+        const PayeeData* payee_n = PayeeModel::instance().get_key_data_n(payee_name);
         if (!payee_n) {
             wxMessageDialog msgDlg(this,
                 wxString::Format(_t("Payee name has not been used before. Is the name correct?\n%s"), payee_name),
@@ -923,7 +923,7 @@ void TrxDialog::SetDialogTitle(const wxString& title)
 
 void TrxDialog::OnPayeeChanged(wxCommandEvent& /*event*/)
 {
-    const PayeeData * payee = PayeeModel::instance().get_key(cbPayee_->GetValue());
+    const PayeeData * payee = PayeeModel::instance().get_key_data_n(cbPayee_->GetValue());
     if (payee) {
         SetCategoryForPayee(payee);
     }
@@ -1034,7 +1034,7 @@ void TrxDialog::SetCategoryForPayee(const PayeeData *payee_n)
     }
 
     if (!payee_n) {
-        payee_n = PayeeModel::instance().get_key(cbPayee_->GetValue());
+        payee_n = PayeeModel::instance().get_key_data_n(cbPayee_->GetValue());
         if (!payee_n)
             return;
     }

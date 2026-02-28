@@ -467,7 +467,7 @@ void TrxModel::Full_Data::fill_data()
         PAYEENAME = TOACCOUNTNAME;
     }
     else {
-        PAYEENAME = PayeeModel::get_payee_name(PAYEEID);
+        PAYEENAME = PayeeModel::instance().get_id_name(PAYEEID);
     }
 
     if (!m_splits.empty()) {

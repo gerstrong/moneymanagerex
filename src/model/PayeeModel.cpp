@@ -52,20 +52,37 @@ PayeeModel& PayeeModel::instance()
     return Singleton<PayeeModel>::instance();
 }
 
-const PayeeModel::DataA PayeeModel::FilterPayees(const wxString& payee_pattern, bool includeInActive)
+bool PayeeModel::is_used(int64 id)
 {
-    DataA payees;
-    for (auto& payee_d : this->find_all(PayeeCol::COL_ID_PAYEENAME)) {
-        if (payee_d.m_name.Lower().Matches(payee_pattern.Lower().Append("*")) &&
-            (includeInActive || payee_d.m_active)
-        ) {
-            payees.push_back(payee_d);
-        }
-    }
-    return payees;
+    const auto& trx_a = TrxModel::instance().find(
+        TrxCol::PAYEEID(id)
+    );
+    // FIXME: do not exclude deleted transactions; the payee is still used.
+    // deleted transactions are shown in a panel and must have a valid payee id.
+    for (const auto& trx_d : trx_a)
+        if (trx_d.DELETEDTIME.IsEmpty())
+            return true;
+
+    const auto& sched_a = SchedModel::instance().find(
+        SchedCol::PAYEEID(id)
+    );
+    if (!sched_a.empty())
+        return true;
+
+    return false;
 }
 
-const PayeeData* PayeeModel::get_key(const wxString& name)
+bool PayeeModel::purge_id(int64 id)
+{
+    if (PayeeModel::is_used(id))
+        return false;
+
+    // FIXME: remove AttachmentData owned by id
+
+    return unsafe_remove_data(id);
+}
+
+const PayeeData* PayeeModel::get_key_data_n(const wxString& name)
 {
     const Data* payee_n = search_cache_n(PayeeCol::PAYEENAME(name));
     if (payee_n)
@@ -77,45 +94,35 @@ const PayeeData* PayeeModel::get_key(const wxString& name)
     return payee_n;
 }
 
-wxString PayeeModel::get_payee_name(int64 payee_id)
+const wxString PayeeModel::get_id_name(int64 payee_id)
 {
-    const Data* payee_n = instance().get_data_n(payee_id);
+    const Data* payee_n = get_data_n(payee_id);
     if (payee_n)
         return payee_n->m_name;
     else
         return _t("Payee Error");
 }
 
-bool PayeeModel::purge_id(int64 id)
+const wxArrayString PayeeModel::find_name_a()
 {
-    if (is_used(id))
-        return false;
-
-    // FIXME: remove AttachmentData owned by id
-
-    return unsafe_remove_data(id);
-}
-
-const wxArrayString PayeeModel::all_payee_names()
-{
-    wxArrayString payees;
-    for (const auto& payee_d: this->find_all(Col::COL_ID_PAYEENAME)) {
-        payees.Add(payee_d.m_name);
+    wxArrayString payee_name_a;
+    for (const auto& payee_d: find_all(Col::COL_ID_PAYEENAME)) {
+        payee_name_a.Add(payee_d.m_name);
     }
-    return payees;
+    return payee_name_a;
 }
 
-const std::map<wxString, int64> PayeeModel::all_payees(bool excludeHidden)
+const std::map<wxString, int64> PayeeModel::find_name_id(bool excludeHidden)
 {
-    std::map<wxString, int64> payees;
-    for (const auto& payee_d : this->find_all()) {
+    std::map<wxString, int64> payee_name_id;
+    for (const auto& payee_d : find_all()) {
         if (!excludeHidden || payee_d.m_active)
-            payees[payee_d.m_name] = payee_d.m_id;
+            payee_name_id[payee_d.m_name] = payee_d.m_id;
     }
-    return payees;
+    return payee_name_id;
 }
 
-const std::map<wxString, int64> PayeeModel::used_payee()
+const std::map<wxString, int64> PayeeModel::find_name_id_used()
 {
     std::map<int64, wxString> cache;
     for (const auto& payee_d : find_all())
@@ -133,25 +140,18 @@ const std::map<wxString, int64> PayeeModel::used_payee()
     return payees;
 }
 
-// -- Check if Payee if being used
-
-bool PayeeModel::is_used(int64 id)
-{
-    const auto& trans = TrxModel::instance().find(
-        TrxCol::PAYEEID(id)
-    );
-    // FIXME: do not exclude deleted transactions; the payee is still used.
-    // deleted transactions are shown in a panel and must have a valid payee id.
-    for (const auto& txn : trans)
-        if (txn.DELETEDTIME.IsEmpty())
-            return true;
-
-    const auto& sched_a = SchedModel::instance().find(
-        SchedCol::PAYEEID(id)
-    );
-    if (!sched_a.empty())
-        return true;
-
-    return false;
+const PayeeModel::DataA PayeeModel::filter_name(
+    const wxString& name_pattern,
+    bool includeInActive
+) {
+    DataA payee_a;
+    for (auto& payee_d : find_all(PayeeCol::COL_ID_PAYEENAME)) {
+        if (payee_d.m_name.Lower().Matches(name_pattern.Lower().Append("*")) &&
+            (includeInActive || payee_d.m_active)
+        ) {
+            payee_a.push_back(payee_d);
+        }
+    }
+    return payee_a;
 }
 

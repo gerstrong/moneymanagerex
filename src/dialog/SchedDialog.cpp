@@ -932,7 +932,7 @@ void SchedDialog::OnOk(wxCommandEvent& WXUNUSED(event))
         if (payee_loc != wxNOT_FOUND)
             payee_name = cbPayee_->GetString(payee_loc);
 
-        const PayeeData* payee_n = PayeeModel::instance().get_key(payee_name);
+        const PayeeData* payee_n = PayeeModel::instance().get_key_data_n(payee_name);
         if (!payee_n) {
             wxMessageDialog msgDlg(this,
                 wxString::Format(_t("Payee name has not been used before. Is the name correct?\n%s"), payee_name),

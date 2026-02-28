@@ -394,7 +394,7 @@ SchedModel::Full_Data::Full_Data(const Data& r) :
 
     ACCOUNTNAME = AccountModel::instance().get_id_name(r.ACCOUNTID);
 
-    PAYEENAME = PayeeModel::get_payee_name(r.PAYEEID);
+    PAYEENAME = PayeeModel::instance().get_id_name(r.PAYEEID);
     if (SchedModel::type_id(r) == TrxModel::TYPE_ID_TRANSFER) {
         PAYEENAME = AccountModel::instance().get_id_name(r.TOACCOUNTID);
     }

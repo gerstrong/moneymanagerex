@@ -268,7 +268,7 @@ void TrxLinkDialog::DataToControls()
     m_status_selector->SetSelection(TrxModel::status_id(m_transaction_n->STATUS));
 
     m_payee_id = m_transaction_n->PAYEEID;
-    m_payee->SetLabelText(PayeeModel::get_payee_name(m_payee_id));
+    m_payee->SetLabelText(PayeeModel::instance().get_id_name(m_payee_id));
 
     m_category_id = m_transaction_n->CATEGID;
     m_category->SetValue(CategoryModel::full_name(m_category_id));

@@ -43,24 +43,20 @@ public:
     // Note: Assigning the address to a local variable can destroy the instance.
     static PayeeModel& instance();
 
-public:
-    // TODO: move to PayeeData
-    static bool is_active(const Data& this_d);
+    static bool is_used(int64 id);
 
 public:
     PayeeModel();
     ~PayeeModel();
 
 public:
-    bool is_used(int64 id);
     bool purge_id(int64 id) override;
 
-    // Return the Data record pointer for the given payee name
-    // Returns 0 when payee not found.
-    const Data* get_key(const wxString& name);
-    static wxString get_payee_name(int64 payee_id);
-    const std::map<wxString, int64> all_payees(bool excludeHidden = false);
-    const wxArrayString all_payee_names();
-    const std::map<wxString, int64> used_payee();
-    const DataA FilterPayees(const wxString& payee_pattern, bool includeInActive = true);
+    const Data* get_key_data_n(const wxString& name);
+    const wxString get_id_name(int64 payee_id);
+
+    const wxArrayString find_name_a();
+    const std::map<wxString, int64> find_name_id(bool excludeHidden = false);
+    const std::map<wxString, int64> find_name_id_used();
+    const DataA filter_name(const wxString& name_pattern, bool includeInActive = true);
 };

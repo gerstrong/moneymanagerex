@@ -1353,7 +1353,7 @@ bool mmUnivCSVDialog::validateData(tran_holder & holder, wxString& message)
 
     const PayeeData* payee_n = PayeeModel::instance().get_data_n(holder.PayeeID);
     if (!payee_n) {
-        const PayeeData* unknown_n = PayeeModel::instance().get_key(_t("Unknown"));
+        const PayeeData* unknown_n = PayeeModel::instance().get_key_data_n(_t("Unknown"));
         if (!unknown_n) {
             PayeeData new_payee_d = PayeeData();
             new_payee_d.m_name = _t("Unknown");
@@ -2696,7 +2696,7 @@ void mmUnivCSVDialog::validatePayees() {
             }
         }
         if (!payee_found) {
-            const PayeeData* payee_n = PayeeModel::instance().get_key(payee_name);
+            const PayeeData* payee_n = PayeeModel::instance().get_key_data_n(payee_name);
             if (payee_n) {
                 m_CSVpayeeNames[payee_name] = std::make_tuple(payee_n->m_id, payee_n->m_name, "");
             }

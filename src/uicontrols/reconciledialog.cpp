@@ -669,7 +669,7 @@ void mmReconcileDialog::moveItemData(wxListCtrl* list, int row1, int row2)
 void mmReconcileDialog::setListItemData(const TrxData* trx, wxListCtrl* list, long item)
 {
     wxString prefix = trx->TRANSCODE == "Transfer" ? (trx->TOACCOUNTID == m_account->m_id ? "< " : "> ") : "";
-    wxString payeeName = (trx->TRANSCODE == "Transfer") ? AccountModel::instance().get_id_name(trx->TOACCOUNTID == m_account->m_id ? trx->ACCOUNTID : trx->TOACCOUNTID): PayeeModel::get_payee_name(trx->PAYEEID);
+    wxString payeeName = (trx->TRANSCODE == "Transfer") ? AccountModel::instance().get_id_name(trx->TOACCOUNTID == m_account->m_id ? trx->ACCOUNTID : trx->TOACCOUNTID): PayeeModel::instance().get_id_name(trx->PAYEEID);
     list->SetItem(item, 1, mmGetDateTimeForDisplay(trx->TRANSDATE));
     list->SetItem(item, 2, trx->TRANSACTIONNUMBER);
     list->SetItem(item, 3, prefix + payeeName);

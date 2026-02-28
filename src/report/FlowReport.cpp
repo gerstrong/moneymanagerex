@@ -442,7 +442,7 @@ wxString mmReportCashFlowTransactions::getHTMLText()
             hb.startAltTableRow();
         hb.addTableCellDate(trx.TRANSDATE);
         hb.addTableCell(AccountModel::instance().get_id_name(trx.ACCOUNTID));
-        hb.addTableCell((trx.TOACCOUNTID == -1) ? PayeeModel::get_payee_name(trx.PAYEEID)
+        hb.addTableCell((trx.TOACCOUNTID == -1) ? PayeeModel::instance().get_id_name(trx.PAYEEID)
             : "> " + AccountModel::instance().get_id_name(trx.TOACCOUNTID));
         hb.addTableCell(CategoryModel::full_name(trx.CATEGID));
         double amount = trx.TRANSAMOUNT;

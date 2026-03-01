@@ -344,10 +344,10 @@ bool TrxModel::purge_id(int64 id)
 {
     // TODO: remove all split at once
     // TrxSplitModel::instance().purge_id(TrxSplitModel::instance().find(TrxSplitCol::TRANSID(id)));
-    for (const auto& ts_d : TrxSplitModel::instance().find(
+    for (const auto& tp_d : TrxSplitModel::instance().find(
         TrxSplitCol::TRANSID(id)
     )) {
-        TrxSplitModel::instance().purge_id(ts_d.SPLITTRANSID);
+        TrxSplitModel::instance().purge_id(tp_d.m_id);
     }
     if (is_foreign(*instance().get_id_data_n(id)))
         TrxLinkModel::RemoveTranslinkEntry(id);
@@ -463,9 +463,9 @@ void TrxModel::Full_Data::fill_data()
     }
 
     if (!m_splits.empty()) {
-        for (const auto& entry : m_splits)
+        for (const auto& tp_d : m_splits)
             CATEGNAME += (CATEGNAME.empty() ? " + " : ", ")
-                + CategoryModel::full_name(entry.CATEGID);
+                + CategoryModel::full_name(tp_d.m_category_id_p);
     }
     else {
         CATEGNAME = CategoryModel::full_name(CATEGID);
@@ -586,30 +586,26 @@ const wxString TrxModel::Full_Data::to_json()
     if (this->has_tags()) {
         json_writer.Key("TAGS");
         json_writer.StartArray();
-        for (const auto& item : m_splits)
-        {
+        for (const auto& tp_d : m_splits) {
             json_writer.StartObject();
-            json_writer.Key(CategoryModel::full_name(item.CATEGID).utf8_str());
-            json_writer.Double(item.SPLITTRANSAMOUNT);
+            json_writer.Key(CategoryModel::full_name(tp_d.m_category_id_p).utf8_str());
+            json_writer.Double(tp_d.m_amount);
             json_writer.EndObject();
         }
         json_writer.EndArray();
     }
-    if (this->has_split())
-    {
+    if (this->has_split()) {
         json_writer.Key("CATEGS");
         json_writer.StartArray();
-        for (const auto & item : m_splits)
-        {
+        for (const auto & tp_d : m_splits) {
             json_writer.StartObject();
-            json_writer.Key(CategoryModel::full_name(item.CATEGID).utf8_str());
-            json_writer.Double(item.SPLITTRANSAMOUNT);
+            json_writer.Key(CategoryModel::full_name(tp_d.m_category_id_p).utf8_str());
+            json_writer.Double(tp_d.m_amount);
             json_writer.EndObject();
         }
         json_writer.EndArray();
     }
-    else
-    {
+    else {
         json_writer.Key("CATEG");
         json_writer.String(CategoryModel::full_name(this->CATEGID).utf8_str());
     }

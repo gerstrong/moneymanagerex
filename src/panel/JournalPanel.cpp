@@ -859,38 +859,38 @@ void JournalPanel::filterList()
         wxString tranTagnames = full_tran.TAGNAMES;
         wxString tranDisplaySN = full_tran.displaySN;
         wxString tranDisplayID = full_tran.displayID;
-        for (const auto& split : full_tran.m_splits) {
+        for (const auto& tp_d : full_tran.m_splits) {
             if (m_filter_advanced) {
-              if (!m_trans_filter_dlg->mmIsSplitRecordMatches<TrxSplitModel>(split))
+              if (!m_trans_filter_dlg->mmIsSplitRecordMatches<TrxSplitModel>(tp_d))
                   continue;
             }
             full_tran.displaySN = tranDisplaySN + "." + wxString::Format("%i", splitIndex);
             full_tran.displayID = tranDisplayID + "." + wxString::Format("%i", splitIndex);
             splitIndex++;
-            full_tran.CATEGID = split.CATEGID;
-            full_tran.CATEGNAME = CategoryModel::full_name(split.CATEGID);
-            full_tran.TRANSAMOUNT = split.SPLITTRANSAMOUNT;
-            full_tran.NOTES = tran->NOTES;
-            full_tran.TAGNAMES = tranTagnames;
+            full_tran.CATEGID     = tp_d.m_category_id_p;
+            full_tran.CATEGNAME   = CategoryModel::full_name(tp_d.m_category_id_p);
+            full_tran.TRANSAMOUNT = tp_d.m_amount;
+            full_tran.NOTES       = tran->NOTES;
+            full_tran.TAGNAMES    = tranTagnames;
             TrxData splitWithTxnNotes = full_tran;
             TrxData splitWithSplitNotes = full_tran;
-            splitWithSplitNotes.NOTES = split.NOTES;
+            splitWithSplitNotes.NOTES = tp_d.m_notes;
             if (m_filter_advanced) {
-              if (
-                  !m_trans_filter_dlg->mmIsRecordMatches<TrxModel>(splitWithSplitNotes, true) &&
-                  !m_trans_filter_dlg->mmIsRecordMatches<TrxModel>(splitWithTxnNotes, true)
-              ) {
-                continue;
-              }
+                if (
+                    !m_trans_filter_dlg->mmIsRecordMatches<TrxModel>(splitWithSplitNotes, true) &&
+                    !m_trans_filter_dlg->mmIsRecordMatches<TrxModel>(splitWithTxnNotes, true)
+                ) {
+                    continue;
+                }
             }
             if (isAccount()) {
                 full_tran.ACCOUNT_FLOW = TrxModel::account_flow(splitWithTxnNotes, m_account_id);
                 m_flow += full_tran.ACCOUNT_FLOW;
             }
-            full_tran.NOTES.Append((tran->NOTES.IsEmpty() ? "" : " ") + split.NOTES);
+            full_tran.NOTES.Append((tran->NOTES.IsEmpty() ? "" : " ") + tp_d.m_notes);
             wxString tagnames;
             const wxString reftype = (repeat_num == 0) ? tranSplitRefType : billSplitRefType;
-            for (const auto& tag : TagLinkModel::instance().get_ref(reftype, split.SPLITTRANSID))
+            for (const auto& tag : TagLinkModel::instance().get_ref(reftype, tp_d.m_id))
                 tagnames.Append(tag.first + " ");
             if (!tagnames.IsEmpty())
                 full_tran.TAGNAMES.Append((full_tran.TAGNAMES.IsEmpty() ? "" : ", ") + tagnames.Trim());
@@ -940,13 +940,13 @@ void JournalPanel::updateExtraTransactionData(bool single, int repeat_num, bool 
 
         wxString notesStr = full_tran.NOTES;
         if (!full_tran.m_repeat_num) {
-            auto splits = TrxSplitModel::instance().find(
+            auto tp_a = TrxSplitModel::instance().find(
                 TrxSplitCol::TRANSID(full_tran.TRANSID)
             );
-            for (const auto& split : splits)
-                if (!split.NOTES.IsEmpty()) {
+            for (const auto& tp_d : tp_a)
+                if (!tp_d.m_notes.IsEmpty()) {
                     notesStr += notesStr.empty() ? "" : "\n";
-                    notesStr += split.NOTES;
+                    notesStr += tp_d.m_notes;
                 }
             if (full_tran.has_attachment()) {
                 const wxString& refType = TrxModel::refTypeName;
@@ -958,13 +958,13 @@ void JournalPanel::updateExtraTransactionData(bool single, int repeat_num, bool 
             }
         }
         else {
-            auto splits = SchedSplitModel::instance().find(
+            auto qp_a = SchedSplitModel::instance().find(
                 SchedSplitCol::TRANSID(full_tran.m_bdid)
             );
-            for (const auto& split : splits)
-                if (!split.NOTES.IsEmpty()) {
+            for (const auto& qp_d : qp_a)
+                if (!qp_d.m_notes.IsEmpty()) {
                     notesStr += notesStr.empty() ? "" : "\n";
-                    notesStr += split.NOTES;
+                    notesStr += qp_d.m_notes;
                 }
             if (full_tran.has_attachment()) {
                 const wxString& refType = SchedModel::refTypeName;
@@ -1425,12 +1425,12 @@ void JournalPanel::displaySplitCategories(Journal::IdB journal_id)
         ? Journal::Data(*TrxModel::instance().get_id_data_n(journal_id.first))
         : Journal::Data(*SchedModel::instance().get_id_data_n(journal_id.first));
     std::vector<Split> splits;
-    for (const auto& split : Journal::split(journal)) {
-        Split s;
-        s.CATEGID          = split.CATEGID;
-        s.SPLITTRANSAMOUNT = split.SPLITTRANSAMOUNT;
-        s.NOTES            = split.NOTES;
-        splits.push_back(s);
+    for (const auto& tp_d : Journal::split(journal)) {
+        Split split_d;
+        split_d.CATEGID          = tp_d.m_category_id_p;
+        split_d.SPLITTRANSAMOUNT = tp_d.m_amount;
+        split_d.NOTES            = tp_d.m_notes;
+        splits.push_back(split_d);
     }
     if (splits.empty()) return;
     SplitDialog splitTransDialog(this, splits, m_account_id, true);

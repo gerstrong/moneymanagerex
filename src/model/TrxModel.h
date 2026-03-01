@@ -36,8 +36,8 @@ const wxString mmGetTimeForDisplay(const wxString& datetime_iso);
 class TrxModel : public TableFactory<TrxTable, TrxData>
 {
 public:
-    using Split_DataA   = TrxSplitModel::DataA;
-    using Taglink_DataA = TagLinkModel::DataA;
+    using TrxSplitDataA = TrxSplitModel::DataA;
+    using TagLinkDataA  = TagLinkModel::DataA;
 
 public:
     enum TYPE_ID
@@ -87,8 +87,8 @@ public:
         wxString ACCOUNTNAME, TOACCOUNTNAME;
         wxString PAYEENAME;
         wxString CATEGNAME;
-        Split_DataA m_splits;
-        Taglink_DataA m_tags;
+        TrxSplitDataA m_splits;
+        TagLinkDataA m_tags;
         wxString TAGNAMES;
 
         // filled-in by constructor; overwritten by JournalPanel::filterTable()
@@ -186,7 +186,7 @@ public:
 
 public:
     static const TrxModel::DataA find_allByDateTimeId();
-    static const Split_DataA find_split(const Data& r);
+    static const TrxSplitDataA find_split(const Data& r);
     static void getFrequentUsedNotes(std::vector<wxString> &frequentNotes, int64 accountID = -1);
     static void setEmptyData(Data &data, int64 accountID);
     static bool is_locked(const Data& trx_d);

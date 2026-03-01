@@ -122,18 +122,21 @@ TrxDialog::TrxDialog(
         const wxString& splitRefType = (m_journal_data.m_repeat_num == 0) ?
             TrxSplitModel::refTypeName :
             SchedSplitModel::refTypeName;
-        for (const auto& split : Journal::split(m_journal_data)) {
-            wxArrayInt64 tags;
-            for (const auto& tag : TagLinkModel::instance().find(
+        for (const auto& tp_d : Journal::split(m_journal_data)) {
+            wxArrayInt64 tag_id_a;
+            for (const auto& gl_d : TagLinkModel::instance().find(
                 TagLinkCol::REFTYPE(splitRefType),
-                TagLinkCol::REFID(split.SPLITTRANSID))
+                TagLinkCol::REFID(tp_d.m_id))
             )
-                tags.push_back(tag.TAGID);
-            m_local_splits.push_back({split.CATEGID, split.SPLITTRANSAMOUNT, tags, split.NOTES});
+                tag_id_a.push_back(gl_d.TAGID);
+            m_local_splits.push_back(
+                {tp_d.m_category_id_p, tp_d.m_amount, tag_id_a, tp_d.m_notes}
+            );
         }
 
-        if (m_mode == MODE_DUP && !SettingModel::instance().getBool(INIDB_USE_ORG_DATE_DUPLICATE, false))
-        {
+        if (m_mode == MODE_DUP &&
+            !SettingModel::instance().getBool(INIDB_USE_ORG_DATE_DUPLICATE, false)
+        ) {
             // Use the empty transaction logic to generate the new date to be used
             TrxData emptyTrx;
             TrxModel::setEmptyData(emptyTrx, account_id);
@@ -1260,34 +1263,33 @@ void TrxDialog::OnOk(wxCommandEvent& event)
 
     TrxModel::copy_from_trx(trx_n, m_journal_data);
     TrxModel::instance().unsafe_save_trx(trx_n);
-    m_journal_data.TRANSID = trx_n->id();
-    m_journal_data.m_bdid = 0;
+    m_journal_data.TRANSID      = trx_n->id();
+    m_journal_data.m_bdid       = 0;
     m_journal_data.m_repeat_num = 0;
 
-    TrxSplitModel::DataA splt;
+    TrxSplitModel::DataA tp_a;
     for (const auto& entry : m_local_splits) {
-        TrxSplitData s = TrxSplitData();
-        s.CATEGID = entry.CATEGID;
-        s.SPLITTRANSAMOUNT = entry.SPLITTRANSAMOUNT;
-        s.NOTES = entry.NOTES;
-        splt.push_back(s);
+        TrxSplitData tp_d = TrxSplitData();
+        tp_d.m_category_id_p = entry.CATEGID;
+        tp_d.m_amount        = entry.SPLITTRANSAMOUNT;
+        tp_d.m_notes         = entry.NOTES;
+        tp_a.push_back(tp_d);
     }
-    TrxSplitModel::instance().update(splt, m_journal_data.TRANSID);
+    TrxSplitModel::instance().update(tp_a, m_journal_data.TRANSID);
 
     // Save split tags
     const wxString& splitRefType = TrxSplitModel::refTypeName;
 
-    for (unsigned int i = 0; i < m_local_splits.size(); i++)
-    {
+    for (unsigned int i = 0; i < m_local_splits.size(); i++) {
         TagLinkModel::DataA splitTaglinks;
-        for (const auto& tagId : m_local_splits.at(i).TAGS) {
-            TagLinkData t = TagLinkData();
-            t.REFTYPE = splitRefType;
-            t.REFID = splt.at(i).SPLITTRANSID;
-            t.TAGID = tagId;
-            splitTaglinks.push_back(t);
+        for (const auto& tag_id : m_local_splits.at(i).TAGS) {
+            TagLinkData gl_d = TagLinkData();
+            gl_d.REFTYPE = splitRefType;
+            gl_d.REFID   = tp_a.at(i).m_id;
+            gl_d.TAGID   = tag_id;
+            splitTaglinks.push_back(gl_d);
         }
-        TagLinkModel::instance().update(splitTaglinks, splitRefType, splt.at(i).SPLITTRANSID);
+        TagLinkModel::instance().update(splitTaglinks, splitRefType, tp_a.at(i).m_id);
     }
     const wxString& RefType = TrxModel::refTypeName;
     if (m_mode != MODE_EDIT) {
@@ -1298,13 +1300,12 @@ void TrxDialog::OnOk(wxCommandEvent& event)
 
     // Save base transaction tags
     TagLinkModel::DataA taglinks;
-    for (const auto& tagId : tagTextCtrl_->GetTagIDs())
-    {
-        TagLinkData t = TagLinkData();
-        t.REFTYPE = RefType;
-        t.REFID = m_journal_data.TRANSID;
-        t.TAGID = tagId;
-        taglinks.push_back(t);
+    for (const auto& tag_id : tagTextCtrl_->GetTagIDs()) {
+        TagLinkData gl_d = TagLinkData();
+        gl_d.REFTYPE = RefType;
+        gl_d.REFID   = m_journal_data.TRANSID;
+        gl_d.TAGID   = tag_id;
+        taglinks.push_back(gl_d);
     }
     TagLinkModel::instance().update(taglinks, RefType, m_journal_data.TRANSID);
 

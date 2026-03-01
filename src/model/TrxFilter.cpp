@@ -84,7 +84,7 @@ void TrxFilter::setCategoryList(const wxArrayInt64 &categoryList)
 template<class MODEL, class DATA>
 bool TrxFilter::checkCategory(
     const DATA& tran,
-    const std::map<int64, typename MODEL::Split_DataA> & splits
+    const std::map<int64, typename MODEL::TrxSplitDataA> & splits
 ) {
     const auto it = splits.find(tran.id());
     if (it == splits.end()) {
@@ -94,9 +94,9 @@ bool TrxFilter::checkCategory(
         }
     }
     else {
-        for (const auto& split : it->second) {
+        for (const auto& tp_d : it->second) {
             for (auto it2 : m_category_a) {
-                if (it2 == split.CATEGID)
+                if (it2 == tp_d.m_category_id_p)
                     return true;
             }
         }
@@ -106,20 +106,20 @@ bool TrxFilter::checkCategory(
 }
 
 bool TrxFilter::mmIsRecordMatches(
-    const TrxData &tran,
+    const TrxData &trx_d,
     const std::map<int64, TrxSplitModel::DataA>& split
 ) {
     bool ok = true;
-    wxString strDate = TrxModel::getTransDateTime(tran).FormatISOCombined();
+    wxString strDate = TrxModel::getTransDateTime(trx_d).FormatISOCombined();
     if (m_filter_account
-        && (std::find(m_account_a.begin(), m_account_a.end(), tran.ACCOUNTID) == m_account_a.end())
-        && (std::find(m_account_a.begin(), m_account_a.end(), tran.TOACCOUNTID) == m_account_a.end()))
+        && (std::find(m_account_a.begin(), m_account_a.end(), trx_d.ACCOUNTID) == m_account_a.end())
+        && (std::find(m_account_a.begin(), m_account_a.end(), trx_d.TOACCOUNTID) == m_account_a.end()))
         ok = false;
     else if (m_filter_date && ((strDate < m_start_date) || (strDate > m_end_date)))
         ok = false;
-    else if (m_filter_payee && (std::find(m_payee_a.begin(), m_payee_a.end(), tran.PAYEEID) == m_payee_a.end()))
+    else if (m_filter_payee && (std::find(m_payee_a.begin(), m_payee_a.end(), trx_d.PAYEEID) == m_payee_a.end()))
         ok = false;
-    else if (m_filter_category && !checkCategory<TrxModel>(tran, split))
+    else if (m_filter_category && !checkCategory<TrxModel>(trx_d, split))
         ok = false;
     return ok;
 }
@@ -130,35 +130,30 @@ wxString TrxFilter::getHTML()
     m_trans.clear();
     const auto splits = TrxSplitModel::instance().get_all_id();
     const auto tags = TagLinkModel::instance().get_all_id(TrxModel::refTypeName);
-    for (const auto& tran : TrxModel::instance().find_all()) //TODO: find should be faster
-    {
-        if (!mmIsRecordMatches(tran, splits)) continue;
-        TrxModel::Full_Data full_tran(tran, splits, tags);
+    //TODO: find should be faster
+    for (const auto& trx_d : TrxModel::instance().find_all()) {
+        if (!mmIsRecordMatches(trx_d, splits)) continue;
+        TrxModel::Full_Data full_tran(trx_d, splits, tags);
 
         full_tran.PAYEENAME = full_tran.real_payee_name(full_tran.ACCOUNTID);
-        if (full_tran.has_split())
-        {
+        if (full_tran.has_split()) {
             bool found = true;
-            for (const auto& split : full_tran.m_splits)
-            {
-                if (m_filter_category)
-                {
+            for (const auto& tp_d : full_tran.m_splits) {
+                if (m_filter_category) {
                     found = false;
 
-                    for (const auto& it : m_category_a)
-                    {
-                        if (it == split.CATEGID) {
+                    for (const auto& it : m_category_a) {
+                        if (it == tp_d.m_category_id_p) {
                             found = true;
                             break;
                         }
                     }
                 }
 
-                if (found)
-                {
-                    full_tran.CATEGNAME = CategoryModel::full_name(split.CATEGID);
-                    full_tran.TRANSAMOUNT = split.SPLITTRANSAMOUNT;
-                    full_tran.NOTES.Append((tran.NOTES.IsEmpty() ? "" : " ") + split.NOTES);
+                if (found) {
+                    full_tran.CATEGNAME = CategoryModel::full_name(tp_d.m_category_id_p);
+                    full_tran.TRANSAMOUNT = tp_d.m_amount;
+                    full_tran.NOTES.Append((trx_d.NOTES.IsEmpty() ? "" : " ") + tp_d.m_notes);
                     m_trans.push_back(full_tran);
                 }
             }

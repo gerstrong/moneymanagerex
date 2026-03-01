@@ -130,15 +130,15 @@ void FlowReport::getTransactions()
         ) != m_account_id.end();
         if (!isAccountFound && !isToAccountFound)
             continue; // skip account
-        const auto& split_a = TrxModel::find_split(trx_d);
-        if (split_a.empty()) {
+        const auto& tp_a = TrxModel::find_split(trx_d);
+        if (tp_a.empty()) {
             trx_d.TRANSAMOUNT = trueAmount(trx_d);
             m_forecastVector.push_back(trx_d);
         }
         else {
-            for (const auto& split_d : split_a) {
-                trx_d.CATEGID     = split_d.CATEGID;
-                trx_d.TRANSAMOUNT = split_d.SPLITTRANSAMOUNT;
+            for (const auto& tp_d : tp_a) {
+                trx_d.CATEGID     = tp_d.m_category_id_p;
+                trx_d.TRANSAMOUNT = tp_d.m_amount;
                 trx_d.TRANSAMOUNT = trueAmount(trx_d);
                 m_forecastVector.push_back(trx_d);
             }
@@ -171,26 +171,26 @@ void FlowReport::getTransactions()
             if (next_date > endDate)
                 break;
 
-            TrxData trx;
-            trx.TRANSDATE     = next_date.FormatISODate();
-            trx.ACCOUNTID     = sched_d.ACCOUNTID;
-            trx.TOACCOUNTID   = sched_d.TOACCOUNTID;
-            trx.PAYEEID       = sched_d.PAYEEID;
-            trx.TRANSCODE     = sched_d.TRANSCODE;
-            trx.TRANSAMOUNT   = sched_d.TRANSAMOUNT;
-            trx.TOTRANSAMOUNT = sched_d.TOTRANSAMOUNT;
+            TrxData trx_d;
+            trx_d.TRANSDATE     = next_date.FormatISODate();
+            trx_d.ACCOUNTID     = sched_d.ACCOUNTID;
+            trx_d.TOACCOUNTID   = sched_d.TOACCOUNTID;
+            trx_d.PAYEEID       = sched_d.PAYEEID;
+            trx_d.TRANSCODE     = sched_d.TRANSCODE;
+            trx_d.TRANSAMOUNT   = sched_d.TRANSAMOUNT;
+            trx_d.TOTRANSAMOUNT = sched_d.TOTRANSAMOUNT;
             if (!SchedModel::split(sched_d).empty()) {
-                for (const auto& split_item : SchedModel::split(sched_d)) {
-                    trx.CATEGID     = split_item.CATEGID;
-                    trx.TRANSAMOUNT = split_item.SPLITTRANSAMOUNT;
-                    trx.TRANSAMOUNT = trueAmount(trx);
-                    m_forecastVector.push_back(trx);
+                for (const auto& qp_d : SchedModel::split(sched_d)) {
+                    trx_d.CATEGID     = qp_d.m_category_id_p;
+                    trx_d.TRANSAMOUNT = qp_d.m_amount;
+                    trx_d.TRANSAMOUNT = trueAmount(trx_d);
+                    m_forecastVector.push_back(trx_d);
                 }
             }
             else {
-                trx.CATEGID     = sched_d.CATEGID;
-                trx.TRANSAMOUNT = trueAmount(trx);
-                m_forecastVector.push_back(trx);
+                trx_d.CATEGID     = sched_d.CATEGID;
+                trx_d.TRANSAMOUNT = trueAmount(trx_d);
+                m_forecastVector.push_back(trx_d);
             }
 
             if (rn.num == 1)

@@ -1710,8 +1710,7 @@ void mmUnivCSVDialog::OnExport(wxCommandEvent& WXUNUSED(event))
         std::sort(txns.begin(), txns.end());
         std::stable_sort(txns.begin(), txns.end(), TrxData::SorterByTRANSDATE());
 
-        for (const auto& pBankTransaction : txns)
-        {
+        for (const auto& pBankTransaction : txns) {
             if (TrxModel::status_id(pBankTransaction) == TrxModel::STATUS_ID_VOID || !pBankTransaction.DELETEDTIME.IsEmpty())
                 continue;
 
@@ -1721,22 +1720,24 @@ void mmUnivCSVDialog::OnExport(wxCommandEvent& WXUNUSED(event))
             account_balance += value;
 
             if (!has_split) {
-                TrxSplitData splt = TrxSplitData();
-                splt.TRANSID = tran.TRANSID;
-                splt.CATEGID = tran.CATEGID;
-                splt.SPLITTRANSAMOUNT = value;
-                tran.m_splits.push_back(splt);
+                TrxSplitData tp_d = TrxSplitData();
+                tp_d.m_trx_id_p      = tran.TRANSID;
+                tp_d.m_category_id_p = tran.CATEGID;
+                tp_d.m_amount        = value;
+                tran.m_splits.push_back(tp_d);
             }
 
-            for (const auto& splt : tran.m_splits) {
+            for (const auto& tp_d : tran.m_splits) {
                 //Export the transaction only if the transaction is between the selected dates or if the user select to export all the transactions regardless of their date
                 if (TrxModel::getTransDateTime(pBankTransaction).IsBetween(m_date_picker_start->GetValue(),m_date_picker_end->GetValue()) || m_haveDatesCheckBox->IsChecked()==false
                 ) {
                     pTxFile->AddNewLine();
 
-                    const CategoryData* category = CategoryModel::instance().get_id_data_n(splt.CATEGID);
+                    const CategoryData* category = CategoryModel::instance().get_id_data_n(
+                        tp_d.m_category_id_p
+                    );
 
-                    double amt = splt.SPLITTRANSAMOUNT;
+                    double amt = tp_d.m_amount;
                     if (TrxModel::type_id(pBankTransaction) == TrxModel::TYPE_ID_WITHDRAWAL
                         && has_split) {
                         amt = -amt;
@@ -1744,8 +1745,7 @@ void mmUnivCSVDialog::OnExport(wxCommandEvent& WXUNUSED(event))
                     const wxString amount = CurrencyModel::toStringNoFormatting(amt, currency);
                     const wxString amount_abs = CurrencyModel::toStringNoFormatting(fabs(amt), currency);
 
-                    for (const auto& it : csvFieldOrder_)
-                    {
+                    for (const auto& it : csvFieldOrder_) {
                         wxString entry = "";
                         ITransactionsFile::ItemType itemType = ITransactionsFile::TYPE_STRING;
                         switch (it.first)
@@ -1782,7 +1782,7 @@ void mmUnivCSVDialog::OnExport(wxCommandEvent& WXUNUSED(event))
                         case UNIV_CSV_TAGS:
                         {
                             wxString splitTags;
-                            for (const auto& tag : TagLinkModel::instance().get_ref(TrxSplitModel::refTypeName, splt.SPLITTRANSID))
+                            for (const auto& tag : TagLinkModel::instance().get_ref(TrxSplitModel::refTypeName, tp_d.m_id))
                                 splitTags.Append((splitTags.IsEmpty() ? "" : " ") + tag.first);
                             entry = tran.TAGNAMES;
                             if (!splitTags.IsEmpty())
@@ -2110,14 +2110,14 @@ void mmUnivCSVDialog::update_preview()
                         account_balance += value;
 
                         if (!has_split) {
-                            TrxSplitData s = TrxSplitData();
-                            s.TRANSID = tran.TRANSID;
-                            s.CATEGID = tran.CATEGID;
-                            s.SPLITTRANSAMOUNT = value;
-                            tran.m_splits.push_back(s);
+                            TrxSplitData tp_d = TrxSplitData();
+                            tp_d.m_trx_id_p      = tran.TRANSID;
+                            tp_d.m_category_id_p = tran.CATEGID;
+                            tp_d.m_amount        = value;
+                            tran.m_splits.push_back(tp_d);
                         }
 
-                        for (const auto& splt : tran.m_splits) {
+                        for (const auto& tp_d : tran.m_splits) {
                             int col = 0;
                             wxString buf;
                             buf.Printf("%d", col);
@@ -2125,11 +2125,11 @@ void mmUnivCSVDialog::update_preview()
                             buf.Printf("%d", row + 1);
                             m_list_ctrl_->SetItem(itemIndex, col, buf);
                             m_list_ctrl_->SetItemData(itemIndex, row);
-                            const CategoryData* category = CategoryModel::instance().get_id_data_n(splt.CATEGID);
+                            const CategoryData* category = CategoryModel::instance().get_id_data_n(tp_d.m_category_id_p);
 
                             const CurrencyData* currency = AccountModel::instance().get_data_currency_p(*from_account);
 
-                            double amt = splt.SPLITTRANSAMOUNT;
+                            double amt = tp_d.m_amount;
                             if (TrxModel::type_id(pBankTransaction) == TrxModel::TYPE_ID_WITHDRAWAL
                                 && has_split
                             ) {
@@ -2179,7 +2179,7 @@ void mmUnivCSVDialog::update_preview()
                                 {
                                     wxString splitTags;
                                     for (const auto& tag :
-                                         TagLinkModel::instance().get_ref(TrxSplitModel::refTypeName, splt.SPLITTRANSID))
+                                         TagLinkModel::instance().get_ref(TrxSplitModel::refTypeName, tp_d.m_id))
                                         splitTags.Append((splitTags.IsEmpty() ? "" : " ") + tag.first);
                                     text << inQuotes(tran.TAGNAMES + (tran.TAGNAMES.IsEmpty() ? "" : " ") + splitTags, delimit);
                                     break;

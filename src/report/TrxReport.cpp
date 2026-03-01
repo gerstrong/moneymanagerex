@@ -562,38 +562,36 @@ void TrxReport::Run(wxSharedPtr<TrxFilterDialog>& dlg)
     const auto tags = TagLinkModel::instance().get_all_id(TrxModel::refTypeName);
     bool combine_splits = dlg.get()->mmIsCombineSplitsChecked();
     const wxString splitRefType = TrxSplitModel::refTypeName;
-    for (const auto& tran : TrxModel::instance().find_all())
-    {
+    for (const auto& tran : TrxModel::instance().find_all()) {
         TrxModel::Full_Data full_tran(tran, splits, tags);
 
         full_tran.PAYEENAME = full_tran.real_payee_name(full_tran.ACCOUNTID);
-        if (full_tran.has_split())
-        {
+        if (full_tran.has_split()) {
             TrxModel::Full_Data single_tran = full_tran;
             single_tran.TRANSAMOUNT = 0;
             int splitIndex = 1;
             bool match = false;
             wxString tranTagnames = full_tran.TAGNAMES;
-            for (const auto& split : full_tran.m_splits)
-            {
-                full_tran.displayID = (wxString::Format("%lld", tran.TRANSID) + "." + wxString::Format("%i", splitIndex++));
-                full_tran.CATEGID = split.CATEGID;
-                full_tran.CATEGNAME = CategoryModel::full_name(split.CATEGID);
-                full_tran.TRANSAMOUNT = split.SPLITTRANSAMOUNT;
-                full_tran.NOTES = tran.NOTES;
-                full_tran.TAGNAMES = tranTagnames;
+            for (const auto& tp_d : full_tran.m_splits) {
+                full_tran.displayID   = (wxString::Format("%lld", tran.TRANSID) + "." + wxString::Format("%i", splitIndex++));
+                full_tran.CATEGID     = tp_d.m_category_id_p;
+                full_tran.CATEGNAME   = CategoryModel::full_name(tp_d.m_category_id_p);
+                full_tran.TRANSAMOUNT = tp_d.m_amount;
+                full_tran.NOTES       = tran.NOTES;
+                full_tran.TAGNAMES    = tranTagnames;
+
                 TrxData splitWithTxnNotes = full_tran;
                 TrxData splitWithSplitNotes = full_tran;
-                splitWithSplitNotes.NOTES = split.NOTES;
-                if (dlg.get()->mmIsSplitRecordMatches<TrxSplitModel>(split)
-                    && (dlg.get()->mmIsRecordMatches<TrxModel>(splitWithSplitNotes, true)
-                        || dlg.get()->mmIsRecordMatches<TrxModel>(splitWithTxnNotes, true)))
-                {
+                splitWithSplitNotes.NOTES = tp_d.m_notes;
+                if (dlg.get()->mmIsSplitRecordMatches<TrxSplitModel>(tp_d) && (
+                    dlg.get()->mmIsRecordMatches<TrxModel>(splitWithSplitNotes, true) ||
+                    dlg.get()->mmIsRecordMatches<TrxModel>(splitWithTxnNotes, true)
+                )) {
                     match = true;
-                    full_tran.NOTES.Append((tran.NOTES.IsEmpty() ? "" : " ") + split.NOTES);
+                    full_tran.NOTES.Append((tran.NOTES.IsEmpty() ? "" : " ") + tp_d.m_notes);
 
                     wxString tagnames;
-                    for (const auto& [tag_name, _] : TagLinkModel::instance().get_ref(splitRefType, split.SPLITTRANSID))
+                    for (const auto& [tag_name, _] : TagLinkModel::instance().get_ref(splitRefType, tp_d.m_id))
                         tagnames.Append(tag_name + " ");
                     if (!tagnames.IsEmpty())
                         full_tran.TAGNAMES.Append((full_tran.TAGNAMES.IsEmpty() ? "" : ", ") + tagnames.Trim());

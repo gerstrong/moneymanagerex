@@ -100,15 +100,15 @@ void PayeeReport::loadData()
             trx.TRANSDATE
         );
 
-        TrxSplitModel::DataA splits;
+        TrxSplitModel::DataA tp_a;
         if (all_splits.count(trx.id()))
-            splits = all_splits.at(trx.id());
-        if (splits.empty()) {
+            tp_a = all_splits.at(trx.id());
+        if (tp_a.empty()) {
             updateData(data, type_id, trx.TRANSAMOUNT * convRate);
         }
         else {
-            for (const auto& split : splits) {
-                updateData(data, type_id, split.SPLITTRANSAMOUNT * convRate);
+            for (const auto& tp_d : tp_a) {
+                updateData(data, type_id, tp_d.m_amount * convRate);
             }
         }
     }

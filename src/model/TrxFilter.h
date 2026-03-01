@@ -38,7 +38,7 @@ public:
     template<class MODEL, class DATA = typename MODEL::Data>
     bool checkCategory(
         const DATA& tran,
-        const std::map<int64, typename MODEL::Split_DataA> & splits
+        const std::map<int64, typename MODEL::TrxSplitDataA> & splits
     );
     bool mmIsRecordMatches(
         const TrxData &tran,

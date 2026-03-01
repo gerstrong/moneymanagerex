@@ -643,40 +643,40 @@ void mmGUIFrame::OnAutoRepeatTransactionsTimer(wxTimerEvent& /*event*/)
                 TrxModel::instance().save_trx(new_trx_d);
                 int64 transID = new_trx_d.id();
 
-                TrxSplitModel::DataA split_a;
+                TrxSplitModel::DataA tp_a;
                 std::vector<wxArrayInt64> splitTags;
-                for (const auto& item : SchedModel::split(q1)) {
-                    TrxSplitData split_d = TrxSplitData();
-                    split_d.TRANSID          = transID;
-                    split_d.CATEGID          = item.CATEGID;
-                    split_d.SPLITTRANSAMOUNT = item.SPLITTRANSAMOUNT;
-                    split_d.NOTES            = item.NOTES;
-                    split_a.push_back(split_d);
+                for (const auto& qp_d : SchedModel::split(q1)) {
+                    TrxSplitData tp_d = TrxSplitData();
+                    tp_d.m_trx_id_p      = transID;
+                    tp_d.m_category_id_p = qp_d.m_category_id_p;
+                    tp_d.m_amount        = qp_d.m_amount;
+                    tp_d.m_notes         = qp_d.m_notes;
+                    tp_a.push_back(tp_d);
 
                     wxArrayInt64 tags;
                     for (const auto& tag_d : TagLinkModel::instance().find(
                         TagLinkCol::REFTYPE(SchedSplitModel::refTypeName),
-                        TagLinkCol::REFID(item.SPLITTRANSID)
+                        TagLinkCol::REFID(qp_d.m_id)
                     )) {
                         tags.push_back(tag_d.TAGID);
                     }
                     splitTags.push_back(tags);
                 }
-                TrxSplitModel::instance().save_data_a(split_a);
+                TrxSplitModel::instance().save_data_a(tp_a);
 
                 // Save split tags
                 const wxString& splitRefType = TrxSplitModel::refTypeName;
 
-                for (size_t i = 0; i < split_a.size(); i++) {
+                for (size_t i = 0; i < tp_a.size(); i++) {
                     TagLinkModel::DataA splitTaglinks;
                     for (const auto& tagId : splitTags.at(i)) {
                         TagLinkData new_gl_d = TagLinkData();
                         new_gl_d.REFTYPE = splitRefType;
-                        new_gl_d.REFID   = split_a[i].SPLITTRANSID;
+                        new_gl_d.REFID   = tp_a[i].m_id;
                         new_gl_d.TAGID   = tagId;
                         splitTaglinks.push_back(new_gl_d);
                     }
-                    TagLinkModel::instance().update(splitTaglinks, splitRefType, split_a.at(i).SPLITTRANSID);
+                    TagLinkModel::instance().update(splitTaglinks, splitRefType, tp_a.at(i).m_id);
                 }
 
                 // Copy the custom fields to the newly created transaction

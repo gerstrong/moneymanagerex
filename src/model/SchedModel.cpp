@@ -267,8 +267,8 @@ SchedModel::~SchedModel()
 bool SchedModel::purge_id(int64 id)
 {
     // purge SchedSplitData owned by id
-    for (auto& split_d : SchedModel::split(*get_id_data_n(id)))
-        SchedSplitModel::instance().purge_id(split_d.SPLITTRANSID);
+    for (auto& qp_d : SchedModel::split(*get_id_data_n(id)))
+        SchedSplitModel::instance().purge_id(qp_d.m_id);
 
     // remove TagLinkData owned by id
     TagLinkModel::instance().DeleteAllTags(this->refTypeName, id);
@@ -378,12 +378,12 @@ SchedModel::Full_Data::Full_Data(const Data& r) :
     }
 
     if (!m_bill_splits.empty()) {
-        for (const auto& sched_split_d : m_bill_splits) {
+        for (const auto& qp_d : m_bill_splits) {
             CATEGNAME += (CATEGNAME.empty() ? " + " : ", ")
-                + CategoryModel::full_name(sched_split_d.CATEGID);
+                + CategoryModel::full_name(qp_d.m_category_id_p);
 
             wxString splitTags;
-            for (const auto& tag : TagLinkModel::instance().get_ref(SchedSplitModel::refTypeName, sched_split_d.SPLITTRANSID))
+            for (const auto& tag : TagLinkModel::instance().get_ref(SchedSplitModel::refTypeName, qp_d.m_id))
                 splitTags.Append(tag.first + " ");
             if (!splitTags.IsEmpty())
                 TAGNAMES.Append((TAGNAMES.IsEmpty() ? "" : ", ") + splitTags.Trim());

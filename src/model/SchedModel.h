@@ -35,7 +35,7 @@ const int BD_REPEATS_MULTIPLEX_BASE = 100;
 class SchedModel : public TableFactory<SchedTable, SchedData>
 {
 public:
-    using Split_DataA = SchedSplitModel::DataA;
+    using TrxSplitDataA = SchedSplitModel::DataA;
 
     enum REPEAT_EXEC
     {

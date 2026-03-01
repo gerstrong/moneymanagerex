@@ -61,17 +61,19 @@ TrxLinkDialog::TrxLinkDialog(
     m_enable_revalue(enable_revalue)
 {
     if (m_transaction_n) {
-        for (const auto& split: TrxSplitModel::instance().find(
+        for (const auto& tp_d: TrxSplitModel::instance().find(
             TrxSplitCol::TRANSID(m_transaction_n->TRANSID)
         )) {
-            wxArrayInt64 tags;
-            for (const auto& tag : TagLinkModel::instance().find(
+            wxArrayInt64 tag_id_a;
+            for (const auto& gl_d : TagLinkModel::instance().find(
                 TagLinkCol::REFTYPE(TrxSplitModel::refTypeName),
-                TagLinkCol::REFID(split.SPLITTRANSID)
+                TagLinkCol::REFID(tp_d.m_id)
             )) {
-                tags.push_back(tag.TAGID);
+                tag_id_a.push_back(gl_d.TAGID);
             }
-            m_local_splits.push_back({split.CATEGID, split.SPLITTRANSAMOUNT, tags, split.NOTES});
+            m_local_splits.push_back(
+                {tp_d.m_category_id_p, tp_d.m_amount, tag_id_a, tp_d.m_notes}
+            );
         }
     }
 

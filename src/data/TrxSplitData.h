@@ -16,21 +16,6 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  ********************************************************/
 
-// PLEASE EDIT!
-//
-// This is only sample code re-used from "table/TrxSplitTable.h".
-//
-// The data structure can be refined by:
-// * using more user-frielndly filed name
-// * using stronger field types
-// * adding enumerations for fields with limited choices
-// * demultiplexing composite values in database columns
-//
-// See also an implementation in Swift:
-//   https://github.com/moneymanagerex/mmex-ios/tree/master/MMEX/Data
-// and an implementation in Java:
-//   https://github.com/moneymanagerex/android-money-manager-ex/tree/master/app/src/main/java/com/money/manager/ex/domainmodel
-
 #pragma once
 
 #include "table/_TableBase.h"
@@ -39,18 +24,18 @@
 // User-friendly representation of a record in table SPLITTRANSACTIONS_V1.
 struct TrxSplitData
 {
-    int64 SPLITTRANSID; // primary key
-    int64 TRANSID;
-    int64 CATEGID;
-    double SPLITTRANSAMOUNT;
-    wxString NOTES;
+    int64    m_id;
+    int64    m_trx_id_p;      // non-null (> 0) after initialization
+    int64    m_category_id_p; // non-null (> 0) after initialization
+    double   m_amount;
+    wxString m_notes;
 
     explicit TrxSplitData();
     explicit TrxSplitData(wxSQLite3ResultSet& q);
     TrxSplitData(const TrxSplitData& other) = default;
 
-    int64 id() const { return SPLITTRANSID; }
-    void id(const int64 id) { SPLITTRANSID = id; }
+    int64 id() const { return m_id; }
+    void id(const int64 id) { m_id = id; }
     TrxSplitRow to_row() const;
     TrxSplitData& from_row(const TrxSplitRow& row);
     void to_insert_stmt(wxSQLite3Statement& stmt, int64 id) const;
@@ -71,7 +56,7 @@ struct TrxSplitData
     {
         bool operator()(const TrxSplitData& x, const TrxSplitData& y)
         {
-            return x.SPLITTRANSID < y.SPLITTRANSID;
+            return x.m_id < y.m_id;
         }
     };
 
@@ -79,7 +64,7 @@ struct TrxSplitData
     {
         bool operator()(const TrxSplitData& x, const TrxSplitData& y)
         {
-            return x.TRANSID < y.TRANSID;
+            return x.m_trx_id_p < y.m_trx_id_p;
         }
     };
 
@@ -87,7 +72,7 @@ struct TrxSplitData
     {
         bool operator()(const TrxSplitData& x, const TrxSplitData& y)
         {
-            return x.CATEGID < y.CATEGID;
+            return x.m_category_id_p < y.m_category_id_p;
         }
     };
 
@@ -95,7 +80,7 @@ struct TrxSplitData
     {
         bool operator()(const TrxSplitData& x, const TrxSplitData& y)
         {
-            return x.SPLITTRANSAMOUNT < y.SPLITTRANSAMOUNT;
+            return x.m_amount < y.m_amount;
         }
     };
 
@@ -103,7 +88,7 @@ struct TrxSplitData
     {
         bool operator()(const TrxSplitData& x, const TrxSplitData& y)
         {
-            return x.NOTES < y.NOTES;
+            return x.m_notes < y.m_notes;
         }
     };
 };

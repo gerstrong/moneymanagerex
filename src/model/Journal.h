@@ -34,13 +34,13 @@ public:
     // id represents TRANSID if repeat_num == 0, or BDID otherwise
     typedef std::pair<int64 /* id */, int /* repeat_num */> IdRepeat;
 
-    typedef TrxSplitModel::DataA Split_DataA;
-    typedef SchedSplitModel::DataA Budgetsplit_DataA;
-    typedef TagLinkModel::DataA Taglink_DataA;
+    typedef TrxSplitModel::DataA TrxSplitDataA;
+    typedef SchedSplitModel::DataA SchedSplitDataA;
+    typedef TagLinkModel::DataA TagLinkDataA;
 
     static TrxData execute_bill(const SchedData& r, wxString date);
     static TrxModel::Full_Data execute_bill_full(const SchedData& r, wxString date);
-    static Split_DataA execute_splits(const Budgetsplit_DataA& rs);
+    static TrxSplitDataA execute_splits(const SchedSplitDataA& rs);
 
     struct Data: public TrxData
     {
@@ -63,14 +63,14 @@ public:
         explicit Full_Data(const TrxData& t);
         Full_Data(
             const TrxData& t,
-            const std::map<int64 /* TRANSID */, Split_DataA>& splits,
-            const std::map<int64 /* TRANSID */, Taglink_DataA>& tags
+            const std::map<int64 /* TRANSID */, TrxSplitDataA>& splits,
+            const std::map<int64 /* TRANSID */, TagLinkDataA>& tags
         );
         Full_Data(const SchedData& r);
         Full_Data(const SchedData& r, wxString date, int repeat_num);
         Full_Data(const SchedData& r, wxString date, int repeat_num,
-            const std::map<int64 /* BDID */, Budgetsplit_DataA>& budgetsplits,
-            const std::map<int64 /* BDID */, Taglink_DataA>& tags
+            const std::map<int64 /* BDID */, SchedSplitDataA>& budgetsplits,
+            const std::map<int64 /* BDID */, TagLinkDataA>& tags
         );
         ~Full_Data();
     };

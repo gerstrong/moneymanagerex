@@ -214,7 +214,7 @@ bool CategoryModel::is_used(int64 id)
         TrxCol::CATEGID(id)
     );
     for (const auto& split_d : split_a)
-        if (TrxModel::instance().get_id_data_n(split_d.TRANSID)->DELETEDTIME.IsEmpty())
+        if (TrxModel::instance().get_id_data_n(split_d.m_trx_id_p)->DELETEDTIME.IsEmpty())
             return true;
 
     const auto& sched_a = SchedModel::instance().find(
@@ -269,10 +269,10 @@ bool CategoryModel::has_income(int64 id)
             switch (TrxModel::type_id(tran))
             {
             case TrxModel::TYPE_ID_WITHDRAWAL:
-                sum -= split.SPLITTRANSAMOUNT;
+                sum -= split.m_amount;
                 break;
             case TrxModel::TYPE_ID_DEPOSIT:
-                sum += split.SPLITTRANSAMOUNT;
+                sum += split.m_amount;
             case TrxModel::TYPE_ID_TRANSFER:
             default:
                 break;
@@ -316,7 +316,7 @@ void CategoryModel::getCategoryStats(
         }
     }
     //Calculations
-    auto splits = TrxSplitModel::instance().get_all_id();
+    auto id_tp_m = TrxSplitModel::instance().get_all_id();
     for (const auto& transaction : TrxModel::instance().find(
         TrxModel::STATUS(OP_NE, TrxModel::STATUS_ID_VOID),
         TrxModel::TRANSDATE(OP_GE, date_range->start_date()),
@@ -324,8 +324,7 @@ void CategoryModel::getCategoryStats(
     )) {
         if (!transaction.DELETEDTIME.IsEmpty()) continue;
 
-        if (accountArray)
-        {
+        if (accountArray) {
             const auto account = AccountModel::instance().get_id_data_n(transaction.ACCOUNTID);
             if (wxNOT_FOUND == accountArray->Index(account->m_name)) {
                 continue;
@@ -339,8 +338,7 @@ void CategoryModel::getCategoryStats(
         wxDateTime d = TrxModel::getTransDateTime(transaction);
 
         int month = 0;
-        if (group_by_month)
-        {
+        if (group_by_month) {
             auto it = std::find_if(monthMap.begin(), monthMap.end()
                 , [d](std::pair<wxDateTime, int> date){return d >= date.first;});
             month = it->second;
@@ -348,17 +346,14 @@ void CategoryModel::getCategoryStats(
 
         int64 categID = transaction.CATEGID;
 
-        if (splits[transaction.id()].empty())
-        {
-            if (TrxModel::type_id(transaction) != TrxModel::TYPE_ID_TRANSFER)
-            {
+        if (id_tp_m[transaction.id()].empty()) {
+            if (TrxModel::type_id(transaction) != TrxModel::TYPE_ID_TRANSFER) {
                 // Do not include asset or stock transfers in income expense calculations.
                 if (TrxModel::is_foreignAsTransfer(transaction))
                     continue;
                 categoryStats[categID][month] += TrxModel::account_flow(transaction, transaction.ACCOUNTID) * convRate;
             }
-            else if (budgetAmt != 0)
-            {
+            else if (budgetAmt != 0) {
                 double amt = transaction.TRANSAMOUNT * convRate;
                 if ((*budgetAmt)[categID] < 0)
                     categoryStats[categID][month] -= amt;
@@ -366,12 +361,11 @@ void CategoryModel::getCategoryStats(
                     categoryStats[categID][month] += amt;
             }
         }
-        else
-        {
-            for (const auto& entry : splits[transaction.id()])
-            {
-                categoryStats[entry.CATEGID][month] += entry.SPLITTRANSAMOUNT
-                    * convRate * ((TrxModel::type_id(transaction) == TrxModel::TYPE_ID_WITHDRAWAL) ? -1 : 1);
+        else {
+            for (const auto& tp_d : id_tp_m[transaction.id()]) {
+                categoryStats[tp_d.m_category_id_p][month] +=
+                    tp_d.m_amount * convRate *
+                    ((TrxModel::type_id(transaction) == TrxModel::TYPE_ID_WITHDRAWAL) ? -1 : 1);
             }
         }
     }

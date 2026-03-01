@@ -89,14 +89,14 @@ void TagLinkModel::DeleteAllTags(const wxString& refType, int64 refID)
     instance().db_release_savepoint();
 }
 
-int TagLinkModel::update(const DataA& rows, const wxString& refType, int64 refId)
+int TagLinkModel::update(const DataA& rows, const wxString& refType, int64 ref_id)
 {
     TagLinkModel::instance().db_savepoint();
     bool save_timestamp = false;
     std::map<int, int64> row_id_map;
 
     DataA links = instance().find(
-        TagLinkCol::REFTYPE(refType), TagLinkCol::REFID(refId)
+        TagLinkCol::REFTYPE(refType), TagLinkCol::REFID(ref_id)
     );
     if (links.size() != rows.size())
         save_timestamp = true;
@@ -120,17 +120,17 @@ int TagLinkModel::update(const DataA& rows, const wxString& refType, int64 refId
     for (const auto& item : rows) {
         Data new_gl_d = Data();
         new_gl_d.REFTYPE = refType;
-        new_gl_d.REFID   = refId;
+        new_gl_d.REFID   = ref_id;
         new_gl_d.TAGID   = item.TAGID;
         instance().add_data_n(new_gl_d);
     }
 
     if (save_timestamp) {
         if (refType == TrxModel::refTypeName)
-            TrxModel::instance().save_timestamp(refId);
+            TrxModel::instance().save_timestamp(ref_id);
         else if (refType == TrxSplitModel::refTypeName)
             TrxModel::instance().save_timestamp(
-                TrxSplitModel::instance().get_id_data_n(refId)->TRANSID
+                TrxSplitModel::instance().get_id_data_n(ref_id)->m_trx_id_p
             );
     }
 

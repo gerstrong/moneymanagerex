@@ -57,8 +57,7 @@ const wxString mmExportTransaction::getTransactionCSV(const TrxModel::Full_Data&
     wxString account = acc_in->m_name;
     wxString currency = curr_in->m_symbol;
 
-    if (is_transfer)
-    {
+    if (is_transfer) {
         account_id = reverce ? full_tran.ACCOUNTID : full_tran.TOACCOUNTID;
         const auto acc_to = AccountModel::instance().get_id_data_n(full_tran.TOACCOUNTID);
         const auto curr_to = CurrencyModel::instance().get_id_data_n(acc_to->m_currency_id_p);
@@ -74,15 +73,13 @@ const wxString mmExportTransaction::getTransactionCSV(const TrxModel::Full_Data&
         }
     }
 
-    if (full_tran.has_split())
-    {
-        for (const auto &split_entry : full_tran.m_splits)
-        {
-            double valueSplit = split_entry.SPLITTRANSAMOUNT;
+    if (full_tran.has_split()) {
+        for (const auto& tp_d : full_tran.m_splits) {
+            double valueSplit = tp_d.m_amount;
             if (TrxModel::type_id(full_tran) == TrxModel::TYPE_ID_WITHDRAWAL)
                 valueSplit = -valueSplit;
             const wxString split_amount = wxString::FromCDouble(valueSplit, 2);
-            const wxString split_categ = CategoryModel::full_name(split_entry.CATEGID, ":");
+            const wxString split_categ = CategoryModel::full_name(tp_d.m_category_id_p, ":");
 
             buffer << inQuotes(wxString::Format("%lld", full_tran.TRANSID), delimiter) << delimiter;
             buffer << inQuotes(mmGetDateTimeForDisplay(full_tran.TRANSDATE, dateMask), delimiter) << delimiter;
@@ -102,8 +99,7 @@ const wxString mmExportTransaction::getTransactionCSV(const TrxModel::Full_Data&
             buffer << "\n";
         }
     }
-    else
-    {
+    else {
         buffer << inQuotes(wxString::Format("%lld", full_tran.TRANSID), delimiter) << delimiter;
         buffer << inQuotes(mmGetDateTimeForDisplay(full_tran.TRANSDATE, dateMask), delimiter) << delimiter;
         buffer << inQuotes(full_tran.STATUS, delimiter) << delimiter;
@@ -187,16 +183,16 @@ const wxString mmExportTransaction::getTransactionQIF(const TrxModel::Full_Data&
     }
 
     wxString reftype = TrxSplitModel::refTypeName;
-    for (const auto &split_entry : full_tran.m_splits) {
-        double valueSplit = split_entry.SPLITTRANSAMOUNT;
+    for (const auto& tp_d : full_tran.m_splits) {
+        double valueSplit = tp_d.m_amount;
         if (TrxModel::type_id(full_tran) == TrxModel::TYPE_ID_WITHDRAWAL)
             valueSplit = -valueSplit;
         const wxString split_amount = wxString::FromCDouble(valueSplit, 2);
-        wxString split_categ = CategoryModel::full_name(split_entry.CATEGID, ":");
+        wxString split_categ = CategoryModel::full_name(tp_d.m_category_id_p, ":");
         split_categ.Replace("/", "-");
         TagLinkModel::DataA splitTags = TagLinkModel::instance().find(
             TagLinkCol::REFTYPE(reftype),
-            TagLinkCol::REFID(split_entry.SPLITTRANSID)
+            TagLinkCol::REFID(tp_d.m_id)
         );
         if (!splitTags.empty()) {
             split_categ.Append("/");
@@ -207,8 +203,8 @@ const wxString mmExportTransaction::getTransactionQIF(const TrxModel::Full_Data&
         }
         buffer << "S" << split_categ << "\n"
             << "$" << split_amount << "\n";
-        if (!split_entry.NOTES.IsEmpty()) {
-            notes = split_entry.NOTES;
+        if (!tp_d.m_notes.IsEmpty()) {
+            notes = tp_d.m_notes;
             notes.Replace("''", "'");
             notes.Replace("\n", "\nE");
             buffer << "E" << notes << "\n";
@@ -419,22 +415,21 @@ void mmExportTransaction::getTransactionJSON(PrettyWriter<StringBuffer>& json_wr
     if (!full_tran.m_splits.empty()) {
         json_writer.Key("DIVISION");
         json_writer.StartArray();
-        for (const auto &split_entry : full_tran.m_splits)
-        {
-            double valueSplit = split_entry.SPLITTRANSAMOUNT;
+        for (const auto& tp_d : full_tran.m_splits) {
+            double valueSplit = tp_d.m_amount;
             if (TrxModel::type_id(full_tran) == TrxModel::TYPE_ID_WITHDRAWAL) {
                 valueSplit = -valueSplit;
             }
 
             json_writer.StartObject();
             json_writer.Key("CATEGORY_ID");
-            json_writer.Int64(split_entry.CATEGID.GetValue());
+            json_writer.Int64(tp_d.m_category_id_p.GetValue());
             json_writer.Key("AMOUNT");
             json_writer.Double(valueSplit);
             json_writer.Key("TAGS");
             json_writer.StartArray();
             for (const auto& tag : TagLinkModel::instance().get_ref(
-                TrxSplitModel::refTypeName, split_entry.SPLITTRANSID)
+                TrxSplitModel::refTypeName, tp_d.m_id)
             )
                 json_writer.Int64(tag.second.GetValue());
             json_writer.EndArray();

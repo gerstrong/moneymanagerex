@@ -1396,12 +1396,12 @@ bool TrxFilterDialog::mmIsTagMatches(const wxString& refType, int64 refId, bool 
     if (refType == TrxSplitModel::refTypeName)
         txnTagnames = TagLinkModel::instance().get_ref(
             TrxModel::refTypeName,
-            TrxSplitModel::instance().get_id_data_n(refId)->TRANSID
+            TrxSplitModel::instance().get_id_data_n(refId)->m_trx_id_p
         );
     else if (refType == SchedSplitModel::refTypeName)
         txnTagnames = TagLinkModel::instance().get_ref(
             SchedModel::refTypeName,
-            SchedSplitModel::instance().get_id_data_n(refId)->TRANSID
+            SchedSplitModel::instance().get_id_data_n(refId)->m_sched_id_p
         );
 
     if (mergeSplitTags)
@@ -1409,28 +1409,26 @@ bool TrxFilterDialog::mmIsTagMatches(const wxString& refType, int64 refId, bool 
         // Merge transaction tags and split tags. This is necessary when checking
         // if a split record matches the filter since we are using mmIsRecordMatches
         // to validate the split which gives it the wrong refType & refId
-        if (refType == TrxModel::refTypeName)
-        {
+        if (refType == TrxModel::refTypeName) {
             // Loop through checking splits and merge tags for each SPLITTRANSID
-            for (const auto& split : TrxSplitModel::instance().find(
+            for (const auto& tp_d : TrxSplitModel::instance().find(
                 TrxSplitCol::TRANSID(refId)
             )) {
                 std::map<wxString, int64> splitTagnames =
                     TagLinkModel::instance().get_ref(
-                        TrxSplitModel::refTypeName, split.SPLITTRANSID
+                        TrxSplitModel::refTypeName, tp_d.m_id
                     );
                 txnTagnames.insert(splitTagnames.begin(), splitTagnames.end());
             }
         }
-        else if (refType == SchedModel::refTypeName)
-        {
+        else if (refType == SchedModel::refTypeName) {
             // Loop through scheduled txn splits and merge tags for each SPLITTRANSID
-            for (const auto& split : SchedSplitModel::instance().find(
+            for (const auto& qp_d : SchedSplitModel::instance().find(
                 SchedSplitCol::TRANSID(refId)
             )) {
                 std::map<wxString, int64> splitTagnames =
                     TagLinkModel::instance().get_ref(
-                        SchedSplitModel::refTypeName, split.SPLITTRANSID
+                        SchedSplitModel::refTypeName, qp_d.m_id
                     );
                 txnTagnames.insert(splitTagnames.begin(), splitTagnames.end());
             }
@@ -1460,7 +1458,8 @@ bool TrxFilterDialog::mmIsTagMatches(const wxString& refType, int64 refId, bool 
     return match;
 }
 
-template <class MODEL, class DATA> bool TrxFilterDialog::mmIsRecordMatches(const DATA& tran, bool mergeSplitTags)
+template <class MODEL, class DATA>
+bool TrxFilterDialog::mmIsRecordMatches(const DATA& tran, bool mergeSplitTags)
 {
     bool ok = true;
 
@@ -1504,68 +1503,76 @@ template <class MODEL, class DATA> bool TrxFilterDialog::mmIsRecordMatches(const
     return ok;
 }
 
-template <class MODEL, class DATA> bool TrxFilterDialog::mmIsSplitRecordMatches(const DATA& split)
+template <class MODEL, class DATA>
+bool TrxFilterDialog::mmIsSplitRecordMatches(const DATA& split_d)
 {
     wxString refType;
 
-    if (typeid(split).hash_code() == typeid(TrxSplitData).hash_code())
-    {
+    if (typeid(split_d).hash_code() == typeid(TrxSplitData).hash_code()) {
         refType = TrxSplitModel::refTypeName;
     }
-    else if (typeid(split).hash_code() == typeid(SchedSplitData).hash_code())
-    {
+    else if (typeid(split_d).hash_code() == typeid(SchedSplitData).hash_code()) {
         refType = SchedSplitModel::refTypeName;
     }
 
-    if (mmIsTagsChecked() && !mmIsTagMatches(refType, split.SPLITTRANSID))
+    if (mmIsTagsChecked() && !mmIsTagMatches(refType, split_d.m_id))
         return false;
 
     return true;
 }
 
-template bool TrxFilterDialog::mmIsSplitRecordMatches<TrxSplitModel>(const TrxSplitData& split);
-template bool TrxFilterDialog::mmIsSplitRecordMatches<SchedSplitModel>(const SchedSplitData& split);
+template bool TrxFilterDialog::mmIsSplitRecordMatches<TrxSplitModel>(const TrxSplitData& tp_d);
+template bool TrxFilterDialog::mmIsSplitRecordMatches<SchedSplitModel>(const SchedSplitData& qp_d);
 
-int TrxFilterDialog::mmIsRecordMatches(const TrxData& tran, const TrxSplitModel::DataA& splits)
+int TrxFilterDialog::mmIsRecordMatches(const TrxData& trx_d, const TrxSplitModel::DataA& tp_a)
 {
-    int ok = mmIsRecordMatches<TrxModel>(tran);
-    for (const auto& split : splits)
+    int ok = mmIsRecordMatches<TrxModel>(trx_d);
+    for (const auto& tp_d : tp_a)
     {
         // Need to check if the split matches using the transaction Notes & Tags as well
-        TrxData splitWithTxnNotes(tran);
-        splitWithTxnNotes.CATEGID = split.CATEGID;
-        splitWithTxnNotes.TRANSAMOUNT = split.SPLITTRANSAMOUNT;
-        TrxData splitWithSplitNotes = splitWithTxnNotes;
-        splitWithSplitNotes.NOTES = split.NOTES;
-        ok += (mmIsRecordMatches<TrxModel>(splitWithSplitNotes, true) || mmIsRecordMatches<TrxModel>(splitWithTxnNotes, true));
+        TrxData trx_trx_d(trx_d);
+        trx_trx_d.CATEGID     = tp_d.m_category_id_p;
+        trx_trx_d.TRANSAMOUNT = tp_d.m_amount;
+        TrxData trx_tp_d = trx_trx_d;
+        trx_tp_d.NOTES = tp_d.m_notes;
+        ok += (
+            mmIsRecordMatches<TrxModel>(trx_tp_d, true) ||
+            mmIsRecordMatches<TrxModel>(trx_trx_d, true)
+        );
     }
     return ok;
 }
 
-int TrxFilterDialog::mmIsRecordMatches(const TrxData& tran, const std::map<int64, TrxSplitModel::DataA>& splits)
-{
+int TrxFilterDialog::mmIsRecordMatches(
+    const TrxData& trx_d,
+    const std::map<int64, TrxSplitModel::DataA>& splits
+) {
     const TrxSplitModel::DataA* split = nullptr;
-    const auto& it = splits.find(tran.id());
+    const auto& it = splits.find(trx_d.id());
     if (it != splits.end())
         split = &(it->second);
-    return mmIsRecordMatches(tran, *split);
+    return mmIsRecordMatches(trx_d, *split);
 }
 
-int TrxFilterDialog::mmIsRecordMatches(const SchedData& tran, const std::map<int64, SchedSplitModel::DataA>& splits)
-{
-    int ok = mmIsRecordMatches<SchedModel>(tran);
-    const auto& it = splits.find(tran.id());
-    if (it != splits.end())
-    {
-        for (const auto& split : it->second)
-        {
-            SchedData splitWithTxnNotes = tran;
-            splitWithTxnNotes.CATEGID = split.CATEGID;
-            splitWithTxnNotes.TRANSAMOUNT = split.SPLITTRANSAMOUNT;
-            SchedData splitWithSplitNotes = splitWithTxnNotes;
-            splitWithSplitNotes.NOTES = split.NOTES;
-            ok += (mmIsRecordMatches<SchedModel>(splitWithSplitNotes, true) || mmIsRecordMatches<SchedModel>(splitWithTxnNotes, true));
-        }
+int TrxFilterDialog::mmIsRecordMatches(
+    const SchedData& sched_d,
+    const std::map<int64, SchedSplitModel::DataA>& splits
+) {
+    int ok = mmIsRecordMatches<SchedModel>(sched_d);
+    const auto& it = splits.find(sched_d.id());
+    if (it == splits.end())
+        return ok;
+
+    for (const auto& qp_d : it->second) {
+        SchedData sched_sched_d = sched_d;
+        sched_sched_d.CATEGID     = qp_d.m_category_id_p;
+        sched_sched_d.TRANSAMOUNT = qp_d.m_amount;
+        SchedData sched_qp_d = sched_sched_d;
+        sched_qp_d.NOTES = qp_d.m_notes;
+        ok += (
+            mmIsRecordMatches<SchedModel>(sched_qp_d, true) ||
+            mmIsRecordMatches<SchedModel>(sched_sched_d, true)
+        );
     }
     return ok;
 }

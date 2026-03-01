@@ -542,18 +542,17 @@ void mmQIFExportDialog::mmExportQIF()
                 }
 
                 // store tags from the transaction
-                for (const auto& tag : full_tran.m_tags)
-                {
+                for (const auto& tag : full_tran.m_tags) {
                     if (std::find(allTags4Export.begin(), allTags4Export.end(), tag.TAGID) == allTags4Export.end())
                         allTags4Export.push_back(tag.TAGID);
                 }
                 // store tags from the splits
-                for (const auto& split : full_tran.m_splits)
-                {
-                    for (const auto& taglink : TagLinkModel::instance().get_ref(TrxSplitModel::refTypeName, split.SPLITTRANSID))
-                    {
-                        if (std::find(allTags4Export.begin(), allTags4Export.end(), taglink.second) == allTags4Export.end())
-                            allTags4Export.push_back(taglink.second);
+                for (const auto& tp_d : full_tran.m_splits) {
+                    for (const auto& gl_d : TagLinkModel::instance().get_ref(
+                        TrxSplitModel::refTypeName, tp_d.m_id
+                    )) {
+                        if (std::find(allTags4Export.begin(), allTags4Export.end(), gl_d.second) == allTags4Export.end())
+                            allTags4Export.push_back(gl_d.second);
                     }
                 }
 

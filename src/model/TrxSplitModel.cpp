@@ -58,99 +58,102 @@ bool TrxSplitModel::purge_id(int64 id)
     return unsafe_remove_id(id);
 }
 
-double TrxSplitModel::get_total(const DataA& rows)
+double TrxSplitModel::get_total(const DataA& tp_a)
 {
     double total = 0.0;
-    for (auto& r : rows) total += r.SPLITTRANSAMOUNT;
+    for (const auto& tp_d : tp_a)
+        total += tp_d.m_amount;
     return total;
 }
-double TrxSplitModel::get_total(const std::vector<Split>& rows)
+
+double TrxSplitModel::get_total(const std::vector<Split>& split_a)
 {
     double total = 0.0;
-    for (auto& r : rows) total += r.SPLITTRANSAMOUNT;
+    for (auto& split_d : split_a)
+        total += split_d.SPLITTRANSAMOUNT;
     return total;
 }
 
 std::map<int64, TrxSplitModel::DataA> TrxSplitModel::get_all_id()
 {
-    std::map<int64, TrxSplitModel::DataA> data;
-    for (const auto &split : instance().find_all()) {
-        data[split.TRANSID].push_back(split);
+    std::map<int64, TrxSplitModel::DataA> id_tpa_m;
+    for (const auto& tp_d : instance().find_all()) {
+        id_tpa_m[tp_d.m_trx_id_p].push_back(tp_d);
     }
-    return data;
+    return id_tpa_m;
 }
 
-int TrxSplitModel::update(DataA& rows, int64 transactionID)
+int TrxSplitModel::update(DataA& src_tp_a, int64 trx_id)
 {
     bool save_timestamp = false;
     std::map<int, int64> row_id_map;
 
-    DataA split = instance().find(TrxSplitCol::TRANSID(transactionID));
-    if (split.size() != rows.size()) save_timestamp = true;
+    DataA old_tp_a = instance().find(TrxSplitCol::TRANSID(trx_id));
+    if (old_tp_a.size() != src_tp_a.size())
+        save_timestamp = true;
 
-    for (const auto& split_item : split) {
+    for (const auto& old_tp_d : old_tp_a) {
         if (!save_timestamp) {
             bool match = false;
-            for (decltype(rows.size()) i = 0; i < rows.size(); i++) {
-                match = (rows[i].CATEGID == split_item.CATEGID
-                        && rows[i].SPLITTRANSAMOUNT == split_item.SPLITTRANSAMOUNT
-                        && rows[i].NOTES.IsSameAs(split_item.NOTES))
-                    && (row_id_map.find(i) == row_id_map.end());
+            for (decltype(src_tp_a.size()) i = 0; i < src_tp_a.size(); ++i) {
+                if (row_id_map.find(i) != row_id_map.end())
+                    continue;
+                match = (
+                    src_tp_a[i].m_category_id_p == old_tp_d.m_category_id_p &&
+                    src_tp_a[i].m_amount == old_tp_d.m_amount &&
+                    src_tp_a[i].m_notes.IsSameAs(old_tp_d.m_notes)
+                );
                 if (match) {
-                    row_id_map[i] = split_item.SPLITTRANSID;
+                    row_id_map[i] = old_tp_d.m_id;
                     break;
                 }
-                    
             }
             save_timestamp = save_timestamp || !match;
         }
-
-        instance().purge_id(split_item.SPLITTRANSID);
+        instance().purge_id(old_tp_d.m_id);
     }
 
-    if (!rows.empty()) {
-        for (auto &item : rows) {
-            Data split_d = Data();
-            split_d.TRANSID          = transactionID;
-            split_d.SPLITTRANSAMOUNT = item.SPLITTRANSAMOUNT;
-            split_d.CATEGID          = item.CATEGID;
-            split_d.NOTES            = item.NOTES;
-            instance().add_data_n(split_d);
-            item.SPLITTRANSID = split_d.id();
-        }
+    for (auto& src_tp_d : src_tp_a) {
+        Data new_tp_d = Data();
+        new_tp_d.m_trx_id_p      = trx_id;
+        new_tp_d.m_amount        = src_tp_d.m_amount;
+        new_tp_d.m_category_id_p = src_tp_d.m_category_id_p;
+        new_tp_d.m_notes         = src_tp_d.m_notes;
+        instance().add_data_n(new_tp_d);
+        src_tp_d.m_id = new_tp_d.id();
     }
 
     if (save_timestamp)
-        TrxModel::instance().save_timestamp(transactionID);
+        TrxModel::instance().save_timestamp(trx_id);
     
-    return rows.size();
+    return src_tp_a.size();
 }
 
-int TrxSplitModel::update(const std::vector<Split>& rows, int64 transactionID)
+int TrxSplitModel::update(const std::vector<Split>& split_a, int64 trx_id)
 {
-
-    DataA splits;
-    for (const auto& entry : rows) {
-        Data s = Data();
-        s.CATEGID = entry.CATEGID;
-        s.SPLITTRANSAMOUNT = entry.SPLITTRANSAMOUNT;
-        s.NOTES = entry.NOTES;
-        splits.push_back(s);
+    DataA tp_a;
+    for (const auto& entry : split_a) {
+        Data tp_d = Data();
+        tp_d.m_category_id_p = entry.CATEGID;
+        tp_d.m_amount        = entry.SPLITTRANSAMOUNT;
+        tp_d.m_notes         = entry.NOTES;
+        tp_a.push_back(tp_d);
     }
 
-    return this->update(splits, transactionID);
+    return this->update(tp_a, trx_id);
 }
 
-const wxString TrxSplitModel::get_tooltip(const std::vector<Split>& rows, const CurrencyData* currency)
-{
+const wxString TrxSplitModel::get_tooltip(
+    const std::vector<Split>& split_a,
+    const CurrencyData* currency
+) {
     wxString split_tooltip = "";
-    for (const auto& entry : rows)
-    {
-        split_tooltip += wxString::Format("%s = %s"
-                    , CategoryModel::full_name(entry.CATEGID)
-                    , CurrencyModel::toCurrency(entry.SPLITTRANSAMOUNT, currency));
-        if (!entry.NOTES.IsEmpty())
-        {
+    for (const auto& entry : split_a) {
+        split_tooltip += wxString::Format("%s = %s",
+            CategoryModel::full_name(entry.CATEGID),
+            CurrencyModel::toCurrency(entry.SPLITTRANSAMOUNT, currency)
+        );
+        if (!entry.NOTES.IsEmpty()) {
             wxString value = entry.NOTES;
             value.Replace("\n", " ");
             split_tooltip += wxString::Format(" (%s)", value);

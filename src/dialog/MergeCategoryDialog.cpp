@@ -164,13 +164,13 @@ void MergeCategoryDialog::OnOk(wxCommandEvent& WXUNUSED(event))
     ) {
         auto trx_a = TrxModel::instance()
             .find(TrxCol::CATEGID(m_sourceCatID));
-        auto split_a = TrxSplitModel::instance()
+        auto tp_a = TrxSplitModel::instance()
             .find(TrxSplitCol::CATEGID(m_sourceCatID));
         auto sched_a = SchedModel::instance()
             .find(SchedCol::CATEGID(m_sourceCatID));
         auto budget_a = BudgetModel::instance()
             .find(BudgetCol::CATEGID(m_sourceCatID));
-        auto schedsplit_a = SchedSplitModel::instance()
+        auto qp_a = SchedSplitModel::instance()
             .find(SchedSplitCol::CATEGID(m_sourceCatID));
         auto payee_a = PayeeModel::instance()
             .find(PayeeCol::CATEGID(m_sourceCatID));
@@ -187,11 +187,11 @@ void MergeCategoryDialog::OnOk(wxCommandEvent& WXUNUSED(event))
         SchedModel::instance().save_data_a(sched_a);
         m_changedRecords += sched_a.size();
 
-        for (auto& split_d : split_a) {
-            split_d.CATEGID = m_destCatID;
+        for (auto& tp_d : tp_a) {
+            tp_d.m_category_id_p = m_destCatID;
         }
-        TrxSplitModel::instance().save_data_a(split_a);
-        m_changedRecords += split_a.size();
+        TrxSplitModel::instance().save_data_a(tp_a);
+        m_changedRecords += tp_a.size();
 
         for (auto& payee_d : payee_a) {
             payee_d.m_category_id_n = m_destCatID;
@@ -200,11 +200,11 @@ void MergeCategoryDialog::OnOk(wxCommandEvent& WXUNUSED(event))
         m_changedRecords += payee_a.size();
         mmWebApp::MMEX_WebApp_UpdatePayee();
 
-        for (auto& schedsplit_d : schedsplit_a) {
-            schedsplit_d.CATEGID = m_destCatID;
+        for (auto& qp_d : qp_a) {
+            qp_d.m_category_id_p = m_destCatID;
         }
-        SchedSplitModel::instance().save_data_a(schedsplit_a);
-        m_changedRecords += schedsplit_a.size();
+        SchedSplitModel::instance().save_data_a(qp_a);
+        m_changedRecords += qp_a.size();
 
         for (auto& budget_d : budget_a) {
             BudgetModel::instance().purge_id(budget_d.m_period_id);

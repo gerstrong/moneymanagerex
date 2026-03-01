@@ -39,18 +39,18 @@
 // User-friendly representation of a record in table BUDGETSPLITTRANSACTIONS_V1.
 struct SchedSplitData
 {
-    int64 SPLITTRANSID; // primary key
-    int64 TRANSID;
-    int64 CATEGID;
-    double SPLITTRANSAMOUNT;
-    wxString NOTES;
+    int64    m_id;
+    int64    m_sched_id_p;    // non-null (> 0) after initialization
+    int64    m_category_id_p; // non-null (> 0) after initialization
+    double   m_amount;
+    wxString m_notes;
 
     explicit SchedSplitData();
     explicit SchedSplitData(wxSQLite3ResultSet& q);
     SchedSplitData(const SchedSplitData& other) = default;
 
-    int64 id() const { return SPLITTRANSID; }
-    void id(const int64 id) { SPLITTRANSID = id; }
+    int64 id() const { return m_id; }
+    void id(const int64 id) { m_id = id; }
     SchedSplitRow to_row() const;
     SchedSplitData& from_row(const SchedSplitRow& row);
     void to_insert_stmt(wxSQLite3Statement& stmt, int64 id) const;
@@ -71,7 +71,7 @@ struct SchedSplitData
     {
         bool operator()(const SchedSplitData& x, const SchedSplitData& y)
         {
-            return x.SPLITTRANSID < y.SPLITTRANSID;
+            return x.m_id < y.m_id;
         }
     };
 
@@ -79,7 +79,7 @@ struct SchedSplitData
     {
         bool operator()(const SchedSplitData& x, const SchedSplitData& y)
         {
-            return x.TRANSID < y.TRANSID;
+            return x.m_sched_id_p < y.m_sched_id_p;
         }
     };
 
@@ -87,7 +87,7 @@ struct SchedSplitData
     {
         bool operator()(const SchedSplitData& x, const SchedSplitData& y)
         {
-            return x.CATEGID < y.CATEGID;
+            return x.m_category_id_p < y.m_category_id_p;
         }
     };
 
@@ -95,7 +95,7 @@ struct SchedSplitData
     {
         bool operator()(const SchedSplitData& x, const SchedSplitData& y)
         {
-            return x.SPLITTRANSAMOUNT < y.SPLITTRANSAMOUNT;
+            return x.m_amount < y.m_amount;
         }
     };
 
@@ -103,7 +103,7 @@ struct SchedSplitData
     {
         bool operator()(const SchedSplitData& x, const SchedSplitData& y)
         {
-            return x.NOTES < y.NOTES;
+            return x.m_notes < y.m_notes;
         }
     };
 };

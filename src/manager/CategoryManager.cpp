@@ -506,53 +506,60 @@ void CategoryManager::showCategDialogDeleteError(bool category)
 void CategoryManager::mmDoDeleteSelectedCategory()
 {
     wxTreeItemId PreviousItem = m_treeCtrl->GetPrevVisible(m_selectedItemId);
-    TrxModel::DataA deletedTrans;
-    TrxSplitModel::DataA splits;
+
     if (CategoryModel::is_used(m_categ_id) || m_categ_id == m_init_selected_categ_id)
         return showCategDialogDeleteError();
-    else {
-        deletedTrans = TrxModel::instance().find(
-            TrxCol::CATEGID(m_categ_id)
+
+    // TODO: only the deleted trx ids are needed; define a single set of int64
+    TrxModel::DataA deleted_trx_a;
+    TrxSplitModel::DataA deleted_tp_a;
+
+    deleted_trx_a = TrxModel::instance().find(
+        TrxCol::CATEGID(m_categ_id)
+    );
+    deleted_tp_a = TrxSplitModel::instance().find(
+        TrxSplitCol::CATEGID(m_categ_id)
+    );
+    for (const auto& subcat_d : CategoryModel::sub_tree(
+        CategoryModel::instance().get_id_data_n(m_categ_id)
+    )) {
+        TrxModel::DataA trx_a = TrxModel::instance().find(
+            TrxCol::CATEGID(subcat_d.m_id)
         );
-        for (const auto& subcat : CategoryModel::sub_tree(CategoryModel::instance().get_id_data_n(m_categ_id))) {
-            TrxModel::DataA trans = TrxModel::instance().find(
-                TrxCol::CATEGID(subcat.m_id)
-            );
-            deletedTrans.insert(deletedTrans.end(), trans.begin(), trans.end());
-        }
-        splits = TrxSplitModel::instance().find(
-            TrxSplitCol::CATEGID(m_categ_id)
+        deleted_trx_a.insert(deleted_trx_a.end(), trx_a.begin(), trx_a.end());
+        TrxSplitModel::DataA tp_a = TrxSplitModel::instance().find(
+            TrxSplitCol::CATEGID(subcat_d.m_id)
         );
-        for (const auto& subcat : CategoryModel::sub_tree(CategoryModel::instance().get_id_data_n(m_categ_id))) {
-            TrxSplitModel::DataA trans = TrxSplitModel::instance().find(
-                TrxSplitCol::CATEGID(subcat.m_id)
-            );
-            splits.insert(splits.end(), trans.begin(), trans.end());
-        }
+        deleted_tp_a.insert(deleted_tp_a.end(), tp_a.begin(), tp_a.end());
     }
 
-    wxMessageDialog msgDlg(this, _t("Deleted transactions exist which use this category or one of its descendants.")
-            + "\n\n" + _t("Deleting the category will also automatically purge the associated deleted transactions.")
-            + "\n\n" + _t("Do you want to continue?")
-        , _t("Confirm Category Deletion"), wxYES_NO | wxNO_DEFAULT | wxICON_WARNING);
-    if ((deletedTrans.empty() && splits.empty()) || msgDlg.ShowModal() == wxID_YES)
-    {
-        if(!(deletedTrans.empty() && splits.empty())){
+    wxMessageDialog msgDlg(this,
+        _t("Deleted transactions exist which use this category or one of its descendants.") + "\n\n" +
+            _t("Deleting the category will also automatically purge the associated deleted transactions.") + "\n\n" +
+            _t("Do you want to continue?"),
+        _t("Confirm Category Deletion"),
+        wxYES_NO | wxNO_DEFAULT | wxICON_WARNING
+    );
+
+    if ((deleted_trx_a.empty() && deleted_tp_a.empty()) || msgDlg.ShowModal() == wxID_YES) {
+        if (!deleted_trx_a.empty() || !deleted_tp_a.empty()) {
             TrxModel::instance().db_savepoint();
             TrxSplitModel::instance().db_savepoint();
             AttachmentModel::instance().db_savepoint();
             FieldValueModel::instance().db_savepoint();
             const wxString& RefType = TrxModel::refTypeName;
-            for (auto& split : splits) {
-                TrxModel::instance().purge_id(split.TRANSID);
-                mmAttachmentManage::DeleteAllAttachments(RefType, split.TRANSID);
-                FieldValueModel::DeleteAllData(RefType, split.TRANSID);
+
+            // TODO: do not delete the same trx id multiple times
+            for (auto& tp_d : deleted_tp_a) {
+                TrxModel::instance().purge_id(tp_d.m_trx_id_p);
+                mmAttachmentManage::DeleteAllAttachments(RefType, tp_d.m_trx_id_p);
+                FieldValueModel::DeleteAllData(RefType, tp_d.m_trx_id_p);
             }
 
-            for (auto& tran : deletedTrans) {
-                TrxModel::instance().purge_id(tran.TRANSID);
-                mmAttachmentManage::DeleteAllAttachments(RefType, tran.TRANSID);
-                FieldValueModel::DeleteAllData(RefType, tran.TRANSID);
+            for (auto& trx_d : deleted_trx_a) {
+                TrxModel::instance().purge_id(trx_d.TRANSID);
+                mmAttachmentManage::DeleteAllAttachments(RefType, trx_d.TRANSID);
+                FieldValueModel::DeleteAllData(RefType, trx_d.TRANSID);
             }
 
             TrxModel::instance().db_release_savepoint();

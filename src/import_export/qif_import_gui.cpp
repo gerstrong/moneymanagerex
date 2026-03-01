@@ -1308,18 +1308,18 @@ void mmQIFImportDialog::saveSplit()
 }
 
 void mmQIFImportDialog::joinSplit(
-    TrxModel::DataA& destination,
-    std::vector<TrxSplitModel::DataA> &ts_a
+    TrxModel::DataA& dst_trx_a,
+    std::vector<TrxSplitModel::DataA>& tp_a_a
 ) {
     // no splits in the file
-    if (ts_a.empty())
+    if (tp_a_a.empty())
         return;
 
-    for (auto& item : destination) {
-        if (item.CATEGID > 0) continue;
-        for (auto& ts_data : ts_a.at(-1 * item.CATEGID.GetValue()))
-            ts_data.TRANSID = item.TRANSID;
-        item.CATEGID = -1;
+    for (auto& dst_trx_d : dst_trx_a) {
+        if (dst_trx_d.CATEGID > 0) continue;
+        for (auto& tp_d : tp_a_a.at(-1 * dst_trx_d.CATEGID.GetValue()))
+            tp_d.m_trx_id_p = dst_trx_d.TRANSID;
+        dst_trx_d.CATEGID = -1;
     }
 }
 
@@ -1479,7 +1479,7 @@ bool mmQIFImportDialog::completeTransaction(
     wxString tagStr;
     wxRegEx regex(" ?: ?");
     if (t.find(QIF_ID_CategorySplit) != t.end()) {
-        TrxSplitModel::DataA split;
+        TrxSplitModel::DataA tp_a;
         wxStringTokenizer categToken(t[QIF_ID_CategorySplit], "\n");
         wxStringTokenizer amtToken((t.find(QIF_ID_AmountSplit) != t.end() ? t[QIF_ID_AmountSplit] : ""), "\n");
         wxString notes = t.find(QIF_ID_MemoSplit) != t.end() ? t[QIF_ID_MemoSplit] : "";
@@ -1493,8 +1493,8 @@ bool mmQIFImportDialog::completeTransaction(
                 msg = _t("Transaction Category is incorrect");
                 return false;
             }
-            TrxSplitData ts_data = TrxSplitData();
-            ts_data.CATEGID = categID;
+            TrxSplitData tp_d = TrxSplitData();
+            tp_d.m_category_id_p = categID;
 
             wxString amtSplit = amtToken.GetNextToken();
             amtSplit = mmTrimAmount(amtSplit, decimal_, ".");
@@ -1513,10 +1513,10 @@ bool mmQIFImportDialog::completeTransaction(
                     break;
             }
 
-            ts_data.SPLITTRANSAMOUNT = (TrxModel::is_deposit(*trx) ? amount : -amount);
-            ts_data.TRANSID = trx->TRANSID;
-            ts_data.NOTES = memo;
-            split.push_back(ts_data);
+            tp_d.m_amount   = (TrxModel::is_deposit(*trx) ? amount : -amount);
+            tp_d.m_trx_id_p = trx->TRANSID;
+            tp_d.m_notes    = memo;
+            tp_a.push_back(tp_d);
 
             // Save split tags
             if (!tagStr.IsEmpty()) {
@@ -1547,11 +1547,13 @@ bool mmQIFImportDialog::completeTransaction(
             split_id++;
         }
         trx->CATEGID = -1 * static_cast<int>(m_splitDataSets.size());
-        m_splitDataSets.push_back(split);
+        m_splitDataSets.push_back(tp_a);
     }
-    else
-    {
-        wxString categStr = (t.find(QIF_ID_Category) != t.end() ? t.at(QIF_ID_Category).BeforeFirst('/') : "");
+    else {
+        wxString categStr = (t.find(QIF_ID_Category) != t.end()
+            ? t.at(QIF_ID_Category).BeforeFirst('/')
+            : ""
+        );
         if (categStr.empty()) {
             const PayeeData* payee_n = PayeeModel::instance().get_id_data_n(trx->PAYEEID);
             if (payee_n) {
@@ -1566,7 +1568,6 @@ bool mmQIFImportDialog::completeTransaction(
         else {
             trx->CATEGID = (m_QIFcategoryNames[categStr]);
         }
-
     }
 
     // Check for duplicates according to user choice

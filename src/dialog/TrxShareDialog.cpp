@@ -79,39 +79,48 @@ TrxShareDialog::TrxShareDialog(
     m_translink_entry(translink_entry)
 {
     if (m_translink_entry) {
-        m_stock_n = StockModel::instance().unsafe_get_id_data_n(m_translink_entry->LINKRECORDID);
+        m_stock_n = StockModel::instance().unsafe_get_id_data_n(
+            m_translink_entry->LINKRECORDID
+        );
         if (m_translink_entry->LINKTYPE == StockModel::refTypeName) {
-            m_share_entry = TrxShareModel::instance().unsafe_get_trx_share_n(m_translink_entry->CHECKINGACCOUNTID);
+            m_share_entry = TrxShareModel::instance().unsafe_get_trx_share_n(
+                m_translink_entry->CHECKINGACCOUNTID
+            );
             if (m_share_entry->SHARELOT.IsEmpty())
                 // FIXME: m_share_entry is changed but not saved
                 m_share_entry->SHARELOT = m_stock_n->m_id.ToString();
 
-            for (const auto& split: TrxSplitModel::instance().find(
+            for (const auto& tp_d: TrxSplitModel::instance().find(
                 TrxSplitCol::TRANSID(m_share_entry->SHAREINFOID)
             )) {
-                wxArrayInt64 tags;
-                for (const auto& tag : TagLinkModel::instance().find(
+                wxArrayInt64 tag_id_a;
+                for (const auto& gl_d : TagLinkModel::instance().find(
                     TagLinkCol::REFTYPE(TrxSplitModel::refTypeName),
-                    TagLinkCol::REFID(split.SPLITTRANSID)
-                ))
-                    tags.push_back(tag.TAGID);
-                m_local_deductible_splits.push_back({split.CATEGID, split.SPLITTRANSAMOUNT, tags, split.NOTES});
+                    TagLinkCol::REFID(tp_d.m_id)
+                )) {
+                    tag_id_a.push_back(gl_d.TAGID);
+                }
+                m_local_deductible_splits.push_back(
+                    {tp_d.m_category_id_p, tp_d.m_amount, tag_id_a, tp_d.m_notes}
+                );
             }
         }
     }
 
-    if (m_checking_entry)
-    {
-        for (const auto& split: TrxSplitModel::instance().find(
+    if (m_checking_entry) {
+        for (const auto& tp_d: TrxSplitModel::instance().find(
             TrxSplitCol::TRANSID(m_checking_entry->TRANSID)
         )) {
-            wxArrayInt64 tags;
-            for (const auto& tag : TagLinkModel::instance().find(
+            wxArrayInt64 tag_id_a;
+            for (const auto& gl_d : TagLinkModel::instance().find(
                 TagLinkCol::REFTYPE(TrxSplitModel::refTypeName),
-                TagLinkCol::REFID(split.SPLITTRANSID)
-            ))
-                tags.push_back(tag.TAGID);
-            m_local_non_deductible_splits.push_back({split.CATEGID, split.SPLITTRANSAMOUNT, tags, split.NOTES});
+                TagLinkCol::REFID(tp_d.m_id)
+            )) {
+                tag_id_a.push_back(gl_d.TAGID);
+            }
+            m_local_non_deductible_splits.push_back(
+                {tp_d.m_category_id_p, tp_d.m_amount, tag_id_a, tp_d.m_notes}
+            );
         }
     }
 

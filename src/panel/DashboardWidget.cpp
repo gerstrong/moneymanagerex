@@ -216,14 +216,14 @@ void htmlWidgetTop7Categories::getTopCategoryStats(
     std::map<int64 /*category*/, double> stat;
 
     const auto split = TrxSplitModel::instance().get_all_id();
-    const auto &transactions = TrxModel::instance().find(
+    const auto& trx_a = TrxModel::instance().find(
         TrxModel::TRANSDATE(OP_GE, date_range->start_date()),
         TrxCol::TRANSDATE(OP_LE, date_range->end_date().FormatISOCombined()),
         TrxModel::STATUS(OP_NE, TrxModel::STATUS_ID_VOID),
         TrxModel::TRANSCODE(OP_NE, TrxModel::TYPE_ID_TRANSFER)
     );
 
-    for (const auto &trx : transactions) {
+    for (const auto &trx : trx_a) {
         // Do not include asset or stock transfers or deleted transactions in income expense calculations.
         if (TrxModel::is_foreignAsTransfer(trx) || !trx.DELETEDTIME.IsEmpty())
             continue;
@@ -242,21 +242,17 @@ void htmlWidgetTop7Categories::getTopCategoryStats(
                 stat[category] += trx.TRANSAMOUNT * convRate;
         }
         else {
-            for (const auto& entry : it->second) {
-                int64 category = entry.CATEGID;
-                double val = entry.SPLITTRANSAMOUNT
-                    * convRate
-                    * (withdrawal ? -1 : 1);
+            for (const auto& tp_d : it->second) {
+                int64 category = tp_d.m_category_id_p;
+                double val = tp_d.m_amount * convRate * (withdrawal ? -1 : 1);
                 stat[category] += val;
             }
         }
     }
 
     categoryStats.clear();
-    for (const auto& i : stat)
-    {
-        if (i.second < 0)
-        {
+    for (const auto& i : stat) {
+        if (i.second < 0) {
             std::pair <wxString, double> stat_pair;
             stat_pair.first = CategoryModel::full_name(i.first);
             stat_pair.second = i.second;
@@ -264,15 +260,15 @@ void htmlWidgetTop7Categories::getTopCategoryStats(
         }
     }
 
-    std::stable_sort(categoryStats.begin(), categoryStats.end()
-        , [](const std::pair<wxString, double> x, const std::pair<wxString, double> y)
-    { return x.second < y.second; }
+    std::stable_sort(categoryStats.begin(), categoryStats.end(),
+        [](const std::pair<wxString, double> x, const std::pair<wxString, double> y) {
+            return x.second < y.second;
+        }
     );
 
     int counter = 0;
     std::vector<std::pair<wxString, double> >::iterator iter;
-    for (iter = categoryStats.begin(); iter != categoryStats.end(); )
-    {
+    for (iter = categoryStats.begin(); iter != categoryStats.end(); ) {
         counter++;
         if (counter > 7)
             iter = categoryStats.erase(iter);

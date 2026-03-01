@@ -63,25 +63,25 @@ const TagData* TagModel::get_key(const wxString& name)
 
 int TagModel::is_used(int64 id)
 {
-    TagLinkModel::DataA taglink = TagLinkModel::instance().find(
+    TagLinkModel::DataA gl_a = TagLinkModel::instance().find(
         TagLinkCol::TAGID(id)
     );
 
-    if (taglink.empty())
+    if (gl_a.empty())
         return 0;
 
-    for (const auto& link : taglink) {
+    for (const auto& gl_d : gl_a) {
         // FIXME: do not exclude deleted transactions
-        if (link.REFTYPE == TrxModel::refTypeName) {
-            const TrxData* t = TrxModel::instance().get_id_data_n(link.REFID);
-            if (t && t->DELETEDTIME.IsEmpty())
+        if (gl_d.REFTYPE == TrxModel::refTypeName) {
+            const TrxData* trx_n = TrxModel::instance().get_id_data_n(gl_d.REFID);
+            if (trx_n && trx_n->DELETEDTIME.IsEmpty())
                 return 1;
         }
-        else if (link.REFTYPE == TrxSplitModel::refTypeName) {
-            const TrxSplitData* s = TrxSplitModel::instance().get_id_data_n(link.REFID);
-            if (s) {
-                const TrxData* t = TrxModel::instance().get_id_data_n(s->TRANSID);
-                if (t && t->DELETEDTIME.IsEmpty())
+        else if (gl_d.REFTYPE == TrxSplitModel::refTypeName) {
+            const TrxSplitData* tp_n = TrxSplitModel::instance().get_id_data_n(gl_d.REFID);
+            if (tp_n) {
+                const TrxData* trx_n = TrxModel::instance().get_id_data_n(tp_n->m_trx_id_p);
+                if (trx_n && trx_n->DELETEDTIME.IsEmpty())
                     return 1;
             }
         }

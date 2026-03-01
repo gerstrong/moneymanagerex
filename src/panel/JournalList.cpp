@@ -1722,20 +1722,20 @@ int64 JournalList::onPaste(const TrxData* tran)
 
     // Clone split transactions
     reftype = TrxSplitModel::refTypeName;
-    for (const auto& split_item : TrxModel::find_split(*tran)) {
-        TrxSplitData new_split_d;
-        new_split_d.clone_from(split_item);
-        new_split_d.TRANSID = transactionID;
-        TrxSplitModel::instance().add_data_n(new_split_d);
+    for (const auto& tp_d : TrxModel::find_split(*tran)) {
+        TrxSplitData new_tp_d;
+        new_tp_d.clone_from(tp_d);
+        new_tp_d.m_trx_id_p = transactionID;
+        TrxSplitModel::instance().add_data_n(new_tp_d);
 
         // Clone split tags
         for (const auto& tl_d : TagLinkModel::instance().find(
             TagLinkCol::REFTYPE(reftype),
-            TagLinkCol::REFID(split_item.SPLITTRANSID)
+            TagLinkCol::REFID(tp_d.m_id)
         )) {
             TagLinkData new_gl_d;
             new_gl_d.clone_from(tl_d);
-            new_gl_d.REFID = new_split_d.id();
+            new_gl_d.REFID = new_tp_d.id();
             new_gl_a.push_back(new_gl_d);
         }
     }
@@ -1922,8 +1922,8 @@ const wxString JournalList::getItem(long item, int col_id) const
     case LIST_ID_NOTES: {
         value = journal.NOTES;
         if (!journal.displayID.Contains(".")) {
-            for (const auto& split : journal.m_splits)
-                value += wxString::Format(" %s", split.NOTES);
+            for (const auto& tp_d : journal.m_splits)
+                value += wxString::Format(" %s", tp_d.m_notes);
         }
         value.Replace("\n", " ");
         if (journal.has_attachment())
@@ -1934,9 +1934,9 @@ const wxString JournalList::getItem(long item, int col_id) const
         value = journal.TAGNAMES;
         if (!journal.displayID.Contains(".")) {
             const wxString splitRefType = TrxSplitModel::refTypeName;
-            for (const auto& split : journal.m_splits) {
+            for (const auto& tp_d : journal.m_splits) {
                 wxString tagnames;
-                std::map<wxString, int64> tags = TagLinkModel::instance().get_ref(splitRefType, split.SPLITTRANSID);
+                std::map<wxString, int64> tags = TagLinkModel::instance().get_ref(splitRefType, tp_d.m_id);
                 std::map<wxString, int64, caseInsensitiveComparator> sortedTags(tags.begin(), tags.end());
                 for (const auto& tag : sortedTags)
                     tagnames.Append(tag.first + " ");

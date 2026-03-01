@@ -16,17 +16,14 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  ********************************************************/
 
-// PLEASE EDIT!
-// This is only sample code re-used from "table/TrxSplitTable.cpp".
-
 #include "TrxSplitData.h"
 
 TrxSplitData::TrxSplitData()
 {
-    SPLITTRANSID = -1;
-    TRANSID = -1;
-    CATEGID = -1;
-    SPLITTRANSAMOUNT = 0.0;
+    m_id            = -1;
+    m_trx_id_p      = -1;
+    m_category_id_p = -1;
+    m_amount        = 0.0;
 }
 
 // Convert TrxSplitData to TrxSplitRow
@@ -34,11 +31,11 @@ TrxSplitRow TrxSplitData::to_row() const
 {
     TrxSplitRow row;
 
-    row.SPLITTRANSID = SPLITTRANSID;
-    row.TRANSID = TRANSID;
-    row.CATEGID = CATEGID;
-    row.SPLITTRANSAMOUNT = SPLITTRANSAMOUNT;
-    row.NOTES = NOTES;
+    row.SPLITTRANSID     = m_id;
+    row.TRANSID          = m_trx_id_p;
+    row.CATEGID          = m_category_id_p;
+    row.SPLITTRANSAMOUNT = m_amount;
+    row.NOTES            = m_notes;
 
     return row;
 }
@@ -46,22 +43,22 @@ TrxSplitRow TrxSplitData::to_row() const
 // Convert TrxSplitRow to TrxSplitData
 TrxSplitData& TrxSplitData::from_row(const TrxSplitRow& row)
 {
-    SPLITTRANSID = row.SPLITTRANSID; // int64
-    TRANSID = row.TRANSID; // int64
-    CATEGID = row.CATEGID; // int64
-    SPLITTRANSAMOUNT = row.SPLITTRANSAMOUNT; // double
-    NOTES = row.NOTES; // wxString
+    m_id            = row.SPLITTRANSID;     // int64
+    m_trx_id_p      = row.TRANSID;          // int64
+    m_category_id_p = row.CATEGID;          // int64
+    m_amount        = row.SPLITTRANSAMOUNT; // double
+    m_notes         = row.NOTES;            // wxString
 
     return *this;
 }
 
 bool TrxSplitData::equals(const TrxSplitData* other) const
 {
-    if ( SPLITTRANSID != other->SPLITTRANSID) return false;
-    if ( TRANSID != other->TRANSID) return false;
-    if ( CATEGID != other->CATEGID) return false;
-    if ( SPLITTRANSAMOUNT != other->SPLITTRANSAMOUNT) return false;
-    if (!NOTES.IsSameAs(other->NOTES)) return false;
+    if ( m_id            != other->m_id)            return false;
+    if ( m_trx_id_p      != other->m_trx_id_p)      return false;
+    if ( m_category_id_p != other->m_category_id_p) return false;
+    if ( m_amount        != other->m_amount)        return false;
+    if (!m_notes.IsSameAs(  other->m_notes))        return false;
 
     return true;
 }

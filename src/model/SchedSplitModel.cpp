@@ -50,10 +50,11 @@ SchedSplitModel& SchedSplitModel::instance()
     return Singleton<SchedSplitModel>::instance();
 }
 
-double SchedSplitModel::get_total(const DataA& rows)
+double SchedSplitModel::get_total(const DataA& qp_a)
 {
     double total = 0.0;
-    for (auto& r : rows) total += r.SPLITTRANSAMOUNT;
+    for (auto& qp_d : qp_a)
+        total += qp_d.m_amount;
 
     return total;
 }
@@ -69,37 +70,37 @@ bool SchedSplitModel::purge_id(int64 id)
 std::map<int64, SchedSplitModel::DataA> SchedSplitModel::get_all_id()
 {
     std::map<int64, SchedSplitModel::DataA> data;
-    for (const auto & split : instance().find_all())
-    {
-        data[split.TRANSID].push_back(split);
+    for (const auto& qp_d : instance().find_all()) {
+        data[qp_d.m_sched_id_p].push_back(qp_d);
     }
-
     return data;
 }
 
-int SchedSplitModel::update(DataA& rows, int64 transactionID)
+int SchedSplitModel::update(DataA& src_qp_a, int64 sched_id)
 {
 
-    DataA split_a = instance().find(SchedSplitCol::TRANSID(transactionID));
-    for (const auto& split_d : split_a) {
-        instance().purge_id(split_d.id());
+    for (const auto& qp_d : instance().find(
+        SchedSplitCol::TRANSID(sched_id)
+    )) {
+        instance().purge_id(qp_d.id());
     }
 
-    if (!rows.empty()) {
-        DataA new_split_a;
-        for (const auto &item : rows) {
-            Data new_split_d = Data();
-            new_split_d.TRANSID          = transactionID;
-            new_split_d.SPLITTRANSAMOUNT = item.SPLITTRANSAMOUNT;
-            new_split_d.CATEGID          = item.CATEGID;
-            new_split_d.NOTES            = item.NOTES;
-            new_split_a.push_back(new_split_d);
+    if (!src_qp_a.empty()) {
+        DataA new_qp_a;
+        for (const auto& src_qp_d : src_qp_a) {
+            Data new_qp_d = Data();
+            new_qp_d.m_sched_id_p    = sched_id;
+            new_qp_d.m_amount        = src_qp_d.m_amount;
+            new_qp_d.m_category_id_p = src_qp_d.m_category_id_p;
+            new_qp_d.m_notes         = src_qp_d.m_notes;
+            new_qp_a.push_back(new_qp_d);
         }
-        instance().save_data_a(new_split_a);
+        instance().save_data_a(new_qp_a);
 
-        // Send back the new SPLITTRANSID which is needed to update taglinks
-        for (int i = 0; i < static_cast<int>(rows.size()); i++)
-            rows.at(i).SPLITTRANSID = new_split_a.at(i).SPLITTRANSID;
+        // Send back the new m_id which is needed to update taglinks
+        // CHECK: src_qp_a.at(i).m_sched_id_p is not updated
+        for (int i = 0; i < static_cast<int>(src_qp_a.size()); i++)
+            src_qp_a.at(i).m_id = new_qp_a.at(i).m_id;
     }
-    return rows.size();
+    return src_qp_a.size();
 }

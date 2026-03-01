@@ -21,8 +21,8 @@
 #include "CategoryModel.h"
 #include "TransactionModel.h"
 
-TransactionSplitModel::TransactionSplitModel()
-    : Model<TransactionSplitTable>()
+TransactionSplitModel::TransactionSplitModel() :
+    Model<TransactionSplitTable, TransactionSplitData>()
 {
 }
 
@@ -37,8 +37,8 @@ TransactionSplitModel::~TransactionSplitModel()
 TransactionSplitModel& TransactionSplitModel::instance(wxSQLite3Database* db)
 {
     TransactionSplitModel& ins = Singleton<TransactionSplitModel>::instance();
+    ins.reset_cache();
     ins.m_db = db;
-    ins.destroy_cache();
     ins.ensure_table();
 
     return ins;
@@ -50,14 +50,14 @@ TransactionSplitModel& TransactionSplitModel::instance()
     return Singleton<TransactionSplitModel>::instance();
 }
 
-bool TransactionSplitModel::remove(int64 id)
+bool TransactionSplitModel::remove_depen(int64 id)
 {
     // Delete all tags for the split before removing it
     TagLinkModel::instance().DeleteAllTags(TransactionSplitModel::refTypeName, id);
-    return this->remove(id);
+    return remove_data(id);
 }
 
-double TransactionSplitModel::get_total(const Data_Set& rows)
+double TransactionSplitModel::get_total(const DataA& rows)
 {
     double total = 0.0;
     for (auto& r : rows) total += r.SPLITTRANSAMOUNT;
@@ -70,36 +70,32 @@ double TransactionSplitModel::get_total(const std::vector<Split>& rows)
     return total;
 }
 
-std::map<int64, TransactionSplitModel::Data_Set> TransactionSplitModel::get_all_id()
+std::map<int64, TransactionSplitModel::DataA> TransactionSplitModel::get_all_id()
 {
-    std::map<int64, TransactionSplitModel::Data_Set> data;
-    for (const auto &split : instance().get_all()) {
+    std::map<int64, TransactionSplitModel::DataA> data;
+    for (const auto &split : instance().find_all()) {
         data[split.TRANSID].push_back(split);
     }
     return data;
 }
 
-int TransactionSplitModel::update(Data_Set& rows, int64 transactionID)
+int TransactionSplitModel::update(DataA& rows, int64 transactionID)
 {
     bool updateTimestamp = false;
     std::map<int, int64> row_id_map;
 
-    Data_Set split = instance().find(TRANSID(transactionID));
+    DataA split = instance().find(TransactionSplitCol::TRANSID(transactionID));
     if (split.size() != rows.size()) updateTimestamp = true;
 
-    for (const auto& split_item : split)
-    {
-        if (!updateTimestamp)
-        {
+    for (const auto& split_item : split) {
+        if (!updateTimestamp) {
             bool match = false;
-            for (decltype(rows.size()) i = 0; i < rows.size(); i++)
-            {
+            for (decltype(rows.size()) i = 0; i < rows.size(); i++) {
                 match = (rows[i].CATEGID == split_item.CATEGID
                         && rows[i].SPLITTRANSAMOUNT == split_item.SPLITTRANSAMOUNT
                         && rows[i].NOTES.IsSameAs(split_item.NOTES))
                     && (row_id_map.find(i) == row_id_map.end());
-                if (match)
-                {
+                if (match) {
                     row_id_map[i] = split_item.SPLITTRANSID;
                     break;
                 }
@@ -108,19 +104,18 @@ int TransactionSplitModel::update(Data_Set& rows, int64 transactionID)
             updateTimestamp = updateTimestamp || !match;
         }
 
-        instance().remove(split_item.SPLITTRANSID);
+        instance().remove_depen(split_item.SPLITTRANSID);
     }
 
-    if (!rows.empty())
-    {
-        for (auto &item : rows)
-        {
-            Data *split_item = instance().create();
-            split_item->TRANSID = transactionID;
-            split_item->SPLITTRANSAMOUNT = item.SPLITTRANSAMOUNT;
-            split_item->CATEGID = item.CATEGID;
-            split_item->NOTES = item.NOTES;
-            item.SPLITTRANSID = instance().save(split_item);
+    if (!rows.empty()) {
+        for (auto &item : rows) {
+            Data split_d = Data();
+            split_d.TRANSID          = transactionID;
+            split_d.SPLITTRANSAMOUNT = item.SPLITTRANSAMOUNT;
+            split_d.CATEGID          = item.CATEGID;
+            split_d.NOTES            = item.NOTES;
+            instance().add_data_n(split_d);
+            item.SPLITTRANSID = split_d.id();
         }
     }
 
@@ -133,20 +128,19 @@ int TransactionSplitModel::update(Data_Set& rows, int64 transactionID)
 int TransactionSplitModel::update(const std::vector<Split>& rows, int64 transactionID)
 {
 
-    Data_Set splits;
-    for (const auto& entry : rows)
-    {
-        TransactionSplitModel::Data *s = instance().create();
-        s->CATEGID = entry.CATEGID;
-        s->SPLITTRANSAMOUNT = entry.SPLITTRANSAMOUNT;
-        s->NOTES = entry.NOTES;
-        splits.push_back(*s);
+    DataA splits;
+    for (const auto& entry : rows) {
+        Data s = Data();
+        s.CATEGID = entry.CATEGID;
+        s.SPLITTRANSAMOUNT = entry.SPLITTRANSAMOUNT;
+        s.NOTES = entry.NOTES;
+        splits.push_back(s);
     }
 
     return this->update(splits, transactionID);
 }
 
-const wxString TransactionSplitModel::get_tooltip(const std::vector<Split>& rows, const CurrencyModel::Data* currency)
+const wxString TransactionSplitModel::get_tooltip(const std::vector<Split>& rows, const CurrencyData* currency)
 {
     wxString split_tooltip = "";
     for (const auto& entry : rows)

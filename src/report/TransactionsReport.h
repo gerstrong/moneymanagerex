@@ -34,7 +34,7 @@ public:
 
 private:
     void Run(wxSharedPtr<TransactionFilterDialog>& transDialog);
-    TransactionModel::Full_Data_Set trans_;
+    TransactionModel::Full_DataA trans_;
     wxSharedPtr<TransactionFilterDialog> m_transDialog;
     bool showColumnById(int num);
     void displayTotals(const std::map<int64, double>& total, std::map<int64, double>& total_in_base_curr, int noOfCols);

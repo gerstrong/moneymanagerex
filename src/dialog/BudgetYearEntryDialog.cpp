@@ -116,7 +116,7 @@ void BudgetYearEntryDialog::CreateControls()
     mmToolTip(itemChoice_, _t("Specify year to base budget on"));
 
     unsigned int index = 1;
-    for (const auto& e : BudgetPeriodModel::instance().get_all())
+    for (const auto& e : BudgetPeriodModel::instance().find_all())
     {
         const wxString& budgetYearString = e.BUDGETYEARNAME;
         itemChoice_->Insert(budgetYearString, index++);

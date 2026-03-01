@@ -22,8 +22,8 @@
 #include "TransactionShareModel.h"
 #include "CurrencyHistoryModel.h"
 
-TransactionLinkModel::TransactionLinkModel()
-    : Model<TransactionLinkTable>()
+TransactionLinkModel::TransactionLinkModel() :
+    Model<TransactionLinkTable, TransactionLinkData>()
 {
 }
 
@@ -38,8 +38,8 @@ TransactionLinkModel::~TransactionLinkModel()
 TransactionLinkModel& TransactionLinkModel::instance(wxSQLite3Database* db)
 {
     TransactionLinkModel& ins = Singleton<TransactionLinkModel>::instance();
+    ins.reset_cache();
     ins.m_db = db;
-    ins.destroy_cache();
     ins.ensure_table();
 
     return ins;
@@ -63,59 +63,60 @@ TransactionLinkModel::CHECKING_TYPE TransactionLinkModel::type_checking(const in
     }
 }
 
-TransactionLinkModel::Data* TransactionLinkModel::SetAssetTranslink(const int64 asset_id
+void TransactionLinkModel::SetAssetTranslink(const int64 asset_id
     , const int64 checking_id
     , const CHECKING_TYPE checking_type)
 {
-    return SetTranslink(checking_id, checking_type
-        , AssetModel::refTypeName, asset_id);
+    SetTranslink(checking_id, checking_type, AssetModel::refTypeName, asset_id);
 }
 
-TransactionLinkModel::Data* TransactionLinkModel::SetStockTranslink(const int64 stock_id
-    , const int64 checking_id
-    , const CHECKING_TYPE checking_type)
-{
-    return SetTranslink(checking_id, checking_type
-        , StockModel::refTypeName, stock_id);
+void TransactionLinkModel::SetStockTranslink(
+    const int64 stock_id,
+    const int64 checking_id,
+    const CHECKING_TYPE checking_type
+) {
+    SetTranslink(checking_id, checking_type, StockModel::refTypeName, stock_id);
 }
 
-TransactionLinkModel::Data* TransactionLinkModel::SetTranslink(const int64 checking_id
-    , [[maybe_unused]] const CHECKING_TYPE checking_type
-    , const wxString& link_type, const int64 link_record_id)
-{
-    TransactionLinkModel::Data* translink = TransactionLinkModel::instance().create();
-    translink->CHECKINGACCOUNTID = checking_id;
-    translink->LINKTYPE = link_type;
-    translink->LINKRECORDID = link_record_id;
-    TransactionLinkModel::instance().save(translink);
+void TransactionLinkModel::SetTranslink(
+    const int64 checking_id,
+    [[maybe_unused]] const CHECKING_TYPE checking_type,
+    const wxString& link_type,
+    const int64 link_record_id
+) {
+    TransactionLinkData new_tl_d = TransactionLinkData();
+    new_tl_d.CHECKINGACCOUNTID = checking_id;
+    new_tl_d.LINKTYPE          = link_type;
+    new_tl_d.LINKRECORDID      = link_record_id;
+    TransactionLinkModel::instance().add_data_n(new_tl_d);
 
-    /*
-    set the checking entry to recognise it as a foreign transaction
-    set the checking type as AS_INCOME_EXPENSE = 32701 or AS_TRANSFER
-    */
-    TransactionModel::Data* checking_entry = TransactionModel::instance().get_id(checking_id);
-    // checking_entry->TOACCOUNTID = checking_type;
-    TransactionModel::instance().save_trx(checking_entry);
-
-    return translink;
+    // set the checking entry to recognise it as a foreign transaction
+    // set the checking type as AS_INCOME_EXPENSE = 32701 or AS_TRANSFER
+    TransactionData* trx_n = TransactionModel::instance().unsafe_get_data_n(checking_id);
+    // trx_n->TOACCOUNTID = checking_type;
+    TransactionModel::instance().unsafe_save_trx(trx_n);
+    //TransactionLinkModel::instance().get_data_n(new_tl_d.id());
 }
 
 template <typename T>
-TransactionLinkModel::Data_Set TransactionLinkModel::TranslinkList(const int64 link_entry_id)
+TransactionLinkModel::DataA TransactionLinkModel::TranslinkList(const int64 link_entry_id)
 {
-    TransactionLinkModel::Data_Set translink_list = TransactionLinkModel::instance().find(
-        TransactionLinkModel::LINKTYPE(T::refTypeName)
-        , TransactionLinkModel::LINKRECORDID(link_entry_id));
+    TransactionLinkModel::DataA translink_list = TransactionLinkModel::instance().find(
+        TransactionLinkCol::LINKTYPE(T::refTypeName),
+        TransactionLinkCol::LINKRECORDID(link_entry_id)
+    );
 
     return translink_list;
 }
 
-TransactionLinkModel::Data_Set TransactionLinkModel::TranslinkListBySymbol(const wxString symbol)
+TransactionLinkModel::DataA TransactionLinkModel::TranslinkListBySymbol(const wxString symbol)
 {
-    TransactionLinkModel::Data_Set result;
-    StockModel::Data_Set stocks = StockModel::instance().find(StockModel::SYMBOL(symbol));
+    TransactionLinkModel::DataA result;
+    StockModel::DataA stocks = StockModel::instance().find(StockCol::SYMBOL(symbol));
     for (auto& stock : stocks) {
-       TransactionLinkModel::Data_Set t = TransactionLinkModel::instance().find(TransactionLinkModel::LINKRECORDID(stock.STOCKID));
+       TransactionLinkModel::DataA t = TransactionLinkModel::instance().find(
+            TransactionLinkCol::LINKRECORDID(stock.STOCKID)
+        );
        result.insert(result.end(), t.begin(), t.end());
     }
     return result;
@@ -131,15 +132,15 @@ bool TransactionLinkModel::HasShares(const int64 stock_id)
     return true;
 }
 
-TransactionLinkModel::Data TransactionLinkModel::TranslinkRecord(const int64 checking_id)
+TransactionLinkData TransactionLinkModel::TranslinkRecord(const int64 checking_id)
 {
-    auto i = TransactionLinkModel::CHECKINGACCOUNTID(checking_id);
-    TransactionLinkModel::Data_Set translink_list = TransactionLinkModel::instance().find(i);
+    auto i = TransactionLinkCol::CHECKINGACCOUNTID(checking_id);
+    TransactionLinkModel::DataA translink_list = TransactionLinkModel::instance().find(i);
 
     if (!translink_list.empty())
         return *translink_list.begin();
     else {
-        wxSharedPtr<TransactionLinkModel::Data> t(new TransactionLinkModel::Data);
+        wxSharedPtr<TransactionLinkData> t(new TransactionLinkData);
         return *t;
     }
 }
@@ -149,7 +150,7 @@ void TransactionLinkModel::RemoveTransLinkRecords(const int64 entry_id)
 {
     for (const auto& translink : TranslinkList<T>(entry_id))
     {
-        TransactionModel::instance().remove(translink.CHECKINGACCOUNTID);
+        TransactionModel::instance().remove_depen(translink.CHECKINGACCOUNTID);
     }
 }
 
@@ -161,62 +162,62 @@ void TransactionLinkModel::RemoveTranslinkEntry(const int64 checking_account_id)
 {
     Data translink = TranslinkRecord(checking_account_id);
     TransactionShareModel::RemoveShareEntry(translink.CHECKINGACCOUNTID);
-    TransactionLinkModel::instance().remove(translink.TRANSLINKID);
+    TransactionLinkModel::instance().remove_depen(translink.TRANSLINKID);
 
-    if (translink.LINKTYPE == AssetModel::refTypeName)
-    {
-        AssetModel::Data* asset_entry = AssetModel::instance().get_id(translink.LINKRECORDID);
+    if (translink.LINKTYPE == AssetModel::refTypeName) {
+        AssetData* asset_entry = AssetModel::instance().unsafe_get_data_n(translink.LINKRECORDID);
         UpdateAssetValue(asset_entry);
     }
 
-    if (translink.LINKTYPE == StockModel::refTypeName)
-    {
-        StockModel::Data* stock_entry = StockModel::instance().get_id(translink.LINKRECORDID);
+    if (translink.LINKTYPE == StockModel::refTypeName) {
+        StockData* stock_entry = StockModel::instance().unsafe_get_data_n(translink.LINKRECORDID);
         StockModel::UpdatePosition(stock_entry);
     }
 }
 
-void TransactionLinkModel::UpdateAssetValue(AssetModel::Data* asset_entry)
+void TransactionLinkModel::UpdateAssetValue(AssetData* asset_n)
 {
-    Data_Set trans_list = TranslinkList<AssetModel>(asset_entry->ASSETID);
+    DataA trans_list = TranslinkList<AssetModel>(asset_n->ASSETID);
     double new_value = 0;
-    for (const auto &trans : trans_list)
-    {
-        TransactionModel::Data* asset_trans = TransactionModel::instance().get_id(trans.CHECKINGACCOUNTID);
-        if (asset_trans && asset_trans->DELETEDTIME.IsEmpty() && TransactionModel::status_id(asset_trans->STATUS) != TransactionModel::STATUS_ID_VOID)
-        {
-            CurrencyModel::Data* asset_currency = AccountModel::currency(AccountModel::instance().get_id(asset_trans->ACCOUNTID));
-            const double conv_rate = CurrencyHistoryModel::getDayRate(asset_currency->CURRENCYID, asset_trans->TRANSDATE);
+    for (const auto &trans : trans_list) {
+        const TransactionData* trx_n = TransactionModel::instance().get_data_n(trans.CHECKINGACCOUNTID);
+        if (trx_n && trx_n->DELETEDTIME.IsEmpty()
+            && TransactionModel::status_id(trx_n->STATUS) != TransactionModel::STATUS_ID_VOID
+        ) {
+            const CurrencyData* currency_n = AccountModel::currency(
+                AccountModel::instance().get_data_n(trx_n->ACCOUNTID)
+            );
+            const double conv_rate = CurrencyHistoryModel::getDayRate(
+                currency_n->CURRENCYID,
+                trx_n->TRANSDATE
+            );
 
-            if (asset_trans->TRANSCODE == TransactionModel::TYPE_NAME_DEPOSIT)
-            {
-                new_value -= asset_trans->TRANSAMOUNT * conv_rate; // Withdrawal from asset value
+            if (trx_n->TRANSCODE == TransactionModel::TYPE_NAME_DEPOSIT) {
+                new_value -= trx_n->TRANSAMOUNT * conv_rate; // Withdrawal from asset value
             }
-            else
-            {
-                new_value += asset_trans->TRANSAMOUNT * conv_rate;  // Deposit to asset value
+            else {
+                new_value += trx_n->TRANSAMOUNT * conv_rate;  // Deposit to asset value
             }
         }
     }
 
-    if (asset_entry->VALUE != new_value)
-    {
-        asset_entry->VALUE = new_value;
-        AssetModel::instance().save(asset_entry);
+    if (asset_n->VALUE != new_value) {
+        asset_n->VALUE = new_value;
+        AssetModel::instance().unsafe_save_data_n(asset_n);
     }
 }
 
 bool TransactionLinkModel::ShareAccountId(int64& stock_entry_id)
 {
-    TransactionLinkModel::Data_Set stock_translink_list = TranslinkList<StockModel>(stock_entry_id);
+    TransactionLinkModel::DataA stock_translink_list = TranslinkList<StockModel>(stock_entry_id);
 
     if (!stock_translink_list.empty())
     {
-        TransactionModel::Data_Set checking_entry = TransactionModel::instance().find(
-            TransactionModel::TRANSID(stock_translink_list.at(0).CHECKINGACCOUNTID));
+        TransactionModel::DataA checking_entry = TransactionModel::instance().find(
+            TransactionCol::TRANSID(stock_translink_list.at(0).CHECKINGACCOUNTID));
         if (!checking_entry.empty())
         {
-            AccountModel::Data* account_entry = AccountModel::instance().get_id(checking_entry.at(0).ACCOUNTID);
+            const AccountData* account_entry = AccountModel::instance().get_data_n(checking_entry.at(0).ACCOUNTID);
             stock_entry_id = account_entry->ACCOUNTID;
             return true;
         }

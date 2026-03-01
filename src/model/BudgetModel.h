@@ -26,9 +26,11 @@
 #include "util/mmDateRange.h"
 
 #include "table/BudgetTable.h"
+#include "data/BudgetData.h"
+
 #include "_ModelBase.h"
 
-class BudgetModel : public Model<BudgetTable>
+class BudgetModel : public Model<BudgetTable, BudgetData>
 {
 public:
     BudgetModel();
@@ -73,7 +75,7 @@ public:
     static PERIOD_ID period_id(const Data* r);
     static PERIOD_ID period_id(const Data& r);
 
-    static BudgetTable::PERIOD PERIOD(OP op, PERIOD_ID period);
+    static BudgetCol::PERIOD PERIOD(OP op, PERIOD_ID period);
 
     static void getBudgetEntry(int64 budgetYearID,
         std::map<int64, PERIOD_ID> &budgetPeriod,

@@ -38,11 +38,11 @@ public:
     template<class MODEL, class DATA = typename MODEL::Data>
     bool checkCategory(
         const DATA& tran,
-        const std::map<int64, typename MODEL::Split_Data_Set> & splits
+        const std::map<int64, typename MODEL::Split_DataA> & splits
     );
     bool mmIsRecordMatches(
-        const TransactionModel::Data &tran,
-        const std::map<int64, TransactionSplitModel::Data_Set>& split
+        const TransactionData &tran,
+        const std::map<int64, TransactionSplitModel::DataA>& split
     );
 
     wxString getHTML();
@@ -56,6 +56,6 @@ private:
     wxArrayInt64 m_account_a;
     wxArrayInt64 m_payee_a;
     wxArrayInt64 m_category_a;
-    TransactionModel::Full_Data_Set m_trans;
+    TransactionModel::Full_DataA m_trans;
 };
 

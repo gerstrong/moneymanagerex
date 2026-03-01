@@ -34,46 +34,47 @@ public:
     // id represents TRANSID if repeat_num == 0, or BDID otherwise
     typedef std::pair<int64 /* id */, int /* repeat_num */> IdRepeat;
 
-    typedef TransactionSplitModel::Data_Set Split_Data_Set;
-    typedef ScheduledSplitModel::Data_Set Budgetsplit_Data_Set;
-    typedef TagLinkModel::Data_Set Taglink_Data_Set;
+    typedef TransactionSplitModel::DataA Split_DataA;
+    typedef ScheduledSplitModel::DataA Budgetsplit_DataA;
+    typedef TagLinkModel::DataA Taglink_DataA;
 
-    static TransactionModel::Data execute_bill(const ScheduledModel::Data& r, wxString date);
-    static TransactionModel::Full_Data execute_bill_full(const ScheduledModel::Data& r, wxString date);
-    static Split_Data_Set execute_splits(const Budgetsplit_Data_Set& rs);
+    static TransactionData execute_bill(const ScheduledData& r, wxString date);
+    static TransactionModel::Full_Data execute_bill_full(const ScheduledData& r, wxString date);
+    static Split_DataA execute_splits(const Budgetsplit_DataA& rs);
 
-    struct Data: public TransactionModel::Data
+    struct Data: public TransactionData
     {
         int64 m_bdid;
         int m_repeat_num;
 
         Data();
-        explicit Data(const TransactionModel::Data& t);
-        explicit Data(const ScheduledModel::Data& r);
-        Data(const ScheduledModel::Data& r, wxString date, int repeat_num);
+        explicit Data(const TransactionData& t);
+        explicit Data(const ScheduledData& r);
+        Data(const ScheduledData& r, wxString date, int repeat_num);
         ~Data();
     };
-    typedef std::vector<Data> Data_Set;
+    typedef std::vector<Data> DataA;
 
     struct Full_Data: public TransactionModel::Full_Data
     {
         int64 m_bdid;
         int m_repeat_num;
 
-        explicit Full_Data(const TransactionModel::Data& t);
-        Full_Data(const TransactionModel::Data& t,
-            const std::map<int64 /* TRANSID */, Split_Data_Set>& splits,
-            const std::map<int64 /* TRANSID */, Taglink_Data_Set>& tags
+        explicit Full_Data(const TransactionData& t);
+        Full_Data(
+            const TransactionData& t,
+            const std::map<int64 /* TRANSID */, Split_DataA>& splits,
+            const std::map<int64 /* TRANSID */, Taglink_DataA>& tags
         );
-        Full_Data(const ScheduledModel::Data& r);
-        Full_Data(const ScheduledModel::Data& r, wxString date, int repeat_num);
-        Full_Data(const ScheduledModel::Data& r, wxString date, int repeat_num,
-            const std::map<int64 /* BDID */, Budgetsplit_Data_Set>& budgetsplits,
-            const std::map<int64 /* BDID */, Taglink_Data_Set>& tags
+        Full_Data(const ScheduledData& r);
+        Full_Data(const ScheduledData& r, wxString date, int repeat_num);
+        Full_Data(const ScheduledData& r, wxString date, int repeat_num,
+            const std::map<int64 /* BDID */, Budgetsplit_DataA>& budgetsplits,
+            const std::map<int64 /* BDID */, Taglink_DataA>& tags
         );
         ~Full_Data();
     };
-    typedef std::vector<Full_Data> Full_Data_Set;
+    typedef std::vector<Full_Data> Full_DataA;
 
     struct SorterByJOURNALID
     { 
@@ -94,8 +95,8 @@ public:
         }
     };
 
-    static void getEmptyData(Data &data, int64 account_id);
-    static bool getJournalData(Data &data, IdB journal_id);
-    static const TransactionSplitModel::Data_Set split(Data &r);
+    static void setEmptyData(Data &data, int64 account_id);
+    static bool setJournalData(Data &data, IdB journal_id);
+    static const TransactionSplitModel::DataA split(Data &r);
 };
 

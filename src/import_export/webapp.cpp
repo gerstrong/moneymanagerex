@@ -179,7 +179,7 @@ bool mmWebApp::WebApp_UpdateAccount()
 
     json_writer.StartArray();
 
-    for (const auto &account : AccountModel::instance().get_all(AccountCol::COL_ID_ACCOUNTNAME))
+    for (const auto &account : AccountModel::instance().find_all(AccountCol::COL_ID_ACCOUNTNAME))
     {
         if (AccountModel::type_id(account) != NavigatorTypes::TYPE_ID_INVESTMENT && AccountModel::status_id(account) != AccountModel::STATUS_ID_CLOSED)
         {
@@ -224,32 +224,27 @@ bool mmWebApp::WebApp_UpdatePayee()
     json_writer.StartArray();
 
     wxString def_category_name, def_subcategory_name;
-    for (const auto &payee : PayeeModel::instance().get_all(PayeeCol::COL_ID_PAYEENAME))
+    for (const auto &payee : PayeeModel::instance().find_all(PayeeCol::COL_ID_PAYEENAME))
     {
-        const CategoryModel::Data* def_category = CategoryModel::instance().get_id(payee.CATEGID);
-        if (def_category != nullptr)
-        {
-            if (def_category->PARENTID == -1)
-            {
+        const CategoryData* def_category = CategoryModel::instance().get_data_n(payee.CATEGID);
+        if (def_category) {
+            if (def_category->PARENTID == -1) {
                 def_category_name = def_category->CATEGNAME;
                 def_subcategory_name = "None";
             }
-            else
-            {
-                CategoryModel::Data* parent_category = CategoryModel::instance().get_id(def_category->PARENTID);
+            else {
+                const CategoryData* parent_category = CategoryModel::instance().get_data_n(def_category->PARENTID);
                 if (parent_category != nullptr && parent_category->PARENTID == -1) {
                     def_category_name = parent_category->CATEGNAME;
                     def_subcategory_name = def_category->CATEGNAME;
                 }
-                else
-                {
+                else {
                     def_category_name = "None";
                     def_subcategory_name = "None";
                 }
             }
         }
-        else
-        {
+        else {
             def_category_name = "None";
             def_subcategory_name = "None";
         }
@@ -295,8 +290,8 @@ bool mmWebApp::WebApp_UpdateCategory()
     json_writer.Key("Categories");
 
     json_writer.StartArray();
-    const auto &categories = CategoryModel::instance().find(CategoryModel::PARENTID(-1));
-    for (const CategoryModel::Data& category : categories)
+    const auto &categories = CategoryModel::instance().find(CategoryCol::PARENTID(-1));
+    for (const CategoryData& category : categories)
     {
         bool first_category_run = true;
         bool sub_category_found = false;
@@ -463,29 +458,29 @@ int64 mmWebApp::MMEX_InsertNewTransaction(webtran_holder& WebAppTrans)
 
     int64 AccountID = -1;
     int64 ToAccountID = -1;
-    int64 PayeeID = -1;
-    int64 CategoryID = -1;
+    int64 payeeID = -1;
+    int64 categoryID = -1;
     wxString TrStatus;
 
     //Search Account
-    const AccountModel::Data* Account = AccountModel::instance().get_key(WebAppTrans.Account);
+    const AccountData* Account = AccountModel::instance().get_key(WebAppTrans.Account);
     wxString accountName, accountInitialDate;
-    if (Account != nullptr)
-    {
+    if (Account != nullptr) {
         AccountID = Account->ACCOUNTID;
         accountName = Account->ACCOUNTNAME;
         accountInitialDate = Account->INITIALDATE;
         TrStatus = WebAppTrans.Status;
     }
-    else
-    {
+    else {
         TrStatus = TransactionModel::STATUS_KEY_FOLLOWUP;
 
         //Search first bank account
-        for (const auto &FirstAccount : AccountModel::instance().get_all(AccountCol::COL_ID_ACCOUNTNAME))
-        {
-            if (AccountModel::type_id(FirstAccount) != NavigatorTypes::TYPE_ID_INVESTMENT && AccountModel::type_id(FirstAccount) != NavigatorTypes::TYPE_ID_TERM)
-            {
+        for (const auto &FirstAccount : AccountModel::instance().find_all(
+            AccountCol::COL_ID_ACCOUNTNAME
+        )) {
+            if (AccountModel::type_id(FirstAccount) != NavigatorTypes::TYPE_ID_INVESTMENT &&
+                AccountModel::type_id(FirstAccount) != NavigatorTypes::TYPE_ID_TERM
+            ) {
                 accountName = FirstAccount.ACCOUNTNAME;
                 AccountID = FirstAccount.ACCOUNTID;
                 accountInitialDate = FirstAccount.INITIALDATE;
@@ -501,89 +496,85 @@ int64 mmWebApp::MMEX_InsertNewTransaction(webtran_holder& WebAppTrans)
         wxMessageBox(msgStr, _t("Wrong WebApp account"), wxICON_ERROR);
     }
 
-    //Search ToAccount
-    AccountModel::Data* ToAccount = nullptr;
-    if (WebAppTrans.ToAccount != "None")
-    {
+    // Search ToAccount
+    const AccountData* ToAccount = nullptr;
+    if (WebAppTrans.ToAccount != "None") {
         ToAccount = AccountModel::instance().get_key(WebAppTrans.ToAccount);
-        if (ToAccount != nullptr)
+        if (ToAccount)
             ToAccountID = ToAccount->ACCOUNTID;
     }
 
     //Search or insert Category
-    const CategoryModel::Data* Category = CategoryModel::instance().get_key(WebAppTrans.Category, int64(-1));
-    if (Category != nullptr)
-        CategoryID = Category->CATEGID;
-    else
-    {
-        CategoryModel::Data* NewCategory = CategoryModel::instance().create();
-        NewCategory->CATEGNAME = WebAppTrans.Category;
-        NewCategory->ACTIVE = 1;
-        NewCategory->PARENTID = -1;
-        CategoryID = CategoryModel::instance().save(NewCategory);
+    const CategoryData* category_n = CategoryModel::instance().get_key(WebAppTrans.Category, int64(-1));
+    if (category_n != nullptr)
+        categoryID = category_n->CATEGID;
+    else {
+        CategoryData new_category_d = CategoryData();
+        new_category_d.CATEGNAME = WebAppTrans.Category;
+        new_category_d.ACTIVE   = 1;
+        new_category_d.PARENTID = -1;
+        CategoryModel::instance().add_data_n(new_category_d);
+        categoryID = new_category_d.id();
     }
 
-    //Search or insert SubCategory
-    if (!WebAppTrans.SubCategory.IsEmpty())
-    {
-        const CategoryModel::Data* SubCategory = CategoryModel::instance().get_key(WebAppTrans.SubCategory, CategoryID);
-        if (SubCategory != nullptr)
-            CategoryID = SubCategory->CATEGID;
-        else if (CategoryID != -1)
-        {
-            CategoryModel::Data* NewSubCategory = CategoryModel::instance().create();
-            NewSubCategory->PARENTID = CategoryID;
-            NewSubCategory->CATEGNAME = WebAppTrans.SubCategory;
-            NewSubCategory->ACTIVE = 1;
-            CategoryID = CategoryModel::instance().save(NewSubCategory);
+    // Search or insert SubCategory
+    if (!WebAppTrans.SubCategory.IsEmpty()) {
+        const CategoryData* subcategory_n = CategoryModel::instance().get_key(WebAppTrans.SubCategory, categoryID);
+        if (subcategory_n) {
+            categoryID = subcategory_n->CATEGID;
+        }
+        else if (categoryID != -1) {
+            CategoryData new_subcategory_d = CategoryData();
+            new_subcategory_d.PARENTID  = categoryID;
+            new_subcategory_d.CATEGNAME = WebAppTrans.SubCategory;
+            new_subcategory_d.ACTIVE    = 1;
+            CategoryModel::instance().add_data_n(new_subcategory_d);
+            categoryID = new_subcategory_d.id();
         }
     }
 
-    //Search or insert Payee
-    const PayeeModel::Data* Payee = PayeeModel::instance().get_key(WebAppTrans.Payee);
-    if (Payee != nullptr)
-    {
-        PayeeID = Payee->PAYEEID;
+    // Search or insert Payee
+    const PayeeData* payee_n = PayeeModel::instance().get_key(WebAppTrans.Payee);
+    if (payee_n) {
+        payeeID = payee_n->PAYEEID;
     }
-    else
-    {
-        PayeeModel::Data* NewPayee = PayeeModel::instance().create();
-        NewPayee->PAYEENAME = WebAppTrans.Payee;
-        NewPayee->ACTIVE = 1;
-        NewPayee->CATEGID = CategoryID;
-        int64 NewPayeeID = PayeeModel::instance().save(NewPayee);
-        PayeeID = NewPayeeID;
+    else {
+        PayeeData new_payee_d = PayeeData();
+        new_payee_d.PAYEENAME = WebAppTrans.Payee;
+        new_payee_d.ACTIVE    = 1;
+        new_payee_d.CATEGID   = categoryID;
+        PayeeModel::instance().add_data_n(new_payee_d);
+        payeeID = new_payee_d.id();
     }
 
-    //Create New Transaction
-    TransactionModel::Data * desktopNewTransaction;
-    desktopNewTransaction = TransactionModel::instance().create();
+    // Create New Transaction
+    TransactionData new_trx_d = TransactionData();
     wxString trxDate = WebAppTrans.Date.FormatISOCombined();
-    if ((trxDate < accountInitialDate) ||
-            (ToAccount && trxDate < ToAccount->INITIALDATE))
-    {
-        wxString msgStr = wxString::Format("%s: %s / %s: %s\n\n%s\n%s"
-                            , _t("Account"), accountName
-                            , _t("Date"), trxDate
-                            , _t("The opening date for the account is later than the date of this transaction")
-                            , _t("Today will be used as the transaction date"));
+    if ((trxDate < accountInitialDate) || (ToAccount && trxDate < ToAccount->INITIALDATE)) {
+        wxString msgStr = wxString::Format("%s: %s / %s: %s\n\n%s\n%s",
+            _t("Account"), accountName,
+            _t("Date"), trxDate,
+            _t("The opening date for the account is later than the date of this transaction"),
+            _t("Today will be used as the transaction date")
+        );
         wxMessageBox(msgStr, _t("Invalid Date"), wxICON_ERROR);
         trxDate = wxDate::Today().FormatISOCombined();
     }
-    desktopNewTransaction->TRANSDATE = trxDate;
-    desktopNewTransaction->STATUS = TrStatus;
-    desktopNewTransaction->TRANSCODE = WebAppTrans.Type;
-    desktopNewTransaction->TRANSAMOUNT = WebAppTrans.Amount;
-    desktopNewTransaction->ACCOUNTID = AccountID;
-    desktopNewTransaction->TOACCOUNTID = ToAccountID;
-    desktopNewTransaction->PAYEEID = PayeeID;
-    desktopNewTransaction->CATEGID = CategoryID;
-    desktopNewTransaction->TRANSACTIONNUMBER = "";
-    desktopNewTransaction->NOTES = WebAppTrans.Notes;
-    desktopNewTransaction->FOLLOWUPID = -1;
-    desktopNewTransaction->TOTRANSAMOUNT = WebAppTrans.Amount;
-    desktopNewTransaction->COLOR = -1;
-    DeskNewTrID = TransactionModel::instance().save_trx(desktopNewTransaction);
+    new_trx_d.TRANSDATE         = trxDate;
+    new_trx_d.STATUS            = TrStatus;
+    new_trx_d.TRANSCODE         = WebAppTrans.Type;
+    new_trx_d.TRANSAMOUNT       = WebAppTrans.Amount;
+    new_trx_d.ACCOUNTID         = AccountID;
+    new_trx_d.TOACCOUNTID       = ToAccountID;
+    new_trx_d.PAYEEID           = payeeID;
+    new_trx_d.CATEGID           = categoryID;
+    new_trx_d.TRANSACTIONNUMBER = "";
+    new_trx_d.NOTES             = WebAppTrans.Notes;
+    new_trx_d.FOLLOWUPID        = -1;
+    new_trx_d.TOTRANSAMOUNT     = WebAppTrans.Amount;
+    new_trx_d.COLOR             = -1;
+    TransactionModel::instance().add_data_n(new_trx_d);
+    DeskNewTrID = new_trx_d.id();
 
     if (DeskNewTrID > 0)
     {
@@ -592,7 +583,7 @@ int64 mmWebApp::MMEX_InsertNewTransaction(webtran_holder& WebAppTrans)
             const wxString AttachmentsFolder = mmex::getPathAttachment(mmAttachmentManage::InfotablePathSetting());
             if (AttachmentsFolder == wxEmptyString || !wxDirExists(AttachmentsFolder))
             {
-                TransactionModel::instance().remove(DeskNewTrID);
+                TransactionModel::instance().remove_depen(DeskNewTrID);
                 DeskNewTrID = -1;
 
                 wxString msgStr = wxString() << _t("Unable to download attachments from the WebApp.") << "\n"
@@ -615,18 +606,16 @@ int64 mmWebApp::MMEX_InsertNewTransaction(webtran_holder& WebAppTrans)
                     WebAppAttachmentName = AttachmentsArray.Item(i);
                     wxString CurlError = "";
                     DesktopAttachmentName = WebApp_DownloadOneAttachment(WebAppAttachmentName, DeskNewTrID, AttachmentNr, CurlError);
-                    if (DesktopAttachmentName != wxEmptyString)
-                    {
-                        AttachmentModel::Data* NewAttachment = AttachmentModel::instance().create();
-                        NewAttachment->REFTYPE = TransactionModel::refTypeName;
-                        NewAttachment->REFID = DeskNewTrID;
-                        NewAttachment->DESCRIPTION = _t("Attachment") + "_" << AttachmentNr;
-                        NewAttachment->FILENAME = DesktopAttachmentName;
-                        AttachmentModel::instance().save(NewAttachment);
+                    if (DesktopAttachmentName != wxEmptyString) {
+                        AttachmentData new_att_d = AttachmentData();
+                        new_att_d.REFTYPE     = TransactionModel::refTypeName;
+                        new_att_d.REFID       = DeskNewTrID;
+                        new_att_d.DESCRIPTION = _t("Attachment") + "_" << AttachmentNr;
+                        new_att_d.FILENAME    = DesktopAttachmentName;
+                        AttachmentModel::instance().add_data_n(new_att_d);
                     }
-                    else
-                    {
-                        TransactionModel::instance().remove(DeskNewTrID);
+                    else {
+                        TransactionModel::instance().remove_depen(DeskNewTrID);
                         DeskNewTrID = -1;
 
                         wxString msgStr = wxString() << _t("Unable to download attachments from the WebApp.") << "\n"

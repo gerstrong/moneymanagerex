@@ -65,7 +65,7 @@ private:
     wxStaticBox* m_static_box =nullptr;
     const wxString m_ref_type;
     int64 m_ref_id = -1;
-    FieldModel::Data_Set m_fields;
+    FieldModel::DataA m_fields;
     std::map<wxWindowID, wxString> m_data_changed;
     void OnStringChanged(wxCommandEvent& event);
     void OnDateChanged(wxDateEvent& event);

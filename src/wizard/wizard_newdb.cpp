@@ -152,13 +152,11 @@ bool mmNewDatabaseWizardPage::TransferDataFromWindow()
 
 void mmNewDatabaseWizardPage::OnCurrency(wxCommandEvent& /*event*/)
 {
-    while (true)
-    {
+    while (true) {
         currencyID_ = PreferencesModel::instance().getBaseCurrencyID();
         CurrencyChoiceDialog::Execute(this, currencyID_);
-        CurrencyModel::Data* currency = CurrencyModel::instance().get_id(currencyID_);
-        if (currency)
-        {
+        const CurrencyData* currency = CurrencyModel::instance().get_data_n(currencyID_);
+        if (currency) {
             itemButtonCurrency_->SetLabelText(wxGetTranslation(currency->CURRENCYNAME));
             currencyID_ = currency->CURRENCYID;
             PreferencesModel::instance().setBaseCurrencyID(currencyID_);

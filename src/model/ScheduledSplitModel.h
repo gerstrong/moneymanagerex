@@ -19,10 +19,13 @@
 #pragma once
 
 #include "base/defs.h"
-#include "_ModelBase.h"
-#include "table/ScheduledSplitTable.h"
 
-class ScheduledSplitModel : public Model<ScheduledSplitTable>
+#include "table/ScheduledSplitTable.h"
+#include "data/ScheduledSplitData.h"
+
+#include "_ModelBase.h"
+
+class ScheduledSplitModel : public Model<ScheduledSplitTable, ScheduledSplitData>
 {
 public:
     ScheduledSplitModel();
@@ -43,13 +46,11 @@ public:
     */
     static ScheduledSplitModel& instance();
 
-    using Model<ScheduledSplitTable>::remove;
-
 public:
-    double get_total(const Data_Set& rows);
-    std::map<int64, Data_Set> get_all_id();
-    int update(Data_Set& rows, int64 transactionID);
-    bool remove(int64 id);
+    double get_total(const DataA& rows);
+    std::map<int64, DataA> get_all_id();
+    int update(DataA& rows, int64 transactionID);
+    bool remove_depen(int64 id) override;
 
 public:
     static const wxString refTypeName;

@@ -93,7 +93,7 @@ void MergeTagDialog::CreateControls()
         , wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL);
 
     choices_.Clear();
-    for (const auto& tag : TagModel::instance().get_all())
+    for (const auto& tag : TagModel::instance().find_all())
         choices_.Add(tag.TAGNAME);
     cbSourceTag_ = new wxComboBox(this, wxID_REPLACE, "", wxDefaultPosition, wxDefaultSize, choices_);
     cbSourceTag_->SetMinSize(wxSize(200, -1));
@@ -162,50 +162,52 @@ void MergeTagDialog::OnOk(wxCommandEvent& WXUNUSED(event))
         , _t("Merge tags confirmation")
         , wxOK | wxCANCEL | wxICON_INFORMATION);
 
-    if (ans == wxOK)
-    {
-        TagLinkModel::instance().Savepoint();
-        TagLinkModel::Data_Set taglinks = TagLinkModel::instance().find(TagLinkModel::TAGID(sourceTagID_));
-        for (auto &entry : taglinks) {
-            entry.TAGID = destTagID_;
-        }
-        m_changed_records += TagLinkModel::instance().save(taglinks);
-        TagLinkModel::instance().ReleaseSavepoint();
+    if (ans != wxOK)
+        return;
 
-        if (cbDeleteSourceTag_->IsChecked())
-        {
-            TagModel::instance().remove(sourceTagID_);
-            choices_.Remove(source_tag_name);
-            cbSourceTag_->Set(choices_);
-            cbDestTag_->Set(choices_);
-        }
-
-        IsOkOk();
+    TagLinkModel::instance().Savepoint();
+    TagLinkModel::DataA gl_a = TagLinkModel::instance().find(
+        TagLinkCol::TAGID(sourceTagID_)
+    );
+    for (auto &gl_d : gl_a) {
+        gl_d.TAGID = destTagID_;
     }
+    TagLinkModel::instance().save_data_a(gl_a);
+    m_changed_records += gl_a.size();
+    TagLinkModel::instance().ReleaseSavepoint();
+
+    if (cbDeleteSourceTag_->IsChecked()) {
+        TagModel::instance().remove_depen(sourceTagID_);
+        choices_.Remove(source_tag_name);
+        cbSourceTag_->Set(choices_);
+        cbDestTag_->Set(choices_);
+    }
+
+    IsOkOk();
 }
 
 void MergeTagDialog::IsOkOk()
 {
     bool e = true;
-    TagModel::Data* source = TagModel::instance().get_key(cbSourceTag_->GetValue());
-    TagModel::Data* dest = TagModel::instance().get_key(cbDestTag_->GetValue());
+    const TagData* source = TagModel::instance().get_key(cbSourceTag_->GetValue());
+    const TagData* dest = TagModel::instance().get_key(cbDestTag_->GetValue());
     if (dest) destTagID_ = dest->TAGID;
     if (source) sourceTagID_ = source->TAGID;
     int trxs_size = (sourceTagID_ < 0) ? 0 : TagLinkModel::instance().find(
-        TagLinkModel::REFTYPE(TransactionModel::refTypeName),
-        TagLinkModel::TAGID(sourceTagID_)
+        TagLinkCol::REFTYPE(TransactionModel::refTypeName),
+        TagLinkCol::TAGID(sourceTagID_)
     ).size();
     int split_size = (sourceTagID_ < 0) ? 0 : TagLinkModel::instance().find(
-        TagLinkModel::REFTYPE(TransactionSplitModel::refTypeName),
-        TagLinkModel::TAGID(sourceTagID_)
+        TagLinkCol::REFTYPE(TransactionSplitModel::refTypeName),
+        TagLinkCol::TAGID(sourceTagID_)
     ).size();
     int bills_size = (sourceTagID_ < 0) ? 0 : TagLinkModel::instance().find(
-        TagLinkModel::REFTYPE(ScheduledModel::refTypeName),
-        TagLinkModel::TAGID(sourceTagID_)
+        TagLinkCol::REFTYPE(ScheduledModel::refTypeName),
+        TagLinkCol::TAGID(sourceTagID_)
     ).size();
     int bill_split_size = (sourceTagID_ < 0) ? 0 : TagLinkModel::instance().find(
-        TagLinkModel::REFTYPE(ScheduledSplitModel::refTypeName),
-        TagLinkModel::TAGID(sourceTagID_)
+        TagLinkCol::REFTYPE(ScheduledSplitModel::refTypeName),
+        TagLinkCol::TAGID(sourceTagID_)
     ).size();
 
     if (destTagID_ < 0 || sourceTagID_ < 0

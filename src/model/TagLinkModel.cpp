@@ -21,8 +21,8 @@
 #include "TransactionModel.h"
 #include "TagModel.h"
 
-TagLinkModel::TagLinkModel()
-: Model<TagLinkTable>()
+TagLinkModel::TagLinkModel() :
+    Model<TagLinkTable, TagLinkData>()
 {
 }
 
@@ -36,10 +36,10 @@ TagLinkModel::~TagLinkModel()
 TagLinkModel& TagLinkModel::instance(wxSQLite3Database* db)
 {
     TagLinkModel& ins = Singleton<TagLinkModel>::instance();
+    ins.reset_cache();
     ins.m_db = db;
-    ins.destroy_cache();
     ins.ensure_table();
-    ins.preload();
+    ins.preload_cache();
 
     return ins;
 }
@@ -50,23 +50,29 @@ TagLinkModel& TagLinkModel::instance()
     return Singleton<TagLinkModel>::instance();
 }
 
-TagLinkModel::Data* TagLinkModel::get_key(const wxString& refType, int64 refId, int64 tagId)
+const TagLinkData* TagLinkModel::get_key(const wxString& refType, int64 refId, int64 tagId)
 {
-    Data* link = this->search_cache(REFTYPE(refType), REFID(refId), TAGID(tagId));
-    if (link)
-        return link;
+    const Data* gl_n = search_cache_n(
+        TagLinkCol::REFTYPE(refType), TagLinkCol::REFID(refId), TagLinkCol::TAGID(tagId)
+    );
+    if (gl_n)
+        return gl_n;
 
-    Data_Set items = this->find(REFTYPE(refType), REFID(refId), TAGID(tagId));
+    DataA items = this->find(
+        TagLinkCol::REFTYPE(refType), TagLinkCol::REFID(refId), TagLinkCol::TAGID(tagId)
+    );
     if (!items.empty())
-        link = this->get_id(items[0].TAGLINKID);
-    return link;
+        gl_n = get_data_n(items[0].TAGLINKID);
+    return gl_n;
 }
 
-std::map<wxString, int64> TagLinkModel::cache_ref(const wxString& refType, int64 refId)
+std::map<wxString, int64> TagLinkModel::get_ref(const wxString& refType, int64 refId)
 {
     std::map<wxString, int64> tags;
-    for (const auto& link : instance().find(REFTYPE(refType), REFID(refId)))
-        tags[TagModel::instance().get_id(link.TAGID)->TAGNAME] = link.TAGID;
+    for (const auto& gl_d : instance().find(
+        TagLinkCol::REFTYPE(refType), TagLinkCol::REFID(refId)
+    ))
+        tags[TagModel::instance().get_data_n(gl_d.TAGID)->TAGNAME] = gl_d.TAGID;
 
     return tags;
 }
@@ -74,32 +80,33 @@ std::map<wxString, int64> TagLinkModel::cache_ref(const wxString& refType, int64
 /* Delete all tags for a REFTYPE + REFID */
 void TagLinkModel::DeleteAllTags(const wxString& refType, int64 refID)
 {
-    const auto& links = instance().find(REFTYPE(refType), REFID(refID));
+    const auto& links = instance().find(
+        TagLinkCol::REFTYPE(refType), TagLinkCol::REFID(refID)
+    );
     instance().Savepoint();
     for (const auto& link : links)
-        instance().remove(link.TAGLINKID);
+        instance().remove_depen(link.TAGLINKID);
     instance().ReleaseSavepoint();
 }
 
-int TagLinkModel::update(const Data_Set& rows, const wxString& refType, int64 refId)
+int TagLinkModel::update(const DataA& rows, const wxString& refType, int64 refId)
 {
     TagLinkModel::instance().Savepoint();
     bool updateTimestamp = false;
     std::map<int, int64> row_id_map;
 
-    Data_Set links = instance().find(REFTYPE(refType), REFID(refId));
-    if (links.size() != rows.size()) updateTimestamp = true;
+    DataA links = instance().find(
+        TagLinkCol::REFTYPE(refType), TagLinkCol::REFID(refId)
+    );
+    if (links.size() != rows.size())
+        updateTimestamp = true;
 
-    for (const auto& link : links)
-    {
-        if (!updateTimestamp)
-        {
+    for (const auto& link : links) {
+        if (!updateTimestamp) {
             bool match = false;
-            for (decltype(rows.size()) i = 0; i < rows.size(); i++)
-            {
+            for (decltype(rows.size()) i = 0; i < rows.size(); i++) {
                 match = (rows[i].TAGID == link.TAGID && row_id_map.find(i) == row_id_map.end());
-                if (match)
-                {
+                if (match) {
                     row_id_map[i] = link.TAGLINKID;
                     break;
                 }
@@ -107,27 +114,24 @@ int TagLinkModel::update(const Data_Set& rows, const wxString& refType, int64 re
             updateTimestamp = updateTimestamp || !match;
         }
 
-        instance().remove(link.TAGLINKID);
+        instance().remove_depen(link.TAGLINKID);
     }
 
-    if (!rows.empty())
-    {
-        for (const auto& item : rows)
-        {
-            Data* taglink = instance().create();
-            taglink->REFID = refId;
-            taglink->REFTYPE = refType;
-            taglink->TAGID = item.TAGID;
-            instance().save(taglink);
-        }
+    for (const auto& item : rows) {
+        Data new_gl_d = Data();
+        new_gl_d.REFTYPE = refType;
+        new_gl_d.REFID   = refId;
+        new_gl_d.TAGID   = item.TAGID;
+        instance().add_data_n(new_gl_d);
     }
 
-    if (updateTimestamp)
-    {
+    if (updateTimestamp) {
         if (refType == TransactionModel::refTypeName)
             TransactionModel::instance().updateTimestamp(refId);
         else if (refType == TransactionSplitModel::refTypeName)
-            TransactionModel::instance().updateTimestamp(TransactionSplitModel::instance().get_id(refId)->TRANSID);
+            TransactionModel::instance().updateTimestamp(
+                TransactionSplitModel::instance().get_data_n(refId)->TRANSID
+            );
     }
 
     TagLinkModel::instance().ReleaseSavepoint();
@@ -135,11 +139,11 @@ int TagLinkModel::update(const Data_Set& rows, const wxString& refType, int64 re
     return rows.size();
 }
 
-std::map<int64, TagLinkModel::Data_Set> TagLinkModel::get_all_id(const wxString& refType)
+std::map<int64, TagLinkModel::DataA> TagLinkModel::get_all_id(const wxString& refType)
 {
-    Data_Set taglinks = instance().find(REFTYPE(refType));
+    DataA taglinks = instance().find(TagLinkCol::REFTYPE(refType));
 
-    std::map<int64, Data_Set> data;
+    std::map<int64, DataA> data;
     for (const auto& taglink : taglinks) {
         data[taglink.REFID].push_back(taglink);
     }

@@ -45,23 +45,23 @@ class ScheduledDialog : public wxDialog
 
 public:
     ScheduledDialog();
-    ~ScheduledDialog();
     ScheduledDialog(wxWindow* parent, int64 bdD, bool duplicate, bool enterOccur);
-    int64 GetTransID()
-    {
-        return m_trans_id;
-    }
+    ~ScheduledDialog();
 
+    int64 GetTransID() { return m_trans_id; }
     void SetDialogHeader(const wxString& header);
     void SetDialogParameters(int64 trx_id);
 
 private:
-    bool Create(wxWindow* parent, wxWindowID id = wxID_ANY,
+    bool Create(
+        wxWindow* parent,
+        wxWindowID id = wxID_ANY,
         const wxString& caption = _t("New Scheduled Transaction"),
         const wxPoint& pos = wxDefaultPosition,
         const wxSize& size = wxDefaultSize,
         long style = wxCAPTION | wxSYSTEM_MENU | wxCLOSE_BOX,
-        const wxString& name = "Scheduled Transaction Dialog");
+        const wxString& name = "Scheduled Transaction Dialog"
+    );
 
     void CreateControls();
 
@@ -74,7 +74,7 @@ private:
     void OnTypeChanged(wxCommandEvent& event);
     void OnAttachments(wxCommandEvent& event);
     void OnComboKey(wxKeyEvent& event);
-private:
+
     void dataToControls();
     void updateControlsForTransType();
     void OnAccountUpdated(wxCommandEvent& event);
@@ -83,58 +83,58 @@ private:
     void OnFocusChange(wxChildFocusEvent& event);
     void SetAmountCurrencies(int64 accountID, int64 toAccountID);
     void OnCalculator(wxCommandEvent& event);
-    int64 m_trans_id;
 
+private:
+    ScheduledModel::Bill_Data m_sched_d;
+    int64 m_trans_id;
+    bool m_transfer = false;
     bool m_new_bill = false;
     bool m_dup_bill = false;
     bool m_enter_occur = false;
     bool autoExecuteUserAck_ = false;
     bool autoExecuteSilent_ = false;
     bool m_advanced = false;
-private:
-    wxBitmapButton* bCalc_ = nullptr;
-    mmCalculatorPopup* calcPopup_ = nullptr;
-    wxTextCtrl* textNumber_ = nullptr;
-    mmTextCtrl* textAmount_ = nullptr;
-    mmTextCtrl* toTextAmount_ = nullptr;
-    mmTextCtrl* calcTarget_ = nullptr;
-    wxTextCtrl* textNotes_ = nullptr;
-    //wxTextCtrl* textCategory_ = nullptr;
-    wxTextCtrl* textNumRepeats_ = nullptr;
-    mmComboBoxCategory* cbCategory_ = nullptr;
-    wxBitmapButton* bSplit_ = nullptr;
-    mmComboBoxPayee* cbPayee_ = nullptr;
-    mmComboBoxAccount* cbAccount_ = nullptr;
-    mmComboBoxAccount* cbToAccount_ = nullptr;
-    wxBitmapButton* bAttachments_ = nullptr;
-    wxButton* m_button_cancel = nullptr;
-    mmColorButton* bColours_ = nullptr;
-    wxCheckBox* cAdvanced_ = nullptr;
-    wxChoice* m_choice_status = nullptr;
-    wxChoice* m_choice_transaction_type = nullptr;
-    mmDatePickerCtrl* m_date_paid = nullptr; // Stored in ::TRANSDATE
-    mmDatePickerCtrl* m_date_due = nullptr;  // Stored in ::NEXTOCCURRENCEDATE
-    wxChoice* m_choice_repeat = nullptr;
-    wxCheckBox* itemCheckBoxAutoExeUserAck_ = nullptr;
-    wxCheckBox* itemCheckBoxAutoExeSilent_ = nullptr;
-    wxStaticText* staticTimesRepeat_ = nullptr;
-    wxStaticText* staticTextRepeats_ = nullptr;
-    wxBitmapButton* m_btn_due_prev_date = nullptr;
-    wxBitmapButton* m_btn_due_date = nullptr;
-    mmTagTextCtrl* tagTextCtrl_ = nullptr;
-
-    bool m_transfer = false;
     int object_in_focus_ = wxID_ANY;
     wxSize min_size_;
-    ScheduledModel::Bill_Data m_bill_data;
-
     std::vector<wxString> frequentNotes_;
 
     const wxString payeeWithdrawalTip_ = _t("Specify where the transaction is going to");
-    const wxString payeeDepositTip_ = _t("Specify where the transaction is coming from");
-    const wxString payeeTransferTip_ = _t("Specify which account the transfer is going to");
-    const wxString amountNormalTip_ = _t("Specify the amount for this transaction");
-    const wxString amountTransferTip_ = _t("Specify the amount to be transferred");
+    const wxString payeeDepositTip_    = _t("Specify where the transaction is coming from");
+    const wxString payeeTransferTip_   = _t("Specify which account the transfer is going to");
+    const wxString amountNormalTip_    = _t("Specify the amount for this transaction");
+    const wxString amountTransferTip_  = _t("Specify the amount to be transferred");
+
+    wxBitmapButton*     bCalc_                      = nullptr;
+    mmCalculatorPopup*  calcPopup_                  = nullptr;
+    wxTextCtrl*         textNumber_                 = nullptr;
+    mmTextCtrl*         textAmount_                 = nullptr;
+    mmTextCtrl*         toTextAmount_               = nullptr;
+    mmTextCtrl*         calcTarget_                 = nullptr;
+    wxTextCtrl*         textNotes_                  = nullptr;
+    wxTextCtrl*         textNumRepeats_             = nullptr;
+    mmComboBoxCategory* cbCategory_                 = nullptr;
+    wxBitmapButton*     bSplit_                     = nullptr;
+    mmComboBoxPayee*    cbPayee_                    = nullptr;
+    mmComboBoxAccount*  cbAccount_                  = nullptr;
+    mmComboBoxAccount*  cbToAccount_                = nullptr;
+    wxBitmapButton*     bAttachments_               = nullptr;
+    wxButton*           m_button_cancel             = nullptr;
+    mmColorButton*      bColours_                   = nullptr;
+    wxCheckBox*         cAdvanced_                  = nullptr;
+    wxChoice*           m_choice_status             = nullptr;
+    wxChoice*           m_choice_transaction_type   = nullptr;
+    mmDatePickerCtrl*   m_date_paid                 = nullptr; // Stored in TRANSDATE
+    mmDatePickerCtrl*   m_date_due                  = nullptr; // Stored in NEXTOCCURRENCEDATE
+    wxChoice*           m_choice_repeat             = nullptr;
+    wxCheckBox*         itemCheckBoxAutoExeUserAck_ = nullptr;
+    wxCheckBox*         itemCheckBoxAutoExeSilent_  = nullptr;
+    wxStaticText*       staticTimesRepeat_          = nullptr;
+    wxStaticText*       staticTextRepeats_          = nullptr;
+    wxBitmapButton*     m_btn_due_prev_date         = nullptr;
+    wxBitmapButton*     m_btn_due_date              = nullptr;
+    mmTagTextCtrl*      tagTextCtrl_                = nullptr;
+    //wxTextCtrl*       textCategory_               = nullptr;
+
 private:
     void setTooltips();
     void setCategoryLabel();

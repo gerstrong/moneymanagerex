@@ -100,7 +100,7 @@ void TagManager::CreateControls()
     this->SetSizer(boxSizer);
 
     //--------------------------
-    for (const auto& tag : TagModel::instance().get_all(TagCol::COL_ID_TAGNAME))
+    for (const auto& tag : TagModel::instance().find_all(TagCol::COL_ID_TAGNAME))
         tagList_.Add(tag.TAGNAME);
 
     if (!isSelection_)
@@ -218,17 +218,21 @@ void TagManager::OnAdd(wxCommandEvent& WXUNUSED(event))
     if (text.IsEmpty())
         return;
 
-    const auto& tags = TagModel::instance().find(TagModel::TAGNAME(text));
-    if (!tags.empty())
-    {
-        wxMessageBox(_t("A tag with this name already exists"), _t("Tag Manager: Adding Error"), wxOK | wxICON_ERROR);
+    const auto& tags = TagModel::instance().find(TagCol::TAGNAME(text));
+    if (!tags.empty()) {
+        wxMessageBox(
+            _t("A tag with this name already exists"),
+            _t("Tag Manager: Adding Error"),
+            wxOK | wxICON_ERROR
+        );
         return;
     }
 
-    TagModel::Data* tag = TagModel::instance().create();
-    tag->TAGNAME = text;
-    tag->ACTIVE = 1;
-    TagModel::instance().save(tag);
+    TagData new_tag_d = TagData();
+    new_tag_d.TAGNAME = text;
+    new_tag_d.ACTIVE  = 1;
+    TagModel::instance().add_data_n(new_tag_d);
+
     refreshRequested_ = true;
     tagList_.Add(text);
     fillControls();
@@ -253,22 +257,22 @@ void TagManager::OnEdit(wxCommandEvent& WXUNUSED(event))
     if (text.IsEmpty() || old_name == text)
         return;
 
-    TagModel::Data* tag = TagModel::instance().get_key(text);
-    if (tag)
-    {
+    const TagData* tag_n = TagModel::instance().get_key(text);
+    if (tag_n) {
         wxString errMsg = _t("A tag with this name already exists");
         wxMessageBox(errMsg, _t("Tag Manager: Editing Error"), wxOK | wxICON_ERROR);
         return;
     }
 
-    tag = TagModel::instance().get_key(old_name);
-    tag->TAGNAME = text;
-    TagModel::instance().save(tag);
+    tag_n = TagModel::instance().get_key(old_name);
+    TagData tag_d = *tag_n;
+    tag_d.TAGNAME = text;
+    TagModel::instance().save_data_n(tag_d);
+
     tagList_.Remove(old_name);
     tagList_.Add(text);
     int index = selectedTags_.Index(old_name);
-    if (index != wxNOT_FOUND)
-    {
+    if (index != wxNOT_FOUND) {
         selectedTags_.RemoveAt(index);
         selectedTags_.Add(text);
     }
@@ -294,7 +298,7 @@ void TagManager::OnDelete(wxCommandEvent& WXUNUSED(event))
     TransactionSplitModel::instance().Savepoint();
     for (const auto& selection : stringSelections)
     {
-        TagModel::Data* tag = TagModel::instance().get_key(selection);
+        const TagData* tag = TagModel::instance().get_key(selection);
         int tag_used = TagModel::instance().is_used(tag->TAGID);
         if (tag_used == 1)
         {
@@ -308,15 +312,17 @@ void TagManager::OnDelete(wxCommandEvent& WXUNUSED(event))
         
         if (tag_used == 0 || (tag_used == -1 && msgDlg.ShowModal() == wxID_YES))
         {
-            TagLinkModel::Data_Set taglinks = TagLinkModel::instance().find(TagLinkModel::TAGID(tag->TAGID));
+            TagLinkModel::DataA taglinks = TagLinkModel::instance().find(
+                TagLinkCol::TAGID(tag->TAGID)
+            );
             for (const auto& link : taglinks)
                 // Taglinks for deleted transactions are either TRANSACTION or TRANSACTIONSPLIT type.
                 // Remove the transactions which will delete all associated tags.
                 if (link.REFTYPE == TransactionModel::refTypeName)
-                    TransactionModel::instance().remove(link.REFID);
+                    TransactionModel::instance().remove_depen(link.REFID);
                 else if (link.REFTYPE == TransactionSplitModel::refTypeName)
-                    TransactionModel::instance().remove(TransactionSplitModel::instance().get_id(link.REFID)->TRANSID);
-            TagModel::instance().remove(tag->TAGID);
+                    TransactionModel::instance().remove_depen(TransactionSplitModel::instance().get_data_n(link.REFID)->TRANSID);
+            TagModel::instance().remove_depen(tag->TAGID);
             tagList_.Remove(selection);
             int index = selectedTags_.Index(selection);
             if (index != wxNOT_FOUND)
@@ -369,7 +375,7 @@ void TagManager::OnListSelChanged(wxCommandEvent& WXUNUSED(event))
         bool is_used = false;
         for (const auto& selection : stringSelections)
         {
-            TagModel::Data* tag = TagModel::instance().get_key(selection);
+            const TagData* tag = TagModel::instance().get_key(selection);
             is_used |= TagModel::instance().is_used(tag->TAGID) == 1;
         }
         buttonDelete_->Enable(!is_used);

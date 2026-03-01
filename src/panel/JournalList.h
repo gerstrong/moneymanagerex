@@ -122,7 +122,7 @@ private:
     };
 
 private:
-    Journal::Full_Data_Set m_trans;
+    Journal::Full_DataA m_trans;
     long m_topItemIndex = -1; // where to display the list again after refresh
     wxString m_today;
     bool m_firstSort = true;
@@ -204,7 +204,7 @@ private:
     void onSelectAll(wxCommandEvent& WXUNUSED(event));
     void onCopy(wxCommandEvent& WXUNUSED(event));
     void onPaste(wxCommandEvent& WXUNUSED(event));
-    int64 onPaste(TransactionModel::Data* tran);
+    int64 onPaste(const TransactionData* tran);
     void onDuplicateTransaction(wxCommandEvent& event);
     void onEnterScheduled(wxCommandEvent& event);
     void onSkipScheduled(wxCommandEvent& event);

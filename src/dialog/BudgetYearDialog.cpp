@@ -68,7 +68,7 @@ bool BudgetYearDialog::Create(wxWindow* parent, wxWindowID id,
 void BudgetYearDialog::fillControls()
 {
     int index = 0;
-    for (const auto& e: BudgetPeriodModel::instance().get_all(BudgetPeriodCol::COL_ID_BUDGETYEARNAME))
+    for (const auto& e: BudgetPeriodModel::instance().find_all(BudgetPeriodCol::COL_ID_BUDGETYEARNAME))
     {
         const wxString& payeeString = e.BUDGETYEARNAME;
         int64 budgetYearID = e.BUDGETYEARID;
@@ -147,7 +147,7 @@ void BudgetYearDialog::OnDelete(wxCommandEvent& /*event*/)
 {
     wxString budgetYearString = m_listBox->GetStringSelection();
     int64 budgetYearID = BudgetPeriodModel::instance().Get(budgetYearString);
-    BudgetPeriodModel::instance().remove(budgetYearID);
+    BudgetPeriodModel::instance().remove_depen(budgetYearID);
     m_listBox->Clear();
     fillControls();
 }

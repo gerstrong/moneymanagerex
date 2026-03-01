@@ -34,8 +34,8 @@ ChoicesName FieldModel::TYPE_CHOICES = ChoicesName({
     { TYPE_ID_MULTICHOICE,  _n("MultiChoice") }
 });
 
-FieldModel::FieldModel()
-    : Model<FieldTable>()
+FieldModel::FieldModel() :
+    Model<FieldTable, FieldData>()
 {
 }
 
@@ -50,8 +50,8 @@ FieldModel::~FieldModel()
 FieldModel& FieldModel::instance(wxSQLite3Database* db)
 {
     FieldModel& ins = Singleton<FieldModel>::instance();
+    ins.reset_cache();
     ins.m_db = db;
-    ins.destroy_cache();
     ins.ensure_table();
 
     return ins;
@@ -64,11 +64,11 @@ FieldModel& FieldModel::instance()
 }
 
 ///** Return a dataset with fields linked to a specific object */
-//const FieldModel::Data_Set FieldModel::GetFields(AttachmentModel::REFTYPE_ID RefType)
+//const FieldModel::DataA FieldModel::GetFields(ModelBase::REFTYPE_ID RefType)
 //{
-//    Data_Set fields;
+//    DataA fields;
 //    wxString reftype_str = ModelBase::reftype_name(RefType);
-//    for (const auto & field : this->find(FieldTable::REFTYPE(RefType)))
+//    for (const auto & field : this->find(FieldCol::REFTYPE(RefType)))
 //    {
 //        fields.push_back(field);
 //    }
@@ -78,11 +78,11 @@ FieldModel& FieldModel::instance()
 /** Delete a field and all his data */
 bool FieldModel::Delete(const int64& FieldID)
 {
-    this->Savepoint();
-    for (const auto& r : FieldValueModel::instance().find(FieldValueModel::FIELDID(FieldID)))
-        FieldValueModel::instance().remove(r.id());
-    this->ReleaseSavepoint();
-    return this->remove(FieldID);
+    Savepoint();
+    for (const auto& r : FieldValueModel::instance().find(FieldValueCol::FIELDID(FieldID)))
+        FieldValueModel::instance().remove_depen(r.id());
+    ReleaseSavepoint();
+    return remove_data(FieldID);
 }
 
 const wxString FieldModel::getTooltip(const wxString& properties)
@@ -183,7 +183,7 @@ const std::map<wxString, int64> FieldModel::getMatrix(const wxString& reftype)
 int64 FieldModel::getUDFCID(const wxString& ref_type, const wxString& name)
 {
     Document json_doc;
-    const auto& a = FieldModel::instance().find(REFTYPE(ref_type));
+    const auto& a = FieldModel::instance().find(FieldCol::REFTYPE(ref_type));
     for (const auto& item : a)
     {
         if (!json_doc.Parse(item.PROPERTIES.utf8_str()).HasParseError())
@@ -204,7 +204,7 @@ int64 FieldModel::getUDFCID(const wxString& ref_type, const wxString& name)
 const wxString FieldModel::getUDFCName(const wxString& ref_type, const wxString& name)
 {
     Document json_doc;
-    const auto& a = FieldModel::instance().find(REFTYPE(ref_type));
+    const auto& a = FieldModel::instance().find(FieldCol::REFTYPE(ref_type));
     for (const auto& item : a)
     {
         if (!json_doc.Parse(item.PROPERTIES.utf8_str()).HasParseError())
@@ -225,7 +225,7 @@ const wxString FieldModel::getUDFCName(const wxString& ref_type, const wxString&
 FieldModel::TYPE_ID FieldModel::getUDFCType(const wxString& ref_type, const wxString& name)
 {
     Document json_doc;
-    const auto& a = FieldModel::instance().find(REFTYPE(ref_type));
+    const auto& a = FieldModel::instance().find(FieldCol::REFTYPE(ref_type));
     for (const auto& item : a)
     {
         if (!json_doc.Parse(item.PROPERTIES.utf8_str()).HasParseError())
@@ -246,7 +246,7 @@ FieldModel::TYPE_ID FieldModel::getUDFCType(const wxString& ref_type, const wxSt
 const wxString FieldModel::getUDFCProperties(const wxString& ref_type, const wxString& name)
 {
     Document json_doc;
-    const auto& a = FieldModel::instance().find(REFTYPE(ref_type));
+    const auto& a = FieldModel::instance().find(FieldCol::REFTYPE(ref_type));
     for (const auto& item : a)
     {
         if (!json_doc.Parse(item.PROPERTIES.utf8_str()).HasParseError())
@@ -276,20 +276,17 @@ const wxArrayString FieldModel::UDFC_FIELDS()
     return choices;
 }
 
-const wxArrayString FieldModel::getUDFCList(FieldModel::Data* r)
+const wxArrayString FieldModel::getUDFCList(const FieldData* r)
 {
     const wxString& ref_type = TransactionModel::refTypeName;
-    const auto& a = FieldModel::instance().find(FieldModel::FieldTable::REFTYPE(ref_type));
+    const auto& a = FieldModel::instance().find(FieldCol::REFTYPE(ref_type));
 
     wxArrayString choices = UDFC_FIELDS();
 
-    for (const auto& item : a)
-    {
+    for (const auto& item : a) {
         Document json_doc;
-        if (!json_doc.Parse(item.PROPERTIES.utf8_str()).HasParseError())
-        {
-            if (json_doc.HasMember("UDFC") && json_doc["UDFC"].IsString())
-            {
+        if (!json_doc.Parse(item.PROPERTIES.utf8_str()).HasParseError()) {
+            if (json_doc.HasMember("UDFC") && json_doc["UDFC"].IsString()) {
                 Value& s = json_doc["UDFC"];
                 if (choices.Index(s.GetString()) != wxNOT_FOUND) {
                     choices.Remove(s.GetString());
@@ -298,8 +295,7 @@ const wxArrayString FieldModel::getUDFCList(FieldModel::Data* r)
         }
     }
 
-    if (r)
-    {
+    if (r) {
         Document json_doc;
         if (!json_doc.Parse(r->PROPERTIES.utf8_str()).HasParseError())
         {

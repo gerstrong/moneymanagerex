@@ -67,14 +67,14 @@ TransactionUpdateDialog::TransactionUpdateDialog(wxWindow* parent
     m_currency = CurrencyModel::GetBaseCurrency(); // base currency if we need it
 
     // Determine the mix of transaction that have been selected
-    for (const auto& id : m_transaction_id)
-    {
-        TransactionModel::Data *trx = TransactionModel::instance().get_id(id);
+    for (const auto& id : m_transaction_id) {
+        const TransactionData *trx = TransactionModel::instance().get_data_n(id);
         const bool isTransfer = TransactionModel::is_transfer(trx);
 
-        if (!m_hasSplits)
-        {
-            TransactionSplitModel::Data_Set split = TransactionSplitModel::instance().find(TransactionSplitModel::TRANSID(id));
+        if (!m_hasSplits) {
+            TransactionSplitModel::DataA split = TransactionSplitModel::instance().find(
+                TransactionSplitCol::TRANSID(id)
+            );
             if (!split.empty())
                 m_hasSplits = true;
         }
@@ -318,9 +318,10 @@ void TransactionUpdateDialog::OnOk(wxCommandEvent& WXUNUSED(event))
         return;
 
     wxString status = "";
-    if (m_status_checkbox->IsChecked())
-    {
-        wxStringClientData* status_obj = static_cast<wxStringClientData*>(m_status_choice->GetClientObject(m_status_choice->GetSelection()));
+    if (m_status_checkbox->IsChecked()) {
+        wxStringClientData* status_obj = static_cast<wxStringClientData*>(
+            m_status_choice->GetClientObject(m_status_choice->GetSelection())
+        );
         if (status_obj)
             status = TransactionModel::status_key(status_obj->GetData());
         else
@@ -328,12 +329,12 @@ void TransactionUpdateDialog::OnOk(wxCommandEvent& WXUNUSED(event))
     }
 
     wxString type = "";
-    if (m_type_checkbox->IsChecked())
-    {
-        wxStringClientData* type_obj = static_cast<wxStringClientData*>(m_type_choice->GetClientObject(m_type_choice->GetSelection()));
+    if (m_type_checkbox->IsChecked()) {
+        wxStringClientData* type_obj = static_cast<wxStringClientData*>(
+            m_type_choice->GetClientObject(m_type_choice->GetSelection())
+        );
         type = type_obj->GetData();
-        if (TransactionModel::TYPE_NAME_TRANSFER == type)
-        {
+        if (TransactionModel::TYPE_NAME_TRANSFER == type) {
             if  (m_hasNonTransfers && !m_transferAcc_checkbox->IsChecked())
                 return mmErrorDialogs::InvalidAccount(m_transferAcc_checkbox, true);
         } else {
@@ -343,8 +344,7 @@ void TransactionUpdateDialog::OnOk(wxCommandEvent& WXUNUSED(event))
     }
 
     int64 payee_id = -1;
-    if (m_payee_checkbox->IsChecked())
-    {
+    if (m_payee_checkbox->IsChecked()) {
         wxString payee_name = cbPayee_->GetValue();
         if (payee_name.IsEmpty())
             return mmErrorDialogs::InvalidPayee(cbPayee_);
@@ -354,14 +354,13 @@ void TransactionUpdateDialog::OnOk(wxCommandEvent& WXUNUSED(event))
                 , wxString::Format(_t("Payee name has not been used before. Is the name correct?\n%s"), cbPayee_->GetValue())
                 , _t("Confirm payee name")
                 , wxYES_NO | wxYES_DEFAULT | wxICON_WARNING);
-            if (msgDlg.ShowModal() == wxID_YES)
-            {
-                PayeeModel::Data* payee = PayeeModel::instance().create();
-                payee->PAYEENAME = cbPayee_->GetValue();
-                payee->ACTIVE = 1;
-                PayeeModel::instance().save(payee);
+            if (msgDlg.ShowModal() == wxID_YES) {
+                PayeeData new_payee_d = PayeeData();
+                new_payee_d.PAYEENAME = cbPayee_->GetValue();
+                new_payee_d.ACTIVE    = 1;
+                PayeeModel::instance().add_data_n(new_payee_d);
                 mmWebApp::MMEX_WebApp_UpdatePayee();
-                payee_id = payee->PAYEEID;
+                payee_id = new_payee_d.PAYEEID;
             }
             else
                 return;
@@ -373,14 +372,12 @@ void TransactionUpdateDialog::OnOk(wxCommandEvent& WXUNUSED(event))
     if (tag_checkbox_->IsChecked() && !tagTextCtrl_->IsValid())
         return  mmErrorDialogs::ToolTip4Object(tagTextCtrl_, _t("Invalid value"), _t("Tags"), wxICON_ERROR);
 
-    if (m_transferAcc_checkbox->IsChecked())
-    {
+    if (m_transferAcc_checkbox->IsChecked()) {
         if (!cbAccount_->mmIsValid())
             return mmErrorDialogs::InvalidAccount(cbAccount_);
     }
 
-    if (m_categ_checkbox->IsChecked())
-    {
+    if (m_categ_checkbox->IsChecked()) {
         if (!cbCategory_->mmIsValid())
             return mmErrorDialogs::InvalidCategory(cbCategory_);
     }
@@ -391,55 +388,51 @@ void TransactionUpdateDialog::OnOk(wxCommandEvent& WXUNUSED(event))
     std::vector<int64> skip_trx;
     TransactionModel::instance().Savepoint();
     TagLinkModel::instance().Savepoint();
-    for (const auto& id : m_transaction_id)
-    {
-        TransactionModel::Data *trx = TransactionModel::instance().get_id(id);
-        bool is_locked = TransactionModel::is_locked(trx);
+    for (const auto& id : m_transaction_id) {
+        TransactionData* trx_n = TransactionModel::instance().unsafe_get_data_n(id);
+        bool is_locked = TransactionModel::is_locked(trx_n);
 
         if (is_locked) {
-            skip_trx.push_back(trx->TRANSID);
+            skip_trx.push_back(trx_n->TRANSID);
             continue;
         }
 
         if (m_status_checkbox->IsChecked()) {
-            trx->STATUS = status;
+            trx_n->STATUS = status;
         }
 
         if (m_payee_checkbox->IsChecked()) {
-            trx->PAYEEID = payee_id;
-            trx->TOACCOUNTID = -1;
+            trx_n->PAYEEID = payee_id;
+            trx_n->TOACCOUNTID = -1;
         }
 
         if (m_transferAcc_checkbox->IsChecked()) {
-            trx->TOACCOUNTID = cbAccount_->mmGetId();
-            trx->PAYEEID = -1;
+            trx_n->TOACCOUNTID = cbAccount_->mmGetId();
+            trx_n->PAYEEID = -1;
         }
 
-        if (m_date_checkbox->IsChecked() || (m_time_ctrl && m_time_checkbox->IsChecked()))
-        {
-            wxString date = trx->TRANSDATE;
-            if (m_date_checkbox->IsChecked())
-            {
+        if (m_date_checkbox->IsChecked() || (m_time_ctrl && m_time_checkbox->IsChecked())) {
+            wxString date = trx_n->TRANSDATE;
+            if (m_date_checkbox->IsChecked()) {
                 date.replace(0, 10, m_dpc->GetValue().FormatISODate());
-                const AccountModel::Data* account = AccountModel::instance().get_id(trx->ACCOUNTID);
-                const AccountModel::Data* to_account = AccountModel::instance().get_id(trx->TOACCOUNTID);
+                const AccountData* account = AccountModel::instance().get_data_n(trx_n->ACCOUNTID);
+                const AccountData* to_account = AccountModel::instance().get_data_n(trx_n->TOACCOUNTID);
                 if ((date < account->INITIALDATE) ||
                     (to_account && (date < to_account->INITIALDATE)))
                 {
-                    skip_trx.push_back(trx->TRANSID);
+                    skip_trx.push_back(trx_n->TRANSID);
                     continue;
                 }
             }
 
-            if (m_time_ctrl && m_time_checkbox->IsChecked())
-            {
+            if (m_time_ctrl && m_time_checkbox->IsChecked()) {
                 if (date.Length() > 10)
                     date.replace(11, 8, m_time_ctrl->GetValue().FormatISOTime());
                 else
                     date.Append("T" + m_time_ctrl->GetValue().FormatISOTime());
             }
 
-            trx->TRANSDATE = date;
+            trx_n->TRANSDATE = date;
         }
 
         if (m_color_checkbox->IsChecked()) {
@@ -447,29 +440,32 @@ void TransactionUpdateDialog::OnOk(wxCommandEvent& WXUNUSED(event))
             if (color_id < 0 || color_id > 7) {
                 return mmErrorDialogs::ToolTip4Object(bColours_, _t("Color"), _t("Invalid value"), wxICON_ERROR);
             }
-            trx->COLOR = color_id == 0 ? -1 : color_id ; 
+            trx_n->COLOR = color_id == 0 ? -1 : color_id ; 
         }
 
         if (m_notes_checkbox->IsChecked()) {
             if (m_append_checkbox->IsChecked()) {
-                trx->NOTES += (trx->NOTES.Right(1) == "\n" || trx->NOTES.empty()
+                trx_n->NOTES += (trx_n->NOTES.Right(1) == "\n" || trx_n->NOTES.empty()
                     ? "" : "\n")
                     + m_notes_ctrl->GetValue();
             }
             else {
-                trx->NOTES = m_notes_ctrl->GetValue();
+                trx_n->NOTES = m_notes_ctrl->GetValue();
             }
         }
 
         // Update tags
         if (tag_checkbox_->IsChecked()) {
-            TagLinkModel::Data_Set taglinks;
+            TagLinkModel::DataA taglinks;
             const wxString& refType = TransactionModel::refTypeName;
             wxArrayInt64 tagIds = tagTextCtrl_->GetTagIDs();
 
             if (tag_append_checkbox_->IsChecked()) {
                 // Since we are appending, start with the existing tags
-                taglinks = TagLinkModel::instance().find(TagLinkModel::REFTYPE(refType), TagLinkModel::REFID(trx->TRANSID));
+                taglinks = TagLinkModel::instance().find(
+                    TagLinkCol::REFTYPE(refType),
+                    TagLinkCol::REFID(trx_n->TRANSID)
+                );
                 // Remove existing tags from the new list to avoid duplicates
                 for (const auto& link : taglinks)
                 {
@@ -479,67 +475,61 @@ void TransactionUpdateDialog::OnOk(wxCommandEvent& WXUNUSED(event))
                 }
             }
             // Create new taglinks for each tag ID
-            for (const auto& tagId : tagIds)
-            {
-                TagLinkModel::Data* t = TagLinkModel::instance().create();
-                t->REFTYPE = refType;
-                t->REFID = trx->TRANSID;
-                t->TAGID = tagId;
-                taglinks.push_back(*t);
+            for (const auto& tagId : tagIds) {
+                TagLinkData new_gl_d = TagLinkData();
+                new_gl_d.REFTYPE = refType;
+                new_gl_d.REFID   = trx_n->TRANSID;
+                new_gl_d.TAGID   = tagId;
+                taglinks.push_back(new_gl_d);
             }
             // Update the links for the transaction
-            TagLinkModel::instance().update(taglinks, refType, trx->TRANSID);
+            TagLinkModel::instance().update(taglinks, refType, trx_n->TRANSID);
         }
 
         if (m_amount_checkbox->IsChecked()) {
-            trx->TRANSAMOUNT = amount;
+            trx_n->TRANSAMOUNT = amount;
         }
 
         if (m_categ_checkbox->IsChecked()) {
-            trx->CATEGID = categ_id;
+            trx_n->CATEGID = categ_id;
         }
 
         if (m_type_checkbox->IsChecked()) {
-            trx->TRANSCODE = type;
+            trx_n->TRANSCODE = type;
         }
 
         // Need to consider TOTRANSAMOUNT if material transaction change
-        if (m_amount_checkbox->IsChecked() || m_type_checkbox->IsChecked() || m_transferAcc_checkbox->IsChecked())
-        {
-            if (!TransactionModel::is_transfer(trx))
-            {
-                trx->TOTRANSAMOUNT = trx->TRANSAMOUNT;
-            } else
-            {
-                const auto acc = AccountModel::instance().get_id(trx->ACCOUNTID);
-                const auto curr = CurrencyModel::instance().get_id(acc->CURRENCYID);
-                const auto to_acc = AccountModel::instance().get_id(trx->TOACCOUNTID);
-                const auto to_curr = CurrencyModel::instance().get_id(to_acc->CURRENCYID);
-                if (curr == to_curr)
-                {
-                    trx->TOTRANSAMOUNT = trx->TRANSAMOUNT;
-                } else
-                {
+        if (m_amount_checkbox->IsChecked() || m_type_checkbox->IsChecked() || m_transferAcc_checkbox->IsChecked()) {
+            if (!TransactionModel::is_transfer(trx_n)) {
+                trx_n->TOTRANSAMOUNT = trx_n->TRANSAMOUNT;
+            }
+            else {
+                const auto acc = AccountModel::instance().get_data_n(trx_n->ACCOUNTID);
+                const auto curr = CurrencyModel::instance().get_data_n(acc->CURRENCYID);
+                const auto to_acc = AccountModel::instance().get_data_n(trx_n->TOACCOUNTID);
+                const auto to_curr = CurrencyModel::instance().get_data_n(to_acc->CURRENCYID);
+                if (curr == to_curr) {
+                    trx_n->TOTRANSAMOUNT = trx_n->TRANSAMOUNT;
+                }
+                else {
                     double exch = 1;
-                    const double convRateTo = CurrencyHistoryModel::getDayRate(to_curr->CURRENCYID, trx->TRANSDATE);
-                    if (convRateTo > 0)
-                    {
-                        const double convRate = CurrencyHistoryModel::getDayRate(curr->CURRENCYID, trx->TRANSDATE);
+                    const double convRateTo = CurrencyHistoryModel::getDayRate(to_curr->CURRENCYID, trx_n->TRANSDATE);
+                    if (convRateTo > 0) {
+                        const double convRate = CurrencyHistoryModel::getDayRate(curr->CURRENCYID, trx_n->TRANSDATE);
                         exch = convRate / convRateTo;
                     }
-                    trx->TOTRANSAMOUNT = trx->TRANSAMOUNT * exch;
+                    trx_n->TOTRANSAMOUNT = trx_n->TRANSAMOUNT * exch;
                 }
             }
         }
 
         m_custom_fields->UpdateCustomValues(id);
 
-        TransactionModel::instance().save_trx(trx);
+        TransactionModel::instance().unsafe_save_trx(trx_n);
     }
     TagLinkModel::instance().ReleaseSavepoint();
     TransactionModel::instance().ReleaseSavepoint();
-    if (!skip_trx.empty())
-    {
+    if (!skip_trx.empty()) {
         const wxString detail = wxString::Format("%s\n%s: %zu\n%s: %zu"
                         , _t("This is due to some elements of the transaction or account detail not allowing the update")
                         , _t("Updated"), m_transaction_id.size() - skip_trx.size()
@@ -658,9 +648,9 @@ void TransactionUpdateDialog::OnComboKey(wxKeyEvent& event)
                 if (dlg.getRefreshRequested())
                     cbPayee_->mmDoReInitialize();
                 int64 payee_id = dlg.getPayeeId();
-                PayeeModel::Data* payee = PayeeModel::instance().get_id(payee_id);
-                if (payee) {
-                    cbPayee_->ChangeValue(payee->PAYEENAME);
+                const PayeeData* payee_n = PayeeModel::instance().get_data_n(payee_id);
+                if (payee_n) {
+                    cbPayee_->ChangeValue(payee_n->PAYEENAME);
                     cbPayee_->SelectAll();
                 }
                 return;

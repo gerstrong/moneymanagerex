@@ -42,7 +42,7 @@ private:
     int CalculateLevenshteinDistance(const wxString& s1, const wxString& s2);
 
     // Helper to load regex patterns from a payee
-    void LoadRegexPatterns(const PayeeModel::Data& payee, std::vector<wxString>& patterns);
+    void LoadRegexPatterns(const PayeeData& payee, std::vector<wxString>& patterns);
 
     // Helper to sort and trim results
     void SortAndTrimResults(std::vector<PayeeMatchResult>& results, int maxResults);

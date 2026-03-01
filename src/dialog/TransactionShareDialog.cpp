@@ -61,31 +61,41 @@ TransactionShareDialog::TransactionShareDialog()
 {
 }
 
-TransactionShareDialog::TransactionShareDialog(wxWindow* parent, StockModel::Data* stock)
-    : m_stock(stock)
+TransactionShareDialog::TransactionShareDialog(wxWindow* parent, StockData* stock)
+    : m_stock_n(stock)
     , m_dialog_heading(_t("Add Share Transaction"))
 {
     long style = wxCAPTION | wxSYSTEM_MENU | wxCLOSE_BOX;
     Create(parent, wxID_ANY, m_dialog_heading, wxDefaultPosition, wxSize(400, 300), style);
 }
 
-TransactionShareDialog::TransactionShareDialog(wxWindow* parent, TransactionLinkModel::Data* translink_entry, TransactionModel::Data* checking_entry)
-    : m_dialog_heading(_t("Edit Share Transaction"))
-    , m_checking_entry(checking_entry)
-    , m_translink_entry(translink_entry)
+TransactionShareDialog::TransactionShareDialog(
+    wxWindow* parent,
+    const TransactionLinkData* translink_entry,
+    TransactionData* checking_entry
+) :
+    m_dialog_heading(_t("Edit Share Transaction")),
+    m_checking_entry(checking_entry),
+    m_translink_entry(translink_entry)
 {
     if (m_translink_entry)
     {
-        m_stock = StockModel::instance().get_id(m_translink_entry->LINKRECORDID);
+        m_stock_n = StockModel::instance().unsafe_get_data_n(m_translink_entry->LINKRECORDID);
         if (m_translink_entry->LINKTYPE == StockModel::refTypeName)
         {
             m_share_entry = TransactionShareModel::ShareEntry(m_translink_entry->CHECKINGACCOUNTID);
-            if (m_share_entry->SHARELOT.IsEmpty()) m_share_entry->SHARELOT = m_stock->STOCKID.ToString();
+            if (m_share_entry->SHARELOT.IsEmpty())
+                // FIXME: m_share_entry is changed but not saved
+                m_share_entry->SHARELOT = m_stock_n->STOCKID.ToString();
 
-            for (const auto& split: TransactionSplitModel::instance().find(TransactionSplitModel::TRANSID(m_share_entry->SHAREINFOID)))
-            {
+            for (const auto& split: TransactionSplitModel::instance().find(
+                TransactionSplitCol::TRANSID(m_share_entry->SHAREINFOID)
+            )) {
                 wxArrayInt64 tags;
-                for (const auto& tag : TagLinkModel::instance().find(TagLinkModel::REFTYPE(TransactionSplitModel::refTypeName), TagLinkModel::REFID(split.SPLITTRANSID)))
+                for (const auto& tag : TagLinkModel::instance().find(
+                    TagLinkCol::REFTYPE(TransactionSplitModel::refTypeName),
+                    TagLinkCol::REFID(split.SPLITTRANSID)
+                ))
                     tags.push_back(tag.TAGID);
                 m_local_deductible_splits.push_back({split.CATEGID, split.SPLITTRANSAMOUNT, tags, split.NOTES});
             }
@@ -94,10 +104,14 @@ TransactionShareDialog::TransactionShareDialog(wxWindow* parent, TransactionLink
 
     if (m_checking_entry)
     {
-        for (const auto& split: TransactionSplitModel::instance().find(TransactionSplitModel::TRANSID(m_checking_entry->TRANSID)))
-        {
+        for (const auto& split: TransactionSplitModel::instance().find(
+            TransactionSplitCol::TRANSID(m_checking_entry->TRANSID)
+        )) {
             wxArrayInt64 tags;
-            for (const auto& tag : TagLinkModel::instance().find(TagLinkModel::REFTYPE(TransactionSplitModel::refTypeName), TagLinkModel::REFID(split.SPLITTRANSID)))
+            for (const auto& tag : TagLinkModel::instance().find(
+                TagLinkCol::REFTYPE(TransactionSplitModel::refTypeName),
+                TagLinkCol::REFID(split.SPLITTRANSID)
+            ))
                 tags.push_back(tag.TAGID);
             m_local_non_deductible_splits.push_back({split.CATEGID, split.SPLITTRANSAMOUNT, tags, split.NOTES});
         }
@@ -129,31 +143,31 @@ bool TransactionShareDialog::Create(wxWindow* parent, wxWindowID id, const wxStr
 
 void TransactionShareDialog::DataToControls()
 {
-    if (!m_stock) return;
+    if (!m_stock_n) return;
 
-    m_stock_id = m_stock->STOCKID;
-    m_stock_name_ctrl->SetValue(m_stock->STOCKNAME);
-    m_transaction_panel->SetTransactionAccount(m_stock->STOCKNAME);
-    m_stock_symbol_ctrl->SetValue(m_stock->SYMBOL);
-    m_notes_ctrl->SetValue(m_stock->NOTES);
+    m_stock_id = m_stock_n->STOCKID;
+    m_stock_name_ctrl->SetValue(m_stock_n->STOCKNAME);
+    m_transaction_panel->SetTransactionAccount(m_stock_n->STOCKNAME);
+    m_stock_symbol_ctrl->SetValue(m_stock_n->SYMBOL);
+    m_notes_ctrl->SetValue(m_stock_n->NOTES);
 
     m_stock_name_ctrl->Enable(false);
     m_stock_symbol_ctrl->Enable(false);
     m_share_lot_ctrl->Enable(false);
     m_notes_ctrl->Enable(false);
 
-    TransactionLinkModel::Data_Set translink_list = TransactionLinkModel::TranslinkList<StockModel>(m_stock->STOCKID);
+    TransactionLinkModel::DataA translink_list = TransactionLinkModel::TranslinkList<StockModel>(m_stock_n->STOCKID);
 
     if (translink_list.empty())
     {   // Set up the transaction as the first entry.
-        int precision = m_stock->NUMSHARES == floor(m_stock->NUMSHARES) ? 0 : PreferencesModel::instance().getSharePrecision();
-        m_share_num_ctrl->SetValue(m_stock->NUMSHARES, precision);
-        m_share_price_ctrl->SetValue(m_stock->PURCHASEPRICE, PreferencesModel::instance().getSharePrecision());
-        m_share_commission_ctrl->SetValue(m_stock->COMMISSION, PreferencesModel::instance().getSharePrecision());
-        m_share_lot_ctrl->SetValue(m_stock->STOCKID.ToString());
-        m_transaction_panel->TransactionDate(StockModel::PURCHASEDATE(m_stock));
-        m_transaction_panel->SetTransactionValue(GetAmount(m_stock->NUMSHARES, m_stock->PURCHASEPRICE
-                , m_stock->COMMISSION), true);
+        int precision = m_stock_n->NUMSHARES == floor(m_stock_n->NUMSHARES) ? 0 : PreferencesModel::instance().getSharePrecision();
+        m_share_num_ctrl->SetValue(m_stock_n->NUMSHARES, precision);
+        m_share_price_ctrl->SetValue(m_stock_n->PURCHASEPRICE, PreferencesModel::instance().getSharePrecision());
+        m_share_commission_ctrl->SetValue(m_stock_n->COMMISSION, PreferencesModel::instance().getSharePrecision());
+        m_share_lot_ctrl->SetValue(m_stock_n->STOCKID.ToString());
+        m_transaction_panel->TransactionDate(StockModel::PURCHASEDATE(m_stock_n));
+        m_transaction_panel->SetTransactionValue(GetAmount(m_stock_n->NUMSHARES, m_stock_n->PURCHASEPRICE
+                , m_stock_n->COMMISSION), true);
     }
     else
     {
@@ -165,20 +179,17 @@ void TransactionShareDialog::DataToControls()
             m_share_commission_ctrl->SetValue(m_share_entry->SHARECOMMISSION, PreferencesModel::instance().getSharePrecision());
             m_share_lot_ctrl->SetValue(m_share_entry->SHARELOT);
 
-            if (m_translink_entry)
-            {
-                TransactionModel::Data* checking_entry = TransactionModel::instance().get_id(m_translink_entry->CHECKINGACCOUNTID);
-                if (checking_entry)
-                {
+            if (m_translink_entry) {
+                const TransactionData* checking_entry = TransactionModel::instance().get_data_n(m_translink_entry->CHECKINGACCOUNTID);
+                if (checking_entry) {
                     m_transaction_panel->TransactionDate(TransactionModel::getTransDateTime(checking_entry));
                     m_transaction_panel->SetTransactionValue(GetAmount(std::abs(m_share_entry->SHARENUMBER)
                         , m_share_entry->SHAREPRICE, m_share_entry->SHARECOMMISSION), true);
-                    m_transaction_panel->SetTransactionAccount(AccountModel::cache_id_name(checking_entry->ACCOUNTID));
+                    m_transaction_panel->SetTransactionAccount(AccountModel::get_id_name(checking_entry->ACCOUNTID));
                     m_transaction_panel->SetTransactionStatus(TransactionModel::status_id(checking_entry));
                     m_transaction_panel->SetTransactionPayee(checking_entry->PAYEEID);
                     m_transaction_panel->SetTransactionCategory(checking_entry->CATEGID);
-                    if (!checking_entry->DELETEDTIME.IsEmpty())
-                    {
+                    if (!checking_entry->DELETEDTIME.IsEmpty()) {
                         m_share_num_ctrl->Enable(false);
                         m_share_price_ctrl->Enable(false);
                         m_share_commission_ctrl->Enable(false);
@@ -191,7 +202,7 @@ void TransactionShareDialog::DataToControls()
         {
             m_share_num_ctrl->SetValue(0, 0);
             m_share_price_ctrl->SetValue(0, PreferencesModel::instance().getSharePrecision());
-            m_share_lot_ctrl->SetValue(m_stock->STOCKID.ToString());
+            m_share_lot_ctrl->SetValue(m_stock_n->STOCKID.ToString());
             m_transaction_panel->SetTransactionValue(0, true);
         }
     }
@@ -343,8 +354,8 @@ void TransactionShareDialog::CreateControls()
     }
     else
     {
-        wxString acc_held = AccountModel::cache_id_name(m_stock->HELDAT);
-        m_transaction_panel->SetTransactionNumber(m_stock->STOCKNAME + "_" + m_stock->SYMBOL);
+        wxString acc_held = AccountModel::get_id_name(m_stock_n->HELDAT);
+        m_transaction_panel->SetTransactionNumber(m_stock_n->STOCKNAME + "_" + m_stock_n->SYMBOL);
         m_transaction_panel->SetTransactionAccount(acc_held);
     }
 
@@ -372,7 +383,7 @@ void TransactionShareDialog::CreateControls()
 void TransactionShareDialog::OnQuit(wxCloseEvent& WXUNUSED(event))
 {
     const wxString& RefType = StockModel::refTypeName;
-    if (!this->m_stock)
+    if (!this->m_stock_n)
         mmAttachmentManage::DeleteAllAttachments(RefType, 0);
     EndModal(wxID_CANCEL);
 }
@@ -439,15 +450,18 @@ void TransactionShareDialog::OnOk(wxCommandEvent& WXUNUSED(event))
         */
         if (!m_translink_entry)
         {
-             TransactionLinkModel::SetStockTranslink(m_stock->STOCKID
+             TransactionLinkModel::SetStockTranslink(m_stock_n->STOCKID
                 , checking_id, m_transaction_panel->CheckingType());
         }
-        TransactionShareModel::ShareEntry(checking_id, num_shares, share_price, commission, m_local_deductible_splits,  m_share_lot_ctrl->GetValue());
+        TransactionShareModel::ShareEntry(
+            checking_id, num_shares, share_price, commission,
+            m_local_deductible_splits,  m_share_lot_ctrl->GetValue()
+        );
 
-        StockModel::UpdatePosition(m_stock);
+        StockModel::UpdatePosition(m_stock_n);
         if (!loyalty_shares)
         {
-            StockHistoryModel::instance().addUpdate(m_stock->SYMBOL, m_transaction_panel->TransactionDate(), share_price, StockHistoryModel::MANUAL);
+            StockHistoryModel::instance().addUpdate(m_stock_n->SYMBOL, m_transaction_panel->TransactionDate(), share_price, StockHistoryModel::MANUAL);
         }
     }
     else
@@ -487,25 +501,23 @@ void TransactionShareDialog::CalculateAmount(wxCommandEvent& WXUNUSED(event))
 
 void TransactionShareDialog::OnDeductibleSplit(wxCommandEvent&)
 {
-    if (m_local_deductible_splits.empty())
-    {
+    if (m_local_deductible_splits.empty()) {
         double commission = 0;
         m_share_commission_ctrl->GetDouble(commission);
 
-        CategoryModel::Data* category = CategoryModel::instance().get_key(_("Investment"), int64(-1L));
-        if (!category)
-        {
-            category = CategoryModel::instance().create();
-            category->CATEGNAME = _("Investment");
-            category->ACTIVE = 1;
-            category->PARENTID = -1;
-
-            CategoryModel::instance().save(category);
+        const CategoryData* category_n = CategoryModel::instance().get_key(_("Investment"), int64(-1L));
+        if (!category_n) {
+            CategoryData new_category_d = CategoryData();
+            new_category_d.CATEGNAME = _("Investment");
+            new_category_d.ACTIVE    = 1;
+            new_category_d.PARENTID  = -1;
+            CategoryModel::instance().add_data_n(new_category_d);
+            category_n = CategoryModel::instance().get_data_n(new_category_d.id());
         }
-        m_local_deductible_splits.push_back({category->CATEGID, commission, wxArrayInt64(), ""});
+        m_local_deductible_splits.push_back({category_n->CATEGID, commission, wxArrayInt64(), ""});
     }
 
-    SplitDialog dlg(this, m_local_deductible_splits, m_stock->HELDAT);
+    SplitDialog dlg(this, m_local_deductible_splits, m_stock_n->HELDAT);
 
     if (dlg.ShowModal() == wxID_OK)
     {

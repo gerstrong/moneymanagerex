@@ -436,7 +436,7 @@ void mmComboBoxAccount::init()
 {
     all_elements_ = AccountModel::instance().all_accounts(excludeClosed_);
     if (accountID_ > -1)
-        all_elements_[AccountModel::cache_id_name(accountID_)] = accountID_;
+        all_elements_[AccountModel::get_id_name(accountID_)] = accountID_;
 }
 
 // accountID = always include this account even if it would have been excluded as closed
@@ -832,7 +832,7 @@ mmChoiceAmountMask::mmChoiceAmountMask(wxWindow* parent, wxWindowID id)
         this->Append(wxGetTranslation(entry.first), new wxStringClientData(entry.second));
     }
 
-    CurrencyModel::Data* base_currency = CurrencyModel::GetBaseCurrency();
+    const CurrencyData* base_currency = CurrencyModel::GetBaseCurrency();
     const auto decimal_point = base_currency->DECIMAL_POINT;
 
     SetDecimalChar(decimal_point);
@@ -1124,7 +1124,7 @@ mmSingleChoiceDialog::mmSingleChoiceDialog(wxWindow* parent, const wxString& mes
     Fit();
 }
 mmSingleChoiceDialog::mmSingleChoiceDialog(wxWindow* parent, const wxString& message,
-    const wxString& caption, const AccountModel::Data_Set& accounts)
+    const wxString& caption, const AccountModel::DataA& accounts)
 {
     if (parent) this->SetFont(parent->GetFont());
     wxArrayString choices;
@@ -1537,7 +1537,7 @@ void mmTagTextCtrl::init()
     // Initialize the tag map and dropdown checkboxes
     tag_map_.clear();
     tagCheckListBox_->Clear();
-    for (const auto& tag : TagModel::instance().get_all(TagCol::COL_ID_TAGNAME))
+    for (const auto& tag : TagModel::instance().find_all(TagCol::COL_ID_TAGNAME))
     {
         tag_map_[tag.TAGNAME] = tag.TAGID;
         tagCheckListBox_->Append(tag.TAGNAME);
@@ -1782,26 +1782,26 @@ bool mmTagTextCtrl::ValidateTagText(const wxString& tagText)
     wxString tags_out;
     bool is_valid = true;
     // parse the tags and prompt to create any which don't exist
-    for (const auto& tag : parseTags(tags_in))
-    {
+    for (const auto& tag : parseTags(tags_in)) {
         // ignore search operators
-        if (tag == "&" || tag == "|")
-        {
+        if (tag == "&" || tag == "|") {
             tags_out.Append(tag + " ");
             continue;
         }
 
-        if (tag_map_.find(tag) == tag_map_.end())
-        {
+        if (tag_map_.find(tag) == tag_map_.end()) {
             // Prompt user to create a new tag
-            if (wxMessageDialog(nullptr, wxString::Format(_t("Create new tag '%s'?"), tag), _t("New tag entered"), wxYES_NO).ShowModal() == wxID_YES)
-            {
-                TagModel::Data* newTag = TagModel::instance().create();
-                newTag->TAGNAME = tag;
-                newTag->ACTIVE = 1;
-                TagModel::instance().save(newTag);
+            if (wxMessageDialog(nullptr,
+                wxString::Format(_t("Create new tag '%s'?"), tag),
+                _t("New tag entered"),
+                wxYES_NO
+            ).ShowModal() == wxID_YES) {
+                TagData new_tag_d = TagData();
+                new_tag_d.TAGNAME = tag;
+                new_tag_d.ACTIVE  = 1;
+                TagModel::instance().add_data_n(new_tag_d);
                 // Save the new tag to reference
-                tag_map_[tag] = newTag->TAGID;
+                tag_map_[tag] = new_tag_d.TAGID;
                 tagCheckListBox_->Append(tag);
 
                 // Generate an event to tell the parent that a new tag has been added
@@ -1811,8 +1811,7 @@ bool mmTagTextCtrl::ValidateTagText(const wxString& tagText)
                 evt.SetId(GetId());
                 GetEventHandler()->AddPendingEvent(evt);
             }
-            else
-            {
+            else {
                 is_valid = false;
                 continue;
             }

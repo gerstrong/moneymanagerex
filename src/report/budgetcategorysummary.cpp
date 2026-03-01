@@ -136,8 +136,8 @@ wxString mmReportBudgetCategorySummary::getHTMLText()
     m_filter.clear();
     m_filter.setDateRange(yearBegin, yearEnd);
 
-    CategoryModel::Data_Set categs = CategoryModel::instance().find(CategoryModel::PARENTID(-1));
-    std::stable_sort(categs.begin(), categs.end(), CategoryRow::SorterByCATEGNAME());
+    CategoryModel::DataA categs = CategoryModel::instance().find(CategoryCol::PARENTID(-1));
+    std::stable_sort(categs.begin(), categs.end(), CategoryData::SorterByCATEGNAME());
 
     // Chart
     if (getChartSelection() == 0)
@@ -235,7 +235,7 @@ wxString mmReportBudgetCategorySummary::getHTMLText()
                     }
                     
                     std::vector<int> totals_stack;
-                    CategoryModel::Data_Set subcats = CategoryModel::sub_tree(category);
+                    CategoryModel::DataA subcats = CategoryModel::sub_tree(category);
                     for (int i = 0; i < static_cast<int>(subcats.size()); i++) {
                         categLevel[subcats[i].CATEGID].first = 1;
                         estimated = budgetStats[subcats[i].CATEGID][budgetMonth];

@@ -23,14 +23,16 @@
 
 #include "base/defs.h"
 #include "util/_choices.h"
+
 #include "table/CurrencyTable.h"
+#include "data/CurrencyData.h"
+
 #include "_ModelBase.h"
 #include "InfoModel.h" // detect base currency setting BASECURRENCYID
 
-class CurrencyModel : public Model<CurrencyTable>
+class CurrencyModel : public Model<CurrencyTable, CurrencyData>
 {
 public:
-    using Model<CurrencyTable>::remove;
     CurrencyModel();
     ~CurrencyModel();
 
@@ -68,26 +70,26 @@ public:
     static TYPE_ID type_id(const Data* r);
     static TYPE_ID type_id(const Data& r);
 
-    static CurrencyTable::CURRENCY_TYPE CURRENCY_TYPE(OP op, TYPE_ID currencytype);
+    static CurrencyCol::CURRENCY_TYPE CURRENCY_TYPE(OP op, TYPE_ID currencytype);
     const wxArrayString all_currency_names();
     const std::map<wxString, int64>  all_currency();
     const wxArrayString all_currency_symbols();
 
     /** Return the Data record of the base currency.*/
-    static Data* GetBaseCurrency();
+    static const Data* GetBaseCurrency();
     static bool GetBaseCurrencySymbol(wxString& base_currency_symbol);
 
     /** Resets all BASECONVRATE to 1 */
     static void ResetBaseConversionRates();
 
     /** Return the currency Data record for the given symbol */
-    CurrencyModel::Data* GetCurrencyRecord(const wxString& currency_symbol);
+    const CurrencyData* GetCurrencyRecord(const wxString& currency_symbol);
 
     /**
     * Remove the Data record from memory and the database.
     * Delete also all currency history
     */
-    bool remove(int64 id);
+    bool remove_depen(int64 id) override;
 
     static std::map<wxDateTime,int> DateUsed(int64 CurrencyID);
 

@@ -79,7 +79,7 @@ private:
     wxCheckBox* m_append_checkbox = nullptr;
     wxTextCtrl* m_notes_ctrl = nullptr;
     std::vector<int64> m_transaction_id;
-    CurrencyModel::Data* m_currency = nullptr;
+    const CurrencyData* m_currency = nullptr;
     bool m_hasTransfers = false, m_hasNonTransfers = false, m_hasSplits = false;
     wxSharedPtr<FieldValueDialog> m_custom_fields;
 

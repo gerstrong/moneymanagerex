@@ -330,7 +330,9 @@ bool BudgetPanel::DisplayEntryAllowed(int64 categoryID, int64 subcategoryID)
 
     if (categoryID > 0) {
         displayDetails_[categoryID].second = result;
-        for (const auto& subcat : CategoryModel::sub_tree(CategoryModel::instance().get_id(categoryID))) {
+        for (const auto& subcat : CategoryModel::sub_tree(
+            CategoryModel::instance().get_data_n(categoryID)
+        )) {
             result = result || DisplayEntryAllowed(subcat.CATEGID, -1);
         }
     }
@@ -394,8 +396,10 @@ void BudgetPanel::initVirtualListControl()
         , false, (evaluateTransfer ? &budgetAmt_ : 0));
 
     //start with only the root categories
-    CategoryModel::Data_Set categories = CategoryModel::instance().find(CategoryModel::PARENTID(-1));
-    std::stable_sort(categories.begin(), categories.end(), CategoryRow::SorterByCATEGNAME());
+    CategoryModel::DataA categories = CategoryModel::instance().find(
+        CategoryCol::PARENTID(-1)
+    );
+    std::stable_sort(categories.begin(), categories.end(), CategoryData::SorterByCATEGNAME());
     for (const auto& category : categories)
     {
         displayDetails_[category.CATEGID].first = 0;
@@ -424,7 +428,7 @@ void BudgetPanel::initVirtualListControl()
 
         std::vector<int> totals_queue;
         //now a depth-first walk of the subtree of this root category
-        CategoryModel::Data_Set subcats = CategoryModel::sub_tree(category);
+        CategoryModel::DataA subcats = CategoryModel::sub_tree(category);
         for (int i = 0; i < static_cast<int>(subcats.size()); i++)
         {
             estimated = getEstimate(subcats[i].CATEGID);
@@ -564,12 +568,12 @@ wxString BudgetPanel::getItem(long item, int col_id)
     case BudgetList::LIST_ID_ICON:
         return " ";
     case BudgetList::LIST_ID_CATEGORY: {
-        CategoryModel::Data* category = CategoryModel::instance().get_id(
+        const CategoryData* category_n = CategoryModel::instance().get_data_n(
             budget_[item].first > 0 ? budget_[item].first : budget_[item].second
         );
-        if (category) {
-            wxString name = category->CATEGNAME;
-            for (int64 i = displayDetails_[category->CATEGID].first; i > 0; i--) {
+        if (category_n) {
+            wxString name = category_n->CATEGNAME;
+            for (int64 i = displayDetails_[category_n->CATEGID].first; i > 0; i--) {
                 name.Prepend("    ");
             }
             return name;
@@ -693,34 +697,44 @@ void BudgetPanel::OnListItemActivated(int selectedIndex)
     /***************************************************************************
      A TOTALS entry does not contain a budget entry, therefore ignore the event.
      ***************************************************************************/
-    BudgetModel::Data_Set budget = BudgetModel::instance().find(BudgetModel::BUDGETYEARID(GetBudgetYearID())
-        , BudgetModel::CATEGID(budget_[selectedIndex].second > 0 ? budget_[selectedIndex].second : budget_[selectedIndex].first));
+    BudgetModel::DataA budget_a = BudgetModel::instance().find(
+        BudgetCol::BUDGETYEARID(GetBudgetYearID()),
+        BudgetCol::CATEGID(budget_[selectedIndex].second > 0
+            ? budget_[selectedIndex].second
+            : budget_[selectedIndex].first
+        )
+    );
 
     if (budget_[selectedIndex].first == -1)
         return;
 
-    BudgetModel::Data* entry = 0;
-    if (budget.empty())
-    {
-        entry = BudgetModel::instance().create();
-        entry->BUDGETYEARID = GetBudgetYearID();
-        entry->CATEGID = budget_[selectedIndex].first;
-        entry->PERIOD = "";
-        entry->AMOUNT = 0.0;
-        entry->ACTIVE = 1;
-        BudgetModel::instance().save(entry);
+    BudgetData budget_d;
+    if (budget_a.empty()) {
+        budget_d = BudgetData();
+        budget_d.BUDGETYEARID = GetBudgetYearID();
+        budget_d.CATEGID      = budget_[selectedIndex].first;
+        budget_d.PERIOD       = "";
+        budget_d.AMOUNT       = 0.0;
+        budget_d.ACTIVE       = 1;
+        BudgetModel::instance().add_data_n(budget_d);
     }
     else
-        entry = &budget[0];
+        budget_d = budget_a[0];
 
-    double estimated = getEstimate(budget_[selectedIndex].second >= 0 ? budget_[selectedIndex].second
-        : budget_[selectedIndex].first);
-    double actual = categoryStats_[budget_[selectedIndex].second >= 0 ? budget_[selectedIndex].second
-        : budget_[selectedIndex].first][0];
+    double estimated = getEstimate(budget_[selectedIndex].second >= 0
+        ? budget_[selectedIndex].second
+        : budget_[selectedIndex].first
+    );
+    double actual = categoryStats_[budget_[selectedIndex].second >= 0
+        ? budget_[selectedIndex].second
+        : budget_[selectedIndex].first
+    ][0];
 
-    BudgetEntryDialog dlg(this, entry, CurrencyModel::toCurrency(estimated), CurrencyModel::toCurrency(actual));
-    if (dlg.ShowModal() == wxID_OK)
-    {
+    BudgetEntryDialog dlg(this, &budget_d,
+        CurrencyModel::toCurrency(estimated),
+        CurrencyModel::toCurrency(actual)
+    );
+    if (dlg.ShowModal() == wxID_OK) {
         initVirtualListControl();
         m_lc->Refresh();
         m_lc->Update();
@@ -737,8 +751,7 @@ void BudgetList::OnMouseMove(wxMouseEvent& event)
 
     row = HitTest(event.GetPosition(), flags, &column);
 
-    if (LIST_ID_ICON == column && row >= 0)
-    {
+    if (LIST_ID_ICON == column && row >= 0) {
         wxString tooltip;
         int icon = cp_->GetItemImage(row);
 
@@ -753,13 +766,10 @@ void BudgetList::OnMouseMove(wxMouseEvent& event)
 
         mmToolTip(this, tooltip);
     }
-    else
-    {
+    else {
         UnsetToolTip();
     }
 
     event.Skip();
 }
-
-
 

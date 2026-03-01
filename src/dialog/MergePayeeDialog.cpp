@@ -159,28 +159,31 @@ void MergePayeeDialog::OnOk(wxCommandEvent& WXUNUSED(event))
         , _t("Merge payees confirmation")
         , wxOK | wxCANCEL | wxICON_INFORMATION);
 
-    if (ans == wxOK)
-    {
+    if (ans == wxOK) {
         TransactionModel::instance().Savepoint();
-        auto transactions = TransactionModel::instance().find(TransactionModel::PAYEEID(sourcePayeeID_));
-        for (auto &entry : transactions) {
-            entry.PAYEEID = destPayeeID_;
+        auto trx_a = TransactionModel::instance().find(
+            TransactionCol::PAYEEID(sourcePayeeID_)
+        );
+        for (auto& trx_d : trx_a) {
+            trx_d.PAYEEID = destPayeeID_;
         }
-        m_changed_records += TransactionModel::instance().save_trx(transactions);
+        TransactionModel::instance().save_trx_a(trx_a);
+        m_changed_records += trx_a.size();
         TransactionModel::instance().ReleaseSavepoint();
 
         ScheduledModel::instance().Savepoint();
-        auto billsdeposits = ScheduledModel::instance().find(ScheduledModel::PAYEEID(sourcePayeeID_));
-        for (auto &entry : billsdeposits) {
-            entry.PAYEEID = destPayeeID_;
+        auto sched_a = ScheduledModel::instance().find(
+            ScheduledCol::PAYEEID(sourcePayeeID_)
+        );
+        for (auto& sched_d : sched_a) {
+            sched_d.PAYEEID = destPayeeID_;
         }
-        m_changed_records += ScheduledModel::instance().save(billsdeposits);
+        ScheduledModel::instance().save_data_a(sched_a);
+        m_changed_records += sched_a.size();
         ScheduledModel::instance().ReleaseSavepoint();
 
-        if (cbDeleteSourcePayee_->IsChecked())
-        {
-            if (PayeeModel::instance().remove(sourcePayeeID_))
-            {
+        if (cbDeleteSourcePayee_->IsChecked()) {
+            if (PayeeModel::instance().remove_depen(sourcePayeeID_)) {
                 mmAttachmentManage::DeleteAllAttachments(PayeeModel::refTypeName, sourcePayeeID_);
                 mmWebApp::MMEX_WebApp_UpdatePayee();
             }
@@ -198,8 +201,12 @@ void MergePayeeDialog::IsOkOk()
 
     destPayeeID_ = cbDestPayee_->mmGetId();
     sourcePayeeID_ = cbSourcePayee_->mmGetId();
-    int trxs_size = (sourcePayeeID_ < 0) ? 0 : TransactionModel::instance().find(TransactionModel::PAYEEID(sourcePayeeID_)).size();
-    int bills_size = (sourcePayeeID_ < 0) ? 0 : ScheduledModel::instance().find(ScheduledModel::PAYEEID(sourcePayeeID_)).size();
+    int trxs_size = (sourcePayeeID_ < 0) ? 0 : TransactionModel::instance().find(
+        TransactionCol::PAYEEID(sourcePayeeID_)
+    ).size();
+    int bills_size = (sourcePayeeID_ < 0) ? 0 : ScheduledModel::instance().find(
+        ScheduledCol::PAYEEID(sourcePayeeID_)
+    ).size();
 
     if (destPayeeID_ < 0 || sourcePayeeID_ < 0
         || destPayeeID_ == sourcePayeeID_

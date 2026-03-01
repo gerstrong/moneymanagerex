@@ -47,8 +47,8 @@ ChoicesName AssetModel::CHANGEMODE_CHOICES = ChoicesName({
     { CHANGEMODE_ID_LINEAR,     _n("Linear") }
 });
 
-AssetModel::AssetModel()
-: Model<AssetTable>()
+AssetModel::AssetModel() :
+    Model<AssetTable, AssetData>()
 {
 }
 
@@ -63,8 +63,8 @@ AssetModel::~AssetModel()
 AssetModel& AssetModel::instance(wxSQLite3Database* db)
 {
     AssetModel& ins = Singleton<AssetModel>::instance();
+    ins.reset_cache();
     ins.m_db = db;
-    ins.destroy_cache();
     ins.ensure_table();
 
     return ins;
@@ -78,9 +78,9 @@ AssetModel& AssetModel::instance()
 
 wxString AssetModel::get_asset_name(int64 asset_id)
 {
-    Data* asset = instance().get_id(asset_id);
-    if (asset)
-        return asset->ASSETNAME;
+    const Data* asset_n = instance().get_data_n(asset_id);
+    if (asset_n)
+        return asset_n->ASSETNAME;
     else
         return _t("Asset Error");
 }
@@ -88,21 +88,21 @@ wxString AssetModel::get_asset_name(int64 asset_id)
 double AssetModel::balance()
 {
     double balance = 0.0;
-    for (const auto& r: this->get_all())
+    for (const auto& r: this->find_all())
     {
         balance += value(r).second;
     }
     return balance;
 }
 
-AssetTable::ASSETTYPE AssetModel::ASSETTYPE(OP op, TYPE_ID type)
+AssetCol::ASSETTYPE AssetModel::ASSETTYPE(OP op, TYPE_ID type)
 {
-    return AssetTable::ASSETTYPE(op, type_name(type));
+    return AssetCol::ASSETTYPE(op, type_name(type));
 }
 
-AssetTable::STARTDATE AssetModel::STARTDATE(OP op, const wxDate& date)
+AssetCol::STARTDATE AssetModel::STARTDATE(OP op, const wxDate& date)
 {
-    return AssetTable::STARTDATE(op, date.FormatISODate());
+    return AssetCol::STARTDATE(op, date.FormatISODate());
 }
 
 wxDate AssetModel::STARTDATE(const Data* r)
@@ -115,7 +115,7 @@ wxDate AssetModel::STARTDATE(const Data& r)
     return parseDateTime(r.STARTDATE);
 }
 
-CurrencyModel::Data* AssetModel::currency(const Data* /* r */)
+const CurrencyData* AssetModel::currency(const Data* /* r */)
 {
     return CurrencyModel::instance().GetBaseCurrency();
 }
@@ -135,9 +135,9 @@ std::pair<double, double> AssetModel::valueAtDate(const Data* r, const wxDate& d
     std::pair<double /*initial*/, double /*market*/> balance;
     if (date < STARTDATE(r)) return balance;
 
-    TransactionLinkModel::Data_Set translink_records = TransactionLinkModel::instance().find(
-        TransactionLinkModel::LINKRECORDID(r->ASSETID),
-        TransactionLinkModel::LINKTYPE(this->refTypeName)
+    TransactionLinkModel::DataA translink_records = TransactionLinkModel::instance().find(
+        TransactionLinkCol::LINKRECORDID(r->ASSETID),
+        TransactionLinkCol::LINKTYPE(this->refTypeName)
     );
 
     double dailyRate = r->VALUECHANGERATE / 36500.0;
@@ -157,14 +157,14 @@ std::pair<double, double> AssetModel::valueAtDate(const Data* r, const wxDate& d
 
     if (!translink_records.empty())
     {
-        TransactionModel::Data_Set trans;
+        TransactionModel::DataA trans;
         for (const auto& link : translink_records)
         {
-            const TransactionModel::Data* tran = TransactionModel::instance().get_id(link.CHECKINGACCOUNTID);
+            const TransactionData* tran = TransactionModel::instance().get_data_n(link.CHECKINGACCOUNTID);
             if(tran && tran->DELETEDTIME.IsEmpty()) trans.push_back(*tran);
         }
 
-        std::stable_sort(trans.begin(), trans.end(), TransactionRow::SorterByTRANSDATE());
+        std::stable_sort(trans.begin(), trans.end(), TransactionData::SorterByTRANSDATE());
 
         wxDate last = date;
         for (const auto& tran: trans)
@@ -185,9 +185,9 @@ std::pair<double, double> AssetModel::valueAtDate(const Data* r, const wxDate& d
 
             double accflow = TransactionModel::account_flow(tran, tran.ACCOUNTID);
             double amount = -1 * accflow *
-                CurrencyHistoryModel::getDayRate(AccountModel::instance().get_id(tran.ACCOUNTID)->CURRENCYID, tranDate);
+                CurrencyHistoryModel::getDayRate(AccountModel::instance().get_data_n(tran.ACCOUNTID)->CURRENCYID, tranDate);
             //double amount = -1 * TransactionModel::account_flow(tran, tran.ACCOUNTID) *
-            //    CurrencyHistoryModel::getDayRate(AccountModel::instance().get_id(tran.ACCOUNTID)->CURRENCYID, tranDate);
+            //    CurrencyHistoryModel::getDayRate(AccountModel::instance().get_data_n(tran.ACCOUNTID)->CURRENCYID, tranDate);
 
             if (amount >= 0)
             {

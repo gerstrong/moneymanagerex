@@ -106,8 +106,8 @@ JournalPanel::JournalPanel(
 {
     if (isAccount()) {
         m_account_id = m_checking_id;
-        m_account = AccountModel::instance().get_id(m_account_id);
-        m_currency = AccountModel::currency(m_account);
+        m_account = AccountModel::instance().get_data_n(m_account_id);
+        m_currency = AccountModel::currency(*m_account);
     }
     else if (isGroup()) {
         m_group_ids = std::set<int64>(group_ids.begin(), group_ids.end());
@@ -159,8 +159,8 @@ void JournalPanel::loadAccount(int64 account_id)
     m_checking_id = account_id;
     m_account_id = account_id;
     m_group_ids = {};
-    m_account = AccountModel::instance().get_id(m_account_id);
-    m_currency = AccountModel::currency(m_account);
+    m_account = AccountModel::instance().get_data_n(m_account_id);
+    m_currency = AccountModel::currency(*m_account);
     m_use_account_specific_filter = PreferencesModel::instance().getUsePerAccountFilter();
 
     loadFilterSettings();
@@ -652,9 +652,9 @@ void JournalPanel::filterList()
         wxDateTime::Now().FormatISOCombined() :
         wxDateTime(23, 59, 59, 999).FormatISOCombined();
 
-    const auto trans = m_account ?
-        AccountModel::transactionsByDateTimeId(m_account) :
-        TransactionModel::instance().allByDateTimeId();
+    const auto trans = m_account
+        ? AccountModel::transactionsByDateTimeId(m_account)
+        : TransactionModel::instance().allByDateTimeId();
     const auto trans_splits = TransactionSplitModel::instance().get_all_id();
     const auto trans_tags = TagLinkModel::instance().get_all_id(tranRefType);
     const auto trans_attachments = AttachmentModel::instance().get_reftype(TransactionModel::refTypeName);
@@ -670,7 +670,7 @@ void JournalPanel::filterList()
         date_start_str = m_current_date_range.rangeStartIsoStartN();
         // find last un-deleted transaction and use that if later than current date + 30 days
         for (auto it = trans.rbegin(); it != trans.rend(); ++it) {
-            const TransactionModel::Data* tran = &(*it);
+            const TransactionData* tran = &(*it);
             if (tran && (isDeletedTrans() || tran->DELETEDTIME.IsEmpty())) {
                 if (date_end < TransactionModel::getTransDateTime(tran))
                     date_end = TransactionModel::getTransDateTime(tran);
@@ -681,10 +681,10 @@ void JournalPanel::filterList()
         date_end_str = m_current_date_range.rangeEnd()
             .value_or(mmDateDay(date_end)).isoEnd();
     }
-    std::map<int64, ScheduledSplitModel::Data_Set> bills_splits;
-    std::map<int64, TagLinkModel::Data_Set> bills_tags;
-    std::map<int64, AttachmentModel::Data_Set> bills_attachments;
-    ScheduledModel::Data_Set bills;
+    std::map<int64, ScheduledSplitModel::DataA> bills_splits;
+    std::map<int64, TagLinkModel::DataA> bills_tags;
+    std::map<int64, AttachmentModel::DataA> bills_attachments;
+    ScheduledModel::DataA bills;
     typedef std::tuple<
         int /* i */,
         wxString /* date */,
@@ -695,9 +695,9 @@ void JournalPanel::filterList()
         bills_splits = ScheduledSplitModel::instance().get_all_id();
         bills_tags = TagLinkModel::instance().get_all_id(billRefType);
         bills_attachments = AttachmentModel::instance().get_reftype(ScheduledModel::refTypeName);
-        bills = m_account ?
-            AccountModel::billsdeposits(m_account) :
-            ScheduledModel::instance().get_all();
+        bills = m_account
+            ? AccountModel::billsdeposits(m_account)
+            : ScheduledModel::instance().find_all();
         for (unsigned int i = 0; i < bills.size(); ++i) {
             int limit = 1000;  // this is enough for daily repetitions for one year
             auto dates = ScheduledModel::unroll(bills[i], date_end_str, limit);
@@ -718,8 +718,8 @@ void JournalPanel::filterList()
         int bill_i = 0;
         wxString tran_date;
         int repeat_num = 0;
-        TransactionModel::Data bill_tran;
-        const TransactionModel::Data* tran = nullptr;
+        TransactionData bill_tran;
+        const TransactionData* tran = nullptr;
 
         if (trans_it != trans.end())
             tran_date = TransactionModel::getTransDateTime(*trans_it).FormatISOCombined();
@@ -866,8 +866,8 @@ void JournalPanel::filterList()
             full_tran.TRANSAMOUNT = split.SPLITTRANSAMOUNT;
             full_tran.NOTES = tran->NOTES;
             full_tran.TAGNAMES = tranTagnames;
-            TransactionModel::Data splitWithTxnNotes = full_tran;
-            TransactionModel::Data splitWithSplitNotes = full_tran;
+            TransactionData splitWithTxnNotes = full_tran;
+            TransactionData splitWithSplitNotes = full_tran;
             splitWithSplitNotes.NOTES = split.NOTES;
             if (m_filter_advanced) {
               if (
@@ -884,7 +884,7 @@ void JournalPanel::filterList()
             full_tran.NOTES.Append((tran->NOTES.IsEmpty() ? "" : " ") + split.NOTES);
             wxString tagnames;
             const wxString reftype = (repeat_num == 0) ? tranSplitRefType : billSplitRefType;
-            for (const auto& tag : TagLinkModel::instance().cache_ref(reftype, split.SPLITTRANSID))
+            for (const auto& tag : TagLinkModel::instance().get_ref(reftype, split.SPLITTRANSID))
                 tagnames.Append(tag.first + " ");
             if (!tagnames.IsEmpty())
                 full_tran.TAGNAMES.Append((full_tran.TAGNAMES.IsEmpty() ? "" : ", ") + tagnames.Trim());
@@ -935,7 +935,7 @@ void JournalPanel::updateExtraTransactionData(bool single, int repeat_num, bool 
         wxString notesStr = full_tran.NOTES;
         if (!full_tran.m_repeat_num) {
             auto splits = TransactionSplitModel::instance().find(
-                TransactionSplitModel::TRANSID(full_tran.TRANSID)
+                TransactionSplitCol::TRANSID(full_tran.TRANSID)
             );
             for (const auto& split : splits)
                 if (!split.NOTES.IsEmpty()) {
@@ -944,7 +944,7 @@ void JournalPanel::updateExtraTransactionData(bool single, int repeat_num, bool 
                 }
             if (full_tran.has_attachment()) {
                 const wxString& refType = TransactionModel::refTypeName;
-                AttachmentModel::Data_Set attachments = AttachmentModel::instance().FilterAttachments(refType, full_tran.TRANSID);
+                AttachmentModel::DataA attachments = AttachmentModel::instance().FilterAttachments(refType, full_tran.TRANSID);
                 for (const auto& i : attachments) {
                     notesStr += notesStr.empty() ? "" : "\n";
                     notesStr += _t("Attachment") + " " + i.DESCRIPTION + " " + i.FILENAME;
@@ -953,7 +953,7 @@ void JournalPanel::updateExtraTransactionData(bool single, int repeat_num, bool 
         }
         else {
             auto splits = ScheduledSplitModel::instance().find(
-                ScheduledSplitModel::TRANSID(full_tran.m_bdid)
+                ScheduledSplitCol::TRANSID(full_tran.m_bdid)
             );
             for (const auto& split : splits)
                 if (!split.NOTES.IsEmpty()) {
@@ -962,7 +962,7 @@ void JournalPanel::updateExtraTransactionData(bool single, int repeat_num, bool 
                 }
             if (full_tran.has_attachment()) {
                 const wxString& refType = ScheduledModel::refTypeName;
-                AttachmentModel::Data_Set attachments = AttachmentModel::instance().FilterAttachments(refType, full_tran.m_bdid);
+                AttachmentModel::DataA attachments = AttachmentModel::instance().FilterAttachments(refType, full_tran.m_bdid);
                 for (const auto& i : attachments) {
                     notesStr += notesStr.empty() ? "" : "\n";
                     notesStr += _t("Attachment") + " " + i.DESCRIPTION + " " + i.FILENAME;
@@ -996,9 +996,14 @@ void JournalPanel::updateExtraTransactionData(bool single, int repeat_num, bool 
             while (true) {
                 item = m_lc->GetNextItem(item, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
                 if (item == -1) break;
-                CurrencyModel::Data* curr = AccountModel::currency(AccountModel::instance().get_id(m_lc->m_trans[item].ACCOUNTID));
-                if ((m_account_id < 0) && TransactionModel::is_transfer(m_lc->m_trans[item].TRANSCODE)) continue;
-                double convrate = (curr != m_currency) ? CurrencyHistoryModel::getDayRate(curr->CURRENCYID, m_lc->m_trans[item].TRANSDATE) : 1.0;
+                const CurrencyData* curr = AccountModel::currency(
+                    AccountModel::instance().get_data_n(m_lc->m_trans[item].ACCOUNTID)
+                );
+                if ((m_account_id < 0) && TransactionModel::is_transfer(m_lc->m_trans[item].TRANSCODE))
+                    continue;
+                double convrate = (curr != m_currency)
+                    ? CurrencyHistoryModel::getDayRate(curr->CURRENCYID, m_lc->m_trans[item].TRANSDATE)
+                    : 1.0;
                 flow += convrate * TransactionModel::account_flow(m_lc->m_trans[item], (m_account_id < 0) ? m_lc->m_trans[item].ACCOUNTID : m_account_id);
                 wxString transdate = m_lc->m_trans[item].TRANSDATE;
                 if (minDate > transdate || minDate.empty()) minDate = transdate;
@@ -1410,9 +1415,9 @@ void JournalPanel::setSelectedTransaction(Journal::IdRepeat journal_id)
 
 void JournalPanel::displaySplitCategories(Journal::IdB journal_id)
 {
-    Journal::Data journal = !journal_id.second ?
-        Journal::Data(*TransactionModel::instance().get_id(journal_id.first)) :
-        Journal::Data(*ScheduledModel::instance().get_id(journal_id.first));
+    Journal::Data journal = !journal_id.second
+        ? Journal::Data(*TransactionModel::instance().get_data_n(journal_id.first))
+        : Journal::Data(*ScheduledModel::instance().get_data_n(journal_id.first));
     std::vector<Split> splits;
     for (const auto& split : Journal::split(journal)) {
         Split s;

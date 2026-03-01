@@ -19,14 +19,14 @@
 #pragma once
 
 #include "base/defs.h"
-#include "_ModelBase.h"
+
 #include "table/BudgetPeriodTable.h"
+#include "data/BudgetPeriodData.h"
 
-class BudgetPeriodModel : public Model<BudgetPeriodTable>
+#include "_ModelBase.h"
+
+class BudgetPeriodModel : public Model<BudgetPeriodTable, BudgetPeriodData>
 {
-public:
-    using Model<BudgetPeriodTable>::remove;
-
 public:
     BudgetPeriodModel();
     ~BudgetPeriodModel();
@@ -46,7 +46,7 @@ public:
     */
     static BudgetPeriodModel& instance();
 
-    bool remove(int64 id);
+    bool remove_depen(int64 id) override;
 
 public:
     void Set(int64 year_id, const wxString& value);

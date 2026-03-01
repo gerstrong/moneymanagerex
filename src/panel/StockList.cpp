@@ -222,7 +222,7 @@ double StockList::GetGainLoss(long item) const
     return getGainLoss(m_stocks[item]);
 }
 
-double StockList::getGainLoss(const StockModel::Data& stock)
+double StockList::getGainLoss(const StockData& stock)
 {
     return StockModel::CurrentValue(stock) - stock.VALUE;
 }
@@ -232,7 +232,7 @@ double StockList::GetRealGainLoss(long item) const
     return getRealGainLoss(m_stocks[item]);
 }
 
-double StockList::getRealGainLoss(const StockModel::Data& stock)
+double StockList::getRealGainLoss(const StockData& stock)
 {
     return StockModel::RealGainLoss(stock);
 }
@@ -291,8 +291,7 @@ void StockList::OnNewStocks(wxCommandEvent& /*event*/)
 {
     StockDialog dlg(this, nullptr, m_stock_panel->m_account_id);
     dlg.ShowModal();
-    if (StockModel::instance().get_id(dlg.m_stock_id))
-    {
+    if (StockModel::instance().get_data_n(dlg.m_stock_id)) {
         doRefreshItems(dlg.m_stock_id);
         m_stock_panel->m_frame->RefreshNavigationTree();
     }
@@ -307,7 +306,7 @@ void StockList::OnDeleteStocks(wxCommandEvent& /*event*/)
         , wxYES_NO | wxNO_DEFAULT | wxICON_ERROR);
     if (msgDlg.ShowModal() == wxID_YES)
     {
-        StockModel::instance().remove(m_stocks[m_selected_row].STOCKID);
+        StockModel::instance().remove_depen(m_stocks[m_selected_row].STOCKID);
         mmAttachmentManage::DeleteAllAttachments(StockModel::refTypeName, m_stocks[m_selected_row].STOCKID);
         TransactionLinkModel::RemoveTransLinkRecords<StockModel>(m_stocks[m_selected_row].STOCKID);
         DeleteItem(m_selected_row);
@@ -321,27 +320,30 @@ void StockList::OnMoveStocks(wxCommandEvent& /*event*/)
     if (m_selected_row == -1) return;
 
     const auto& accounts = AccountModel::instance().find(
-        AccountModel::ACCOUNTTYPE(NavigatorTypes::instance().getInvestmentAccountStr()));
+        AccountCol::ACCOUNTTYPE(NavigatorTypes::instance().getInvestmentAccountStr())
+    );
     if (accounts.empty()) return;
 
-    const AccountModel::Data* from_account = AccountModel::instance().get_id(m_stock_panel->m_account_id);
-    wxString headerMsg = wxString::Format(_t("Moving Transaction from %s to"), from_account->ACCOUNTNAME);
-    mmSingleChoiceDialog scd(this, _t("Select the destination Account "), headerMsg , accounts);
+    const AccountData* from_account = AccountModel::instance().get_data_n(m_stock_panel->m_account_id);
+    wxString headerMsg = wxString::Format(_t("Moving Transaction from %s to"),
+        from_account->ACCOUNTNAME
+    );
+    mmSingleChoiceDialog scd(this, _t("Select the destination Account "),
+        headerMsg , accounts
+    );
 
     int64 toAccountID = -1;
     int error_code = scd.ShowModal();
-    if (error_code == wxID_OK)
-    {
+    if (error_code == wxID_OK) {
         wxString acctName = scd.GetStringSelection();
-        const AccountModel::Data* to_account = AccountModel::instance().get_key(acctName);
+        const AccountData* to_account = AccountModel::instance().get_key(acctName);
         toAccountID = to_account->ACCOUNTID;
     }
 
-    if ( toAccountID != -1 )
-    {
-        StockModel::Data* stock = StockModel::instance().get_id(m_stocks[m_selected_row].STOCKID);
-        stock->HELDAT = toAccountID;
-        StockModel::instance().save(stock);
+    if ( toAccountID != -1 ) {
+        StockData* stock_n = StockModel::instance().unsafe_get_data_n(m_stocks[m_selected_row].STOCKID);
+        stock_n->HELDAT = toAccountID;
+        StockModel::instance().unsafe_update_data_n(stock_n);
 
         DeleteItem(m_selected_row);
         m_stock_panel->m_frame->RefreshNavigationTree();
@@ -468,13 +470,13 @@ int StockList::initVirtualListControl(int64 trx_id)
     // TODO
     if (m_stock_panel->m_account_id > -1 ) {
         m_stocks = StockModel::instance().find(
-            StockModel::HELDAT(m_stock_panel->m_account_id),
-            StockModel::NUMSHARES(m_stock_panel->getFilter() ? OP_GT : OP_GE, 0.0)
+            StockCol::HELDAT(m_stock_panel->m_account_id),
+            StockCol::NUMSHARES(m_stock_panel->getFilter() ? OP_GT : OP_GE, 0.0)
         );
     }
     else { // create summary
         m_stocks = StockModel::instance().find(
-            StockModel::NUMSHARES(m_stock_panel->getFilter() ? OP_GT : OP_GE, 0.0)
+            StockCol::NUMSHARES(m_stock_panel->getFilter() ? OP_GT : OP_GE, 0.0)
         );
         if (!m_stocks.empty())
             createSummary();
@@ -507,50 +509,50 @@ void StockList::sortList()
     switch (getSortColId())
     {
     case StockList::LIST_ID_ID:
-        std::stable_sort(m_stocks.begin(), m_stocks.end(), StockRow::SorterBySTOCKID());
+        std::stable_sort(m_stocks.begin(), m_stocks.end(), StockData::SorterBySTOCKID());
         break;
     case StockList::LIST_ID_DATE:
-        std::stable_sort(m_stocks.begin(), m_stocks.end(), StockRow::SorterByPURCHASEDATE());
+        std::stable_sort(m_stocks.begin(), m_stocks.end(), StockData::SorterByPURCHASEDATE());
         break;
     case StockList::LIST_ID_NAME:
-        std::stable_sort(m_stocks.begin(), m_stocks.end(), StockRow::SorterBySTOCKNAME());
+        std::stable_sort(m_stocks.begin(), m_stocks.end(), StockData::SorterBySTOCKNAME());
         break;
     case StockList::LIST_ID_SYMBOL:
-        std::stable_sort(m_stocks.begin(), m_stocks.end(), StockRow::SorterBySYMBOL());
+        std::stable_sort(m_stocks.begin(), m_stocks.end(), StockData::SorterBySYMBOL());
         break;
     case StockList::LIST_ID_NUMBER:
-        std::stable_sort(m_stocks.begin(), m_stocks.end(), StockRow::SorterByNUMSHARES());
+        std::stable_sort(m_stocks.begin(), m_stocks.end(), StockData::SorterByNUMSHARES());
         break;
     case StockList::LIST_ID_PRICE:
-        std::stable_sort(m_stocks.begin(), m_stocks.end(), StockRow::SorterByPURCHASEPRICE());
+        std::stable_sort(m_stocks.begin(), m_stocks.end(), StockData::SorterByPURCHASEPRICE());
         break;
     case StockList::LIST_ID_VALUE:
         std::stable_sort(m_stocks.begin(), m_stocks.end()
-            , [](const StockModel::Data& x, const StockModel::Data& y)
+            , [](const StockData& x, const StockData& y)
             {
                 return x.VALUE < y.VALUE;
             });
         break;
     case StockList::LIST_ID_REAL_GAIN_LOSS:
         std::stable_sort(m_stocks.begin(), m_stocks.end()
-            , [](const StockModel::Data& x, const StockModel::Data& y)
+            , [](const StockData& x, const StockData& y)
         {
             return getRealGainLoss(x) < getRealGainLoss(y);
         });
         break;
     case StockList::LIST_ID_GAIN_LOSS:
         std::stable_sort(m_stocks.begin(), m_stocks.end()
-            , [](const StockModel::Data& x, const StockModel::Data& y)
+            , [](const StockData& x, const StockData& y)
             {
                 return getGainLoss(x) < getGainLoss(y);
             });
         break;
     case StockList::LIST_ID_CURRENT:
-        std::stable_sort(m_stocks.begin(), m_stocks.end(), StockRow::SorterByCURRENTPRICE());
+        std::stable_sort(m_stocks.begin(), m_stocks.end(), StockData::SorterByCURRENTPRICE());
         break;
     case StockList::LIST_ID_CURRVALUE:
         std::stable_sort(m_stocks.begin(), m_stocks.end()
-            , [](const StockModel::Data& x, const StockModel::Data& y)
+            , [](const StockData& x, const StockData& y)
             {
                 double valueX = StockModel::CurrentValue(x);
                 double valueY = StockModel::CurrentValue(y);
@@ -561,10 +563,10 @@ void StockList::sortList()
         //TODO
         break;
     case StockList::LIST_ID_COMMISSION:
-        std::stable_sort(m_stocks.begin(), m_stocks.end(), StockRow::SorterByCOMMISSION());
+        std::stable_sort(m_stocks.begin(), m_stocks.end(), StockData::SorterByCOMMISSION());
         break;
     case StockList::LIST_ID_NOTES:
-        std::stable_sort(m_stocks.begin(), m_stocks.end(), StockRow::SorterByNOTES());
+        std::stable_sort(m_stocks.begin(), m_stocks.end(), StockData::SorterByNOTES());
         break;
     default:
         break;
@@ -574,16 +576,16 @@ void StockList::sortList()
 
 void StockList::createSummary()
 {
-    StockModel::Data_Set stocks_summary;
-    StockModel::Data prevStock;
+    StockModel::DataA stocks_summary;
+    StockData prevStock;
     wxString prevSymbol = "";
     m_investedVal = 0;
     m_marketVal = 0;
 
     std::sort(m_stocks.begin(), m_stocks.end());
-    std::stable_sort(m_stocks.begin(), m_stocks.end(), StockRow::SorterBySYMBOL());
+    std::stable_sort(m_stocks.begin(), m_stocks.end(), StockData::SorterBySYMBOL());
 
-    for (StockModel::Data stock : m_stocks) {
+    for (StockData stock : m_stocks) {
         if (stock.SYMBOL != prevSymbol) {
             if (!prevSymbol.IsEmpty()) {
                 stocks_summary.push_back(prevStock);

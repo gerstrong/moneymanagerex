@@ -162,19 +162,19 @@ wxString mmReportBudgetingPerformance::getHTMLText()
             {
                 std::map<int64, std::map<int, double>> catTotalsEstimated, catTotalsActual;
                 std::map<int64, wxString> formattedNames;
-                std::map<int64, std::vector<CategoryModel::Data>> categ_children;
+                std::map<int64, std::vector<CategoryData>> categ_children;
 
                 bool budgetDeductMonthly = PreferencesModel::instance().getBudgetDeductMonthly();
                 // pull categories from DB and store
-                for (CategoryModel::Data category : CategoryModel::instance().get_all(CategoryCol::COL_ID_CATEGNAME, false)) {
+                for (CategoryData category : CategoryModel::instance().find_all(CategoryCol::COL_ID_CATEGNAME, false)) {
                     categ_children[category.PARENTID].push_back(category);
                 }
 
-                std::vector<CategoryModel::Data> totals_stack;
-                std::vector<CategoryModel::Data> categ_stack = categ_children[-1];
+                std::vector<CategoryData> totals_stack;
+                std::vector<CategoryData> categ_stack = categ_children[-1];
                 while (!categ_stack.empty())
                 {
-                    CategoryModel::Data category = categ_stack.back();
+                    CategoryData category = categ_stack.back();
                     categ_stack.pop_back();
                     int64 catID = category.CATEGID;
                     double estimate = 0;

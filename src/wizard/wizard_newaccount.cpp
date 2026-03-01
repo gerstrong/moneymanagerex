@@ -63,18 +63,16 @@ void mmAddAccountWizard::RunIt()
 {
     if (RunWizard(page1)) {
         // Success
-        AccountModel::Data* account = AccountModel::instance().create();
-
-        account->FAVORITEACCT = "TRUE";
-        account->STATUS = AccountModel::STATUS_NAME_OPEN;
-        account->ACCOUNTTYPE = NavigatorTypes::instance().type_name(accountType_);
-        account->ACCOUNTNAME = accountName_;
-        account->INITIALBAL = 0;
-        account->INITIALDATE = wxDate::Today().FormatISODate();
-        account->CURRENCYID = currencyID_;
-
-        AccountModel::instance().save(account);
-        acctID_ = account->ACCOUNTID;
+        AccountData account_d = AccountData();
+        account_d.FAVORITEACCT = "TRUE";
+        account_d.STATUS       = AccountModel::STATUS_NAME_OPEN;
+        account_d.ACCOUNTTYPE  = NavigatorTypes::instance().type_name(accountType_);
+        account_d.ACCOUNTNAME  = accountName_;
+        account_d.INITIALBAL   = 0;
+        account_d.INITIALDATE  = wxDate::Today().FormatISODate();
+        account_d.CURRENCYID   = currencyID_;
+        AccountModel::instance().save_data_n(account_d);
+        acctID_ = account_d.ACCOUNTID;
     }
     Destroy();
 }

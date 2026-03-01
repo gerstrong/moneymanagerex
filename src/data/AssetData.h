@@ -16,47 +16,35 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  ********************************************************/
 
-// PLEASE EDIT!
-//
-// This is only sample code re-used from "table/AssetTable.h".
-//
-// The data structure can be refined by:
-// * using more user-frielndly filed name
-// * using stronger field types
-// * adding enumerations for fields with limited choices
-// * demultiplexing composite values in database columns
-//
-// See also an implementation in Swift:
-//   https://github.com/moneymanagerex/mmex-ios/tree/master/MMEX/Data
-// and an implementation in Java:
-//   https://github.com/moneymanagerex/android-money-manager-ex/tree/master/app/src/main/java/com/money/manager/ex/domainmodel
-
 #pragma once
 
+#include "util/_primitive.h"
+#include "util/mmDate.h"
+#include "_DataEnum.h"
 #include "table/_TableBase.h"
 #include "table/AssetTable.h"
 
 // User-friendly representation of a record in table ASSETS_V1.
 struct AssetData
 {
-    int64 ASSETID; // primary key
-    wxString STARTDATE;
-    wxString ASSETNAME;
-    wxString ASSETSTATUS;
-    int64 CURRENCYID;
-    wxString VALUECHANGEMODE;
-    double VALUE;
-    wxString VALUECHANGE;
-    wxString NOTES;
-    double VALUECHANGERATE;
-    wxString ASSETTYPE;
+    int64           m_id;
+    AssetType       m_type;
+    AssetStatus     m_status;
+    wxString        m_name;
+    mmDate          m_start_date;    // non-null
+    int64           m_currency_id_n; // -1 means base currency (no conversion)
+    double          m_value;
+    AssetChange     m_change;
+    AssetChangeMode m_change_mode;
+    double          m_change_rate;
+    wxString        m_notes;
 
     explicit AssetData();
     explicit AssetData(wxSQLite3ResultSet& q);
     AssetData(const AssetData& other) = default;
 
-    int64 id() const { return ASSETID; }
-    void id(const int64 id) { ASSETID = id; }
+    int64 id() const { return m_id; }
+    void id(const int64 id) { m_id = id; }
     AssetRow to_row() const;
     AssetData& from_row(const AssetRow& row);
     void to_insert_stmt(wxSQLite3Statement& stmt, int64 id) const;
@@ -68,7 +56,6 @@ struct AssetData
     void to_html_template(html_template& t) const;
     void destroy() { delete this; }
 
-    AssetData& operator= (const AssetData& other);
     AssetData& clone_from(const AssetData& other);
     bool equals(const AssetData* other) const;
     bool operator< (const AssetData& other) const { return id() < other.id(); }
@@ -78,7 +65,7 @@ struct AssetData
     {
         bool operator()(const AssetData& x, const AssetData& y)
         {
-            return x.ASSETID < y.ASSETID;
+            return x.m_id < y.m_id;
         }
     };
 
@@ -86,7 +73,7 @@ struct AssetData
     {
         bool operator()(const AssetData& x, const AssetData& y)
         {
-            return x.STARTDATE < y.STARTDATE;
+            return x.m_start_date < y.m_start_date;
         }
     };
 
@@ -94,7 +81,7 @@ struct AssetData
     {
         bool operator()(const AssetData& x, const AssetData& y)
         {
-            return x.ASSETNAME < y.ASSETNAME;
+            return x.m_name < y.m_name;
         }
     };
 
@@ -102,7 +89,7 @@ struct AssetData
     {
         bool operator()(const AssetData& x, const AssetData& y)
         {
-            return x.ASSETSTATUS < y.ASSETSTATUS;
+            return x.m_status.id() < y.m_status.id();
         }
     };
 
@@ -110,7 +97,7 @@ struct AssetData
     {
         bool operator()(const AssetData& x, const AssetData& y)
         {
-            return x.CURRENCYID < y.CURRENCYID;
+            return x.m_currency_id_n < y.m_currency_id_n;
         }
     };
 
@@ -118,7 +105,7 @@ struct AssetData
     {
         bool operator()(const AssetData& x, const AssetData& y)
         {
-            return x.VALUECHANGEMODE < y.VALUECHANGEMODE;
+            return x.m_change_mode.id() < y.m_change_mode.id();
         }
     };
 
@@ -126,7 +113,7 @@ struct AssetData
     {
         bool operator()(const AssetData& x, const AssetData& y)
         {
-            return x.VALUE < y.VALUE;
+            return x.m_value < y.m_value;
         }
     };
 
@@ -134,7 +121,7 @@ struct AssetData
     {
         bool operator()(const AssetData& x, const AssetData& y)
         {
-            return x.VALUECHANGE < y.VALUECHANGE;
+            return x.m_change.id() < y.m_change.id();
         }
     };
 
@@ -142,7 +129,7 @@ struct AssetData
     {
         bool operator()(const AssetData& x, const AssetData& y)
         {
-            return x.NOTES < y.NOTES;
+            return x.m_notes < y.m_notes;
         }
     };
 
@@ -150,7 +137,7 @@ struct AssetData
     {
         bool operator()(const AssetData& x, const AssetData& y)
         {
-            return x.VALUECHANGERATE < y.VALUECHANGERATE;
+            return x.m_change_rate < y.m_change_rate;
         }
     };
 
@@ -158,12 +145,13 @@ struct AssetData
     {
         bool operator()(const AssetData& x, const AssetData& y)
         {
-            return x.ASSETTYPE < y.ASSETTYPE;
+            return x.m_type.id() < y.m_type.id();
         }
     };
 };
 
-inline AssetData::AssetData(wxSQLite3ResultSet& q)
+inline AssetData::AssetData(wxSQLite3ResultSet& q) :
+    AssetData()
 {
     from_select_result(q);
 }

@@ -20,7 +20,7 @@
 
 #include "util/_simple.h"
 #include "model/AccountModel.h"
-#include "model/TransactionModel.h"
+#include "model/TrxModel.h"
 #include "panel/JournalPanel.h"
 
 class mmReconcileDialog: public wxDialog
@@ -109,11 +109,11 @@ private:
     void OnRightFocusKill(wxFocusEvent& event);
     void handleListFocusKill(wxListCtrl* list);
 
-    void setListItemData(const TransactionData* trx, wxListCtrl* list, long item);
+    void setListItemData(const TrxData* trx, wxListCtrl* list, long item);
     void processRightClick(wxListCtrl* list, long item);
     void processLeftClick(wxListCtrl* list, wxPoint pt);
-    void addTransaction2List(const TransactionData* trx);
-    long getListIndexByDate(const TransactionData* trx, wxListCtrl* list);
+    void addTransaction2List(const TrxData* trx);
+    long getListIndexByDate(const TrxData* trx, wxListCtrl* list);
     void moveItemData(wxListCtrl* list, int row1, int row2);
     void resetListSelections(wxListCtrl* list);
     void newTransaction();

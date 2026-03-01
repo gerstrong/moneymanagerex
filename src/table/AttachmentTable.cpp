@@ -1,4 +1,4 @@
-﻿// -*- C++ -*-
+// -*- C++ -*-
 //=============================================================================
 /**
  *      Copyright: (c) 2013-2026 Guan Lisheng (guanlisheng@gmail.com)
@@ -13,7 +13,7 @@
  *      @author [sqlite2cpp.py]
  *
  *      Revision History:
- *          AUTO GENERATED at 2026-02-23 02:42:42.918296.
+ *          AUTO GENERATED at 2026-02-25 08:58:12.230056.
  *          DO NOT EDIT!
  */
 //=============================================================================
@@ -117,19 +117,6 @@ void AttachmentRow::to_html_template(html_template& t) const
     t(L"REFID") = REFID.GetValue();
     t(L"DESCRIPTION") = DESCRIPTION;
     t(L"FILENAME") = FILENAME;
-}
-
-AttachmentRow& AttachmentRow::operator= (const AttachmentRow& other)
-{
-    if (this == &other) return *this;
-
-    ATTACHMENTID = other.ATTACHMENTID;
-    REFTYPE = other.REFTYPE;
-    REFID = other.REFID;
-    DESCRIPTION = other.DESCRIPTION;
-    FILENAME = other.FILENAME;
-
-    return *this;
 }
 
 bool AttachmentRow::equals(const AttachmentRow* other) const

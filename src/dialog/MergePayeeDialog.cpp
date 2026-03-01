@@ -23,8 +23,8 @@
 #include "base/paths.h"
 #include "util/_util.h"
 
-#include "model/ScheduledModel.h"
-#include "model/TransactionModel.h"
+#include "model/SchedModel.h"
+#include "model/TrxModel.h"
 #include "model/PayeeModel.h"
 #include "model/AttachmentModel.h"
 
@@ -160,30 +160,30 @@ void MergePayeeDialog::OnOk(wxCommandEvent& WXUNUSED(event))
         , wxOK | wxCANCEL | wxICON_INFORMATION);
 
     if (ans == wxOK) {
-        TransactionModel::instance().Savepoint();
-        auto trx_a = TransactionModel::instance().find(
-            TransactionCol::PAYEEID(sourcePayeeID_)
+        TrxModel::instance().db_savepoint();
+        auto trx_a = TrxModel::instance().find(
+            TrxCol::PAYEEID(sourcePayeeID_)
         );
         for (auto& trx_d : trx_a) {
             trx_d.PAYEEID = destPayeeID_;
         }
-        TransactionModel::instance().save_trx_a(trx_a);
+        TrxModel::instance().save_trx_a(trx_a);
         m_changed_records += trx_a.size();
-        TransactionModel::instance().ReleaseSavepoint();
+        TrxModel::instance().db_release_savepoint();
 
-        ScheduledModel::instance().Savepoint();
-        auto sched_a = ScheduledModel::instance().find(
-            ScheduledCol::PAYEEID(sourcePayeeID_)
+        SchedModel::instance().db_savepoint();
+        auto sched_a = SchedModel::instance().find(
+            SchedCol::PAYEEID(sourcePayeeID_)
         );
         for (auto& sched_d : sched_a) {
             sched_d.PAYEEID = destPayeeID_;
         }
-        ScheduledModel::instance().save_data_a(sched_a);
+        SchedModel::instance().save_data_a(sched_a);
         m_changed_records += sched_a.size();
-        ScheduledModel::instance().ReleaseSavepoint();
+        SchedModel::instance().db_release_savepoint();
 
         if (cbDeleteSourcePayee_->IsChecked()) {
-            if (PayeeModel::instance().remove_depen(sourcePayeeID_)) {
+            if (PayeeModel::instance().purge_id(sourcePayeeID_)) {
                 mmAttachmentManage::DeleteAllAttachments(PayeeModel::refTypeName, sourcePayeeID_);
                 mmWebApp::MMEX_WebApp_UpdatePayee();
             }
@@ -201,11 +201,11 @@ void MergePayeeDialog::IsOkOk()
 
     destPayeeID_ = cbDestPayee_->mmGetId();
     sourcePayeeID_ = cbSourcePayee_->mmGetId();
-    int trxs_size = (sourcePayeeID_ < 0) ? 0 : TransactionModel::instance().find(
-        TransactionCol::PAYEEID(sourcePayeeID_)
+    int trxs_size = (sourcePayeeID_ < 0) ? 0 : TrxModel::instance().find(
+        TrxCol::PAYEEID(sourcePayeeID_)
     ).size();
-    int bills_size = (sourcePayeeID_ < 0) ? 0 : ScheduledModel::instance().find(
-        ScheduledCol::PAYEEID(sourcePayeeID_)
+    int bills_size = (sourcePayeeID_ < 0) ? 0 : SchedModel::instance().find(
+        SchedCol::PAYEEID(sourcePayeeID_)
     ).size();
 
     if (destPayeeID_ < 0 || sourcePayeeID_ < 0

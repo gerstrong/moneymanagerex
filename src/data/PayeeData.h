@@ -16,21 +16,6 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  ********************************************************/
 
-// PLEASE EDIT!
-//
-// This is only sample code re-used from "table/PayeeTable.h".
-//
-// The data structure can be refined by:
-// * using more user-frielndly filed name
-// * using stronger field types
-// * adding enumerations for fields with limited choices
-// * demultiplexing composite values in database columns
-//
-// See also an implementation in Swift:
-//   https://github.com/moneymanagerex/mmex-ios/tree/master/MMEX/Data
-// and an implementation in Java:
-//   https://github.com/moneymanagerex/android-money-manager-ex/tree/master/app/src/main/java/com/money/manager/ex/domainmodel
-
 #pragma once
 
 #include "table/_TableBase.h"
@@ -39,21 +24,21 @@
 // User-friendly representation of a record in table PAYEE_V1.
 struct PayeeData
 {
-    int64 PAYEEID; // primary key
-    wxString PAYEENAME;
-    int64 CATEGID;
-    wxString NUMBER;
-    wxString WEBSITE;
-    wxString NOTES;
-    int64 ACTIVE;
-    wxString PATTERN;
+    int64    m_id;
+    wxString m_name;
+    int64    m_category_id_n; // optional (can be null)
+    wxString m_number;
+    wxString m_website;
+    wxString m_notes;
+    bool     m_active;
+    wxString m_pattern;
 
     explicit PayeeData();
     explicit PayeeData(wxSQLite3ResultSet& q);
     PayeeData(const PayeeData& other) = default;
 
-    int64 id() const { return PAYEEID; }
-    void id(const int64 id) { PAYEEID = id; }
+    int64 id() const { return m_id; }
+    void id(const int64 id) { m_id = id; }
     PayeeRow to_row() const;
     PayeeData& from_row(const PayeeRow& row);
     void to_insert_stmt(wxSQLite3Statement& stmt, int64 id) const;
@@ -65,7 +50,6 @@ struct PayeeData
     void to_html_template(html_template& t) const;
     void destroy() { delete this; }
 
-    PayeeData& operator= (const PayeeData& other);
     PayeeData& clone_from(const PayeeData& other);
     bool equals(const PayeeData* other) const;
     bool operator< (const PayeeData& other) const { return id() < other.id(); }
@@ -75,7 +59,7 @@ struct PayeeData
     {
         bool operator()(const PayeeData& x, const PayeeData& y)
         {
-            return x.PAYEEID < y.PAYEEID;
+            return x.m_id < y.m_id;
         }
     };
 
@@ -84,7 +68,7 @@ struct PayeeData
         bool operator()(const PayeeData& x, const PayeeData& y)
         {
             // Locale case-insensitive
-            return std::wcscoll(x.PAYEENAME.Lower().wc_str(), y.PAYEENAME.Lower().wc_str()) < 0;
+            return std::wcscoll(x.m_name.Lower().wc_str(), y.m_name.Lower().wc_str()) < 0;
         }
     };
 
@@ -92,7 +76,10 @@ struct PayeeData
     {
         bool operator()(const PayeeData& x, const PayeeData& y)
         {
-            return x.CATEGID < y.CATEGID;
+            return x.m_category_id_n > 0 && (
+                y.m_category_id_n <= 0 ||
+                x.m_category_id_n < y.m_category_id_n
+            );
         }
     };
 
@@ -100,7 +87,7 @@ struct PayeeData
     {
         bool operator()(const PayeeData& x, const PayeeData& y)
         {
-            return x.NUMBER < y.NUMBER;
+            return x.m_number < y.m_number;
         }
     };
 
@@ -108,7 +95,7 @@ struct PayeeData
     {
         bool operator()(const PayeeData& x, const PayeeData& y)
         {
-            return x.WEBSITE < y.WEBSITE;
+            return x.m_website < y.m_website;
         }
     };
 
@@ -116,7 +103,7 @@ struct PayeeData
     {
         bool operator()(const PayeeData& x, const PayeeData& y)
         {
-            return x.NOTES < y.NOTES;
+            return x.m_notes < y.m_notes;
         }
     };
 
@@ -124,7 +111,7 @@ struct PayeeData
     {
         bool operator()(const PayeeData& x, const PayeeData& y)
         {
-            return x.ACTIVE < y.ACTIVE;
+            return (x.m_active ? 1 : 0) < (y.m_active ? 1 : 0);
         }
     };
 
@@ -132,12 +119,13 @@ struct PayeeData
     {
         bool operator()(const PayeeData& x, const PayeeData& y)
         {
-            return x.PATTERN < y.PATTERN;
+            return x.m_pattern < y.m_pattern;
         }
     };
 };
 
-inline PayeeData::PayeeData(wxSQLite3ResultSet& q)
+inline PayeeData::PayeeData(wxSQLite3ResultSet& q) :
+    PayeeData()
 {
     from_select_result(q);
 }
@@ -154,6 +142,7 @@ inline void PayeeData::to_update_stmt(wxSQLite3Statement& stmt) const
 
 inline PayeeData& PayeeData::from_select_result(wxSQLite3ResultSet& q)
 {
+    // TODO: check for NULL values in database
     return from_row(PayeeRow().from_select_result(q));
 }
 

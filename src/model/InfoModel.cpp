@@ -24,7 +24,7 @@
 #include "InfoModel.h"
 
 InfoModel::InfoModel() :
-    Model<InfoTable, InfoData>()
+    TableFactory<InfoTable, InfoData>()
 {
 }
 
@@ -72,26 +72,26 @@ void InfoModel::setRaw(const wxString& key, const wxString& newValue)
         // not found in cache; search in db
         DataA info_a = find(InfoCol::INFONAME(key));
         if (!info_a.empty())
-            info_n = get_data_n(info_a[0].INFOID);
+            info_n = get_id_data_n(info_a[0].m_id);
     }
 
     Data info_d = info_n ? *info_n : Data();
     if (!info_n)
-        info_d.INFONAME = key;
-    info_d.INFOVALUE = newValue;
+        info_d.m_name = key;
+    info_d.m_value = newValue;
     save_data_n(info_d);
 }
 
 wxString InfoModel::getRaw(const wxString& key, const wxString& defaultValue)
 {
     // search in cache
-    const Data* info = search_cache_n(InfoCol::INFONAME(key));
-    if (info)
-        return info->INFOVALUE;
+    const Data* info_n = search_cache_n(InfoCol::INFONAME(key));
+    if (info_n)
+        return info_n->m_value;
     // search in db
-    DataA items = find(InfoCol::INFONAME(key));
-    if (!items.empty())
-        return items[0].INFOVALUE;
+    DataA info_a = find(InfoCol::INFONAME(key));
+    if (!info_a.empty())
+        return info_a[0].m_value;
     // not found
     return defaultValue;
 }
@@ -312,21 +312,21 @@ void InfoModel::prependArrayItem(const wxString& key, const wxString& value, int
 {
     const Data* info_n = search_cache_n(InfoCol::INFONAME(key));
     if (!info_n) {
-        DataA items = find(InfoCol::INFONAME(key));
-        if (!items.empty())
-            info_n = get_data_n(items[0].INFOID);
+        DataA info_a = find(InfoCol::INFONAME(key));
+        if (!info_a.empty())
+            info_n = get_id_data_n(info_a[0].m_id);
     }
 
     Data info_d = info_n ? *info_n : Data();
     if (!info_n)
-        info_d.INFONAME = key;
+        info_d.m_name = key;
 
     wxArrayString a;
     if (!value.empty() && limit != 0)
         a.Add(value);
 
     Document j_doc;
-    if (!j_doc.Parse(info_d.INFOVALUE.utf8_str()).HasParseError()
+    if (!j_doc.Parse(info_d.m_value.utf8_str()).HasParseError()
         && j_doc.IsArray()
     ) {
         int i = 1;
@@ -350,7 +350,7 @@ void InfoModel::prependArrayItem(const wxString& key, const wxString& value, int
     }
     json_writer.EndArray();
 
-    info_d.INFOVALUE = wxString::FromUTF8(json_buffer.GetString());
+    info_d.m_value = wxString::FromUTF8(json_buffer.GetString());
     save_data_n(info_d);
 }
 

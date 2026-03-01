@@ -23,7 +23,7 @@
 #include "FieldValueModel.h"
 
 FieldValueModel::FieldValueModel() :
-    Model<FieldValueTable, FieldValueData>()
+    TableFactory<FieldValueTable, FieldValueData>()
 {
 }
 
@@ -58,7 +58,7 @@ const FieldValueData* FieldValueModel::get_key(int64 FieldID, int64 RefID)
         FieldValueCol::REFID(RefID)
     );
     if (!items.empty())
-        return get_data_n(items[0].FIELDATADID);
+        return get_id_data_n(items[0].FIELDATADID);
     return nullptr;
 }
 
@@ -104,7 +104,7 @@ bool FieldValueModel::DeleteAllData(const wxString& RefType, int64 RefID)
     {
         const Data* data = FieldValueModel::instance().get_key(field.FIELDID, RefID);
         if (data)
-            FieldValueModel::instance().remove_depen(data->FIELDATADID);
+            FieldValueModel::instance().purge_id(data->FIELDATADID);
     }
     return true;
 }

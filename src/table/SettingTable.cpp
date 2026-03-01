@@ -1,4 +1,4 @@
-﻿// -*- C++ -*-
+// -*- C++ -*-
 //=============================================================================
 /**
  *      Copyright: (c) 2013-2026 Guan Lisheng (guanlisheng@gmail.com)
@@ -13,7 +13,7 @@
  *      @author [sqlite2cpp.py]
  *
  *      Revision History:
- *          AUTO GENERATED at 2026-02-23 02:42:42.918296.
+ *          AUTO GENERATED at 2026-02-25 08:58:12.230056.
  *          DO NOT EDIT!
  */
 //=============================================================================
@@ -100,17 +100,6 @@ void SettingRow::to_html_template(html_template& t) const
     t(L"SETTINGID") = SETTINGID.GetValue();
     t(L"SETTINGNAME") = SETTINGNAME;
     t(L"SETTINGVALUE") = SETTINGVALUE;
-}
-
-SettingRow& SettingRow::operator= (const SettingRow& other)
-{
-    if (this == &other) return *this;
-
-    SETTINGID = other.SETTINGID;
-    SETTINGNAME = other.SETTINGNAME;
-    SETTINGVALUE = other.SETTINGVALUE;
-
-    return *this;
 }
 
 bool SettingRow::equals(const SettingRow* other) const

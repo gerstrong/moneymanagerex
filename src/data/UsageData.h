@@ -16,21 +16,6 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  ********************************************************/
 
-// PLEASE EDIT!
-//
-// This is only sample code re-used from "table/UsageTable.h".
-//
-// The data structure can be refined by:
-// * using more user-frielndly filed name
-// * using stronger field types
-// * adding enumerations for fields with limited choices
-// * demultiplexing composite values in database columns
-//
-// See also an implementation in Swift:
-//   https://github.com/moneymanagerex/mmex-ios/tree/master/MMEX/Data
-// and an implementation in Java:
-//   https://github.com/moneymanagerex/android-money-manager-ex/tree/master/app/src/main/java/com/money/manager/ex/domainmodel
-
 #pragma once
 
 #include "table/_TableBase.h"
@@ -39,16 +24,16 @@
 // User-friendly representation of a record in table USAGE_V1.
 struct UsageData
 {
-    int64 USAGEID; // primary key
-    wxString USAGEDATE;
-    wxString JSONCONTENT;
+    int64    m_id;
+    wxString m_date;
+    wxString m_json_content;
 
     explicit UsageData();
     explicit UsageData(wxSQLite3ResultSet& q);
     UsageData(const UsageData& other) = default;
 
-    int64 id() const { return USAGEID; }
-    void id(const int64 id) { USAGEID = id; }
+    int64 id() const { return m_id; }
+    void id(const int64 id) { m_id = id; }
     UsageRow to_row() const;
     UsageData& from_row(const UsageRow& row);
     void to_insert_stmt(wxSQLite3Statement& stmt, int64 id) const;
@@ -60,7 +45,6 @@ struct UsageData
     void to_html_template(html_template& t) const;
     void destroy() { delete this; }
 
-    UsageData& operator= (const UsageData& other);
     UsageData& clone_from(const UsageData& other);
     bool equals(const UsageData* other) const;
     bool operator< (const UsageData& other) const { return id() < other.id(); }
@@ -70,7 +54,7 @@ struct UsageData
     {
         bool operator()(const UsageData& x, const UsageData& y)
         {
-            return x.USAGEID < y.USAGEID;
+            return x.m_id < y.m_id;
         }
     };
 
@@ -78,7 +62,7 @@ struct UsageData
     {
         bool operator()(const UsageData& x, const UsageData& y)
         {
-            return x.USAGEDATE < y.USAGEDATE;
+            return x.m_date < y.m_date;
         }
     };
 
@@ -86,12 +70,13 @@ struct UsageData
     {
         bool operator()(const UsageData& x, const UsageData& y)
         {
-            return x.JSONCONTENT < y.JSONCONTENT;
+            return x.m_json_content < y.m_json_content;
         }
     };
 };
 
-inline UsageData::UsageData(wxSQLite3ResultSet& q)
+inline UsageData::UsageData(wxSQLite3ResultSet& q) :
+    UsageData()
 {
     from_select_result(q);
 }

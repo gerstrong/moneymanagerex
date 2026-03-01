@@ -125,7 +125,7 @@ public:
     wxString getItem(long item, int col_id);
 
     AssetModel::DataA m_assets;
-    AssetModel::TYPE_ID m_filter_type;
+    int m_filter_type; // -1 (All), AssetType
 
     wxString BuildPage() const { return m_lc->BuildPage(_t("Assets")); }
 
@@ -133,7 +133,7 @@ public:
     void ViewAssetTrans(const int selected_index);
     wxListCtrl* InitAssetTxnListCtrl(wxWindow* parent);
     void LoadAssetTransactions(wxListCtrl* listCtrl, int64 assetId);
-    void FillAssetListRow(wxListCtrl* listCtrl, long index, const TransactionData& txn);
+    void FillAssetListRow(wxListCtrl* listCtrl, long index, const TrxData& txn);
     void BindAssetListEvents(wxListCtrl* listCtrl);
     void CopySelectedRowsToClipboard(wxListCtrl* listCtrl);
     void GotoAssetAccount(const int selected_index);

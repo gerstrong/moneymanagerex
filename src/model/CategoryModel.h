@@ -28,7 +28,7 @@
 #include "_ModelBase.h"
 
 class mmDateRange;
-class CategoryModel : public Model<CategoryTable, CategoryData>
+class CategoryModel : public TableFactory<CategoryTable, CategoryData>
 {
 public:
     struct SorterByFULLNAME

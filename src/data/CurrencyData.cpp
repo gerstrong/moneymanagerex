@@ -16,16 +16,14 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  ********************************************************/
 
-// PLEASE EDIT!
-// This is only sample code re-used from "table/CurrencyTable.cpp".
-
 #include "CurrencyData.h"
 
 CurrencyData::CurrencyData()
 {
-    CURRENCYID = -1;
-    SCALE = -1;
-    BASECONVRATE = 0.0;
+    m_id             = -1;
+    m_type           = CurrencyType();
+    m_scale          = -1;
+    m_base_conv_rate = 0.0;
 }
 
 // Convert CurrencyData to CurrencyRow
@@ -33,18 +31,18 @@ CurrencyRow CurrencyData::to_row() const
 {
     CurrencyRow row;
 
-    row.CURRENCYID = CURRENCYID;
-    row.CURRENCYNAME = CURRENCYNAME;
-    row.PFX_SYMBOL = PFX_SYMBOL;
-    row.SFX_SYMBOL = SFX_SYMBOL;
-    row.DECIMAL_POINT = DECIMAL_POINT;
-    row.GROUP_SEPARATOR = GROUP_SEPARATOR;
-    row.UNIT_NAME = UNIT_NAME;
-    row.CENT_NAME = CENT_NAME;
-    row.SCALE = SCALE;
-    row.BASECONVRATE = BASECONVRATE;
-    row.CURRENCY_SYMBOL = CURRENCY_SYMBOL;
-    row.CURRENCY_TYPE = CURRENCY_TYPE;
+    row.CURRENCYID      = m_id;
+    row.CURRENCYNAME    = m_name;
+    row.PFX_SYMBOL      = m_prefix_symbol;
+    row.SFX_SYMBOL      = m_suffix_symbol;
+    row.DECIMAL_POINT   = m_decimal_point;
+    row.GROUP_SEPARATOR = m_group_separator;
+    row.UNIT_NAME       = m_unit_name;
+    row.CENT_NAME       = m_cent_name;
+    row.SCALE           = m_scale;
+    row.BASECONVRATE    = m_base_conv_rate;
+    row.CURRENCY_SYMBOL = m_symbol;
+    row.CURRENCY_TYPE   = m_type.name();
 
     return row;
 }
@@ -52,56 +50,36 @@ CurrencyRow CurrencyData::to_row() const
 // Convert CurrencyRow to CurrencyData
 CurrencyData& CurrencyData::from_row(const CurrencyRow& row)
 {
-    CURRENCYID = row.CURRENCYID; // int64
-    CURRENCYNAME = row.CURRENCYNAME; // wxString
-    PFX_SYMBOL = row.PFX_SYMBOL; // wxString
-    SFX_SYMBOL = row.SFX_SYMBOL; // wxString
-    DECIMAL_POINT = row.DECIMAL_POINT; // wxString
-    GROUP_SEPARATOR = row.GROUP_SEPARATOR; // wxString
-    UNIT_NAME = row.UNIT_NAME; // wxString
-    CENT_NAME = row.CENT_NAME; // wxString
-    SCALE = row.SCALE; // int64
-    BASECONVRATE = row.BASECONVRATE; // double
-    CURRENCY_SYMBOL = row.CURRENCY_SYMBOL; // wxString
-    CURRENCY_TYPE = row.CURRENCY_TYPE; // wxString
-
-    return *this;
-}
-
-CurrencyData& CurrencyData::operator= (const CurrencyData& other)
-{
-    if (this == &other) return *this;
-
-    CURRENCYID = other.CURRENCYID;
-    CURRENCYNAME = other.CURRENCYNAME;
-    PFX_SYMBOL = other.PFX_SYMBOL;
-    SFX_SYMBOL = other.SFX_SYMBOL;
-    DECIMAL_POINT = other.DECIMAL_POINT;
-    GROUP_SEPARATOR = other.GROUP_SEPARATOR;
-    UNIT_NAME = other.UNIT_NAME;
-    CENT_NAME = other.CENT_NAME;
-    SCALE = other.SCALE;
-    BASECONVRATE = other.BASECONVRATE;
-    CURRENCY_SYMBOL = other.CURRENCY_SYMBOL;
-    CURRENCY_TYPE = other.CURRENCY_TYPE;
+    m_id              = row.CURRENCYID;                  // int64
+    m_symbol          = row.CURRENCY_SYMBOL;             // wxString
+    m_name            = row.CURRENCYNAME;                // wxString
+    m_type            = CurrencyType(row.CURRENCY_TYPE); // wxString
+    m_prefix_symbol   = row.PFX_SYMBOL;                  // wxString
+    m_suffix_symbol   = row.SFX_SYMBOL;                  // wxString
+    m_decimal_point   = row.DECIMAL_POINT;               // wxString
+    m_group_separator = row.GROUP_SEPARATOR;             // wxString
+    m_unit_name       = row.UNIT_NAME;                   // wxString
+    m_cent_name       = row.CENT_NAME;                   // wxString
+    m_scale           = row.SCALE;                       // int64
+    m_base_conv_rate  = row.BASECONVRATE;                // double
 
     return *this;
 }
 
 bool CurrencyData::equals(const CurrencyData* other) const
 {
-    if ( CURRENCYID != other->CURRENCYID) return false;
-    if (!CURRENCYNAME.IsSameAs(other->CURRENCYNAME)) return false;
-    if (!PFX_SYMBOL.IsSameAs(other->PFX_SYMBOL)) return false;
-    if (!SFX_SYMBOL.IsSameAs(other->SFX_SYMBOL)) return false;
-    if (!DECIMAL_POINT.IsSameAs(other->DECIMAL_POINT)) return false;
-    if (!GROUP_SEPARATOR.IsSameAs(other->GROUP_SEPARATOR)) return false;
-    if (!UNIT_NAME.IsSameAs(other->UNIT_NAME)) return false;
-    if (!CENT_NAME.IsSameAs(other->CENT_NAME)) return false;
-    if ( SCALE != other->SCALE) return false;
-    if ( BASECONVRATE != other->BASECONVRATE) return false;
-    if (!CURRENCY_SYMBOL.IsSameAs(other->CURRENCY_SYMBOL)) return false;
-    if (!CURRENCY_TYPE.IsSameAs(other->CURRENCY_TYPE)) return false;
+    if ( m_id != other->m_id) return false;
+    if (!m_symbol.IsSameAs(other->m_symbol)) return false;
+    if (!m_name.IsSameAs(other->m_name)) return false;
+    if ( m_type.id() != other->m_type.id()) return false;
+    if (!m_prefix_symbol.IsSameAs(other->m_prefix_symbol)) return false;
+    if (!m_suffix_symbol.IsSameAs(other->m_suffix_symbol)) return false;
+    if (!m_decimal_point.IsSameAs(other->m_decimal_point)) return false;
+    if (!m_group_separator.IsSameAs(other->m_group_separator)) return false;
+    if (!m_unit_name.IsSameAs(other->m_unit_name)) return false;
+    if (!m_cent_name.IsSameAs(other->m_cent_name)) return false;
+    if ( m_scale != other->m_scale) return false;
+    if ( m_base_conv_rate != other->m_base_conv_rate) return false;
 
     return true;
 }

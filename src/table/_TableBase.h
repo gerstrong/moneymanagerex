@@ -69,11 +69,11 @@ public:
     TableBase(): m_db(0), m_ticks(0) {};
     virtual ~TableBase() {};
 
-    void Begin() { m_db->Begin(); }
-    void Commit() { m_db->Commit(); }
-    void Savepoint(const wxString name = "MMEX") { m_db->Savepoint(name); }
-    void ReleaseSavepoint(const wxString name = "MMEX") { m_db->ReleaseSavepoint(name); }
-    void Rollback(const wxString name = "MMEX") { m_db->Rollback(name); }
+    void db_begin() { m_db->Begin(); }
+    void db_commit() { m_db->Commit(); }
+    void db_savepoint(const wxString name = "MMEX") { m_db->Savepoint(name); }
+    void db_release_savepoint(const wxString name = "MMEX") { m_db->ReleaseSavepoint(name); }
+    void db_rollback(const wxString name = "MMEX") { m_db->Rollback(name); }
 
     bool ensure_table();
     void drop_table();

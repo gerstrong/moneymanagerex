@@ -53,19 +53,6 @@ AttachmentData& AttachmentData::from_row(const AttachmentRow& row)
     return *this;
 }
 
-AttachmentData& AttachmentData::operator= (const AttachmentData& other)
-{
-    if (this == &other) return *this;
-
-    ATTACHMENTID = other.ATTACHMENTID;
-    REFTYPE = other.REFTYPE;
-    REFID = other.REFID;
-    DESCRIPTION = other.DESCRIPTION;
-    FILENAME = other.FILENAME;
-
-    return *this;
-}
-
 bool AttachmentData::equals(const AttachmentData* other) const
 {
     if ( ATTACHMENTID != other->ATTACHMENTID) return false;

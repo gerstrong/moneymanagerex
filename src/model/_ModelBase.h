@@ -27,7 +27,7 @@ Copyright (C) 2018 Stefano Giorgio (stef145g)
 #include <wx/log.h>
 
 #include "util/mmSingleton.h"
-#include "util/_choices.h"
+#include "util/mmChoice.h"
 
 #include "table/_TableFactory.h"
 
@@ -69,7 +69,7 @@ public:
         REFTYPE_ID_size
     };
 
-    static ChoicesName REFTYPE_CHOICES;
+    static mmChoiceNameA REFTYPE_CHOICES;
     static const wxString REFTYPE_NAME_TRANSACTION;
     static const wxString REFTYPE_NAME_STOCK;
     static const wxString REFTYPE_NAME_ASSET;
@@ -79,27 +79,18 @@ public:
     static const wxString REFTYPE_NAME_TRANSACTIONSPLIT;
     static const wxString REFTYPE_NAME_BILLSDEPOSITSPLIT;
     static const wxString reftype_name(int id);
-    static int reftype_id(const wxString& name, int default_id = -1);
+    static int reftype_id(const wxString& name);
 
 public:
     ModelBase() {};
     ~ModelBase() {};
 };
 
-template<typename TableType, typename DataType>
-class Model : public TableFactory<TableType, DataType>
-{
-public:
-    //using Data  = typename TableType::Data;
-    //using DataA = typename TableType::DataA;
-};
-
 inline const wxString ModelBase::reftype_name(int id)
 {
-    return REFTYPE_CHOICES.getName(id);
+    return REFTYPE_CHOICES.get_name(id);
 }
-
-inline int ModelBase::reftype_id(const wxString& name, int default_id)
+inline int ModelBase::reftype_id(const wxString& name)
 {
-    return REFTYPE_CHOICES.findName(name, default_id);
+    return REFTYPE_CHOICES.find_name_n(name);
 }

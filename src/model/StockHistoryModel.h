@@ -25,7 +25,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "_ModelBase.h"
 
-class StockHistoryModel : public Model<StockHistoryTable, StockHistoryData>
+class StockHistoryModel : public TableFactory<StockHistoryTable, StockHistoryData>
 {
 public:
     enum UPDTYPE { ONLINE = 1, MANUAL };

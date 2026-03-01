@@ -27,7 +27,7 @@
 
 #include "_ModelBase.h"
 
-class SettingModel : public Model<SettingTable, SettingData>
+class SettingModel : public TableFactory<SettingTable, SettingData>
 {
 public:
     SettingModel();

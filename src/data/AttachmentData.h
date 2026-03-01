@@ -62,7 +62,6 @@ struct AttachmentData
     void to_html_template(html_template& t) const;
     void destroy() { delete this; }
 
-    AttachmentData& operator= (const AttachmentData& other);
     AttachmentData& clone_from(const AttachmentData& other);
     bool equals(const AttachmentData* other) const;
     bool operator< (const AttachmentData& other) const { return id() < other.id(); }
@@ -109,7 +108,8 @@ struct AttachmentData
     };
 };
 
-inline AttachmentData::AttachmentData(wxSQLite3ResultSet& q)
+inline AttachmentData::AttachmentData(wxSQLite3ResultSet& q) :
+    AttachmentData()
 {
     from_select_result(q);
 }

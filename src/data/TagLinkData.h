@@ -61,7 +61,6 @@ struct TagLinkData
     void to_html_template(html_template& t) const;
     void destroy() { delete this; }
 
-    TagLinkData& operator= (const TagLinkData& other);
     TagLinkData& clone_from(const TagLinkData& other);
     bool equals(const TagLinkData* other) const;
     bool operator< (const TagLinkData& other) const { return id() < other.id(); }
@@ -100,7 +99,8 @@ struct TagLinkData
     };
 };
 
-inline TagLinkData::TagLinkData(wxSQLite3ResultSet& q)
+inline TagLinkData::TagLinkData(wxSQLite3ResultSet& q) :
+    TagLinkData()
 {
     from_select_result(q);
 }

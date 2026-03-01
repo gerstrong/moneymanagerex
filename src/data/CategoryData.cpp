@@ -16,16 +16,13 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  ********************************************************/
 
-// PLEASE EDIT!
-// This is only sample code re-used from "table/CategoryTable.cpp".
-
 #include "CategoryData.h"
 
 CategoryData::CategoryData()
 {
-    CATEGID = -1;
-    ACTIVE = -1;
-    PARENTID = -1;
+    m_id          = -1;
+    m_parent_id_n = -1;
+    m_active      = true;
 }
 
 // Convert CategoryData to CategoryRow
@@ -33,10 +30,10 @@ CategoryRow CategoryData::to_row() const
 {
     CategoryRow row;
 
-    row.CATEGID = CATEGID;
-    row.CATEGNAME = CATEGNAME;
-    row.ACTIVE = ACTIVE;
-    row.PARENTID = PARENTID;
+    row.CATEGID   = m_id;
+    row.CATEGNAME = m_name;
+    row.ACTIVE    = (m_active ? 1 : 0);
+    row.PARENTID  = m_parent_id_n;
 
     return row;
 }
@@ -44,32 +41,20 @@ CategoryRow CategoryData::to_row() const
 // Convert CategoryRow to CategoryData
 CategoryData& CategoryData::from_row(const CategoryRow& row)
 {
-    CATEGID = row.CATEGID; // int64
-    CATEGNAME = row.CATEGNAME; // wxString
-    ACTIVE = row.ACTIVE; // int64
-    PARENTID = row.PARENTID; // int64
-
-    return *this;
-}
-
-CategoryData& CategoryData::operator= (const CategoryData& other)
-{
-    if (this == &other) return *this;
-
-    CATEGID = other.CATEGID;
-    CATEGNAME = other.CATEGNAME;
-    ACTIVE = other.ACTIVE;
-    PARENTID = other.PARENTID;
+    m_id          = row.CATEGID;       // int64
+    m_name        = row.CATEGNAME;     // wxString
+    m_active      = (row.ACTIVE != 0); // int64
+    m_parent_id_n = row.PARENTID;      // int64
 
     return *this;
 }
 
 bool CategoryData::equals(const CategoryData* other) const
 {
-    if ( CATEGID != other->CATEGID) return false;
-    if (!CATEGNAME.IsSameAs(other->CATEGNAME)) return false;
-    if ( ACTIVE != other->ACTIVE) return false;
-    if ( PARENTID != other->PARENTID) return false;
+    if ( m_id != other->m_id) return false;
+    if (!m_name.IsSameAs(other->m_name)) return false;
+    if ( m_active != other->m_active) return false;
+    if ( m_parent_id_n != other->m_parent_id_n) return false;
 
     return true;
 }

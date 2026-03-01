@@ -16,18 +16,16 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  ********************************************************/
 
-// PLEASE EDIT!
-// This is only sample code re-used from "table/BudgetTable.cpp".
-
 #include "BudgetData.h"
 
 BudgetData::BudgetData()
 {
-    BUDGETENTRYID = -1;
-    BUDGETYEARID = -1;
-    CATEGID = -1;
-    AMOUNT = 0.0;
-    ACTIVE = -1;
+    m_id          = -1;
+    m_period_id   = -1;
+    m_category_id = -1;
+    m_frequency   = BudgetFrequency();
+    m_amount      = 0.0;
+    m_active      = true;
 }
 
 // Convert BudgetData to BudgetRow
@@ -35,13 +33,13 @@ BudgetRow BudgetData::to_row() const
 {
     BudgetRow row;
 
-    row.BUDGETENTRYID = BUDGETENTRYID;
-    row.BUDGETYEARID = BUDGETYEARID;
-    row.CATEGID = CATEGID;
-    row.PERIOD = PERIOD;
-    row.AMOUNT = AMOUNT;
-    row.NOTES = NOTES;
-    row.ACTIVE = ACTIVE;
+    row.BUDGETENTRYID = m_id;
+    row.BUDGETYEARID  = m_period_id;
+    row.CATEGID       = m_category_id;
+    row.PERIOD        = m_frequency.name();
+    row.AMOUNT        = m_amount;
+    row.NOTES         = m_notes;
+    row.ACTIVE        = (m_active ? 1 : 0);
 
     return row;
 }
@@ -49,41 +47,26 @@ BudgetRow BudgetData::to_row() const
 // Convert BudgetRow to BudgetData
 BudgetData& BudgetData::from_row(const BudgetRow& row)
 {
-    BUDGETENTRYID = row.BUDGETENTRYID; // int64
-    BUDGETYEARID = row.BUDGETYEARID; // int64
-    CATEGID = row.CATEGID; // int64
-    PERIOD = row.PERIOD; // wxString
-    AMOUNT = row.AMOUNT; // double
-    NOTES = row.NOTES; // wxString
-    ACTIVE = row.ACTIVE; // int64
-
-    return *this;
-}
-
-BudgetData& BudgetData::operator= (const BudgetData& other)
-{
-    if (this == &other) return *this;
-
-    BUDGETENTRYID = other.BUDGETENTRYID;
-    BUDGETYEARID = other.BUDGETYEARID;
-    CATEGID = other.CATEGID;
-    PERIOD = other.PERIOD;
-    AMOUNT = other.AMOUNT;
-    NOTES = other.NOTES;
-    ACTIVE = other.ACTIVE;
+    m_id          = row.BUDGETENTRYID;           // int64
+    m_period_id   = row.BUDGETYEARID;            // int64
+    m_category_id = row.CATEGID;                 // int64
+    m_frequency   = BudgetFrequency(row.PERIOD); // wxString
+    m_amount      = row.AMOUNT;                  // double
+    m_notes       = row.NOTES;                   // wxString
+    m_active      = (row.ACTIVE != 0);           // int64
 
     return *this;
 }
 
 bool BudgetData::equals(const BudgetData* other) const
 {
-    if ( BUDGETENTRYID != other->BUDGETENTRYID) return false;
-    if ( BUDGETYEARID != other->BUDGETYEARID) return false;
-    if ( CATEGID != other->CATEGID) return false;
-    if (!PERIOD.IsSameAs(other->PERIOD)) return false;
-    if ( AMOUNT != other->AMOUNT) return false;
-    if (!NOTES.IsSameAs(other->NOTES)) return false;
-    if ( ACTIVE != other->ACTIVE) return false;
+    if ( m_id             != other->m_id)             return false;
+    if ( m_period_id      != other->m_period_id)      return false;
+    if ( m_category_id    != other->m_category_id)    return false;
+    if ( m_frequency.id() != other->m_frequency.id()) return false;
+    if ( m_amount         != other->m_amount)         return false;
+    if (!m_notes.IsSameAs(   other->m_notes))         return false;
+    if ( m_active         != other->m_active)         return false;
 
     return true;
 }

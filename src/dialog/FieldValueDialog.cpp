@@ -56,7 +56,7 @@ FieldValueDialog::FieldValueDialog(wxDialog* dialog, const wxString& ref_type, i
 
 mmCustomDataTransaction::mmCustomDataTransaction(wxDialog* dialog, int64 ref_id, wxWindowID base_id)
     : FieldValueDialog(dialog
-        , TransactionModel::refTypeName
+        , TrxModel::refTypeName
         , ref_id)
 {
     SetBaseID(base_id);
@@ -273,7 +273,7 @@ bool FieldValueDialog::FillCustomFields(wxBoxSizer* box_sizer)
     scrolled_window->FitInside();
     scrolled_window->SetScrollRate(6, 6);
     box_sizer_right->Add(scrolled_window, g_flagsExpand);
-    const TransactionData* ref_trx_n = TransactionModel::instance().get_data_n(m_ref_id);
+    const TrxData* ref_trx_n = TrxModel::instance().get_id_data_n(m_ref_id);
     if (ref_trx_n && !ref_trx_n->DELETEDTIME.IsEmpty()) scrolled_window->Disable();
     m_static_box->Hide();
     mmThemeAutoColour(scrolled_window);
@@ -341,7 +341,7 @@ std::map<int64, wxString> FieldValueDialog::GetActiveCustomFields() const
     std::map<int64, wxString> values;
     for (const auto& entry : m_data_changed) {
         int id = (entry.first - GetBaseID()) / FIELDMULTIPLIER;
-        const FieldData* data_n = FieldModel::instance().get_data_n(m_fields[id].FIELDID);
+        const FieldData* data_n = FieldModel::instance().get_id_data_n(m_fields[id].FIELDID);
         if (data_n) {
             values[data_n->FIELDID] = entry.second;
         }
@@ -475,8 +475,8 @@ const wxString FieldValueDialog::GetWidgetData(wxWindowID controlID) const
 
 bool FieldValueDialog::SaveCustomValues(int64 ref_id)
 {
-    bool updateTimestamp = false;
-    FieldValueModel::instance().Savepoint();
+    bool save_timestamp = false;
+    FieldValueModel::instance().db_savepoint();
     int field_index = 0;
     for (const auto &field : m_fields) {
         wxWindowID controlID = GetBaseID() + field_index++ * FIELDMULTIPLIER;
@@ -498,28 +498,28 @@ bool FieldValueDialog::SaveCustomValues(int64 ref_id)
             );
 
             if (!fv_d.equals(&oldData))
-                updateTimestamp = true;
+                save_timestamp = true;
 
             FieldValueModel::instance().save_data_n(fv_d);
         }
         else if (fv_n) {
-            FieldValueModel::instance().remove_depen(fv_n->FIELDATADID);
-            updateTimestamp = true;
+            FieldValueModel::instance().purge_id(fv_n->FIELDATADID);
+            save_timestamp = true;
         }
     }
 
-    FieldValueModel::instance().ReleaseSavepoint();
+    FieldValueModel::instance().db_release_savepoint();
 
-    if (updateTimestamp && m_ref_type == TransactionModel::refTypeName)
-        TransactionModel::instance().updateTimestamp(ref_id);        
+    if (save_timestamp && m_ref_type == TrxModel::refTypeName)
+        TrxModel::instance().save_timestamp(ref_id);        
 
     return true;
 }
 
 void FieldValueDialog::UpdateCustomValues(int64 ref_id)
 {
-    FieldValueModel::instance().Savepoint();
-    bool updateTimestamp = false;
+    FieldValueModel::instance().db_savepoint();
+    bool save_timestamp = false;
     int field_index = 0;
     for (const auto& field : m_fields) {
         bool is_changed = false;
@@ -544,21 +544,21 @@ void FieldValueDialog::UpdateCustomValues(int64 ref_id)
                 fv_d.CONTENT = data;
 
                 if (!fv_d.equals(&oldData))
-                    updateTimestamp = true;
+                    save_timestamp = true;
 
                 FieldValueModel::instance().save_data_n(fv_d);
             }
             else if (fv_n) {
-                FieldValueModel::instance().remove_depen(fv_n->FIELDATADID);
-                updateTimestamp = true;
+                FieldValueModel::instance().purge_id(fv_n->FIELDATADID);
+                save_timestamp = true;
             }
         }
     }
 
-    FieldValueModel::instance().ReleaseSavepoint();
+    FieldValueModel::instance().db_release_savepoint();
 
-    if (updateTimestamp && m_ref_type == TransactionModel::refTypeName)
-        TransactionModel::instance().updateTimestamp(ref_id);        
+    if (save_timestamp && m_ref_type == TrxModel::refTypeName)
+        TrxModel::instance().save_timestamp(ref_id);        
 }
 
 void FieldValueDialog::OnStringChanged(wxCommandEvent& event)
@@ -709,7 +709,7 @@ void FieldValueDialog::SetWidgetChanged(wxWindowID id, const wxString& data)
     }
 }
 
-bool FieldValueDialog::IsDataFound(const TransactionModel::Full_Data &tran)
+bool FieldValueDialog::IsDataFound(const TrxModel::Full_Data &tran)
 {
     const auto& data_set = FieldValueModel::instance().find(
         FieldValueCol::REFID(tran.TRANSID)

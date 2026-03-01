@@ -16,17 +16,14 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  ********************************************************/
 
-// PLEASE EDIT!
-// This is only sample code re-used from "table/CurrencyHistoryTable.cpp".
-
 #include "CurrencyHistoryData.h"
 
 CurrencyHistoryData::CurrencyHistoryData()
 {
-    CURRHISTID = -1;
-    CURRENCYID = -1;
-    CURRVALUE = 0.0;
-    CURRUPDTYPE = -1;
+    m_id             = -1;
+    m_currency_id    = -1;
+    m_base_conv_rate = 0.0;
+    m_update_type_   = -1;
 }
 
 // Convert CurrencyHistoryData to CurrencyHistoryRow
@@ -34,11 +31,11 @@ CurrencyHistoryRow CurrencyHistoryData::to_row() const
 {
     CurrencyHistoryRow row;
 
-    row.CURRHISTID = CURRHISTID;
-    row.CURRENCYID = CURRENCYID;
-    row.CURRDATE = CURRDATE;
-    row.CURRVALUE = CURRVALUE;
-    row.CURRUPDTYPE = CURRUPDTYPE;
+    row.CURRHISTID  = m_id;
+    row.CURRENCYID  = m_currency_id;
+    row.CURRDATE    = m_date;
+    row.CURRVALUE   = m_base_conv_rate;
+    row.CURRUPDTYPE = m_update_type_;
 
     return row;
 }
@@ -46,35 +43,22 @@ CurrencyHistoryRow CurrencyHistoryData::to_row() const
 // Convert CurrencyHistoryRow to CurrencyHistoryData
 CurrencyHistoryData& CurrencyHistoryData::from_row(const CurrencyHistoryRow& row)
 {
-    CURRHISTID = row.CURRHISTID; // int64
-    CURRENCYID = row.CURRENCYID; // int64
-    CURRDATE = row.CURRDATE; // wxString
-    CURRVALUE = row.CURRVALUE; // double
-    CURRUPDTYPE = row.CURRUPDTYPE; // int64
-
-    return *this;
-}
-
-CurrencyHistoryData& CurrencyHistoryData::operator= (const CurrencyHistoryData& other)
-{
-    if (this == &other) return *this;
-
-    CURRHISTID = other.CURRHISTID;
-    CURRENCYID = other.CURRENCYID;
-    CURRDATE = other.CURRDATE;
-    CURRVALUE = other.CURRVALUE;
-    CURRUPDTYPE = other.CURRUPDTYPE;
+    m_id             = row.CURRHISTID;  // int64
+    m_currency_id    = row.CURRENCYID;  // int64
+    m_date           = row.CURRDATE;    // wxString
+    m_base_conv_rate = row.CURRVALUE;   // double
+    m_update_type_   = row.CURRUPDTYPE; // int64
 
     return *this;
 }
 
 bool CurrencyHistoryData::equals(const CurrencyHistoryData* other) const
 {
-    if ( CURRHISTID != other->CURRHISTID) return false;
-    if ( CURRENCYID != other->CURRENCYID) return false;
-    if (!CURRDATE.IsSameAs(other->CURRDATE)) return false;
-    if ( CURRVALUE != other->CURRVALUE) return false;
-    if ( CURRUPDTYPE != other->CURRUPDTYPE) return false;
+    if ( m_id != other->m_id) return false;
+    if ( m_currency_id != other->m_currency_id) return false;
+    if (!m_date.IsSameAs(other->m_date)) return false;
+    if ( m_base_conv_rate != other->m_base_conv_rate) return false;
+    if ( m_update_type_ != other->m_update_type_) return false;
 
     return true;
 }

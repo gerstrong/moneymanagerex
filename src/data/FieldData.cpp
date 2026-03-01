@@ -52,19 +52,6 @@ FieldData& FieldData::from_row(const FieldRow& row)
     return *this;
 }
 
-FieldData& FieldData::operator= (const FieldData& other)
-{
-    if (this == &other) return *this;
-
-    FIELDID = other.FIELDID;
-    REFTYPE = other.REFTYPE;
-    DESCRIPTION = other.DESCRIPTION;
-    TYPE = other.TYPE;
-    PROPERTIES = other.PROPERTIES;
-
-    return *this;
-}
-
 bool FieldData::equals(const FieldData* other) const
 {
     if ( FIELDID != other->FIELDID) return false;

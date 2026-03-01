@@ -33,7 +33,7 @@
 
 #include "model/CurrencyModel.h"
 #include "model/CurrencyHistoryModel.h"
-#include "model/PreferencesModel.h"
+#include "model/PrefModel.h"
 
 #include "CurrencyManager.h"
 
@@ -63,26 +63,23 @@ CurrencyManager::CurrencyManager(wxWindow* parent, const CurrencyData* currency)
     if (currency) {
         m_currency_d.clone_from(*currency);
         m_currency_n = &m_currency_d;
-        m_currency_n->CURRENCYID = currency->CURRENCYID;
-        m_currency_n->BASECONVRATE = CurrencyHistoryModel::getLastRate(m_currency_n->CURRENCYID);
+        m_currency_n->m_id             = currency->m_id;
+        m_currency_n->m_base_conv_rate = CurrencyHistoryModel::getLastRate(m_currency_n->m_id);
     }
     else {
         m_currency_d = CurrencyData();
         m_currency_n = &m_currency_d;
-        m_currency_n->BASECONVRATE = 1;
-        m_currency_n->SCALE = 100;
-        m_currency_n->DECIMAL_POINT = ".";
-        m_currency_n->GROUP_SEPARATOR = ",";
-        m_currency_n->CURRENCY_TYPE = CurrencyModel::TYPE_NAME_FIAT;
+        m_currency_n->m_base_conv_rate  = 1;
+        m_currency_n->m_scale           = 100;
+        m_currency_n->m_decimal_point   = ".";
+        m_currency_n->m_group_separator = ",";
     }
 
     // Check if locale will be used in preference
     const wxString locale = InfoModel::instance().getString("LOCALE", "");
     m_locale_used = false;
-    if (!locale.empty())
-    {
-        try {
-            fmt::format(std::locale(locale.c_str()), "{:L}", 123);
+    if (!locale.empty()) {
+        try { fmt::format(std::locale(locale.c_str()), "{:L}", 123);
             m_locale_used = true;
         }
         catch (...) {
@@ -140,39 +137,39 @@ void CurrencyManager::fillControls()
         return;
     }
 
-    w_name->ChangeValue(m_currency_n->CURRENCYNAME);
-    w_code->ChangeValue(m_currency_n->CURRENCY_SYMBOL);
+    w_name->ChangeValue(m_currency_n->m_name);
+    w_code->ChangeValue(m_currency_n->m_symbol);
 
-    if (m_currency_n->PFX_SYMBOL.IsEmpty()) {
+    if (m_currency_n->m_prefix_symbol.IsEmpty()) {
         w_suffix->SetValue(true);
-        w_symbol->ChangeValue(m_currency_n->SFX_SYMBOL);
+        w_symbol->ChangeValue(m_currency_n->m_suffix_symbol);
     }
     else {
         w_prefix->SetValue(true);
-        w_symbol->ChangeValue(m_currency_n->PFX_SYMBOL);
+        w_symbol->ChangeValue(m_currency_n->m_prefix_symbol);
     }
     unsigned int i;
     for (i = 0; i<w_decimalSep->GetCount(); i++)
         if (static_cast<wxStringClientData *>(w_decimalSep->GetClientObject(i))->GetData()
-            == m_currency_n->DECIMAL_POINT
+            == m_currency_n->m_decimal_point
         )
             break;
     w_decimalSep->SetSelection(i);
     for (i = 0; i<w_groupSep->GetCount(); i++)
         if (static_cast<wxStringClientData *>(w_groupSep->GetClientObject(i))->GetData()
-            == m_currency_n->GROUP_SEPARATOR
+            == m_currency_n->m_group_separator
         )
             break;
     w_groupSep->SetSelection(i);
-    m_scale = log10(m_currency_n->SCALE.GetValue());
+    m_scale = log10(m_currency_n->m_scale.GetValue());
     w_decimalSep->Enable(!m_locale_used && m_scale > 0); 
     w_groupSep->Enable(!m_locale_used); 
     const wxString& scale_value = wxString::Format("%i", m_scale);
     w_scale->ChangeValue(scale_value);
-    w_code->ChangeValue(m_currency_n->CURRENCY_SYMBOL);
+    w_code->ChangeValue(m_currency_n->m_symbol);
 
-    bool baseCurrency = (PreferencesModel::instance().getBaseCurrencyID() == m_currency_n->CURRENCYID);
-    w_baseConvRate->SetValue((baseCurrency ? 1.00 : m_currency_n->BASECONVRATE), SCALE);
+    bool baseCurrency = (PrefModel::instance().getBaseCurrencyID() == m_currency_n->m_id);
+    w_baseConvRate->SetValue((baseCurrency ? 1.00 : m_currency_n->m_base_conv_rate), SCALE);
     w_baseConvRate->Enable(!baseCurrency);
 }
 
@@ -237,7 +234,7 @@ void CurrencyManager::CreateControls()
         , wxCommandEventHandler(CurrencyManager::OnTextEntered), nullptr, this);
     w_baseConvRate->SetAltPrecision(SCALE);
     wxString ConvRateTooltip = wxEmptyString;
-    if (PreferencesModel::instance().getUseCurrencyHistory())
+    if (PrefModel::instance().getUseCurrencyHistory())
         ConvRateTooltip = _t("Conversion rate will be used in case no currency history has been found for the currency");
     else
         ConvRateTooltip = _t("Fixed conversion rate");
@@ -279,18 +276,18 @@ void CurrencyManager::OnOk(wxCommandEvent& WXUNUSED(event))
     const auto currency_code = CurrencyModel::instance().find(
         CurrencyCol::CURRENCY_SYMBOL(code)
     );
-    if (!currency_code.empty() && m_currency_n->CURRENCYID == -1)
+    if (!currency_code.empty() && m_currency_n->m_id == -1)
         return mmErrorDialogs::InvalidSymbol(w_code, true);
 
-    if (m_currency_n->SCALE > 1)
-        if (m_currency_n->GROUP_SEPARATOR == m_currency_n->DECIMAL_POINT) {
+    if (m_currency_n->m_scale > 1)
+        if (m_currency_n->m_group_separator == m_currency_n->m_decimal_point) {
             return mmErrorDialogs::ToolTip4Object(w_groupSep, _t("Invalid Entry")
                         , _t("Grouping character is unable to be the same as the decimal character"));
         }
 
     if (w_baseConvRate->Calculate(SCALE))
-        w_baseConvRate->GetDouble(m_currency_n->BASECONVRATE);
-    if (!w_baseConvRate->checkValue(m_currency_n->BASECONVRATE))
+        w_baseConvRate->GetDouble(m_currency_n->m_base_conv_rate);
+    if (!w_baseConvRate->checkValue(m_currency_n->m_base_conv_rate))
         return mmErrorDialogs::ToolTip4Object(w_baseConvRate, _t("Invalid Entry"), _t("Conversion to Base Rate"));;
 
     CurrencyModel::instance().unsafe_save_data_n(m_currency_n);
@@ -316,18 +313,18 @@ void CurrencyManager::OnDataChanged(wxCommandEvent& WXUNUSED(event))
 
     if (w_prefix->GetValue())
     {
-        m_currency_n->PFX_SYMBOL = w_symbol->GetValue();
-        m_currency_n->SFX_SYMBOL = "";
+        m_currency_n->m_prefix_symbol = w_symbol->GetValue();
+        m_currency_n->m_suffix_symbol = "";
     } else
     {
-        m_currency_n->PFX_SYMBOL = "";
-        m_currency_n->SFX_SYMBOL = w_symbol->GetValue();  
+        m_currency_n->m_prefix_symbol = "";
+        m_currency_n->m_suffix_symbol = w_symbol->GetValue();  
     } 
-    m_currency_n->DECIMAL_POINT = decimal;
-    m_currency_n->GROUP_SEPARATOR = grouping;
-    m_currency_n->SCALE = pow10(scale);
-    m_currency_n->CURRENCY_SYMBOL = w_code->GetValue().Trim();
-    m_currency_n->CURRENCYNAME = w_name->GetValue();
+    m_currency_n->m_decimal_point = decimal;
+    m_currency_n->m_group_separator = grouping;
+    m_currency_n->m_scale = pow10(scale);
+    m_currency_n->m_symbol = w_code->GetValue().Trim();
+    m_currency_n->m_name = w_name->GetValue();
 
     wxString dispAmount = "";
     double base_amount = 1234567.89;
@@ -341,5 +338,5 @@ void CurrencyManager::OnDataChanged(wxCommandEvent& WXUNUSED(event))
 void CurrencyManager::OnTextEntered(wxCommandEvent& WXUNUSED(event))
 {
     if (w_baseConvRate->Calculate(SCALE))
-        w_baseConvRate->GetDouble(m_currency_n->BASECONVRATE);
+        w_baseConvRate->GetDouble(m_currency_n->m_base_conv_rate);
 }

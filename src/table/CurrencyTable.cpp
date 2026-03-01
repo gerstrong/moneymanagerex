@@ -1,4 +1,4 @@
-﻿// -*- C++ -*-
+// -*- C++ -*-
 //=============================================================================
 /**
  *      Copyright: (c) 2013-2026 Guan Lisheng (guanlisheng@gmail.com)
@@ -13,7 +13,7 @@
  *      @author [sqlite2cpp.py]
  *
  *      Revision History:
- *          AUTO GENERATED at 2026-02-23 02:42:42.918296.
+ *          AUTO GENERATED at 2026-02-25 08:58:12.230056.
  *          DO NOT EDIT!
  */
 //=============================================================================
@@ -174,26 +174,6 @@ void CurrencyRow::to_html_template(html_template& t) const
     t(L"BASECONVRATE") = BASECONVRATE;
     t(L"CURRENCY_SYMBOL") = CURRENCY_SYMBOL;
     t(L"CURRENCY_TYPE") = CURRENCY_TYPE;
-}
-
-CurrencyRow& CurrencyRow::operator= (const CurrencyRow& other)
-{
-    if (this == &other) return *this;
-
-    CURRENCYID = other.CURRENCYID;
-    CURRENCYNAME = other.CURRENCYNAME;
-    PFX_SYMBOL = other.PFX_SYMBOL;
-    SFX_SYMBOL = other.SFX_SYMBOL;
-    DECIMAL_POINT = other.DECIMAL_POINT;
-    GROUP_SEPARATOR = other.GROUP_SEPARATOR;
-    UNIT_NAME = other.UNIT_NAME;
-    CENT_NAME = other.CENT_NAME;
-    SCALE = other.SCALE;
-    BASECONVRATE = other.BASECONVRATE;
-    CURRENCY_SYMBOL = other.CURRENCY_SYMBOL;
-    CURRENCY_TYPE = other.CURRENCY_TYPE;
-
-    return *this;
 }
 
 bool CurrencyRow::equals(const CurrencyRow* other) const

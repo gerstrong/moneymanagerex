@@ -21,9 +21,9 @@
 
 #include "FieldModel.h"
 #include "FieldValueModel.h"
-#include "TransactionModel.h"
+#include "TrxModel.h"
 
-ChoicesName FieldModel::TYPE_CHOICES = ChoicesName({
+mmChoiceNameA FieldModel::TYPE_CHOICES = mmChoiceNameA({
     { TYPE_ID_STRING,       _n("String") },
     { TYPE_ID_INTEGER,      _n("Integer") },
     { TYPE_ID_DECIMAL,      _n("Decimal") },
@@ -32,10 +32,10 @@ ChoicesName FieldModel::TYPE_CHOICES = ChoicesName({
     { TYPE_ID_TIME,         _n("Time") },
     { TYPE_ID_SINGLECHOICE, _n("SingleChoice") },
     { TYPE_ID_MULTICHOICE,  _n("MultiChoice") }
-});
+}, -1, true);
 
 FieldModel::FieldModel() :
-    Model<FieldTable, FieldData>()
+    TableFactory<FieldTable, FieldData>()
 {
 }
 
@@ -78,11 +78,11 @@ FieldModel& FieldModel::instance()
 /** Delete a field and all his data */
 bool FieldModel::Delete(const int64& FieldID)
 {
-    Savepoint();
+    db_savepoint();
     for (const auto& r : FieldValueModel::instance().find(FieldValueCol::FIELDID(FieldID)))
-        FieldValueModel::instance().remove_depen(r.id());
-    ReleaseSavepoint();
-    return remove_data(FieldID);
+        FieldValueModel::instance().purge_id(r.id());
+    db_release_savepoint();
+    return unsafe_remove_id(FieldID);
 }
 
 const wxString FieldModel::getTooltip(const wxString& properties)
@@ -278,7 +278,7 @@ const wxArrayString FieldModel::UDFC_FIELDS()
 
 const wxArrayString FieldModel::getUDFCList(const FieldData* r)
 {
-    const wxString& ref_type = TransactionModel::refTypeName;
+    const wxString& ref_type = TrxModel::refTypeName;
     const auto& a = FieldModel::instance().find(FieldCol::REFTYPE(ref_type));
 
     wxArrayString choices = UDFC_FIELDS();

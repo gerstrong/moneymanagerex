@@ -16,48 +16,34 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  ********************************************************/
 
-// PLEASE EDIT!
-//
-// This is only sample code re-used from "table/CurrencyTable.h".
-//
-// The data structure can be refined by:
-// * using more user-frielndly filed name
-// * using stronger field types
-// * adding enumerations for fields with limited choices
-// * demultiplexing composite values in database columns
-//
-// See also an implementation in Swift:
-//   https://github.com/moneymanagerex/mmex-ios/tree/master/MMEX/Data
-// and an implementation in Java:
-//   https://github.com/moneymanagerex/android-money-manager-ex/tree/master/app/src/main/java/com/money/manager/ex/domainmodel
-
 #pragma once
 
+#include "_DataEnum.h"
 #include "table/_TableBase.h"
 #include "table/CurrencyTable.h"
 
 // User-friendly representation of a record in table CURRENCYFORMATS_V1.
 struct CurrencyData
 {
-    int64 CURRENCYID; // primary key
-    wxString CURRENCYNAME;
-    wxString PFX_SYMBOL;
-    wxString SFX_SYMBOL;
-    wxString DECIMAL_POINT;
-    wxString GROUP_SEPARATOR;
-    wxString UNIT_NAME;
-    wxString CENT_NAME;
-    int64 SCALE;
-    double BASECONVRATE;
-    wxString CURRENCY_SYMBOL;
-    wxString CURRENCY_TYPE;
+    int64        m_id;
+    wxString     m_symbol;
+    wxString     m_name;
+    CurrencyType m_type;
+    wxString     m_prefix_symbol;
+    wxString     m_suffix_symbol;
+    wxString     m_decimal_point;
+    wxString     m_group_separator;
+    wxString     m_unit_name;
+    wxString     m_cent_name;
+    int64        m_scale;
+    double       m_base_conv_rate;
 
     explicit CurrencyData();
     explicit CurrencyData(wxSQLite3ResultSet& q);
     CurrencyData(const CurrencyData& other) = default;
 
-    int64 id() const { return CURRENCYID; }
-    void id(const int64 id) { CURRENCYID = id; }
+    int64 id() const { return m_id; }
+    void id(const int64 id) { m_id = id; }
     CurrencyRow to_row() const;
     CurrencyData& from_row(const CurrencyRow& row);
     void to_insert_stmt(wxSQLite3Statement& stmt, int64 id) const;
@@ -69,7 +55,6 @@ struct CurrencyData
     void to_html_template(html_template& t) const;
     void destroy() { delete this; }
 
-    CurrencyData& operator= (const CurrencyData& other);
     CurrencyData& clone_from(const CurrencyData& other);
     bool equals(const CurrencyData* other) const;
     bool operator< (const CurrencyData& other) const { return id() < other.id(); }
@@ -79,7 +64,7 @@ struct CurrencyData
     {
         bool operator()(const CurrencyData& x, const CurrencyData& y)
         {
-            return x.CURRENCYID < y.CURRENCYID;
+            return x.m_id < y.m_id;
         }
     };
 
@@ -87,7 +72,7 @@ struct CurrencyData
     {
         bool operator()(const CurrencyData& x, const CurrencyData& y)
         {
-            return wxGetTranslation(x.CURRENCYNAME) < wxGetTranslation(y.CURRENCYNAME);
+            return wxGetTranslation(x.m_name) < wxGetTranslation(y.m_name);
         }
     };
 
@@ -95,7 +80,7 @@ struct CurrencyData
     {
         bool operator()(const CurrencyData& x, const CurrencyData& y)
         {
-            return x.PFX_SYMBOL < y.PFX_SYMBOL;
+            return x.m_prefix_symbol < y.m_prefix_symbol;
         }
     };
 
@@ -103,7 +88,7 @@ struct CurrencyData
     {
         bool operator()(const CurrencyData& x, const CurrencyData& y)
         {
-            return x.SFX_SYMBOL < y.SFX_SYMBOL;
+            return x.m_suffix_symbol < y.m_suffix_symbol;
         }
     };
 
@@ -111,7 +96,7 @@ struct CurrencyData
     {
         bool operator()(const CurrencyData& x, const CurrencyData& y)
         {
-            return x.DECIMAL_POINT < y.DECIMAL_POINT;
+            return x.m_decimal_point < y.m_decimal_point;
         }
     };
 
@@ -119,7 +104,7 @@ struct CurrencyData
     {
         bool operator()(const CurrencyData& x, const CurrencyData& y)
         {
-            return x.GROUP_SEPARATOR < y.GROUP_SEPARATOR;
+            return x.m_group_separator < y.m_group_separator;
         }
     };
 
@@ -127,7 +112,7 @@ struct CurrencyData
     {
         bool operator()(const CurrencyData& x, const CurrencyData& y)
         {
-            return x.UNIT_NAME < y.UNIT_NAME;
+            return x.m_unit_name < y.m_unit_name;
         }
     };
 
@@ -135,7 +120,7 @@ struct CurrencyData
     {
         bool operator()(const CurrencyData& x, const CurrencyData& y)
         {
-            return x.CENT_NAME < y.CENT_NAME;
+            return x.m_cent_name < y.m_cent_name;
         }
     };
 
@@ -143,7 +128,7 @@ struct CurrencyData
     {
         bool operator()(const CurrencyData& x, const CurrencyData& y)
         {
-            return x.SCALE < y.SCALE;
+            return x.m_scale < y.m_scale;
         }
     };
 
@@ -151,7 +136,7 @@ struct CurrencyData
     {
         bool operator()(const CurrencyData& x, const CurrencyData& y)
         {
-            return x.BASECONVRATE < y.BASECONVRATE;
+            return x.m_base_conv_rate < y.m_base_conv_rate;
         }
     };
 
@@ -159,7 +144,7 @@ struct CurrencyData
     {
         bool operator()(const CurrencyData& x, const CurrencyData& y)
         {
-            return x.CURRENCY_SYMBOL < y.CURRENCY_SYMBOL;
+            return x.m_symbol < y.m_symbol;
         }
     };
 
@@ -167,12 +152,13 @@ struct CurrencyData
     {
         bool operator()(const CurrencyData& x, const CurrencyData& y)
         {
-            return x.CURRENCY_TYPE < y.CURRENCY_TYPE;
+            return x.m_type.id() < y.m_type.id();
         }
     };
 };
 
-inline CurrencyData::CurrencyData(wxSQLite3ResultSet& q)
+inline CurrencyData::CurrencyData(wxSQLite3ResultSet& q) :
+    CurrencyData()
 {
     from_select_result(q);
 }

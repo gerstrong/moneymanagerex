@@ -46,7 +46,7 @@ wxEND_EVENT_TABLE()
 
 FieldDialog::FieldDialog(wxWindow* parent, FieldData* field) :
     m_field_n(field),
-    m_fieldRefType(TransactionModel::refTypeName)
+    m_fieldRefType(TrxModel::refTypeName)
 {
     this->SetFont(parent->GetFont());
     Create(parent);
@@ -246,12 +246,12 @@ void FieldDialog::OnOk(wxCommandEvent& WXUNUSED(event))
 
             // CHECK: What is the intention behind removing and adding back all items?
             // Is removal of CONTENT missing?
-            FieldValueModel::instance().Savepoint();
+            FieldValueModel::instance().db_savepoint();
             for (auto& fv_d : fv_a) {
-                FieldValueModel::instance().remove_depen(fv_d.id());
+                FieldValueModel::instance().purge_id(fv_d.id());
             }
             FieldValueModel::instance().save_data_a(fv_a);
-            FieldValueModel::instance().ReleaseSavepoint();
+            FieldValueModel::instance().db_release_savepoint();
         }
     }
     else if (FieldModel::getChoices(m_field_n->PROPERTIES) != ArrChoices) {
@@ -268,13 +268,13 @@ void FieldDialog::OnOk(wxCommandEvent& WXUNUSED(event))
             if (DeleteResponse != wxYES)
                 return;
 
-            FieldValueModel::instance().Savepoint();
+            FieldValueModel::instance().db_savepoint();
             for (auto& fv_d : fv_a) {
                 if (ArrChoices.Index(fv_d.CONTENT) == wxNOT_FOUND)
-                    FieldValueModel::instance().remove_depen(fv_d.id());
+                    FieldValueModel::instance().purge_id(fv_d.id());
             }
             FieldValueModel::instance().save_data_a(fv_a);
-            FieldValueModel::instance().ReleaseSavepoint();
+            FieldValueModel::instance().db_release_savepoint();
         }
     }
 

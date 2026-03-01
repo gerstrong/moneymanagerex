@@ -16,21 +16,6 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  ********************************************************/
 
-// PLEASE EDIT!
-//
-// This is only sample code re-used from "table/CategoryTable.h".
-//
-// The data structure can be refined by:
-// * using more user-frielndly filed name
-// * using stronger field types
-// * adding enumerations for fields with limited choices
-// * demultiplexing composite values in database columns
-//
-// See also an implementation in Swift:
-//   https://github.com/moneymanagerex/mmex-ios/tree/master/MMEX/Data
-// and an implementation in Java:
-//   https://github.com/moneymanagerex/android-money-manager-ex/tree/master/app/src/main/java/com/money/manager/ex/domainmodel
-
 #pragma once
 
 #include "table/_TableBase.h"
@@ -39,17 +24,17 @@
 // User-friendly representation of a record in table CATEGORY_V1.
 struct CategoryData
 {
-    int64 CATEGID; // primary key
-    wxString CATEGNAME;
-    int64 ACTIVE;
-    int64 PARENTID;
+    int64    m_id;
+    wxString m_name;
+    int64    m_parent_id_n; // -1 means there is no parent
+    bool     m_active;
 
     explicit CategoryData();
     explicit CategoryData(wxSQLite3ResultSet& q);
     CategoryData(const CategoryData& other) = default;
 
-    int64 id() const { return CATEGID; }
-    void id(const int64 id) { CATEGID = id; }
+    int64 id() const { return m_id; }
+    void id(const int64 id) { m_id = id; }
     CategoryRow to_row() const;
     CategoryData& from_row(const CategoryRow& row);
     void to_insert_stmt(wxSQLite3Statement& stmt, int64 id) const;
@@ -61,7 +46,6 @@ struct CategoryData
     void to_html_template(html_template& t) const;
     void destroy() { delete this; }
 
-    CategoryData& operator= (const CategoryData& other);
     CategoryData& clone_from(const CategoryData& other);
     bool equals(const CategoryData* other) const;
     bool operator< (const CategoryData& other) const { return id() < other.id(); }
@@ -71,7 +55,7 @@ struct CategoryData
     {
         bool operator()(const CategoryData& x, const CategoryData& y)
         {
-            return x.CATEGID < y.CATEGID;
+            return x.m_id < y.m_id;
         }
     };
 
@@ -80,7 +64,7 @@ struct CategoryData
         bool operator()(const CategoryData& x, const CategoryData& y)
         {
             // Locale case-insensitive
-            return std::wcscoll(x.CATEGNAME.Lower().wc_str(), y.CATEGNAME.Lower().wc_str()) < 0;
+            return std::wcscoll(x.m_name.Lower().wc_str(), y.m_name.Lower().wc_str()) < 0;
         }
     };
 
@@ -88,7 +72,7 @@ struct CategoryData
     {
         bool operator()(const CategoryData& x, const CategoryData& y)
         {
-            return x.ACTIVE < y.ACTIVE;
+            return (x.m_active ? 1 : 0) < (y.m_active ? 1 : 0);
         }
     };
 
@@ -96,12 +80,13 @@ struct CategoryData
     {
         bool operator()(const CategoryData& x, const CategoryData& y)
         {
-            return x.PARENTID < y.PARENTID;
+            return x.m_parent_id_n < y.m_parent_id_n;
         }
     };
 };
 
-inline CategoryData::CategoryData(wxSQLite3ResultSet& q)
+inline CategoryData::CategoryData(wxSQLite3ResultSet& q) :
+    CategoryData()
 {
     from_select_result(q);
 }

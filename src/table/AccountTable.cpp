@@ -1,4 +1,4 @@
-﻿// -*- C++ -*-
+// -*- C++ -*-
 //=============================================================================
 /**
  *      Copyright: (c) 2013-2026 Guan Lisheng (guanlisheng@gmail.com)
@@ -13,7 +13,7 @@
  *      @author [sqlite2cpp.py]
  *
  *      Revision History:
- *          AUTO GENERATED at 2026-02-23 02:42:42.918296.
+ *          AUTO GENERATED at 2026-02-25 08:58:12.230056.
  *          DO NOT EDIT!
  */
 //=============================================================================
@@ -251,35 +251,6 @@ void AccountRow::to_html_template(html_template& t) const
     t(L"INTERESTRATE") = INTERESTRATE;
     t(L"PAYMENTDUEDATE") = PAYMENTDUEDATE;
     t(L"MINIMUMPAYMENT") = MINIMUMPAYMENT;
-}
-
-AccountRow& AccountRow::operator= (const AccountRow& other)
-{
-    if (this == &other) return *this;
-
-    ACCOUNTID = other.ACCOUNTID;
-    ACCOUNTNAME = other.ACCOUNTNAME;
-    ACCOUNTTYPE = other.ACCOUNTTYPE;
-    ACCOUNTNUM = other.ACCOUNTNUM;
-    STATUS = other.STATUS;
-    NOTES = other.NOTES;
-    HELDAT = other.HELDAT;
-    WEBSITE = other.WEBSITE;
-    CONTACTINFO = other.CONTACTINFO;
-    ACCESSINFO = other.ACCESSINFO;
-    INITIALBAL = other.INITIALBAL;
-    INITIALDATE = other.INITIALDATE;
-    FAVORITEACCT = other.FAVORITEACCT;
-    CURRENCYID = other.CURRENCYID;
-    STATEMENTLOCKED = other.STATEMENTLOCKED;
-    STATEMENTDATE = other.STATEMENTDATE;
-    MINIMUMBALANCE = other.MINIMUMBALANCE;
-    CREDITLIMIT = other.CREDITLIMIT;
-    INTERESTRATE = other.INTERESTRATE;
-    PAYMENTDUEDATE = other.PAYMENTDUEDATE;
-    MINIMUMPAYMENT = other.MINIMUMPAYMENT;
-
-    return *this;
 }
 
 bool AccountRow::equals(const AccountRow* other) const

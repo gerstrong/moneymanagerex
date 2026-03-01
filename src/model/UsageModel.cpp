@@ -26,14 +26,14 @@ Copyright (C) 2018 Stefano Giorgio (stef145g)
 #include "base/paths.h"
 #include "util/_util.h"
 
-#include "PreferencesModel.h"
+#include "PrefModel.h"
 #include "SettingModel.h"
 #include "UsageModel.h"
 
 #include "report/_ReportBase.h"
 
 UsageModel::UsageModel() :
-    Model<UsageTable, UsageData>()
+    TableFactory<UsageTable, UsageData>()
 {
 }
 
@@ -213,7 +213,7 @@ void UsageModel::pageview(const wxWindow* window, const ReportBase* rb, long plt
 
 void UsageModel::pageview(const wxString& documentPath, const wxString& documentTitle, long plt /* = 0 msec*/)
 {
-    if (!PreferencesModel::instance().doSendUsageStats())
+    if (!PrefModel::instance().doSendUsageStats())
     {
         return;
     }
@@ -241,7 +241,7 @@ void UsageModel::pageview(const wxString& documentPath, const wxString& document
     Value os_name(wxGetOsDescription().utf8_str(), document.GetAllocator());
     event.AddMember("os_name", os_name, document.GetAllocator());
 
-    Value language(PreferencesModel::instance().getLanguageCode().utf8_str(), document.GetAllocator());
+    Value language(PrefModel::instance().getLanguageCode().utf8_str(), document.GetAllocator());
     event.AddMember("language", language, document.GetAllocator());
 
     Value version_name(mmex::version::string.utf8_str(), document.GetAllocator());

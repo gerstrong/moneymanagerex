@@ -25,7 +25,7 @@
 
 #include "_ModelBase.h"
 
-class FieldValueModel : public Model<FieldValueTable, FieldValueData>
+class FieldValueModel : public TableFactory<FieldValueTable, FieldValueData>
 {
 public:
     FieldValueModel();

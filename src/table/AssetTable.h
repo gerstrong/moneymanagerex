@@ -1,4 +1,4 @@
-﻿// -*- C++ -*-
+// -*- C++ -*-
 //=============================================================================
 /**
  *      Copyright: (c) 2013-2026 Guan Lisheng (guanlisheng@gmail.com)
@@ -13,7 +13,7 @@
  *      @author [sqlite2cpp.py]
  *
  *      Revision History:
- *          AUTO GENERATED at 2026-02-23 02:42:42.918296.
+ *          AUTO GENERATED at 2026-02-25 08:58:12.230056.
  *          DO NOT EDIT!
  */
 //=============================================================================
@@ -168,7 +168,6 @@ struct AssetRow
     void to_html_template(html_template& t) const;
     void destroy() { delete this; }
 
-    AssetRow& operator= (const AssetRow& other);
     AssetRow& clone_from(const AssetRow& other);
     bool equals(const AssetRow* other) const;
     bool operator< (const AssetRow& other) const { return id() < other.id(); }

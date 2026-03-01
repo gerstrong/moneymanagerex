@@ -16,21 +16,6 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  ********************************************************/
 
-// PLEASE EDIT!
-//
-// This is only sample code re-used from "table/BudgetPeriodTable.h".
-//
-// The data structure can be refined by:
-// * using more user-frielndly filed name
-// * using stronger field types
-// * adding enumerations for fields with limited choices
-// * demultiplexing composite values in database columns
-//
-// See also an implementation in Swift:
-//   https://github.com/moneymanagerex/mmex-ios/tree/master/MMEX/Data
-// and an implementation in Java:
-//   https://github.com/moneymanagerex/android-money-manager-ex/tree/master/app/src/main/java/com/money/manager/ex/domainmodel
-
 #pragma once
 
 #include "table/_TableBase.h"
@@ -39,15 +24,15 @@
 // User-friendly representation of a record in table BUDGETYEAR_V1.
 struct BudgetPeriodData
 {
-    int64 BUDGETYEARID; // primary key
-    wxString BUDGETYEARNAME;
+    int64    m_id;
+    wxString m_name;
 
     explicit BudgetPeriodData();
     explicit BudgetPeriodData(wxSQLite3ResultSet& q);
     BudgetPeriodData(const BudgetPeriodData& other) = default;
 
-    int64 id() const { return BUDGETYEARID; }
-    void id(const int64 id) { BUDGETYEARID = id; }
+    int64 id() const { return m_id; }
+    void id(const int64 id) { m_id = id; }
     BudgetPeriodRow to_row() const;
     BudgetPeriodData& from_row(const BudgetPeriodRow& row);
     void to_insert_stmt(wxSQLite3Statement& stmt, int64 id) const;
@@ -59,7 +44,6 @@ struct BudgetPeriodData
     void to_html_template(html_template& t) const;
     void destroy() { delete this; }
 
-    BudgetPeriodData& operator= (const BudgetPeriodData& other);
     BudgetPeriodData& clone_from(const BudgetPeriodData& other);
     bool equals(const BudgetPeriodData* other) const;
     bool operator< (const BudgetPeriodData& other) const { return id() < other.id(); }
@@ -69,7 +53,7 @@ struct BudgetPeriodData
     {
         bool operator()(const BudgetPeriodData& x, const BudgetPeriodData& y)
         {
-            return x.BUDGETYEARID < y.BUDGETYEARID;
+            return x.m_id < y.m_id;
         }
     };
 
@@ -77,12 +61,13 @@ struct BudgetPeriodData
     {
         bool operator()(const BudgetPeriodData& x, const BudgetPeriodData& y)
         {
-            return x.BUDGETYEARNAME < y.BUDGETYEARNAME;
+            return x.m_name < y.m_name;
         }
     };
 };
 
-inline BudgetPeriodData::BudgetPeriodData(wxSQLite3ResultSet& q)
+inline BudgetPeriodData::BudgetPeriodData(wxSQLite3ResultSet& q) :
+    BudgetPeriodData()
 {
     from_select_result(q);
 }

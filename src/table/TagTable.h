@@ -1,4 +1,4 @@
-﻿// -*- C++ -*-
+// -*- C++ -*-
 //=============================================================================
 /**
  *      Copyright: (c) 2013-2026 Guan Lisheng (guanlisheng@gmail.com)
@@ -13,7 +13,7 @@
  *      @author [sqlite2cpp.py]
  *
  *      Revision History:
- *          AUTO GENERATED at 2026-02-23 02:42:42.918296.
+ *          AUTO GENERATED at 2026-02-25 08:58:12.230056.
  *          DO NOT EDIT!
  */
 //=============================================================================
@@ -88,7 +88,6 @@ struct TagRow
     void to_html_template(html_template& t) const;
     void destroy() { delete this; }
 
-    TagRow& operator= (const TagRow& other);
     TagRow& clone_from(const TagRow& other);
     bool equals(const TagRow* other) const;
     bool operator< (const TagRow& other) const { return id() < other.id(); }

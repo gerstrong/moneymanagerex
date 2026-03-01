@@ -23,7 +23,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include <wx/dialog.h>
 
 #include "util/_simple.h"
-#include "model/TransactionModel.h"
+#include "model/TrxModel.h"
 
 class mmDatePickerCtrl;
 class wxDataViewListCtrl;
@@ -82,12 +82,12 @@ private:
     );
     bool completeTransaction(
         /*in*/ const std::unordered_map<int, wxString>& i,
-        /*out*/ TransactionData* trx,
+        /*out*/ TrxData* trx,
         wxString& msg
     );
-    bool mergeTransferPair(TransactionModel::DataA& to, TransactionModel::DataA& from);
-    void appendTransfers(TransactionModel::DataA& destination, TransactionModel::DataA& target);
-    void joinSplit(TransactionModel::DataA& destination, std::vector<TransactionSplitModel::DataA>& target);
+    bool mergeTransferPair(TrxModel::DataA& to, TrxModel::DataA& from);
+    void appendTransfers(TrxModel::DataA& destination, TrxModel::DataA& target);
+    void joinSplit(TrxModel::DataA& destination, std::vector<TrxSplitModel::DataA>& target);
     void saveSplit();
     void refreshTabs(int tabs);
     void compilePayeeRegEx();
@@ -100,7 +100,7 @@ private:
     std::unordered_map<wxString, std::tuple<int64, wxString, wxString>> m_QIFpayeeNames;
     wxArrayString m_payee_names;
     std::unordered_map<wxString, int64> m_QIFcategoryNames;
-    std::vector<TransactionSplitModel::DataA> m_splitDataSets;
+    std::vector<TrxSplitModel::DataA> m_splitDataSets;
     std::map<int, std::map<int, TagLinkModel::DataA>> m_splitTaglinks;
     std::map<std::pair<int, int>, TagLinkModel::DataA> m_txnTaglinks;
 

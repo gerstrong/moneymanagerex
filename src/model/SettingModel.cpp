@@ -22,12 +22,12 @@
 #include "base/paths.h"
 
 #include "SettingModel.h"
-#include "PreferencesModel.h"
+#include "PrefModel.h"
 
 #include "panel/JournalPanel.h"
 
 SettingModel::SettingModel() :
-    Model<SettingTable, SettingData>()
+    TableFactory<SettingTable, SettingData>()
 {
 }
 
@@ -69,27 +69,27 @@ void SettingModel::setRaw(const wxString& key, const wxString& newValue)
         // not found in cache; search in db
         const DataA setting_a = find(SettingCol::SETTINGNAME(key));
         if (!setting_a.empty())
-            setting_n = get_data_n(setting_a[0].SETTINGID);
+            setting_n = get_id_data_n(setting_a[0].m_id);
     }
 
     Data setting_d = setting_n ? *setting_n : Data();
     if (!setting_n) {
-        setting_d.SETTINGNAME = key;
+        setting_d.m_name = key;
     }
-    setting_d.SETTINGVALUE = newValue;
+    setting_d.m_value = newValue;
     save_data_n(setting_d);
 }
 
 const wxString SettingModel::getRaw(const wxString& key, const wxString& defaultValue)
 {
     // search in cache
-    const Data* setting = search_cache_n(SettingCol::SETTINGNAME(key));
-    if (setting)
-        return setting->SETTINGVALUE;
+    const Data* setting_n = search_cache_n(SettingCol::SETTINGNAME(key));
+    if (setting_n)
+        return setting_n->m_value;
     // search in db
-    DataA items = find(SettingCol::SETTINGNAME(key));
-    if (!items.empty())
-        return items[0].SETTINGVALUE;
+    DataA setting_a = find(SettingCol::SETTINGNAME(key));
+    if (!setting_a.empty())
+        return setting_a[0].m_value;
     // not found
     return defaultValue;
 }
@@ -219,21 +219,21 @@ void SettingModel::prependArrayItem(const wxString& key, const wxString& value, 
 
     const Data* setting_n = search_cache_n(SettingCol::SETTINGNAME(key));
     if (!setting_n) { // not cached
-        DataA items = find(SettingCol::SETTINGNAME(key));
-        if (!items.empty())
-            setting_n = get_data_n(items[0].SETTINGID);
+        DataA setting_a = find(SettingCol::SETTINGNAME(key));
+        if (!setting_a.empty())
+            setting_n = get_id_data_n(setting_a[0].m_id);
     }
 
     Data setting_d = setting_n ? *setting_n : Data();
     if (!setting_n) {
-        setting_d.SETTINGNAME = key;
+        setting_d.m_name = key;
     }
 
     wxArrayString a;
     a.Add(value);
 
     Document j_doc;
-    if (!j_doc.Parse(setting_d.SETTINGVALUE.utf8_str()).HasParseError()
+    if (!j_doc.Parse(setting_d.m_value.utf8_str()).HasParseError()
         && j_doc.IsArray()
     ) {
         int i = 1;
@@ -257,7 +257,7 @@ void SettingModel::prependArrayItem(const wxString& key, const wxString& value, 
     }
     json_writer.EndArray();
 
-    setting_d.SETTINGVALUE = wxString::FromUTF8(json_buffer.GetString());
+    setting_d.m_value = wxString::FromUTF8(json_buffer.GetString());
     save_data_n(setting_d);
 }
 
@@ -326,7 +326,7 @@ void SettingModel::shrinkUsageTable()
 row_t SettingModel::to_html_row()
 {
     row_t row;
-    for (const auto &r: instance().find_all())
-        row(r.SETTINGNAME.ToStdWstring()) = r.SETTINGVALUE;
+    for (const auto& setting_a: instance().find_all())
+        row(setting_a.m_name.ToStdWstring()) = setting_a.m_value;
     return row;
 }

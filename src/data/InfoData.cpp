@@ -16,14 +16,11 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  ********************************************************/
 
-// PLEASE EDIT!
-// This is only sample code re-used from "table/InfoTable.cpp".
-
 #include "InfoData.h"
 
 InfoData::InfoData()
 {
-    INFOID = -1;
+    m_id = -1;
 }
 
 // Convert InfoData to InfoRow
@@ -31,9 +28,9 @@ InfoRow InfoData::to_row() const
 {
     InfoRow row;
 
-    row.INFOID = INFOID;
-    row.INFONAME = INFONAME;
-    row.INFOVALUE = INFOVALUE;
+    row.INFOID    = m_id;
+    row.INFONAME  = m_name;
+    row.INFOVALUE = m_value;
 
     return row;
 }
@@ -41,29 +38,18 @@ InfoRow InfoData::to_row() const
 // Convert InfoRow to InfoData
 InfoData& InfoData::from_row(const InfoRow& row)
 {
-    INFOID = row.INFOID; // int64
-    INFONAME = row.INFONAME; // wxString
-    INFOVALUE = row.INFOVALUE; // wxString
-
-    return *this;
-}
-
-InfoData& InfoData::operator= (const InfoData& other)
-{
-    if (this == &other) return *this;
-
-    INFOID = other.INFOID;
-    INFONAME = other.INFONAME;
-    INFOVALUE = other.INFOVALUE;
+    m_id    = row.INFOID;    // int64
+    m_name  = row.INFONAME;  // wxString
+    m_value = row.INFOVALUE; // wxString
 
     return *this;
 }
 
 bool InfoData::equals(const InfoData* other) const
 {
-    if ( INFOID != other->INFOID) return false;
-    if (!INFONAME.IsSameAs(other->INFONAME)) return false;
-    if (!INFOVALUE.IsSameAs(other->INFOVALUE)) return false;
+    if ( m_id != other->m_id) return false;
+    if (!m_name.IsSameAs(other->m_name)) return false;
+    if (!m_value.IsSameAs(other->m_value)) return false;
 
     return true;
 }

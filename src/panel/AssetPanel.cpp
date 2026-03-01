@@ -122,8 +122,8 @@ void AssetList::OnMouseRightClick(wxMouseEvent& event)
     }
     else
     {
-        auto asset_account = AccountModel::instance().get_key(m_panel->m_assets[m_selected_row].ASSETNAME);  // ASSETNAME <=> ACCOUNTNAME
-        if (!asset_account) asset_account = AccountModel::instance().get_key(m_panel->m_assets[m_selected_row].ASSETTYPE);  // ASSETTYPE <=> ACCOUNTNAME
+        auto asset_account = AccountModel::instance().get_name_data_n(m_panel->m_assets[m_selected_row].m_name);  // ASSETNAME <=> ACCOUNTNAME
+        if (!asset_account) asset_account = AccountModel::instance().get_name_data_n(m_panel->m_assets[m_selected_row].m_type.name());  // ASSETTYPE <=> ACCOUNTNAME
         menu.Enable(MENU_TREEPOPUP_GOTOACCOUNT, asset_account);
         menu.Enable(MENU_TREEPOPUP_VIEWTRANS, asset_account);
     }
@@ -156,7 +156,7 @@ void AssetList::OnListItemSelected(wxListEvent& event)
 
 int AssetList::OnGetItemImage(long item) const
 {
-    return AssetModel::type_id(m_panel->m_assets[item]);
+    return m_panel->m_assets[item].m_type.id();
 }
 
 void AssetList::OnListKeyDown(wxListEvent& event)
@@ -215,9 +215,9 @@ void AssetList::OnDeleteAsset(wxCommandEvent& /*event*/)
 
     if (msgDlg.ShowModal() == wxID_YES) {
         const AssetData& asset = m_panel->m_assets[m_selected_row];
-        AssetModel::instance().remove_depen(asset.ASSETID);
-        mmAttachmentManage::DeleteAllAttachments(AssetModel::refTypeName, asset.ASSETID);
-        TransactionLinkModel::RemoveTransLinkRecords<AssetModel>(asset.ASSETID);
+        AssetModel::instance().purge_id(asset.m_id);
+        mmAttachmentManage::DeleteAllAttachments(AssetModel::refTypeName, asset.m_id);
+        TrxLinkModel::RemoveTransLinkRecords<AssetModel>(asset.m_id);
 
         m_panel->initVirtualListControl();
         m_selected_row = -1;
@@ -245,7 +245,7 @@ void AssetList::OnDuplicateAsset(wxCommandEvent& /*event*/)
 
     if (EditAsset(&duplicate_asset)) {
         m_panel->initVirtualListControl();
-        doRefreshItems(duplicate_asset.ASSETID);
+        doRefreshItems(duplicate_asset.m_id);
     }
 }
 
@@ -276,7 +276,7 @@ void AssetList::OnOrganizeAttachments(wxCommandEvent& /*event*/)
     if (m_selected_row < 0) return;
 
     wxString RefType = AssetModel::refTypeName;
-    int64 RefId = m_panel->m_assets[m_selected_row].ASSETID;
+    int64 RefId = m_panel->m_assets[m_selected_row].m_id;
 
     AttachmentDialog dlg(this, RefType, RefId);
     dlg.ShowModal();
@@ -289,7 +289,7 @@ void AssetList::OnOpenAttachment(wxCommandEvent& /*event*/)
     if (m_selected_row < 0) return;
 
     wxString RefType = AssetModel::refTypeName;
-    int64 RefId = m_panel->m_assets[m_selected_row].ASSETID;
+    int64 RefId = m_panel->m_assets[m_selected_row].m_id;
 
     mmAttachmentManage::OpenAttachmentFromPanelIcon(this, RefType, RefId);
     doRefreshItems(RefId);
@@ -330,10 +330,10 @@ void AssetList::OnColClick(wxListEvent& event)
     else if (event.GetId() != MENU_HEADER_SORT)
         m_sort_asc[0] = !m_sort_asc[0];
     updateSortIcon();
-    savePreferences();
+    savePref();
 
     int64 trx_id = -1;
-    if (m_selected_row>=0) trx_id = m_panel->m_assets[m_selected_row].ASSETID;
+    if (m_selected_row>=0) trx_id = m_panel->m_assets[m_selected_row].m_id;
 
     doRefreshItems(trx_id);
 }
@@ -343,7 +343,7 @@ void AssetList::OnEndLabelEdit(wxListEvent& event)
     if (event.IsEditCancelled())
         return;
     AssetData* asset_n = &m_panel->m_assets[event.GetIndex()];
-    asset_n->ASSETNAME = event.m_item.m_text;
+    asset_n->m_name = event.m_item.m_text;
     AssetModel::instance().unsafe_save_data_n(asset_n);
     RefreshItems(event.GetIndex(), event.GetIndex());
 }
@@ -360,22 +360,25 @@ BEGIN_EVENT_TABLE(AssetPanel, wxPanel)
     EVT_SEARCHCTRL_SEARCH_BTN(wxID_FIND, AssetPanel::OnSearchTxtEntered)
 END_EVENT_TABLE()
 
-AssetPanel::AssetPanel(mmGUIFrame* frame, wxWindow *parent, wxWindowID winid, const wxString& name)
-    : m_frame(frame)
-    , m_filter_type(AssetModel::TYPE_ID(-1))
-    , tips_()
+AssetPanel::AssetPanel(
+    mmGUIFrame* frame, wxWindow *parent, wxWindowID winid, const wxString& name
+) :
+    m_frame(frame),
+    m_filter_type(-1),
+    tips_()
 {
     Create(parent, winid, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL, name);
     mmThemeAutoColour(this);
 }
 
-bool AssetPanel::Create(wxWindow *parent
-    , wxWindowID winid
-    , const wxPoint &pos
-    , const wxSize &size
-    , long style
-    , const wxString &name)
-{
+bool AssetPanel::Create(
+    wxWindow *parent,
+    wxWindowID winid,
+    const wxPoint &pos,
+    const wxSize &size,
+    long style,
+    const wxString &name
+) {
     SetExtraStyle(GetExtraStyle() | wxWS_EX_BLOCK_EVENTS);
 
     if (!wxPanel::Create(parent, winid, pos, size, style, name)) return false;
@@ -535,17 +538,20 @@ void AssetPanel::sortList()
         std::stable_sort(this->m_assets.begin(), this->m_assets.end(), AssetData::SorterByASSETTYPE());
         break;
     case AssetList::LIST_ID_VALUE_INITIAL:
-        std::stable_sort(this->m_assets.begin(), this->m_assets.end()
-            , [](const AssetData& x, const AssetData& y)
-            {
-                return AssetModel::value(x).first < AssetModel::value(y).first;
-            });
+        std::stable_sort(this->m_assets.begin(), this->m_assets.end(),
+            [](const AssetData& x, const AssetData& y) {
+                double x_value = AssetModel::instance().get_data_value(x).first;
+                double y_value = AssetModel::instance().get_data_value(y).first;
+                return x_value < y_value;
+            }
+        );
         break;
     case AssetList::LIST_ID_VALUE_CURRENT:
-        std::stable_sort(this->m_assets.begin(), this->m_assets.end()
-            , [](const AssetData& x, const AssetData& y)
-            {
-                return AssetModel::value(x).second < AssetModel::value(y).second;
+        std::stable_sort(this->m_assets.begin(), this->m_assets.end(),
+            [](const AssetData& x, const AssetData& y) {
+                double x_value = AssetModel::instance().get_data_value(x).second;
+                double y_value = AssetModel::instance().get_data_value(y).second;
+                return x_value < y_value;
             });
         break;
     case AssetList::LIST_ID_DATE:
@@ -564,11 +570,10 @@ int AssetPanel::initVirtualListControl(int64 id)
     /* Clear all the records */
     m_lc->DeleteAllItems();
 
-    if (this->m_filter_type == AssetModel::TYPE_ID(-1)) // ALL
-        this->m_assets = AssetModel::instance().find_all();
-    else
-        this->m_assets = AssetModel::instance().find(
-            AssetModel::ASSETTYPE(OP_EQ, m_filter_type)
+    m_assets = (m_filter_type == -1)
+        ? AssetModel::instance().find_all()
+        : AssetModel::instance().find(
+            AssetModel::ASSETTYPE(OP_EQ, AssetType(m_filter_type))
         );
     this->sortList();
 
@@ -577,7 +582,7 @@ int AssetPanel::initVirtualListControl(int64 id)
     double initial = 0.0, balance = 0.0;
     for (const auto& asset: this->m_assets)
     {
-        auto bal = AssetModel::value(asset);
+        auto bal = AssetModel::instance().get_data_value(asset);
         initial += bal.first;
         balance += bal.second;
     }
@@ -586,7 +591,7 @@ int AssetPanel::initVirtualListControl(int64 id)
     int selected_item = 0;
     for (const auto& asset: this->m_assets)
     {
-        if (asset.ASSETID == id) return selected_item;
+        if (asset.m_id == id) return selected_item;
         ++ selected_item;
     }
     return -1;
@@ -629,21 +634,21 @@ wxString AssetPanel::getItem(long item, int col_id)
     case AssetList::LIST_ID_ICON:
         return "";
     case AssetList::LIST_ID_ID:
-        return wxString::Format("%lld", asset.ASSETID).Trim();
+        return wxString::Format("%lld", asset.m_id).Trim();
     case AssetList::LIST_ID_NAME:
-        return asset.ASSETNAME;
+        return asset.m_name;
     case AssetList::LIST_ID_TYPE:
-        return wxGetTranslation(asset.ASSETTYPE);
+        return wxGetTranslation(asset.m_type.name());
     case AssetList::LIST_ID_VALUE_INITIAL:
-        return CurrencyModel::toCurrency(AssetModel::value(asset).first);
+        return CurrencyModel::toCurrency(AssetModel::instance().get_data_value(asset).first);
     case AssetList::LIST_ID_VALUE_CURRENT:
-        return CurrencyModel::toCurrency(AssetModel::value(asset).second);
+        return CurrencyModel::toCurrency(AssetModel::instance().get_data_value(asset).second);
     case AssetList::LIST_ID_DATE:
-        return mmGetDateTimeForDisplay(asset.STARTDATE);
+        return mmGetDateTimeForDisplay(asset.m_start_date.isoDate());
     case AssetList::LIST_ID_NOTES: {
-        wxString full_notes = asset.NOTES;
+        wxString full_notes = asset.m_notes;
         full_notes.Replace("\n", " ");
-        if (AttachmentModel::NrAttachments(AssetModel::refTypeName, asset.ASSETID))
+        if (AttachmentModel::NrAttachments(AssetModel::refTypeName, asset.m_id))
             full_notes = full_notes.Prepend(mmAttachmentManage::GetAttachmentNoteSign());
         return full_notes;
     }
@@ -660,12 +665,13 @@ void AssetPanel::updateExtraAssetData(int selIndex)
     {
         const AssetData& asset = this->m_assets[selIndex];
         enableEditDeleteButtons(true);
-        const auto& change_rate = (AssetModel::change_id(asset) != AssetModel::CHANGE_ID_NONE)
-            ? wxString::Format("%.2f %%", asset.VALUECHANGERATE) : "";
-        const wxString& miniInfo = " " + wxString::Format(_t("Change in Value: %1$s %2$s")
-            , wxGetTranslation(asset.VALUECHANGE), change_rate);
+        const auto& change_rate = (asset.m_change.id() != AssetChange::e_none)
+            ? wxString::Format("%.2f %%", asset.m_change_rate) : "";
+        const wxString& miniInfo = " " + wxString::Format(_t("Change in Value: %1$s %2$s"),
+            wxGetTranslation(asset.m_change.name()), change_rate
+        );
 
-        st->SetLabelText(asset.NOTES);
+        st->SetLabelText(asset.m_notes);
         stm->SetLabelText(miniInfo);
     }
     else
@@ -703,8 +709,8 @@ void AssetPanel::OnMouseLeftDown (wxCommandEvent& event)
     wxMenu menu;
     menu.Append(++i, _t("All"));
 
-    for (int typeId = 0; typeId < AssetModel::TYPE_ID_size; ++typeId) {
-        wxString type = AssetModel::type_name(typeId);
+    for (int typeId = 0; typeId < AssetType::size; ++typeId) {
+        wxString type = AssetType(typeId).name();
         menu.Append(++i, wxGetTranslation(type));
     }
     PopupMenu(&menu);
@@ -715,18 +721,15 @@ void AssetPanel::OnMouseLeftDown (wxCommandEvent& event)
 void AssetPanel::OnViewPopupSelected(wxCommandEvent& event)
 {
     int evt = std::max(event.GetId() - 1, 0);
+    m_filter_type = evt - 1;
 
-    if (evt == 0)
-    {
+    if (m_filter_type == -1) {
         m_bitmapTransFilter->SetLabel(_t("All"));
         m_bitmapTransFilter->SetBitmap(mmBitmapBundle(png::TRANSFILTER, mmBitmapButtonSize));
-        this->m_filter_type = AssetModel::TYPE_ID(-1);
     }
-    else
-    {
-        this->m_filter_type = AssetModel::TYPE_ID(evt - 1);
+    else {
         m_bitmapTransFilter->SetBitmap(mmBitmapBundle(png::TRANSFILTER_ACTIVE, mmBitmapButtonSize));
-        m_bitmapTransFilter->SetLabel(wxGetTranslation(AssetModel::type_name(evt - 1)));
+        m_bitmapTransFilter->SetLabel(wxGetTranslation(AssetType(m_filter_type).name()));
     }
 
     int64 trx_id = -1;
@@ -777,13 +780,13 @@ void AssetPanel::AddAssetTrans(const int selected_index)
 {
     AssetData* asset = &m_assets[selected_index];
     AssetDialog asset_dialog(this, asset, true);
-    const AccountData* account = AccountModel::instance().get_key(asset->ASSETNAME);
-    const AccountData* account2 = AccountModel::instance().get_key(asset->ASSETTYPE);
+    const AccountData* account = AccountModel::instance().get_name_data_n(asset->m_name);
+    const AccountData* account2 = AccountModel::instance().get_name_data_n(asset->m_type.name());
     if (account || account2) {
-        asset_dialog.SetTransactionAccountName(account ? asset->ASSETNAME : asset->ASSETTYPE);
+        asset_dialog.SetTransactionAccountName(account ? asset->m_name : asset->m_type.name());
     }
     else {
-        TransactionLinkModel::DataA translist = TransactionLinkModel::TranslinkList<AssetModel>(asset->ASSETID);
+        TrxLinkModel::DataA translist = TrxLinkModel::TranslinkList<AssetModel>(asset->m_id);
         if (translist.empty()) {
             wxMessageBox(_t(
                 "This asset does not have its own account\n\n"
@@ -805,7 +808,7 @@ void AssetPanel::ViewAssetTrans(int selectedIndex)
     AssetData* asset = &m_assets[selectedIndex];
 
     wxDialog dlg(this, wxID_ANY,
-                 _t("View Asset Transactions") + ": " + asset->ASSETNAME,
+                 _t("View Asset Transactions") + ": " + asset->m_name,
                  wxDefaultPosition, wxDefaultSize,
                  wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER);
 
@@ -821,7 +824,7 @@ void AssetPanel::ViewAssetTrans(int selectedIndex)
     BindAssetListEvents(assetTxnListCtrl);
 
     // Load asset transactions
-    LoadAssetTransactions(assetTxnListCtrl, asset->ASSETID);
+    LoadAssetTransactions(assetTxnListCtrl, asset->m_id);
 
     // Add buttons
     wxSizer* buttonSizer = dlg.CreateSeparatedButtonSizer(wxOK);
@@ -852,11 +855,11 @@ wxListCtrl* AssetPanel::InitAssetTxnListCtrl(wxWindow* parent)
 // Load asset transactions into the list control
 void AssetPanel::LoadAssetTransactions(wxListCtrl* listCtrl, int64 assetId)
 {
-    TransactionLinkModel::DataA asset_a = TransactionLinkModel::TranslinkList<AssetModel>(assetId);
+    TrxLinkModel::DataA asset_a = TrxLinkModel::TranslinkList<AssetModel>(assetId);
 
     int row = 0;
     for (const auto& asset_d : asset_a) {
-        const TransactionData* trx_n = TransactionModel::instance().get_data_n(asset_d.CHECKINGACCOUNTID);
+        const TrxData* trx_n = TrxModel::instance().get_id_data_n(asset_d.CHECKINGACCOUNTID);
         if (!trx_n)
             continue;
 
@@ -866,11 +869,11 @@ void AssetPanel::LoadAssetTransactions(wxListCtrl* listCtrl, int64 assetId)
     }
 }
 
-void AssetPanel::FillAssetListRow(wxListCtrl* listCtrl, long index, const TransactionData& txn)
+void AssetPanel::FillAssetListRow(wxListCtrl* listCtrl, long index, const TrxData& txn)
 {
-    listCtrl->SetItem(index, 0, AccountModel::get_id_name(txn.ACCOUNTID));
+    listCtrl->SetItem(index, 0, AccountModel::instance().get_id_name(txn.ACCOUNTID));
     listCtrl->SetItem(index, 1, mmGetDateTimeForDisplay(txn.TRANSDATE));
-    listCtrl->SetItem(index, 2, TransactionModel::trade_type_name(TransactionModel::type_id(txn.TRANSCODE)));
+    listCtrl->SetItem(index, 2, TrxModel::trade_type_name(TrxModel::type_id(txn.TRANSCODE)));
     listCtrl->SetItem(index, 3, CurrencyModel::toString(txn.TRANSAMOUNT));
 //    listCtrl->SetItem(index, 3, CurrencyModel::get_currency_symbol(txn.CURRENCYID));
 }
@@ -879,19 +882,19 @@ void AssetPanel::BindAssetListEvents(wxListCtrl* listCtrl)
 {
     listCtrl->Bind(wxEVT_LIST_ITEM_ACTIVATED, [listCtrl, this](wxListEvent& event) {
         long index = event.GetIndex();
-        TransactionData* trx_n = TransactionModel::instance().unsafe_get_data_n(event.GetData());
+        TrxData* trx_n = TrxModel::instance().unsafe_get_id_data_n(event.GetData());
         if (!trx_n)
             return;
 
-        auto link = TransactionLinkModel::TranslinkRecord(trx_n->TRANSID);
+        auto link = TrxLinkModel::TranslinkRecord(trx_n->TRANSID);
         AssetDialog dlg(listCtrl, &link, trx_n);
         dlg.ShowModal();
 
         this->FillAssetListRow(listCtrl, index, *trx_n);
 
         listCtrl->SortItems([](wxIntPtr item1, wxIntPtr item2, wxIntPtr) -> int {
-            auto date1 = TransactionModel::getTransDateTime(TransactionModel::instance().get_data_n(item1));
-            auto date2 = TransactionModel::getTransDateTime(TransactionModel::instance().get_data_n(item2));
+            auto date1 = TrxModel::getTransDateTime(*TrxModel::instance().get_id_data_n(item1));
+            auto date2 = TrxModel::getTransDateTime(*TrxModel::instance().get_id_data_n(item2));
             return date1.IsEarlierThan(date2) ? -1 : (date1.IsLaterThan(date2) ? 1 : 0);
         }, 0);
     });
@@ -932,16 +935,16 @@ void AssetPanel::CopySelectedRowsToClipboard(wxListCtrl* listCtrl)
 void AssetPanel::GotoAssetAccount(const int selected_index)
 {
     AssetData* asset = &m_assets[selected_index];
-    const AccountData* account_n = AccountModel::instance().get_key(asset->ASSETNAME);
+    const AccountData* account_n = AccountModel::instance().get_name_data_n(asset->m_name);
     if (account_n) {
         SetAccountParameters(account_n);
     }
     else {
-        TransactionLinkModel::DataA asset_a = TransactionLinkModel::TranslinkList<AssetModel>(asset->ASSETID);
+        TrxLinkModel::DataA asset_a = TrxLinkModel::TranslinkList<AssetModel>(asset->m_id);
         for (const auto &asset_d : asset_a) {
-            const TransactionData* trx_n = TransactionModel::instance().get_data_n(asset_d.CHECKINGACCOUNTID);
+            const TrxData* trx_n = TrxModel::instance().get_id_data_n(asset_d.CHECKINGACCOUNTID);
             if (trx_n) {
-                account_n = AccountModel::instance().get_data_n(trx_n->ACCOUNTID);
+                account_n = AccountModel::instance().get_id_data_n(trx_n->ACCOUNTID);
                 SetAccountParameters(account_n);
             }
         }
@@ -950,8 +953,8 @@ void AssetPanel::GotoAssetAccount(const int selected_index)
 
 void AssetPanel::SetAccountParameters(const AccountData* account)
 {
-    m_frame->selectNavTreeItem(account->ACCOUNTNAME);
-    m_frame->setGotoAccountID(account->ACCOUNTID);
+    m_frame->selectNavTreeItem(account->m_name);
+    m_frame->setGotoAccountID(account->m_id);
     wxCommandEvent evt(wxEVT_COMMAND_MENU_SELECTED, MENU_GOTOACCOUNT);
     m_frame->GetEventHandler()->AddPendingEvent(evt);
 }

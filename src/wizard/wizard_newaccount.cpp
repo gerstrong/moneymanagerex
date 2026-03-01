@@ -64,15 +64,14 @@ void mmAddAccountWizard::RunIt()
     if (RunWizard(page1)) {
         // Success
         AccountData account_d = AccountData();
-        account_d.FAVORITEACCT = "TRUE";
-        account_d.STATUS       = AccountModel::STATUS_NAME_OPEN;
-        account_d.ACCOUNTTYPE  = NavigatorTypes::instance().type_name(accountType_);
-        account_d.ACCOUNTNAME  = accountName_;
-        account_d.INITIALBAL   = 0;
-        account_d.INITIALDATE  = wxDate::Today().FormatISODate();
-        account_d.CURRENCYID   = currencyID_;
+        account_d.m_name          = accountName_;
+        account_d.m_type_         = NavigatorTypes::instance().type_name(accountType_);
+        account_d.m_currency_id_p = currencyID_;
+        account_d.m_open_date     = mmDate::today();
+        account_d.m_open_balance  = 0;
+        account_d.m_favorite      = AccountFavorite(true);
         AccountModel::instance().save_data_n(account_d);
-        acctID_ = account_d.ACCOUNTID;
+        acctID_ = account_d.m_id;
     }
     Destroy();
 }
@@ -81,26 +80,28 @@ void mmAddAccountNamePage::processPage(wxWizardEvent& event)
 {
     const wxString account_name = textAccountName_->GetValue().Trim();
     parent_->accountName_ = account_name;
-    if (event.GetDirection())
-    {
-        if ( account_name.IsEmpty())
-        {
+    if (event.GetDirection()) {
+        if (account_name.IsEmpty()) {
             wxMessageBox(_t("Account Name Invalid"), _t("New Account"), wxOK|wxICON_ERROR, this);
             event.Veto();
         }
-        else
-        {
-            if (AccountModel::instance().get_key(account_name))
-            {
-                wxMessageBox(_t("An account with this name already exists"), _t("New Account"), wxOK|wxICON_ERROR, this);
+        else {
+            if (AccountModel::instance().get_name_data_n(account_name)) {
+                wxMessageBox(
+                    _t("An account with this name already exists"),
+                    _t("New Account"),
+                    wxOK | wxICON_ERROR,
+                    this
+                );
                 event.Veto();
             }
         }
     }
 }
 
-mmAddAccountNamePage::mmAddAccountNamePage(mmAddAccountWizard* parent)
-    : wxWizardPageSimple(parent), parent_(parent)
+mmAddAccountNamePage::mmAddAccountNamePage(mmAddAccountWizard* parent) :
+    wxWizardPageSimple(parent),
+    parent_(parent)
 {
     textAccountName_ = new wxTextCtrl(this, wxID_ANY);
     textAccountName_->SetMinSize(wxSize(200,-1));
@@ -164,7 +165,7 @@ mmAddAccountTypePage::mmAddAccountTypePage(mmAddAccountWizard *parent)
 
 bool mmAddAccountTypePage::TransferDataFromWindow()
 {
-    int64 currencyID = PreferencesModel::instance().getBaseCurrencyID();
+    int64 currencyID = PrefModel::instance().getBaseCurrencyID();
     if (currencyID == -1)
     {
         wxString errorMsg;

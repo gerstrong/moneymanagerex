@@ -1,4 +1,4 @@
-﻿// -*- C++ -*-
+// -*- C++ -*-
 //=============================================================================
 /**
  *      Copyright: (c) 2013-2026 Guan Lisheng (guanlisheng@gmail.com)
@@ -13,7 +13,7 @@
  *      @author [sqlite2cpp.py]
  *
  *      Revision History:
- *          AUTO GENERATED at 2026-02-23 02:42:42.918296.
+ *          AUTO GENERATED at 2026-02-25 08:58:12.230056.
  *          DO NOT EDIT!
  */
 //=============================================================================
@@ -110,18 +110,6 @@ void CategoryRow::to_html_template(html_template& t) const
     t(L"CATEGNAME") = CATEGNAME;
     t(L"ACTIVE") = ACTIVE.GetValue();
     t(L"PARENTID") = PARENTID.GetValue();
-}
-
-CategoryRow& CategoryRow::operator= (const CategoryRow& other)
-{
-    if (this == &other) return *this;
-
-    CATEGID = other.CATEGID;
-    CATEGNAME = other.CATEGNAME;
-    ACTIVE = other.ACTIVE;
-    PARENTID = other.PARENTID;
-
-    return *this;
 }
 
 bool CategoryRow::equals(const CategoryRow* other) const

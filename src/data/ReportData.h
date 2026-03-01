@@ -16,21 +16,6 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  ********************************************************/
 
-// PLEASE EDIT!
-//
-// This is only sample code re-used from "table/ReportTable.h".
-//
-// The data structure can be refined by:
-// * using more user-frielndly filed name
-// * using stronger field types
-// * adding enumerations for fields with limited choices
-// * demultiplexing composite values in database columns
-//
-// See also an implementation in Swift:
-//   https://github.com/moneymanagerex/mmex-ios/tree/master/MMEX/Data
-// and an implementation in Java:
-//   https://github.com/moneymanagerex/android-money-manager-ex/tree/master/app/src/main/java/com/money/manager/ex/domainmodel
-
 #pragma once
 
 #include "table/_TableBase.h"
@@ -39,21 +24,21 @@
 // User-friendly representation of a record in table REPORT_V1.
 struct ReportData
 {
-    int64 REPORTID; // primary key
-    wxString REPORTNAME;
-    wxString GROUPNAME;
-    int64 ACTIVE;
-    wxString SQLCONTENT;
-    wxString LUACONTENT;
-    wxString TEMPLATECONTENT;
-    wxString DESCRIPTION;
+    int64    m_id;
+    wxString m_name;
+    wxString m_group_name;
+    bool     m_active;
+    wxString m_sql_content;
+    wxString m_lua_content;
+    wxString m_template_content;
+    wxString m_description;
 
     explicit ReportData();
     explicit ReportData(wxSQLite3ResultSet& q);
     ReportData(const ReportData& other) = default;
 
-    int64 id() const { return REPORTID; }
-    void id(const int64 id) { REPORTID = id; }
+    int64 id() const { return m_id; }
+    void id(const int64 id) { m_id = id; }
     ReportRow to_row() const;
     ReportData& from_row(const ReportRow& row);
     void to_insert_stmt(wxSQLite3Statement& stmt, int64 id) const;
@@ -65,7 +50,6 @@ struct ReportData
     void to_html_template(html_template& t) const;
     void destroy() { delete this; }
 
-    ReportData& operator= (const ReportData& other);
     ReportData& clone_from(const ReportData& other);
     bool equals(const ReportData* other) const;
     bool operator< (const ReportData& other) const { return id() < other.id(); }
@@ -75,7 +59,7 @@ struct ReportData
     {
         bool operator()(const ReportData& x, const ReportData& y)
         {
-            return x.REPORTID < y.REPORTID;
+            return x.m_id < y.m_id;
         }
     };
 
@@ -83,7 +67,7 @@ struct ReportData
     {
         bool operator()(const ReportData& x, const ReportData& y)
         {
-            return x.REPORTNAME < y.REPORTNAME;
+            return x.m_name < y.m_name;
         }
     };
 
@@ -91,7 +75,7 @@ struct ReportData
     {
         bool operator()(const ReportData& x, const ReportData& y)
         {
-            return x.GROUPNAME < y.GROUPNAME;
+            return x.m_group_name < y.m_group_name;
         }
     };
 
@@ -99,7 +83,7 @@ struct ReportData
     {
         bool operator()(const ReportData& x, const ReportData& y)
         {
-            return x.ACTIVE < y.ACTIVE;
+            return (x.m_active ? 1 : 0) < (y.m_active ? 1 : 0);
         }
     };
 
@@ -107,7 +91,7 @@ struct ReportData
     {
         bool operator()(const ReportData& x, const ReportData& y)
         {
-            return x.SQLCONTENT < y.SQLCONTENT;
+            return x.m_sql_content < y.m_sql_content;
         }
     };
 
@@ -115,7 +99,7 @@ struct ReportData
     {
         bool operator()(const ReportData& x, const ReportData& y)
         {
-            return x.LUACONTENT < y.LUACONTENT;
+            return x.m_lua_content < y.m_lua_content;
         }
     };
 
@@ -123,7 +107,7 @@ struct ReportData
     {
         bool operator()(const ReportData& x, const ReportData& y)
         {
-            return x.TEMPLATECONTENT < y.TEMPLATECONTENT;
+            return x.m_template_content < y.m_template_content;
         }
     };
 
@@ -131,12 +115,13 @@ struct ReportData
     {
         bool operator()(const ReportData& x, const ReportData& y)
         {
-            return x.DESCRIPTION < y.DESCRIPTION;
+            return x.m_description < y.m_description;
         }
     };
 };
 
-inline ReportData::ReportData(wxSQLite3ResultSet& q)
+inline ReportData::ReportData(wxSQLite3ResultSet& q) :
+    ReportData()
 {
     from_select_result(q);
 }

@@ -16,21 +16,6 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  ********************************************************/
 
-// PLEASE EDIT!
-//
-// This is only sample code re-used from "table/SettingTable.h".
-//
-// The data structure can be refined by:
-// * using more user-frielndly filed name
-// * using stronger field types
-// * adding enumerations for fields with limited choices
-// * demultiplexing composite values in database columns
-//
-// See also an implementation in Swift:
-//   https://github.com/moneymanagerex/mmex-ios/tree/master/MMEX/Data
-// and an implementation in Java:
-//   https://github.com/moneymanagerex/android-money-manager-ex/tree/master/app/src/main/java/com/money/manager/ex/domainmodel
-
 #pragma once
 
 #include "table/_TableBase.h"
@@ -39,16 +24,16 @@
 // User-friendly representation of a record in table SETTING_V1.
 struct SettingData
 {
-    int64 SETTINGID; // primary key
-    wxString SETTINGNAME;
-    wxString SETTINGVALUE;
+    int64    m_id;
+    wxString m_name;
+    wxString m_value;
 
     explicit SettingData();
     explicit SettingData(wxSQLite3ResultSet& q);
     SettingData(const SettingData& other) = default;
 
-    int64 id() const { return SETTINGID; }
-    void id(const int64 id) { SETTINGID = id; }
+    int64 id() const { return m_id; }
+    void id(const int64 id) { m_id = id; }
     SettingRow to_row() const;
     SettingData& from_row(const SettingRow& row);
     void to_insert_stmt(wxSQLite3Statement& stmt, int64 id) const;
@@ -60,7 +45,6 @@ struct SettingData
     void to_html_template(html_template& t) const;
     void destroy() { delete this; }
 
-    SettingData& operator= (const SettingData& other);
     SettingData& clone_from(const SettingData& other);
     bool equals(const SettingData* other) const;
     bool operator< (const SettingData& other) const { return id() < other.id(); }
@@ -70,7 +54,7 @@ struct SettingData
     {
         bool operator()(const SettingData& x, const SettingData& y)
         {
-            return x.SETTINGID < y.SETTINGID;
+            return x.m_id < y.m_id;
         }
     };
 
@@ -78,7 +62,7 @@ struct SettingData
     {
         bool operator()(const SettingData& x, const SettingData& y)
         {
-            return x.SETTINGNAME < y.SETTINGNAME;
+            return x.m_name < y.m_name;
         }
     };
 
@@ -86,12 +70,13 @@ struct SettingData
     {
         bool operator()(const SettingData& x, const SettingData& y)
         {
-            return x.SETTINGVALUE < y.SETTINGVALUE;
+            return x.m_value < y.m_value;
         }
     };
 };
 
-inline SettingData::SettingData(wxSQLite3ResultSet& q)
+inline SettingData::SettingData(wxSQLite3ResultSet& q) :
+    SettingData()
 {
     from_select_result(q);
 }

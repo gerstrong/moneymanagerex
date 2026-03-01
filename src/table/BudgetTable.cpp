@@ -1,4 +1,4 @@
-﻿// -*- C++ -*-
+// -*- C++ -*-
 //=============================================================================
 /**
  *      Copyright: (c) 2013-2026 Guan Lisheng (guanlisheng@gmail.com)
@@ -13,7 +13,7 @@
  *      @author [sqlite2cpp.py]
  *
  *      Revision History:
- *          AUTO GENERATED at 2026-02-23 02:42:42.918296.
+ *          AUTO GENERATED at 2026-02-25 08:58:12.230056.
  *          DO NOT EDIT!
  */
 //=============================================================================
@@ -136,21 +136,6 @@ void BudgetRow::to_html_template(html_template& t) const
     t(L"AMOUNT") = AMOUNT;
     t(L"NOTES") = NOTES;
     t(L"ACTIVE") = ACTIVE.GetValue();
-}
-
-BudgetRow& BudgetRow::operator= (const BudgetRow& other)
-{
-    if (this == &other) return *this;
-
-    BUDGETENTRYID = other.BUDGETENTRYID;
-    BUDGETYEARID = other.BUDGETYEARID;
-    CATEGID = other.CATEGID;
-    PERIOD = other.PERIOD;
-    AMOUNT = other.AMOUNT;
-    NOTES = other.NOTES;
-    ACTIVE = other.ACTIVE;
-
-    return *this;
 }
 
 bool BudgetRow::equals(const BudgetRow* other) const

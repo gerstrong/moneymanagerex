@@ -62,7 +62,6 @@ struct FieldData
     void to_html_template(html_template& t) const;
     void destroy() { delete this; }
 
-    FieldData& operator= (const FieldData& other);
     FieldData& clone_from(const FieldData& other);
     bool equals(const FieldData* other) const;
     bool operator< (const FieldData& other) const { return id() < other.id(); }
@@ -109,7 +108,8 @@ struct FieldData
     };
 };
 
-inline FieldData::FieldData(wxSQLite3ResultSet& q)
+inline FieldData::FieldData(wxSQLite3ResultSet& q) :
+    FieldData()
 {
     from_select_result(q);
 }

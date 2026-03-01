@@ -30,7 +30,7 @@
 
 #include "model/CurrencyModel.h"
 #include "model/InfoModel.h"
-#include "model/PreferencesModel.h"
+#include "model/PrefModel.h"
 #include "model/StockModel.h"
 
 #include "AccountDialog.h"
@@ -72,8 +72,8 @@ AccountDialog::AccountDialog(AccountData* account, wxWindow* parent) :
     m_account_n(account)
 {
     m_images = navtree_images_list();
-    m_currencyID = m_account_n->CURRENCYID;
-    [[maybe_unused]] const CurrencyData* currency = CurrencyModel::instance().get_data_n(m_currencyID);
+    m_currencyID = m_account_n->m_currency_id_p;
+    [[maybe_unused]] const CurrencyData* currency = CurrencyModel::instance().get_id_data_n(m_currencyID);
     wxASSERT(currency);
 
     this->SetFont(parent->GetFont());
@@ -140,8 +140,8 @@ void AccountDialog::CreateControls()
     grid_sizer->Add(new wxStaticText(this, wxID_STATIC, _t("Account Status:")), g_flagsH);
 
     wxChoice* itemChoice6 = new wxChoice(this, ID_DIALOG_NEWACCT_COMBO_ACCTSTATUS);
-    for (int i = 0; i < AccountModel::STATUS_ID_size; ++i) {
-        wxString status = AccountModel::status_name(i);
+    for (int i = 0; i < AccountStatus::size; ++i) {
+        wxString status = AccountStatus(i).name();
         itemChoice6->Append(wxGetTranslation(status), new wxStringClientData(status));
     }
     mmToolTip(itemChoice6, _t("Specify if this account has been closed. Closed accounts are inactive in most calculations, reporting etc."));
@@ -164,7 +164,7 @@ void AccountDialog::CreateControls()
     wxString currName = _t("Select Currency");
     const CurrencyData* base_currency = CurrencyModel::GetBaseCurrency();
     if (base_currency)
-        currName = base_currency->CURRENCYNAME;
+        currName = base_currency->m_name;
 
     wxButton* itemButton71 = new wxButton(this, ID_DIALOG_NEWACCT_BUTTON_CURRENCY, currName);
     mmToolTip(itemButton71, _t("Specify the currency to be used by this account."));
@@ -197,7 +197,7 @@ void AccountDialog::CreateControls()
     grid_sizer2->AddGrowableCol(1, 1);
     others_sizer->Add(grid_sizer2, g_flagsExpand);
 
-    grid_sizer2->Add(new wxStaticText(others_tab, wxID_STATIC, (AccountModel::type_id(m_account_n) == NavigatorTypes::TYPE_ID_CREDIT_CARD ? _t("Card Number:") : _t("Account Number:"))), g_flagsH);
+    grid_sizer2->Add(new wxStaticText(others_tab, wxID_STATIC, (AccountModel::type_id(*m_account_n) == NavigatorTypes::TYPE_ID_CREDIT_CARD ? _t("Card Number:") : _t("Account Number:"))), g_flagsH);
     wxTextCtrl* itemTextCtrl6 = new wxTextCtrl(others_tab, ID_ACCTNUMBER, "", wxDefaultPosition, wxDefaultSize);
     mmToolTip(itemTextCtrl6, _t("Enter the Account Number associated with this account."));
     grid_sizer2->Add(itemTextCtrl6, g_flagsExpand);
@@ -306,71 +306,70 @@ void AccountDialog::fillControls()
 {
     if (!m_account_n)
         return;
+    const CurrencyData* currency_p = AccountModel::instance().get_data_currency_p(*m_account_n);
 
-    m_textAccountName->SetValue(m_account_n->ACCOUNTNAME);
+    m_textAccountName->SetValue(m_account_n->m_name);
 
     wxTextCtrl* textCtrl = static_cast<wxTextCtrl*>(FindWindow(ID_ACCTNUMBER));
-    textCtrl->SetValue(m_account_n->ACCOUNTNUM);
+    textCtrl->SetValue(m_account_n->m_num);
 
     textCtrl = static_cast<wxTextCtrl*>(FindWindow(ID_DIALOG_NEWACCT_TEXTCTRL_HELDAT));
-    textCtrl->SetValue(m_account_n->HELDAT);
+    textCtrl->SetValue(m_account_n->m_held_at);
 
     textCtrl = static_cast<wxTextCtrl*>(FindWindow(ID_DIALOG_NEWACCT_TEXTCTRL_WEBSITE));
-    textCtrl->SetValue(m_account_n->WEBSITE);
+    textCtrl->SetValue(m_account_n->m_website);
 
     textCtrl = static_cast<wxTextCtrl*>(FindWindow(ID_DIALOG_NEWACCT_TEXTCTRL_CONTACT));
-    textCtrl->SetValue(m_account_n->CONTACTINFO);
+    textCtrl->SetValue(m_account_n->m_contact_info);
 
     textCtrl = static_cast<wxTextCtrl*>(FindWindow(ID_DIALOG_NEWACCT_TEXTCTRL_NOTES));
-    textCtrl->SetValue(m_account_n->NOTES);
+    textCtrl->SetValue(m_account_n->m_notes);
 
     wxChoice* itemAcctType = static_cast<wxChoice*>(FindWindow(ID_DIALOG_NEWACCT_COMBO_ACCTTYPE));
-    itemAcctType->SetStringSelection(wxGetTranslation(m_account_n->ACCOUNTTYPE));
+    itemAcctType->SetStringSelection(wxGetTranslation(m_account_n->m_type_));
     itemAcctType->Enable(false);
 
     wxChoice* choice = static_cast<wxChoice*>(FindWindow(ID_DIALOG_NEWACCT_COMBO_ACCTSTATUS));
-    choice->SetSelection(AccountModel::status_id(m_account_n));
+    choice->SetSelection(m_account_n->m_status.id());
 
     wxCheckBox* itemCheckBox = static_cast<wxCheckBox*>(FindWindow(ID_DIALOG_NEWACCT_CHKBOX_FAVACCOUNT));
-    itemCheckBox->SetValue(AccountModel::FAVORITEACCT(m_account_n));
+    itemCheckBox->SetValue(m_account_n->is_favorite());
 
     wxButton* bn = static_cast<wxButton*>(FindWindow(ID_DIALOG_NEWACCT_BUTTON_CURRENCY));
-    bn->SetLabelText(AccountModel::currency(m_account_n)->CURRENCYNAME);
+    bn->SetLabelText(currency_p->m_name);
 
-    double initBal = m_account_n->INITIALBAL;
-    m_initbalance_ctrl->SetCurrency(AccountModel::currency(m_account_n));
+    double initBal = m_account_n->m_open_balance;
+    m_initbalance_ctrl->SetCurrency(currency_p);
     m_initbalance_ctrl->SetValue(initBal);
 
-    if (!m_account_n->INITIALDATE.empty()) {
-        m_initdate_ctrl->SetValue(parseDateTime(m_account_n->INITIALDATE));
-    }
+    m_initdate_ctrl->SetValue(m_account_n->m_open_date.getDateTime());
 
-    int selectedImage = PreferencesModel::instance().AccountImageId(
-        m_account_n->ACCOUNTID, false, true
+    int selectedImage = PrefModel::instance().AccountImageId(
+        m_account_n->m_id, false, true
     );
     m_bitmapButtons->SetBitmap(m_images.at(selectedImage));
 
-    m_accessInfo = m_account_n->ACCESSINFO;
+    m_accessInfo = m_account_n->m_access_info;
 
-    m_credit_limit_ctrl->SetCurrency(AccountModel::currency(m_account_n));
-    m_credit_limit_ctrl->SetValue(m_account_n->CREDITLIMIT);
+    m_credit_limit_ctrl->SetCurrency(currency_p);
+    m_credit_limit_ctrl->SetValue(m_account_n->m_credit_limit);
 
-    m_interest_rate_ctrl->SetValue(m_account_n->INTERESTRATE, 2);
+    m_interest_rate_ctrl->SetValue(m_account_n->m_interest_rate, 2);
 
-    if (!m_account_n->PAYMENTDUEDATE.empty()) {
-        m_payment_due_date_ctrl->SetValue(parseDateTime(m_account_n->PAYMENTDUEDATE));
+    if (m_account_n->m_payment_due_date_n.has_value()) {
+        m_payment_due_date_ctrl->SetValue(m_account_n->m_payment_due_date_n.getDateTimeN());
     }
 
-    m_minimum_payment_ctrl->SetCurrency(AccountModel::currency(m_account_n));
-    m_minimum_payment_ctrl->SetValue(m_account_n->MINIMUMPAYMENT);
+    m_minimum_payment_ctrl->SetCurrency(currency_p);
+    m_minimum_payment_ctrl->SetValue(m_account_n->m_min_payment);
 
-    m_statement_lock_ctrl->SetValue(AccountModel::BoolOf(m_account_n->STATEMENTLOCKED));
+    m_statement_lock_ctrl->SetValue(m_account_n->m_stmt_locked);
 
-    if (!m_account_n->STATEMENTDATE.empty()) {
-        m_statement_date_ctrl->SetValue(parseDateTime(m_account_n->STATEMENTDATE));
+    if (m_account_n->m_stmt_date_n.has_value()) {
+        m_statement_date_ctrl->SetValue(m_account_n->m_stmt_date_n.value().getDateTime());
     }
-    m_minimum_balance_ctrl->SetCurrency(AccountModel::currency(m_account_n));
-    m_minimum_balance_ctrl->SetValue(m_account_n->MINIMUMBALANCE);
+    m_minimum_balance_ctrl->SetCurrency(currency_p);
+    m_minimum_balance_ctrl->SetValue(m_account_n->m_min_balance);
 }
 
 void AccountDialog::OnAccountStatus()
@@ -382,7 +381,7 @@ void AccountDialog::OnAccountStatus()
         FindWindow(ID_DIALOG_NEWACCT_CHKBOX_FAVACCOUNT)
     );
     // Can only change if account is open
-    if (choice->GetSelection() == AccountModel::STATUS_ID_CLOSED)
+    if (choice->GetSelection() == AccountStatus::e_closed)
         itemCheckBox->Disable();
     else
         itemCheckBox->Enable();
@@ -396,9 +395,9 @@ void AccountDialog::OnAccountStatus(wxCommandEvent& /*event*/)
 void AccountDialog::OnCurrency(wxCommandEvent& /*event*/)
 {
     if (CurrencyChoiceDialog::Execute(this, m_currencyID)) {
-        const CurrencyData* currency = CurrencyModel::instance().get_data_n(m_currencyID);
+        const CurrencyData* currency = CurrencyModel::instance().get_id_data_n(m_currencyID);
         wxButton* bn = static_cast<wxButton*>(FindWindow(ID_DIALOG_NEWACCT_BUTTON_CURRENCY));
-        bn->SetLabelText(currency->CURRENCYNAME);
+        bn->SetLabelText(currency->m_name);
 
         double value;
 
@@ -419,7 +418,7 @@ void AccountDialog::OnCurrency(wxCommandEvent& /*event*/)
             m_minimum_payment_ctrl->SetValue(value);
 
         if (m_account_n) {
-            m_account_n->CURRENCYID = currency->CURRENCYID;
+            m_account_n->m_currency_id_p = currency->m_id;
         }
     }
 }
@@ -427,7 +426,7 @@ void AccountDialog::OnCurrency(wxCommandEvent& /*event*/)
 void AccountDialog::OnAttachments(wxCommandEvent& /*event*/)
 {
     wxString RefType = AccountModel::refTypeName;
-    AttachmentDialog dlg(this, RefType, m_account_n->ACCOUNTID);
+    AttachmentDialog dlg(this, RefType, m_account_n->m_id);
     dlg.ShowModal();
 }
 
@@ -438,7 +437,7 @@ void AccountDialog::OnImageButton(wxCommandEvent& /*event*/)
     wxMenuItem* menuItem = new wxMenuItem(&mainMenu, wxID_HIGHEST + static_cast<int>(acc_img::ACC_ICON_MONEY) - 1, _t("Default Image"));
 
     menuItem->SetBitmap(m_images.at(
-        PreferencesModel::instance().AccountImageId(m_account_n->ACCOUNTID, true)
+        PrefModel::instance().AccountImageId(m_account_n->m_id, true)
     ));
     mainMenu.Append(menuItem);
 
@@ -456,10 +455,10 @@ void AccountDialog::OnImageButton(wxCommandEvent& /*event*/)
 void AccountDialog::OnCustonImage(wxCommandEvent& event)
 {
     int selectedImage = (event.GetId() - wxID_HIGHEST) - img::LAST_NAVTREE_PNG + 1;
-    int image_id = PreferencesModel::instance().AccountImageId(m_account_n->ACCOUNTID, true);
+    int image_id = PrefModel::instance().AccountImageId(m_account_n->m_id, true);
 
     InfoModel::instance().setInt(
-        wxString::Format("ACC_IMAGE_ID_%lld", m_account_n->ACCOUNTID),
+        wxString::Format("ACC_IMAGE_ID_%lld", m_account_n->m_id),
         selectedImage
     );
     if (selectedImage != 0)
@@ -499,102 +498,127 @@ void AccountDialog::OnCancel(wxCommandEvent& /*event*/)
 
 void AccountDialog::OnOk(wxCommandEvent& /*event*/)
 {
-    wxString acctName = m_textAccountName->GetValue().Trim();
-    if (acctName.IsEmpty() || AccountModel::Exist(acctName)) {
-        if (m_account_n && m_account_n->ACCOUNTNAME.CmpNoCase(acctName) != 0)
+    wxString name = m_textAccountName->GetValue().Trim();
+    if (name.IsEmpty() || !AccountModel::instance().find_name_data_a(name).empty()) {
+        // FIXME: if (!m_account_n || m_account_n->m_name.CmpNoCase(name) != 0)
+        if (m_account_n && m_account_n->m_name.CmpNoCase(name) != 0)
             return mmErrorDialogs::MessageInvalid(this, _t("Account Name "));
     }
 
-    const CurrencyData* currency_n = CurrencyModel::instance().get_data_n(m_currencyID);
+    const CurrencyData* currency_n = CurrencyModel::instance().get_id_data_n(m_currencyID);
     if (!currency_n)
         return mmErrorDialogs::MessageInvalid(this, _t("Currency"));
 
-    wxTextCtrl* textCtrlWebsite = static_cast<wxTextCtrl*>(FindWindow(ID_DIALOG_NEWACCT_TEXTCTRL_WEBSITE));
-    if (!textCtrlWebsite->GetValue().empty() && !isValidURI(textCtrlWebsite->GetValue())) {
+    wxChoice* status_choice = static_cast<wxChoice*>(
+        FindWindow(ID_DIALOG_NEWACCT_COMBO_ACCTSTATUS)
+    );
+    wxCheckBox* favorite_cb = static_cast<wxCheckBox*>(
+        FindWindow(ID_DIALOG_NEWACCT_CHKBOX_FAVACCOUNT)
+    );
+    wxTextCtrl* num_ctrl = static_cast<wxTextCtrl*>(
+        FindWindow(ID_ACCTNUMBER)
+    );
+    wxTextCtrl* held_at_ctrl = static_cast<wxTextCtrl*>(
+        FindWindow(ID_DIALOG_NEWACCT_TEXTCTRL_HELDAT)
+    );
+    wxTextCtrl* website_ctrl = static_cast<wxTextCtrl*>(
+        FindWindow(ID_DIALOG_NEWACCT_TEXTCTRL_WEBSITE)
+    );
+    wxTextCtrl* contact_info_ctrl = static_cast<wxTextCtrl*>(
+        FindWindow(ID_DIALOG_NEWACCT_TEXTCTRL_CONTACT)
+    );
+
+    if (!website_ctrl->GetValue().empty() && !isValidURI(website_ctrl->GetValue())) {
         m_notebook->SetSelection(1);
-        return mmErrorDialogs::ToolTip4Object(textCtrlWebsite, _t("Please enter a valid URL"), _t("Invalid URL"));
+        return mmErrorDialogs::ToolTip4Object(
+            website_ctrl,
+            _t("Please enter a valid URL"),
+            _t("Invalid URL")
+        );
     }
 
-    if (!m_initbalance_ctrl->checkValue(m_account_n->INITIALBAL, false))
+    mmDate open_date = mmDate(m_initdate_ctrl->GetValue());
+    if (open_date > mmDate::today())
+        return mmErrorDialogs::ToolTip4Object(
+            m_initdate_ctrl,
+            _t("Opening date shall not be in the future"),
+            _t("Invalid Date")
+        );
+    if (m_account_n) {
+        bool valid_open_date_trx1 = TrxModel::instance().find(
+            TrxCol::TRANSDATE(OP_LT, open_date.isoStart()),
+            TrxCol::ACCOUNTID(OP_EQ, m_account_n->m_id)
+        ).empty();
+        bool valid_open_date_trx2 = TrxModel::instance().find(
+            TrxCol::TRANSDATE(OP_LT, open_date.isoStart()),
+            TrxCol::TOACCOUNTID(OP_EQ, m_account_n->m_id)
+        ).empty();
+        if (!valid_open_date_trx1 || !valid_open_date_trx2)
+            return mmErrorDialogs::ToolTip4Object(
+                m_initdate_ctrl,
+                _t("Transactions for this account already exist before this date"),
+                _t("Invalid Date")
+            );
+        bool valid_open_date_stock = StockModel::instance().find(
+            StockCol::PURCHASEDATE(OP_LT, open_date.isoStart()),
+            StockCol::HELDAT(OP_EQ, m_account_n->m_id)
+        ).empty();
+        if (!valid_open_date_stock)
+            return mmErrorDialogs::ToolTip4Object(
+                m_initdate_ctrl,
+                _t("Stock purchases for this account already exist before this date"),
+                _t("Invalid Date")
+            );
+        bool valid_open_date_sched1 = SchedModel::instance().find(
+            SchedCol::TRANSDATE(OP_LT, open_date.isoStart()),
+            SchedCol::ACCOUNTID(OP_EQ, m_account_n->m_id)
+        ).empty();
+        bool valid_open_date_sched2 = SchedModel::instance().find(
+            SchedCol::TRANSDATE(OP_LT, open_date.isoStart()),
+            SchedCol::TOACCOUNTID(OP_EQ, m_account_n->m_id)
+        ).empty();
+        if (!valid_open_date_sched1 || !valid_open_date_sched2)
+            return mmErrorDialogs::ToolTip4Object(
+                m_initdate_ctrl,
+                _t("Scheduled transactions for this account are scheduled before this date."),
+                _t("Invalid Date")
+            );
+    }
+
+    double open_balance = 0.0;
+    if (!m_initbalance_ctrl->checkValue(open_balance, false))
         return;
 
-    wxString openingDate = m_initdate_ctrl->GetValue().FormatISODate();
-    if (openingDate > wxDate::Today().FormatISODate())
-        return mmErrorDialogs::ToolTip4Object(m_initdate_ctrl, _t("Opening date is unable to be in the future"), _t("Invalid Date"));
+    double min_balance   = 0.0; m_minimum_balance_ctrl->checkValue(min_balance);
+    double credit_limit  = 0.0; m_credit_limit_ctrl->checkValue(credit_limit);
+    double interest_rate = 0.0; m_interest_rate_ctrl->checkValue(interest_rate);
+    double min_payment   = 0.0; m_minimum_payment_ctrl->checkValue(min_payment);
 
-    if (m_account_n) {
-        const TransactionModel::DataA all_trans_check1 = TransactionModel::instance().find(
-            TransactionCol::TRANSDATE(OP_LT, openingDate),
-            TransactionCol::ACCOUNTID(OP_EQ, m_account_n->ACCOUNTID)
-        );
-        const TransactionModel::DataA all_trans_check2 = TransactionModel::instance().find(
-            TransactionCol::TRANSDATE(OP_LT, openingDate),
-            TransactionCol::TOACCOUNTID(OP_EQ, m_account_n->ACCOUNTID)
-        );
-        if (!all_trans_check1.empty() || !all_trans_check2.empty())
-            return mmErrorDialogs::ToolTip4Object(m_initdate_ctrl, _t("Transactions for this account already exist before this date"), _t("Invalid Date"));
-
-        const StockModel::DataA all_trans_stock = StockModel::instance().find(
-            StockCol::PURCHASEDATE(OP_LT, openingDate),
-            StockCol::HELDAT(OP_EQ, m_account_n->ACCOUNTID)
-        );
-        if (!all_trans_stock.empty())
-            return mmErrorDialogs::ToolTip4Object(m_initdate_ctrl, _t("Stock purchases for this account already exist before this date"), _t("Invalid Date"));
-
-        const ScheduledModel::DataA all_trans_bd1 = ScheduledModel::instance().find(
-            ScheduledCol::TRANSDATE(OP_LT, openingDate),
-            ScheduledCol::ACCOUNTID(OP_EQ, m_account_n->ACCOUNTID)
-        );
-        const ScheduledModel::DataA all_trans_bd2 = ScheduledModel::instance().find(
-            ScheduledCol::TRANSDATE(OP_LT, openingDate),
-            ScheduledCol::TOACCOUNTID(OP_EQ, m_account_n->ACCOUNTID)
-        );
-        if (!all_trans_bd1.empty() || !all_trans_bd2.empty())
-            return mmErrorDialogs::ToolTip4Object(m_initdate_ctrl, _t("Scheduled transactions for this account are scheduled before this date."), _t("Invalid Date"));
-    } else {
+    if (!m_account_n) {
         m_account_d = AccountData();
         m_account_n = &m_account_d;
     }
 
-    m_account_n->INITIALDATE = openingDate;
-
-    wxTextCtrl* textCtrlAcctNumber = static_cast<wxTextCtrl*>(FindWindow(ID_ACCTNUMBER));
-    wxTextCtrl* textCtrlHeldAt = static_cast<wxTextCtrl*>(FindWindow(ID_DIALOG_NEWACCT_TEXTCTRL_HELDAT));
-    wxTextCtrl* textCtrlContact = static_cast<wxTextCtrl*>(FindWindow(ID_DIALOG_NEWACCT_TEXTCTRL_CONTACT));
-
-    wxChoice* choice = static_cast<wxChoice*>(FindWindow(ID_DIALOG_NEWACCT_COMBO_ACCTSTATUS));
-    m_account_n->STATUS = AccountModel::status_name(choice->GetSelection());
-
-    wxCheckBox* itemCheckBox = static_cast<wxCheckBox*>(FindWindow(ID_DIALOG_NEWACCT_CHKBOX_FAVACCOUNT));
-    m_account_n->FAVORITEACCT = itemCheckBox->IsChecked() ? "TRUE" : "FALSE";
-
-    m_account_n->ACCOUNTNAME = acctName;
-    m_account_n->ACCOUNTNUM = textCtrlAcctNumber->GetValue();
-    m_account_n->NOTES = m_notesCtrl->GetValue();
-    m_account_n->HELDAT = textCtrlHeldAt->GetValue();
-    m_account_n->WEBSITE = textCtrlWebsite->GetValue();
-    m_account_n->CONTACTINFO = textCtrlContact->GetValue();
-    m_account_n->CURRENCYID = m_currencyID;
-    m_account_n->ACCESSINFO = m_accessInfo;
-
-    double value = 0;
-    m_credit_limit_ctrl->checkValue(value);
-    m_account_n->CREDITLIMIT = value;
-
-    m_interest_rate_ctrl->checkValue(value);
-    m_account_n->INTERESTRATE = value;
-
-    m_account_n->PAYMENTDUEDATE = m_payment_due_date_ctrl->GetValue().FormatISODate();
-
-    m_minimum_payment_ctrl->checkValue(value);
-    m_account_n->MINIMUMPAYMENT = value;
-
-    m_account_n->STATEMENTLOCKED = m_statement_lock_ctrl->GetValue() ? 1 : 0;
-    m_account_n->STATEMENTDATE = m_statement_date_ctrl->GetValue().FormatISODate();
-
-    m_minimum_balance_ctrl->checkValue(value);
-    m_account_n->MINIMUMBALANCE = value;
-
+    // CHECK: m_type_ is missing
+    m_account_n->m_name               = name;
+    m_account_n->m_currency_id_p      = m_currencyID;
+    m_account_n->m_status             = AccountStatus(status_choice->GetSelection());
+    m_account_n->m_favorite           = AccountFavorite(favorite_cb->IsChecked());
+    m_account_n->m_num                = num_ctrl->GetValue();
+    m_account_n->m_notes              = m_notesCtrl->GetValue();
+    m_account_n->m_held_at            = held_at_ctrl->GetValue();
+    m_account_n->m_website            = website_ctrl->GetValue();
+    m_account_n->m_contact_info       = contact_info_ctrl->GetValue();
+    m_account_n->m_access_info        = m_accessInfo;
+    m_account_n->m_open_date          = open_date;
+    m_account_n->m_open_balance       = open_balance;
+    m_account_n->m_stmt_locked        = m_statement_lock_ctrl->GetValue();
+    m_account_n->m_stmt_date_n        = mmDateN(m_statement_date_ctrl->GetValue());
+    m_account_n->m_min_balance        = min_balance;
+    m_account_n->m_credit_limit       = credit_limit;
+    m_account_n->m_interest_rate      = interest_rate;
+    m_account_n->m_payment_due_date_n = mmDateN(m_payment_due_date_ctrl->GetValue());
+    m_account_n->m_min_payment        = min_payment;
     AccountModel::instance().unsafe_save_data_n(m_account_n);
 
     EndModal(wxID_OK);

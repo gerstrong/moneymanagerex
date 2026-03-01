@@ -1,4 +1,4 @@
-﻿// -*- C++ -*-
+// -*- C++ -*-
 //=============================================================================
 /**
  *      Copyright: (c) 2013-2026 Guan Lisheng (guanlisheng@gmail.com)
@@ -13,7 +13,7 @@
  *      @author [sqlite2cpp.py]
  *
  *      Revision History:
- *          AUTO GENERATED at 2026-02-23 02:42:42.918296.
+ *          AUTO GENERATED at 2026-02-25 08:58:12.230056.
  *          DO NOT EDIT!
  */
 //=============================================================================
@@ -178,7 +178,6 @@ struct CurrencyRow
     void to_html_template(html_template& t) const;
     void destroy() { delete this; }
 
-    CurrencyRow& operator= (const CurrencyRow& other);
     CurrencyRow& clone_from(const CurrencyRow& other);
     bool equals(const CurrencyRow* other) const;
     bool operator< (const CurrencyRow& other) const { return id() < other.id(); }

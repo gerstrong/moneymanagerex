@@ -23,7 +23,7 @@
 #include "util/mmDateRange.h"
 
 #include "model/CategoryModel.h"
-#include "model/PreferencesModel.h"
+#include "model/PrefModel.h"
 
 #include "CategoryReport.h"
 #include "budget.h"
@@ -43,8 +43,14 @@ CategoryReport::~CategoryReport()
 {
 }
 
-double CategoryReport::AppendData([[maybe_unused]] const std::vector<CategoryReport::data_holder> &data, std::map<int64, std::map<int, double>> &categoryStats, const CategoryData* category, int64 groupID, int level) {
-    double amt = categoryStats[category->CATEGID][0];
+double CategoryReport::AppendData(
+    [[maybe_unused]] const std::vector<CategoryReport::data_holder> &data,
+    std::map<int64, std::map<int, double>> &categoryStats,
+    const CategoryData* category,
+    int64 groupID,
+    int level
+) {
+    double amt = categoryStats[category->m_id][0];
     if (type_ == COME && amt < 0.0) amt = 0;
     if (type_ == GOES && amt > 0.0) amt = 0;
     CategoryModel::DataA subcategories = CategoryModel::sub_category(category);
@@ -53,10 +59,10 @@ double CategoryReport::AppendData([[maybe_unused]] const std::vector<CategoryRep
     double subamount = 0;
     for (const auto& subcategory : subcategories) {
         double amount = AppendData(data_, categoryStats, &subcategory, groupID, level + 1);
-        if (amount != 0) data_.insert(data_.begin(), { category->CATEGID, subcategory.CATEGID, category->CATEGNAME, amount, groupID, level });
+        if (amount != 0) data_.insert(data_.begin(), { category->m_id, subcategory.m_id, category->m_name, amount, groupID, level });
         subamount += amount;
     }
-    if (amt != 0 || subamount != 0) data_.insert(data_.begin(), { category->CATEGID, -1, category->CATEGNAME, amt, groupID, level });
+    if (amt != 0 || subamount != 0) data_.insert(data_.begin(), { category->m_id, -1, category->m_name, amt, groupID, level });
     return amt + subamount;
 }
 
@@ -68,7 +74,7 @@ void  CategoryReport::refreshData()
         categoryStats,
         m_account_a,
         m_date_range,
-        PreferencesModel::instance().getIgnoreFutureTransactions(),
+        PrefModel::instance().getIgnoreFutureTransactions(),
         false
     );
 
@@ -79,7 +85,7 @@ void  CategoryReport::refreshData()
     std::reverse(categories.begin(), categories.end());
     for (const auto& category : categories)
     {
-        double amt = categoryStats[category.CATEGID][0];
+        double amt = categoryStats[category.m_id][0];
         if (type_ == COME && amt < 0.0) amt = 0;
         if (type_ == GOES && amt > 0.0) amt = 0;
 
@@ -89,11 +95,11 @@ void  CategoryReport::refreshData()
         double subamount = 0;
         for (const auto& sub_category : subcategories)
         {
-            double amount = AppendData(data_, categoryStats, &sub_category, category.CATEGID, 1);
-            if (amount != 0) data_.insert(data_.begin(), { category.CATEGID, sub_category.CATEGID, category.CATEGNAME, amount, category.CATEGID, 0 });
+            double amount = AppendData(data_, categoryStats, &sub_category, category.m_id, 1);
+            if (amount != 0) data_.insert(data_.begin(), { category.m_id, sub_category.m_id, category.m_name, amount, category.m_id, 0 });
             subamount += amount;
         }
-        if (amt != 0 || subamount != 0) data_.insert(data_.begin(), { category.CATEGID, -1, category.CATEGNAME, amt, category.CATEGID, 0 });
+        if (amt != 0 || subamount != 0) data_.insert(data_.begin(), { category.m_id, -1, category.m_name, amt, category.m_id, 0 });
 
         groupID++;
     }
@@ -353,7 +359,7 @@ wxString mmReportCategoryOverTimePerformance::getHTMLText()
         categoryStats,
         m_account_a,
         date_range,
-        PreferencesModel::instance().getIgnoreFutureTransactions()
+        PrefModel::instance().getIgnoreFutureTransactions()
     );
 
     //Init totals

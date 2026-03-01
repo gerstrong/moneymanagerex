@@ -16,17 +16,19 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  ********************************************************/
 
-// PLEASE EDIT!
-// This is only sample code re-used from "table/AssetTable.cpp".
-
 #include "AssetData.h"
 
-AssetData::AssetData()
+AssetData::AssetData() :
+    m_id(-1),
+    m_type(AssetType()),
+    m_status(AssetStatus()),
+    m_start_date(mmDate::today()),
+    m_currency_id_n(-1),
+    m_value(0.0),
+    m_change(AssetChange()),
+    m_change_mode(AssetChangeMode()),
+    m_change_rate(0.0)
 {
-    ASSETID = -1;
-    CURRENCYID = -1;
-    VALUE = 0.0;
-    VALUECHANGERATE = 0.0;
 }
 
 // Convert AssetData to AssetRow
@@ -34,17 +36,17 @@ AssetRow AssetData::to_row() const
 {
     AssetRow row;
 
-    row.ASSETID = ASSETID;
-    row.STARTDATE = STARTDATE;
-    row.ASSETNAME = ASSETNAME;
-    row.ASSETSTATUS = ASSETSTATUS;
-    row.CURRENCYID = CURRENCYID;
-    row.VALUECHANGEMODE = VALUECHANGEMODE;
-    row.VALUE = VALUE;
-    row.VALUECHANGE = VALUECHANGE;
-    row.NOTES = NOTES;
-    row.VALUECHANGERATE = VALUECHANGERATE;
-    row.ASSETTYPE = ASSETTYPE;
+    row.ASSETID         = m_id;
+    row.STARTDATE       = m_start_date.isoDate();
+    row.ASSETNAME       = m_name;
+    row.ASSETSTATUS     = m_status.name();
+    row.CURRENCYID      = m_currency_id_n;
+    row.VALUECHANGEMODE = m_change_mode.name();
+    row.VALUE           = m_value;
+    row.VALUECHANGE     = m_change.name();
+    row.NOTES           = m_notes;
+    row.VALUECHANGERATE = m_change_rate;
+    row.ASSETTYPE       = m_type.name();
 
     return row;
 }
@@ -52,53 +54,34 @@ AssetRow AssetData::to_row() const
 // Convert AssetRow to AssetData
 AssetData& AssetData::from_row(const AssetRow& row)
 {
-    ASSETID = row.ASSETID; // int64
-    STARTDATE = row.STARTDATE; // wxString
-    ASSETNAME = row.ASSETNAME; // wxString
-    ASSETSTATUS = row.ASSETSTATUS; // wxString
-    CURRENCYID = row.CURRENCYID; // int64
-    VALUECHANGEMODE = row.VALUECHANGEMODE; // wxString
-    VALUE = row.VALUE; // double
-    VALUECHANGE = row.VALUECHANGE; // wxString
-    NOTES = row.NOTES; // wxString
-    VALUECHANGERATE = row.VALUECHANGERATE; // double
-    ASSETTYPE = row.ASSETTYPE; // wxString
-
-    return *this;
-}
-
-AssetData& AssetData::operator= (const AssetData& other)
-{
-    if (this == &other) return *this;
-
-    ASSETID = other.ASSETID;
-    STARTDATE = other.STARTDATE;
-    ASSETNAME = other.ASSETNAME;
-    ASSETSTATUS = other.ASSETSTATUS;
-    CURRENCYID = other.CURRENCYID;
-    VALUECHANGEMODE = other.VALUECHANGEMODE;
-    VALUE = other.VALUE;
-    VALUECHANGE = other.VALUECHANGE;
-    NOTES = other.NOTES;
-    VALUECHANGERATE = other.VALUECHANGERATE;
-    ASSETTYPE = other.ASSETTYPE;
+    m_id            = row.ASSETID;                          // int64
+    m_type          = AssetType(row.ASSETTYPE);             // wxString
+    m_status        = AssetStatus(row.ASSETSTATUS);         // wxString
+    m_name          = row.ASSETNAME;                        // wxString
+    m_start_date    = mmDate(row.STARTDATE);                // wxString
+    m_currency_id_n = row.CURRENCYID;                       // int64
+    m_value         = row.VALUE;                            // double
+    m_change        = AssetChange(row.VALUECHANGE);         // wxString
+    m_change_mode   = AssetChangeMode(row.VALUECHANGEMODE); // wxString
+    m_change_rate   = row.VALUECHANGERATE;                  // double
+    m_notes         = row.NOTES;                            // wxString
 
     return *this;
 }
 
 bool AssetData::equals(const AssetData* other) const
 {
-    if ( ASSETID != other->ASSETID) return false;
-    if (!STARTDATE.IsSameAs(other->STARTDATE)) return false;
-    if (!ASSETNAME.IsSameAs(other->ASSETNAME)) return false;
-    if (!ASSETSTATUS.IsSameAs(other->ASSETSTATUS)) return false;
-    if ( CURRENCYID != other->CURRENCYID) return false;
-    if (!VALUECHANGEMODE.IsSameAs(other->VALUECHANGEMODE)) return false;
-    if ( VALUE != other->VALUE) return false;
-    if (!VALUECHANGE.IsSameAs(other->VALUECHANGE)) return false;
-    if (!NOTES.IsSameAs(other->NOTES)) return false;
-    if ( VALUECHANGERATE != other->VALUECHANGERATE) return false;
-    if (!ASSETTYPE.IsSameAs(other->ASSETTYPE)) return false;
+    if ( m_id               != other->m_id)               return false;
+    if ( m_type.id()        != other->m_type.id())        return false;
+    if ( m_status.id()      != other->m_status.id())      return false;
+    if (!m_name.IsSameAs(other->m_name))                  return false;
+    if ( m_start_date       != other->m_start_date)       return false;
+    if ( m_currency_id_n    != other->m_currency_id_n)    return false;
+    if ( m_value            != other->m_value)            return false;
+    if ( m_change.id()      != other->m_change.id())      return false;
+    if ( m_change_mode.id() != other->m_change_mode.id()) return false;
+    if ( m_change_rate      != other->m_change_rate)      return false;
+    if (!m_notes.IsSameAs(other->m_notes))                return false;
 
     return true;
 }

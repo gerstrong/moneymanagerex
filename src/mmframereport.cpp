@@ -259,28 +259,28 @@ void mmGUIFrame::DoUpdateGRMNavigation(wxTreeItemId& parent_item)
     wxTreeItemId group;
     wxString group_name;
     for (const auto& report_d : report_a) {
-        bool no_group = report_d.GROUPNAME.empty();
-        if (group_name != report_d.GROUPNAME && !no_group) {
+        bool no_group = report_d.m_group_name.empty();
+        if (group_name != report_d.m_group_name && !no_group) {
             group = m_nav_tree_ctrl->AppendItem(
                 parent_item,
-                wxGetTranslation(report_d.GROUPNAME),
+                wxGetTranslation(report_d.m_group_name),
                 img::CUSTOMSQL_GRP_PNG, img::CUSTOMSQL_GRP_PNG
             );
             m_nav_tree_ctrl->SetItemBold(group, true);
             m_nav_tree_ctrl->SetItemData(group, new mmTreeItemData(
-                new mmGeneralGroupReport(report_d.GROUPNAME),
-                report_d.GROUPNAME
+                new mmGeneralGroupReport(report_d.m_group_name),
+                report_d.m_group_name
             ));
-            group_name = report_d.GROUPNAME;
+            group_name = report_d.m_group_name;
         }
-        const ReportData* r = ReportModel::instance().get_data_n(report_d.REPORTID);
+        const ReportData* report_n = ReportModel::instance().get_id_data_n(report_d.m_id);
         wxTreeItemId item = m_nav_tree_ctrl->AppendItem(
             no_group ? parent_item : group,
-            wxGetTranslation(report_d.REPORTNAME),
+            wxGetTranslation(report_d.m_name),
             img::CUSTOMSQL_PNG, img::CUSTOMSQL_PNG
         );
         m_nav_tree_ctrl->SetItemData(item, new mmTreeItemData(
-            new mmGeneralReport(r), r->REPORTNAME
+            new mmGeneralReport(report_n), report_n->m_name
         ));
     }
 

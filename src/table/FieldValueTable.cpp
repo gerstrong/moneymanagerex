@@ -1,4 +1,4 @@
-﻿// -*- C++ -*-
+// -*- C++ -*-
 //=============================================================================
 /**
  *      Copyright: (c) 2013-2026 Guan Lisheng (guanlisheng@gmail.com)
@@ -13,7 +13,7 @@
  *      @author [sqlite2cpp.py]
  *
  *      Revision History:
- *          AUTO GENERATED at 2026-02-23 02:42:42.918296.
+ *          AUTO GENERATED at 2026-02-25 08:58:12.230056.
  *          DO NOT EDIT!
  */
 //=============================================================================
@@ -110,18 +110,6 @@ void FieldValueRow::to_html_template(html_template& t) const
     t(L"FIELDID") = FIELDID.GetValue();
     t(L"REFID") = REFID.GetValue();
     t(L"CONTENT") = CONTENT;
-}
-
-FieldValueRow& FieldValueRow::operator= (const FieldValueRow& other)
-{
-    if (this == &other) return *this;
-
-    FIELDATADID = other.FIELDATADID;
-    FIELDID = other.FIELDID;
-    REFID = other.REFID;
-    CONTENT = other.CONTENT;
-
-    return *this;
 }
 
 bool FieldValueRow::equals(const FieldValueRow* other) const

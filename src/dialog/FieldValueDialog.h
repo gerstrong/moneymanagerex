@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "base/defs.h"
 #include "model/FieldModel.h"
-#include "model/TransactionModel.h"
+#include "model/TrxModel.h"
 
 class mmDatePickerCtrl;
 class mmTextCtrl;
@@ -49,7 +49,7 @@ public:
     wxWindowID GetBaseID() const;
     void ResetRefID();
     bool IsSomeWidgetChanged() const;
-    bool IsDataFound(const TransactionModel::Full_Data &tran);
+    bool IsDataFound(const TrxModel::Full_Data &tran);
     void ResetWidgetsChanged();
     void ClearSettings();
     bool IsCustomPanelShown() const;

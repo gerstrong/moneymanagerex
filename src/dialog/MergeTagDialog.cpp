@@ -25,9 +25,9 @@
 
 #include "model/AttachmentModel.h"
 #include "model/PayeeModel.h"
-#include "model/ScheduledModel.h"
+#include "model/SchedModel.h"
 #include "model/TagModel.h"
-#include "model/TransactionModel.h"
+#include "model/TrxModel.h"
 
 #include "AttachmentDialog.h"
 #include "MergeTagDialog.h"
@@ -93,8 +93,8 @@ void MergeTagDialog::CreateControls()
         , wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL);
 
     choices_.Clear();
-    for (const auto& tag : TagModel::instance().find_all())
-        choices_.Add(tag.TAGNAME);
+    for (const auto& tag_d : TagModel::instance().find_all())
+        choices_.Add(tag_d.m_name);
     cbSourceTag_ = new wxComboBox(this, wxID_REPLACE, "", wxDefaultPosition, wxDefaultSize, choices_);
     cbSourceTag_->SetMinSize(wxSize(200, -1));
 
@@ -165,7 +165,7 @@ void MergeTagDialog::OnOk(wxCommandEvent& WXUNUSED(event))
     if (ans != wxOK)
         return;
 
-    TagLinkModel::instance().Savepoint();
+    TagLinkModel::instance().db_savepoint();
     TagLinkModel::DataA gl_a = TagLinkModel::instance().find(
         TagLinkCol::TAGID(sourceTagID_)
     );
@@ -174,10 +174,10 @@ void MergeTagDialog::OnOk(wxCommandEvent& WXUNUSED(event))
     }
     TagLinkModel::instance().save_data_a(gl_a);
     m_changed_records += gl_a.size();
-    TagLinkModel::instance().ReleaseSavepoint();
+    TagLinkModel::instance().db_release_savepoint();
 
     if (cbDeleteSourceTag_->IsChecked()) {
-        TagModel::instance().remove_depen(sourceTagID_);
+        TagModel::instance().purge_id(sourceTagID_);
         choices_.Remove(source_tag_name);
         cbSourceTag_->Set(choices_);
         cbDestTag_->Set(choices_);
@@ -189,24 +189,27 @@ void MergeTagDialog::OnOk(wxCommandEvent& WXUNUSED(event))
 void MergeTagDialog::IsOkOk()
 {
     bool e = true;
-    const TagData* source = TagModel::instance().get_key(cbSourceTag_->GetValue());
-    const TagData* dest = TagModel::instance().get_key(cbDestTag_->GetValue());
-    if (dest) destTagID_ = dest->TAGID;
-    if (source) sourceTagID_ = source->TAGID;
+    const TagData* src_tag_n = TagModel::instance().get_key(cbSourceTag_->GetValue());
+    const TagData* dst_tag_n = TagModel::instance().get_key(cbDestTag_->GetValue());
+    if (src_tag_n)
+        sourceTagID_ = src_tag_n->m_id;
+    if (dst_tag_n)
+        destTagID_ = dst_tag_n->m_id;
+
     int trxs_size = (sourceTagID_ < 0) ? 0 : TagLinkModel::instance().find(
-        TagLinkCol::REFTYPE(TransactionModel::refTypeName),
+        TagLinkCol::REFTYPE(TrxModel::refTypeName),
         TagLinkCol::TAGID(sourceTagID_)
     ).size();
     int split_size = (sourceTagID_ < 0) ? 0 : TagLinkModel::instance().find(
-        TagLinkCol::REFTYPE(TransactionSplitModel::refTypeName),
+        TagLinkCol::REFTYPE(TrxSplitModel::refTypeName),
         TagLinkCol::TAGID(sourceTagID_)
     ).size();
     int bills_size = (sourceTagID_ < 0) ? 0 : TagLinkModel::instance().find(
-        TagLinkCol::REFTYPE(ScheduledModel::refTypeName),
+        TagLinkCol::REFTYPE(SchedModel::refTypeName),
         TagLinkCol::TAGID(sourceTagID_)
     ).size();
     int bill_split_size = (sourceTagID_ < 0) ? 0 : TagLinkModel::instance().find(
-        TagLinkCol::REFTYPE(ScheduledSplitModel::refTypeName),
+        TagLinkCol::REFTYPE(SchedSplitModel::refTypeName),
         TagLinkCol::TAGID(sourceTagID_)
     ).size();
 

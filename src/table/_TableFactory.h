@@ -39,10 +39,10 @@ public:
     TableFactory<TableType, DataType>() : m_cache(mmCache<int64, Data>()) {};
     ~TableFactory<TableType, DataType>() { m_cache.reset(); };
 
-    // methods starting with 'find_' bypass the cache; other methods use the cache.
-    auto unsafe_get_data_n(const int64 id) -> Data*;
-    auto get_data_n(const int64 id) -> const Data*;
-    auto get_data_n(wxLongLong_t id) -> const Data* { return get_data_n(int64(id)); }
+    // Methods starting with 'find_' bypass the cache; other methods use the cache.
+    auto unsafe_get_id_data_n(const int64 id) -> Data*;
+    auto get_id_data_n(const int64 id) -> const Data*;
+    auto get_id_data_n(wxLongLong_t id) -> const Data* { return get_id_data_n(int64(id)); }
     auto add_data_n(Data& data) -> const Data*;
     bool add_data_a(DataA& data);
     auto unsafe_update_data_n(Data* data) -> Data*;
@@ -50,7 +50,7 @@ public:
     auto unsafe_save_data_n(Data* data) -> const Data*;
     auto save_data_n(Data& data) -> const Data*;
     bool save_data_a(DataA& data);
-    bool remove_data(const int64 id);
+    bool unsafe_remove_id(const int64 id);
     auto find_all(const COL_ID = Col::PRIMARY_ID, const bool asc = true) -> const DataA;
     void preload_cache(int max_size = 1000);
     void reset_cache() { m_cache.reset(); }
@@ -58,13 +58,33 @@ public:
     auto stat_json() const -> const wxString;
     void debug_stat() const;
 
-    virtual bool remove_depen(int64 id) { return remove_data(id); }
+    // TODO:
+    //   Add unordered_map<wxString, wxString> m_ref_query_m (a map from
+    //   other_table to SQL query) in TableBase and initialize it in *Model.
+    // Find records in other_table which refer to id in this table.
+    // The returned records either use id, or fully belong to id in this table.
+    // Returns a vector of ids in other_table.
+    // The complete list of table dependencies can be found in _dependencies.txt
+    // auto find_ref(int64 id, wxString other_table) -> std::vector<int64>;
 
-    // this is a trivial implementation (linear search) of indexing in cache.
-    // it does not require additional storage, other than the cache.
-    // TODO: implement a more efficient indexing using a map<key, id> for each key.
-    // the index is used as a hint for fast access in cache. if the id is wrong,
-    // the entry in the index is removed and a full search (with find) is executed.
+    // Remove all auxiliary records in other tables owned by id, and then remove id
+    // from this table. Return false in case or error.
+    // Before calling this function, the caller shall validate that only records fully
+    // owned by id refer to it, i.e., no references to id remain after this call.
+    // The default implementation assumes no auxiliary records; tables which have
+    // auxiliary records shall override it.
+    // Specializations of this function shall stop immediately in case of error,
+    // such that id in this table is removed only after all its auxiliary records
+    // are removed (otherwise the database will contain dangling references).
+    // The complete list of table dependencies can be found in _dependencies.txt
+    virtual bool purge_id(int64 id) { return unsafe_remove_id(id); }
+
+    // This is a trivial implementation of indexing in cache, using linear search.
+    // It does not require additional storage, other than the cache.
+    // TODO:
+    //   Implement a more efficient indexing using a map<key, id> for each key.
+    //   The index is used as a hint for fast access in cache. If the id is wrong,
+    //   the entry in the index is removed and a full search (with find) is executed.
     template<typename... Args>
     auto unsafe_search_cache_n(const Args& ... args) -> Data*
     {
@@ -87,7 +107,7 @@ public:
     // of the form: *Col::ColumnName(op, value) or *Col::ColumnName(value).
     // The conditions are combined with AND or OR, if op_and is true or false, resp.
     // Example:
-    //   true, AssetCol::ASSETID(2), AssetCol::ASSETTYPE(AssetModel::TYPE_ID_JEWELLERY)
+    //   true, AssetCol::ASSETID(2), AssetCol::ASSETTYPE(AssetType::e_jewellery)
     //   produces the SQL statement condition: ASSETID = 2 AND ASSETTYPE = "Jewellery"
     // Return an empty array if no records are found.
     // 

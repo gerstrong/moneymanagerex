@@ -16,15 +16,12 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  ********************************************************/
 
-// PLEASE EDIT!
-// This is only sample code re-used from "table/TagTable.cpp".
-
 #include "TagData.h"
 
 TagData::TagData()
 {
-    TAGID = -1;
-    ACTIVE = -1;
+    m_id     = -1;
+    m_active = true;
 }
 
 // Convert TagData to TagRow
@@ -32,9 +29,9 @@ TagRow TagData::to_row() const
 {
     TagRow row;
 
-    row.TAGID = TAGID;
-    row.TAGNAME = TAGNAME;
-    row.ACTIVE = ACTIVE;
+    row.TAGID   = m_id;
+    row.TAGNAME = m_name;
+    row.ACTIVE  = (m_active ? 1 : 0);
 
     return row;
 }
@@ -42,29 +39,18 @@ TagRow TagData::to_row() const
 // Convert TagRow to TagData
 TagData& TagData::from_row(const TagRow& row)
 {
-    TAGID = row.TAGID; // int64
-    TAGNAME = row.TAGNAME; // wxString
-    ACTIVE = row.ACTIVE; // int64
-
-    return *this;
-}
-
-TagData& TagData::operator= (const TagData& other)
-{
-    if (this == &other) return *this;
-
-    TAGID = other.TAGID;
-    TAGNAME = other.TAGNAME;
-    ACTIVE = other.ACTIVE;
+    m_id     = row.TAGID;         // int64
+    m_name   = row.TAGNAME;       // wxString
+    m_active = (row.ACTIVE != 0); // int64
 
     return *this;
 }
 
 bool TagData::equals(const TagData* other) const
 {
-    if ( TAGID != other->TAGID) return false;
-    if (!TAGNAME.IsSameAs(other->TAGNAME)) return false;
-    if ( ACTIVE != other->ACTIVE) return false;
+    if ( m_id != other->m_id) return false;
+    if (!m_name.IsSameAs(other->m_name)) return false;
+    if ( m_active != other->m_active) return false;
 
     return true;
 }

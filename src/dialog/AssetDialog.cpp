@@ -31,7 +31,7 @@
 #include "AssetDialog.h"
 #include "AccountDialog.h"
 #include "AttachmentDialog.h"
-#include "TransactionLinkDialog.h"
+#include "TrxLinkDialog.h"
 #include "uicontrols/navigatortypes.h"
 
 wxIMPLEMENT_DYNAMIC_CLASS(AssetDialog, wxDialog);
@@ -66,8 +66,8 @@ AssetDialog::AssetDialog(
 
 AssetDialog::AssetDialog(
     wxWindow* parent,
-    const TransactionLinkData* transfer_entry,
-    TransactionData* checking_entry
+    const TrxLinkData* transfer_entry,
+    TrxData* checking_entry
 ) :
     m_transfer_entry(transfer_entry),
     m_checking_entry(checking_entry),
@@ -76,7 +76,7 @@ AssetDialog::AssetDialog(
 {
     if (transfer_entry) {
         m_dialog_heading = _t("Edit Asset Transaction");
-        m_asset_n = AssetModel::instance().unsafe_get_data_n(transfer_entry->LINKRECORDID);
+        m_asset_n = AssetModel::instance().unsafe_get_id_data_n(transfer_entry->LINKRECORDID);
     }
 
     Create(parent, wxID_ANY, m_dialog_heading);
@@ -111,34 +111,34 @@ void AssetDialog::dataToControls()
     if (!m_asset_n)
         return;
 
-    w_assetName->SetValue(m_asset_n->ASSETNAME);
-    if (AccountModel::instance().get_key(m_asset_n->ASSETNAME))
+    w_assetName->SetValue(m_asset_n->m_name);
+    if (AccountModel::instance().get_name_data_n(m_asset_n->m_name))
         w_assetName->Enable(false);
-    w_dpc->SetValue(AssetModel::STARTDATE(m_asset_n));
-    w_assetType->SetSelection(AssetModel::type_id(m_asset_n));
-    if (AccountModel::instance().get_key(m_asset_n->ASSETTYPE))
+    w_dpc->SetValue(m_asset_n->m_start_date.getDateTime());
+    w_assetType->SetSelection(m_asset_n->m_type.id());
+    if (AccountModel::instance().get_name_data_n(m_asset_n->m_type.name()))
         w_assetType->Enable(false);
 
-    auto bal = AssetModel::value(m_asset_n);
+    auto bal = AssetModel::instance().get_data_value(*m_asset_n);
     w_value->SetValue(bal.first);
     w_curr_val->SetValue(bal.second);
 
-    int valueChangeType = AssetModel::change_id(m_asset_n);
+    mmChoiceId valueChangeType = m_asset_n->m_change.id();
     w_valueChange->SetSelection(valueChangeType);
 
-    // m_asset_n->VALUECHANGERATE is the rate with daily compounding
-    double valueChangeRate = m_asset_n->VALUECHANGERATE;
-    if (valueChangeType != AssetModel::CHANGE_ID_NONE &&
-        m_compounding != PreferencesModel::COMPOUNDING_ID_DAY
+    // m_asset_n->m_change_rate is the rate with daily compounding
+    double valueChangeRate = m_asset_n->m_change_rate;
+    if (valueChangeType != AssetChange::e_none &&
+        m_compounding != PrefModel::COMPOUNDING_ID_DAY
     ) {
-        valueChangeRate = convertRate(valueChangeType, valueChangeRate, PreferencesModel::COMPOUNDING_ID_DAY, m_compounding);
+        valueChangeRate = convertRate(valueChangeType, valueChangeRate, PrefModel::COMPOUNDING_ID_DAY, m_compounding);
     }
     w_valueChangeRate->SetValue(valueChangeRate, 3);
-    enableDisableRate(valueChangeType != AssetModel::CHANGE_ID_NONE);
+    enableDisableRate(valueChangeType != AssetChange::e_none);
 
-    w_notes->SetValue(m_asset_n->NOTES);
+    w_notes->SetValue(m_asset_n->m_notes);
 
-    TransactionLinkModel::DataA translink = TransactionLinkModel::TranslinkList<AssetModel>(m_asset_n->ASSETID);
+    TrxLinkModel::DataA translink = TrxLinkModel::TranslinkList<AssetModel>(m_asset_n->m_id);
     if (!translink.empty())
         w_value->Enable(false);
 
@@ -206,13 +206,13 @@ void AssetDialog::CreateControls()
     itemFlexGridSizer6->Add(new wxStaticText(asset_details_panel, wxID_STATIC, _t("Asset Type")), g_flagsH);
 
     w_assetType = new wxChoice(asset_details_panel, wxID_STATIC);
-    for (int i = 0; i < AssetModel::TYPE_ID_size; ++i) {
-        wxString type = AssetModel::type_name(i);
+    for (int i = 0; i < AssetType::size; ++i) {
+        wxString type = AssetType(i).name();
         w_assetType->Append(wxGetTranslation(type), new wxStringClientData(type));
     }
 
     mmToolTip(w_assetType, _t("Select type of asset"));
-    w_assetType->SetSelection(AssetModel::TYPE_ID_PROPERTY);
+    w_assetType->SetSelection(AssetType().id());
     itemFlexGridSizer6->Add(w_assetType, g_flagsExpand);
 
     wxStaticText* v = new wxStaticText(asset_details_panel, wxID_STATIC, _t("Initial Value"));
@@ -243,22 +243,22 @@ void AssetDialog::CreateControls()
     itemFlexGridSizer6->Add(new wxStaticText(asset_details_panel, wxID_STATIC, _t("Change in Value")), g_flagsH);
 
     w_valueChange = new wxChoice(asset_details_panel, IDC_COMBO_TYPE);
-    for (int i = 0; i < AssetModel::CHANGE_ID_size; ++i) {
-        wxString change = AssetModel::change_name(i);
+    for (mmChoiceId i = 0; i < AssetChange::size; ++i) {
+        wxString change = AssetChange(i).name();
         w_valueChange->Append(wxGetTranslation(change));
     }
 
     mmToolTip(w_valueChange, _t("Specify if the value of the asset changes over time"));
-    w_valueChange->SetSelection(AssetModel::CHANGE_ID_NONE);
+    w_valueChange->SetSelection(AssetChange::e_none);
     itemFlexGridSizer6->Add(w_valueChange, g_flagsExpand);
 
     w_compoundingLabel = new wxStaticText(asset_details_panel, wxID_STATIC, _t("Compounding Period"));
     itemFlexGridSizer6->Add(w_compoundingLabel, g_flagsH);
     w_compoundingChoice = new wxChoice(asset_details_panel, IDC_COMPOUNDING);
-    for(const auto& a : PreferencesModel::COMPOUNDING_NAME)
+    for(const auto& a : PrefModel::COMPOUNDING_NAME)
         w_compoundingChoice->Append(wxGetTranslation(a.second));
     mmToolTip(w_compoundingChoice, _t("Select the compounding period for the appreciation/depreciation rate"));
-    m_compounding = static_cast<PreferencesModel::COMPOUNDING_ID>(PreferencesModel::instance().getAssetCompounding());
+    m_compounding = static_cast<PrefModel::COMPOUNDING_ID>(PrefModel::instance().getAssetCompounding());
     w_compoundingChoice->SetSelection(m_compounding);
     itemFlexGridSizer6->Add(w_compoundingChoice, g_flagsExpand);
 
@@ -298,18 +298,18 @@ void AssetDialog::CreateControls()
     wxStaticBoxSizer* transaction_frame_sizer = new wxStaticBoxSizer(w_transaction_frame, wxVERTICAL);
     right_sizer->Add(transaction_frame_sizer, g_flagsV);
 
-    w_transaction_panel = new TransactionLinkDialog(this, m_checking_entry, true, wxID_STATIC);
+    w_transaction_panel = new TrxLinkDialog(this, m_checking_entry, true, wxID_STATIC);
     transaction_frame_sizer->Add(w_transaction_panel, g_flagsV);
     if (m_transfer_entry && m_checking_entry) {
         w_transaction_panel->CheckingType(
-            TransactionLinkModel::type_checking(m_checking_entry->TOACCOUNTID)
+            TrxLinkModel::type_checking(m_checking_entry->TOACCOUNTID)
         );
     }
     else if (m_asset_n) {
         w_transaction_panel->SetTransactionNumber(
-            m_asset_n->ASSETID.ToString() + "_" + m_asset_n->ASSETNAME
+            m_asset_n->m_id.ToString() + "_" + m_asset_n->m_name
         );
-        w_transaction_panel->CheckingType(TransactionLinkModel::AS_INCOME_EXPENSE);
+        w_transaction_panel->CheckingType(TrxLinkModel::AS_INCOME_EXPENSE);
     }
 
     if (m_hidden_trans_entry) HideTransactionPanel();
@@ -351,11 +351,12 @@ void AssetDialog::enableDisableRate(bool en)
     w_compoundingChoice->Enable(en);
 }
 
-double AssetDialog::convertRate(int changeType, double xRate, int xCompounding, int yCompounding)
-{
-    int sign = changeType == AssetModel::CHANGE_ID_DEPRECIATE ? -1 : 1;
-    int xN = PreferencesModel::COMPOUNDING_N[xCompounding].second;
-    int yN = PreferencesModel::COMPOUNDING_N[yCompounding].second;
+double AssetDialog::convertRate(
+    mmChoiceId changeType, double xRate, int xCompounding, int yCompounding
+) {
+    int sign = (changeType == AssetChange::e_depreciates) ? -1 : 1;
+    int xN = PrefModel::COMPOUNDING_N[xCompounding].second;
+    int yN = PrefModel::COMPOUNDING_N[yCompounding].second;
     // solve (1.0 + sign*xRate/(xN*100.0))^xN = (1.0 + sign*yRate/(yN*100.0))^yN
     double xMult = 1.0 + sign * xRate / (xN * 100.0);
     double yMult = (xMult > 0.0) ? pow(xMult, double(xN)/double(yN)) : 0.0;
@@ -365,9 +366,9 @@ double AssetDialog::convertRate(int changeType, double xRate, int xCompounding, 
 
 void AssetDialog::OnChangeAppreciationType(wxCommandEvent& /*event*/)
 {
-    int selection = w_valueChange->GetSelection();
+    mmChoiceId selection = w_valueChange->GetSelection();
     // Disable for "None", Enable for "Appreciates" or "Depreciates"
-    enableDisableRate(selection != AssetModel::CHANGE_ID_NONE);
+    enableDisableRate(selection != AssetChange::e_none);
 }
 
 void AssetDialog::OnChangeCompounding(wxCommandEvent& /*event*/)
@@ -376,45 +377,46 @@ void AssetDialog::OnChangeCompounding(wxCommandEvent& /*event*/)
     if (selection == m_compounding)
         return;
 
-    int valueChangeType = w_valueChange->GetSelection();
-    double valueChangeRate = 0;
-    if (valueChangeType != AssetModel::CHANGE_ID_NONE &&
-        w_valueChangeRate->checkValue(valueChangeRate)
+    mmChoiceId change_id = w_valueChange->GetSelection();
+    double change_rate = 0;
+    if (change_id != AssetChange::e_none &&
+        w_valueChangeRate->checkValue(change_rate)
     ) {
-        valueChangeRate = convertRate(valueChangeType, valueChangeRate, m_compounding, selection);
-        w_valueChangeRate->SetValue(valueChangeRate, 3);
+        change_rate = convertRate(change_id, change_rate, m_compounding, selection);
+        w_valueChangeRate->SetValue(change_rate, 3);
     }
 
-    m_compounding = static_cast<PreferencesModel::COMPOUNDING_ID>(selection);
+    m_compounding = static_cast<PrefModel::COMPOUNDING_ID>(selection);
 }
 
 void AssetDialog::OnOk(wxCommandEvent& /*event*/)
 {
-    const wxString name = w_assetName->GetValue().Trim();
-    if (name.empty()) {
+    AssetType asset_type = AssetType();
+    wxStringClientData* type_obj = static_cast<wxStringClientData *>(
+        w_assetType->GetClientObject(w_assetType->GetSelection())
+    );
+    if (type_obj)
+        asset_type = AssetType(type_obj->GetData());
+
+    const wxString asset_name = w_assetName->GetValue().Trim();
+    if (asset_name.empty()) {
         mmErrorDialogs::InvalidName(w_assetName);
         return;
     }
 
-    double value = 0;
-    if (!w_value->checkValue(value))
+    double asset_value = 0.0;
+    if (!w_value->checkValue(asset_value))
         return;
 
-    int valueChangeType = w_valueChange->GetSelection();
-    double valueChangeRate = 0.0;
-    if (valueChangeType != AssetModel::CHANGE_ID_NONE) {
-        if (!w_valueChangeRate->checkValue(valueChangeRate))
+    mmChoiceId asset_change_id = w_valueChange->GetSelection();
+    double asset_change_rate = 0.0;
+    if (asset_change_id != AssetChange::e_none) {
+        if (!w_valueChangeRate->checkValue(asset_change_rate))
             return;
-        if (m_compounding != PreferencesModel::COMPOUNDING_ID_DAY) {
-            valueChangeRate = convertRate(valueChangeType, valueChangeRate, m_compounding);
+        if (m_compounding != PrefModel::COMPOUNDING_ID_DAY) {
+            asset_change_rate = convertRate(asset_change_id, asset_change_rate, m_compounding);
         }
     }
-
-    wxString asset_type = "";
-    wxStringClientData* type_obj = static_cast<wxStringClientData *>(
-        w_assetType->GetClientObject(w_assetType->GetSelection())
-    );
-    if (type_obj) asset_type = type_obj->GetData();
 
     bool is_new = !m_asset_n;
     if (!m_asset_n) {
@@ -422,16 +424,16 @@ void AssetDialog::OnOk(wxCommandEvent& /*event*/)
         m_asset_n = &m_asset_d;
     }
 
-    m_asset_n->STARTDATE        = w_dpc->GetValue().FormatISODate();
-    m_asset_n->NOTES            = w_notes->GetValue().Trim();
-    m_asset_n->ASSETNAME        = name;
-    m_asset_n->ASSETSTATUS      = AssetModel::status_name(AssetModel::STATUS_ID_OPEN);
-    m_asset_n->VALUECHANGEMODE  = AssetModel::changemode_name(AssetModel::CHANGEMODE_ID_PERCENTAGE);
-    m_asset_n->CURRENCYID       = -1;
-    m_asset_n->VALUE            = value;
-    m_asset_n->VALUECHANGE      = AssetModel::change_name(valueChangeType);
-    m_asset_n->VALUECHANGERATE  = valueChangeRate;
-    m_asset_n->ASSETTYPE        = asset_type;
+    m_asset_n->m_type          = asset_type;
+    m_asset_n->m_status        = AssetStatus();
+    m_asset_n->m_name          = asset_name;
+    m_asset_n->m_start_date    = mmDate(w_dpc->GetValue());
+    m_asset_n->m_currency_id_n = -1;
+    m_asset_n->m_value         = asset_value;
+    m_asset_n->m_change        = AssetChange(asset_change_id);
+    m_asset_n->m_change_mode   = AssetChangeMode();
+    m_asset_n->m_change_rate   = asset_change_rate;
+    m_asset_n->m_notes         = w_notes->GetValue().Trim();
 
     int64 old_asset_id = m_asset_n->id();
     AssetModel::instance().unsafe_save_data_n(m_asset_n);
@@ -447,18 +449,18 @@ void AssetDialog::OnOk(wxCommandEvent& /*event*/)
             return;
 
         if (!m_transfer_entry) {
-            TransactionLinkModel::SetAssetTranslink(
+            TrxLinkModel::SetAssetTranslink(
                 new_asset_id, checking_id, w_transaction_panel->CheckingType()
             );
         }
-        TransactionLinkModel::UpdateAssetValue(m_asset_n);
+        TrxLinkModel::UpdateAssetValue(m_asset_n);
     }
     else if (!m_hidden_trans_entry) {
         mmErrorDialogs::MessageWarning(this, _t("Invalid Transaction"), m_dialog_heading);
         return;
     }
 
-    const AccountData* asset_account = AccountModel::instance().get_key(name);
+    const AccountData* asset_account = AccountModel::instance().get_name_data_n(asset_name);
     if (is_new && !asset_account) {
         if (wxMessageBox(
             _t("Asset account not found.") + "\n\n" + _t("Do you want to create one?"),
@@ -484,17 +486,15 @@ void AssetDialog::SetTransactionDate()
 void AssetDialog::CreateAssetAccount()
 {
     AccountData new_account_d = AccountData();
-    new_account_d.ACCOUNTNAME  = m_asset_n->ASSETTYPE;
-    new_account_d.ACCOUNTTYPE  = NavigatorTypes::instance().getAssetAccountStr();
-    new_account_d.FAVORITEACCT = "FALSE";
-    new_account_d.STATUS       = AccountModel::STATUS_NAME_OPEN;
-    new_account_d.INITIALBAL   = 0;
-    new_account_d.INITIALDATE  = m_asset_n->STARTDATE;
-    new_account_d.CURRENCYID   = CurrencyModel::GetBaseCurrency()->CURRENCYID;
+    new_account_d.m_name          = m_asset_n->m_type.name();
+    new_account_d.m_type_         = NavigatorTypes::instance().getAssetAccountStr();
+    new_account_d.m_open_balance  = 0;
+    new_account_d.m_open_date     = m_asset_n->m_start_date;
+    new_account_d.m_currency_id_p = CurrencyModel::GetBaseCurrency()->m_id;
     AccountModel::instance().add_data_n(new_account_d);
 
     AssetDialog dlg(this, m_asset_n, true);
-    dlg.SetTransactionAccountName(m_asset_n->ASSETTYPE);
+    dlg.SetTransactionAccountName(m_asset_n->m_type.name());
     dlg.SetTransactionDate();
     dlg.ShowModal();
 }
@@ -526,7 +526,7 @@ void AssetDialog::OnAttachments(wxCommandEvent& /*event*/)
     if (!m_asset_n)
         RefId = 0;
     else
-        RefId= m_asset_n->ASSETID;
+        RefId= m_asset_n->m_id;
 
     AttachmentDialog dlg(this, RefType, RefId);
     dlg.ShowModal();

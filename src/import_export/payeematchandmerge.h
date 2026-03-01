@@ -4,7 +4,7 @@
 #include <vector>
 #include <wx/string.h>
 
-#include "model/TransactionModel.h"
+#include "model/TrxModel.h"
 #include "model/PayeeModel.h"
 
 struct PayeeMatchResult

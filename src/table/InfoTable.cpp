@@ -1,4 +1,4 @@
-﻿// -*- C++ -*-
+// -*- C++ -*-
 //=============================================================================
 /**
  *      Copyright: (c) 2013-2026 Guan Lisheng (guanlisheng@gmail.com)
@@ -13,7 +13,7 @@
  *      @author [sqlite2cpp.py]
  *
  *      Revision History:
- *          AUTO GENERATED at 2026-02-23 02:42:42.918296.
+ *          AUTO GENERATED at 2026-02-25 08:58:12.230056.
  *          DO NOT EDIT!
  */
 //=============================================================================
@@ -100,17 +100,6 @@ void InfoRow::to_html_template(html_template& t) const
     t(L"INFOID") = INFOID.GetValue();
     t(L"INFONAME") = INFONAME;
     t(L"INFOVALUE") = INFOVALUE;
-}
-
-InfoRow& InfoRow::operator= (const InfoRow& other)
-{
-    if (this == &other) return *this;
-
-    INFOID = other.INFOID;
-    INFONAME = other.INFONAME;
-    INFOVALUE = other.INFOVALUE;
-
-    return *this;
 }
 
 bool InfoRow::equals(const InfoRow* other) const

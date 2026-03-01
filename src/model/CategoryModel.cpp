@@ -73,8 +73,8 @@ const CategoryData* CategoryModel::get_name(const wxString& name, const wxString
     const Data* category_n = nullptr;
     DataA category_a = this->find(CategoryCol::CATEGNAME(name));
     for (const auto& category_d : category_a) {
-        if (category_d.m_parent_id != -1) {
-            if (instance().get_id_data_n(category_d.m_parent_id)->m_name.Lower() == parentname.Lower()) {
+        if (category_d.m_parent_id_n != -1) {
+            if (instance().get_id_data_n(category_d.m_parent_id_n)->m_name.Lower() == parentname.Lower()) {
                 category_n = get_id_data_n(category_d.m_id);
                 break;
             }
@@ -151,14 +151,14 @@ const wxString CategoryModel::full_name(const Data* category_n)
         delimiter = InfoModel::instance().getString("CATEG_DELIMITER", ":");
     }
     if (!category_n) return "";
-    if (category_n->m_parent_id == -1)
+    if (category_n->m_parent_id_n == -1)
         return category_n->m_name;
     else {
         wxString name = category_n->m_name;
-        const Data* parent_n = instance().get_id_data_n(category_n->m_parent_id);
+        const Data* parent_n = instance().get_id_data_n(category_n->m_parent_id_n);
         while (parent_n) {
             name = name.Prepend(delimiter).Prepend(parent_n->m_name);
-            parent_n = instance().get_id_data_n(parent_n->m_parent_id);
+            parent_n = instance().get_id_data_n(parent_n->m_parent_id_n);
         }
         return name;
     }
@@ -175,14 +175,14 @@ const wxString CategoryModel::full_name(int64 category_id, wxString delimiter)
     const Data* category_n = instance().get_id_data_n(category_id);
     if (!category_n)
         return "";
-    if (category_n->m_parent_id == -1)
+    if (category_n->m_parent_id_n == -1)
         return category_n->m_name;
     else {
         wxString name = category_n->m_name;
-        const Data* parent_n = instance().get_id_data_n(category_n->m_parent_id);
+        const Data* parent_n = instance().get_id_data_n(category_n->m_parent_id_n);
         while (parent_n) {
             name = name.Prepend(delimiter).Prepend(parent_n->m_name);
-            parent_n = instance().get_id_data_n(parent_n->m_parent_id);
+            parent_n = instance().get_id_data_n(parent_n->m_parent_id_n);
         }
         return name;
     }

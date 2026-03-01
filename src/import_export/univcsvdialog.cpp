@@ -1769,14 +1769,14 @@ void mmUnivCSVDialog::OnExport(wxCommandEvent& WXUNUSED(event))
                         case UNIV_CSV_CATEGORY:
                             if (category)
                             {
-                                if (isIndexPresent(UNIV_CSV_SUBCATEGORY) && category->m_parent_id != -1)
-                                    entry = wxGetTranslation(CategoryModel::full_name(category->m_parent_id, ":"));
+                                if (isIndexPresent(UNIV_CSV_SUBCATEGORY) && category->m_parent_id_n != -1)
+                                    entry = wxGetTranslation(CategoryModel::full_name(category->m_parent_id_n, ":"));
                                 else
                                     entry = wxGetTranslation(CategoryModel::full_name(category->m_id, ":"));
                             }
                             break;
                         case UNIV_CSV_SUBCATEGORY:
-                            if(category && category->m_parent_id != -1)
+                            if(category && category->m_parent_id_n != -1)
                                 entry = wxGetTranslation(category->m_name);
                             break;
                         case UNIV_CSV_TAGS:
@@ -2163,15 +2163,15 @@ void mmUnivCSVDialog::update_preview()
                                     break;
                                 case UNIV_CSV_CATEGORY:
                                     if (category) {
-                                        if (isIndexPresent(UNIV_CSV_SUBCATEGORY) && category->m_parent_id != -1)
-                                            text << inQuotes(CategoryModel::full_name(category->m_parent_id, ":"), delimit);
+                                        if (isIndexPresent(UNIV_CSV_SUBCATEGORY) && category->m_parent_id_n != -1)
+                                            text << inQuotes(CategoryModel::full_name(category->m_parent_id_n, ":"), delimit);
                                         else
                                             text << inQuotes(CategoryModel::full_name(category->m_id, ":"), delimit);
                                     }
                                     else text << inQuotes("", delimit);
                                     break;
                                 case UNIV_CSV_SUBCATEGORY:
-                                    if (category && category->m_parent_id != -1)
+                                    if (category && category->m_parent_id_n != -1)
                                         text << inQuotes(category ? category->m_name : "", delimit);
                                     else text << inQuotes("", delimit);
                                     break;
@@ -2793,8 +2793,8 @@ void mmUnivCSVDialog::parseToken(int index, const wxString& orig_token, tran_hol
                 category_n = CategoryModel::instance().get_key(categname, parentID);
                 if (!category_n) {
                     CategoryData new_category_d = CategoryData();
-                    new_category_d.m_name      = categname;
-                    new_category_d.m_parent_id = parentID;
+                    new_category_d.m_name        = categname;
+                    new_category_d.m_parent_id_n = parentID;
                     CategoryModel::instance().add_data_n(new_category_d);
                     category_n = CategoryModel::instance().get_id_data_n(new_category_d.id());
                 }
@@ -2820,8 +2820,8 @@ void mmUnivCSVDialog::parseToken(int index, const wxString& orig_token, tran_hol
             holder.CategoryID = m_CSVcategoryNames[categname];
         else {
             CategoryData new_category_d = CategoryData();
-            new_category_d.m_name      = token;
-            new_category_d.m_parent_id = holder.CategoryID;
+            new_category_d.m_name        = token;
+            new_category_d.m_parent_id_n = holder.CategoryID;
             CategoryModel::instance().add_data_n(new_category_d);
 
             holder.CategoryID = new_category_d.m_id;

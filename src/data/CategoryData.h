@@ -26,7 +26,7 @@ struct CategoryData
 {
     int64    m_id;
     wxString m_name;
-    int64    m_parent_id;
+    int64    m_parent_id_n; // -1 means there is no parent
     bool     m_active;
 
     explicit CategoryData();
@@ -80,7 +80,7 @@ struct CategoryData
     {
         bool operator()(const CategoryData& x, const CategoryData& y)
         {
-            return x.m_parent_id < y.m_parent_id;
+            return x.m_parent_id_n < y.m_parent_id_n;
         }
     };
 };

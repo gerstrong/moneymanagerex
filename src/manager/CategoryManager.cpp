@@ -203,7 +203,7 @@ void CategoryManager::fillControls()
     wxTreeItemId maincat = root_;
     m_categ_children.clear();
     for (CategoryData cat : CategoryModel::instance().find_all(CategoryCol::COL_ID_CATEGNAME)) {
-        m_categ_children[cat.m_parent_id].push_back(cat);
+        m_categ_children[cat.m_parent_id_n].push_back(cat);
     }
 
     for (auto& category : m_categ_children[-1])
@@ -382,7 +382,7 @@ void CategoryManager::OnAdd(wxCommandEvent& /*event*/)
             );
             return;
         }
-        new_category_d.m_parent_id = -1;
+        new_category_d.m_parent_id_n = -1;
     }
     else {
         const auto& category_a = CategoryModel::instance().find(
@@ -397,7 +397,7 @@ void CategoryManager::OnAdd(wxCommandEvent& /*event*/)
             );
             return;
         }
-        new_category_d.m_parent_id = selectedCategory->m_id;
+        new_category_d.m_parent_id_n = selectedCategory->m_id;
     }
 
     CategoryModel::instance().add_data_n(new_category_d);
@@ -444,13 +444,13 @@ void CategoryManager::OnEndDrag(wxTreeEvent& event)
 
     CategoryData* sourceCat = CategoryModel::instance().unsafe_get_id_data_n(m_dragSourceCATEGID);
 
-    if (categID == sourceCat->m_parent_id)
+    if (categID == sourceCat->m_parent_id_n)
         return;
 
     if (!CategoryModel::instance().find(
         CategoryCol::CATEGNAME(sourceCat->m_name),
         CategoryCol::PARENTID(categID)
-    ).empty() && sourceCat->m_parent_id != categID) {
+    ).empty() && sourceCat->m_parent_id_n != categID) {
         wxMessageBox(_t("Unable to move a subcategory to a category that already has a subcategory with that name. Consider renaming before moving.")
             , _t("A subcategory with this name already exists")
             , wxOK | wxICON_ERROR);
@@ -459,7 +459,7 @@ void CategoryManager::OnEndDrag(wxTreeEvent& event)
 
     wxString subtree_root;
     for (const auto& subcat : CategoryModel::sub_tree(sourceCat)) {
-        if (subcat.m_parent_id == sourceCat->m_id) subtree_root = subcat.m_name;
+        if (subcat.m_parent_id_n == sourceCat->m_id) subtree_root = subcat.m_name;
         if (subcat.m_id == categID) {
             wxMessageBox(wxString::Format("Unable to move a category to one of its own descendants.\n\nConsider first relocating subcategory %s to move the subtree.", subtree_root)
                 , _t("Target category is a descendant")
@@ -478,7 +478,7 @@ void CategoryManager::OnEndDrag(wxTreeEvent& event)
     if (msgDlg.ShowModal() != wxID_YES)
         return;
 
-    sourceCat->m_parent_id = categID;
+    sourceCat->m_parent_id_n = categID;
     CategoryModel::instance().unsafe_update_data_n(sourceCat);
 
     m_refresh_requested = true;
@@ -661,7 +661,7 @@ void CategoryManager::OnEdit(wxCommandEvent& /*event*/)
 
     CategoryModel::DataA category_a = CategoryModel::instance().find(
         CategoryCol::CATEGNAME(text),
-        CategoryCol::PARENTID(category->m_parent_id)
+        CategoryCol::PARENTID(category->m_parent_id_n)
     );
     if (!category_a.empty()) {
         wxString errMsg = _t("A category with this name already exists for the parent");
@@ -686,7 +686,7 @@ wxTreeItemId CategoryManager::getTreeItemFor(const wxTreeItemId& itemID, const w
     wxTreeItemId catID = m_treeCtrl->GetFirstChild(itemID, treeDummyValue);
     while (catID.IsOk() && searching)
     {
-        if (itemText == m_treeCtrl->GetItemText(catID) && parentid == dynamic_cast<mmTreeItemCateg*>(m_treeCtrl->GetItemData(catID))->getCategData()->m_parent_id)
+        if (itemText == m_treeCtrl->GetItemText(catID) && parentid == dynamic_cast<mmTreeItemCateg*>(m_treeCtrl->GetItemData(catID))->getCategData()->m_parent_id_n)
             searching = false;
         else
             catID = m_treeCtrl->GetNextChild(itemID, treeDummyValue);
@@ -698,7 +698,7 @@ void CategoryManager::setTreeSelection(int64 category_id)
 {
     const CategoryData* category_n = CategoryModel::instance().get_id_data_n(category_id);
     if (category_n) {
-        setTreeSelection(category_n->m_name, category_n->m_parent_id);
+        setTreeSelection(category_n->m_name, category_n->m_parent_id_n);
     }
     m_categ_id = category_id;
 }

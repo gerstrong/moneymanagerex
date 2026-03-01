@@ -20,9 +20,9 @@
 
 CategoryData::CategoryData()
 {
-    m_id        = -1;
-    m_parent_id = -1;
-    m_active    = true;
+    m_id          = -1;
+    m_parent_id_n = -1;
+    m_active      = true;
 }
 
 // Convert CategoryData to CategoryRow
@@ -33,7 +33,7 @@ CategoryRow CategoryData::to_row() const
     row.CATEGID   = m_id;
     row.CATEGNAME = m_name;
     row.ACTIVE    = (m_active ? 1 : 0);
-    row.PARENTID  = m_parent_id;
+    row.PARENTID  = m_parent_id_n;
 
     return row;
 }
@@ -41,10 +41,10 @@ CategoryRow CategoryData::to_row() const
 // Convert CategoryRow to CategoryData
 CategoryData& CategoryData::from_row(const CategoryRow& row)
 {
-    m_id        = row.CATEGID;       // int64
-    m_name      = row.CATEGNAME;     // wxString
-    m_active    = (row.ACTIVE != 0); // int64
-    m_parent_id = row.PARENTID;      // int64
+    m_id          = row.CATEGID;       // int64
+    m_name        = row.CATEGNAME;     // wxString
+    m_active      = (row.ACTIVE != 0); // int64
+    m_parent_id_n = row.PARENTID;      // int64
 
     return *this;
 }
@@ -54,7 +54,7 @@ bool CategoryData::equals(const CategoryData* other) const
     if ( m_id != other->m_id) return false;
     if (!m_name.IsSameAs(other->m_name)) return false;
     if ( m_active != other->m_active) return false;
-    if ( m_parent_id != other->m_parent_id) return false;
+    if ( m_parent_id_n != other->m_parent_id_n) return false;
 
     return true;
 }

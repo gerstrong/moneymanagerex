@@ -260,13 +260,13 @@ wxString mmReportBudgetCategorySummary::getHTMLText()
                         catTotalsActual[category.m_id] += actual;
 
                         //walk up the hierarchy and update all the parent totals as well
-                        int64 nextParent = subcats[i].m_parent_id;
+                        int64 nextParent = subcats[i].m_parent_id_n;
                         for (int j = i; j > 0; j--) {
                             if (subcats[j - 1].m_id == nextParent) {
                                 categLevel[subcats[i].m_id].first++;
                                 catTotalsEstimated[subcats[j - 1].m_id] += estimated;
                                 catTotalsActual[subcats[j - 1].m_id] += actual;
-                                nextParent = subcats[j - 1].m_parent_id;
+                                nextParent = subcats[j - 1].m_parent_id_n;
                                 if (nextParent == category.m_id)
                                     break;
                             }
@@ -287,9 +287,9 @@ wxString mmReportBudgetCategorySummary::getHTMLText()
                             hb.endTableRow();
                             
                             if (i < static_cast<int>(subcats.size()) - 1) { //not the last subcategory
-                                if (subcats[i].m_id == subcats[i + 1].m_parent_id) totals_stack.push_back(i); //if next subcategory is our child, queue the total for after the children
-                                else if (subcats[i].m_parent_id != subcats[i + 1].m_parent_id) { // last sibling -- we've exhausted this branch, so display all the totals we held on to
-                                    while (!totals_stack.empty() && subcats[totals_stack.back()].m_id != subcats[i + 1].m_parent_id) {
+                                if (subcats[i].m_id == subcats[i + 1].m_parent_id_n) totals_stack.push_back(i); //if next subcategory is our child, queue the total for after the children
+                                else if (subcats[i].m_parent_id_n != subcats[i + 1].m_parent_id_n) { // last sibling -- we've exhausted this branch, so display all the totals we held on to
+                                    while (!totals_stack.empty() && subcats[totals_stack.back()].m_id != subcats[i + 1].m_parent_id_n) {
                                         hb.startAltTableRow();
                                         {
                                             int index = totals_stack.back();

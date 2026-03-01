@@ -448,14 +448,14 @@ void BudgetPanel::initVirtualListControl()
             budgetTotals_[category_d.m_id].second += actual;
 
             //walk up the hierarchy and update all the parent totals as well
-            int64 nextParent = subcat_a[i].m_parent_id;
+            int64 nextParent = subcat_a[i].m_parent_id_n;
             displayDetails_[subcat_a[i].m_id].first = 1;
             for (int j = i; j > 0; j--) {
                 if (subcat_a[j - 1].m_id == nextParent) {
                     displayDetails_[subcat_a[i].m_id].first++;
                     budgetTotals_[subcat_a[j - 1].m_id].first += estimated;
                     budgetTotals_[subcat_a[j - 1].m_id].second += actual;
-                    nextParent = subcat_a[j - 1].m_parent_id;
+                    nextParent = subcat_a[j - 1].m_parent_id_n;
                     if (nextParent == category_d.m_id)
                         break;
                 }
@@ -468,10 +468,10 @@ void BudgetPanel::initVirtualListControl()
             // check if we need to show any total rows before the next subcategory
             if (i < static_cast<int>(subcat_a.size()) - 1) { //not the last subcategory
                 //if next subcategory is our child, queue the total for after the children
-                if (subcat_a[i].m_id == subcat_a[i + 1].m_parent_id) totals_queue.emplace_back(i);
-                else if (subcat_a[i].m_parent_id != subcat_a[i + 1].m_parent_id) {
+                if (subcat_a[i].m_id == subcat_a[i + 1].m_parent_id_n) totals_queue.emplace_back(i);
+                else if (subcat_a[i].m_parent_id_n != subcat_a[i + 1].m_parent_id_n) {
                     // last sibling -- we've exhausted this branch, so display all the totals we held on to
-                    while (!totals_queue.empty() && subcat_a[totals_queue.back()].m_id != subcat_a[i + 1].m_parent_id) {
+                    while (!totals_queue.empty() && subcat_a[totals_queue.back()].m_id != subcat_a[i + 1].m_parent_id_n) {
                         if (DisplayEntryAllowed(-1, subcat_a[totals_queue.back()].m_id)) {
                             budget_.emplace_back(-1, subcat_a[totals_queue.back()].m_id);
                             size_t transCatTotalIndex = budget_.size() - 1;

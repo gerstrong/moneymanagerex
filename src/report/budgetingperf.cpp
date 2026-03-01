@@ -166,7 +166,7 @@ wxString mmReportBudgetingPerformance::getHTMLText()
                 bool budgetDeductMonthly = PrefModel::instance().getBudgetDeductMonthly();
                 // pull categories from DB and store
                 for (CategoryData category : CategoryModel::instance().find_all(CategoryCol::COL_ID_CATEGNAME, false)) {
-                    categ_children[category.m_parent_id].push_back(category);
+                    categ_children[category.m_parent_id_n].push_back(category);
                 }
 
                 std::vector<CategoryData> totals_stack;
@@ -259,10 +259,10 @@ wxString mmReportBudgetingPerformance::getHTMLText()
                         hb.addTableCell("-");
                     hb.endTableRow();
 
-                    if (!categ_stack.empty() && categ_stack.back().m_parent_id == catID)
+                    if (!categ_stack.empty() && categ_stack.back().m_parent_id_n == catID)
                         totals_stack.push_back(category); //if next subcategory is our child, store the parent to display after the children
                     else
-                        while (!totals_stack.empty() && !categ_stack.empty() && totals_stack.back().m_id != categ_stack.back().m_parent_id) {
+                        while (!totals_stack.empty() && !categ_stack.empty() && totals_stack.back().m_id != categ_stack.back().m_parent_id_n) {
                             hb.startAltTableRow();
                             {
                                 int64 id = totals_stack.back().m_id;

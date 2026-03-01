@@ -230,13 +230,13 @@ bool mmWebApp::WebApp_UpdatePayee()
     for (const auto& payee_d : PayeeModel::instance().find_all(PayeeCol::COL_ID_PAYEENAME)) {
         const CategoryData* def_category = CategoryModel::instance().get_id_data_n(payee_d.m_category_id_n);
         if (def_category) {
-            if (def_category->m_parent_id == -1) {
+            if (def_category->m_parent_id_n == -1) {
                 def_category_name = def_category->m_name;
                 def_subcategory_name = "None";
             }
             else {
-                const CategoryData* parent_category = CategoryModel::instance().get_id_data_n(def_category->m_parent_id);
-                if (parent_category != nullptr && parent_category->m_parent_id == -1) {
+                const CategoryData* parent_category = CategoryModel::instance().get_id_data_n(def_category->m_parent_id_n);
+                if (parent_category != nullptr && parent_category->m_parent_id_n == -1) {
                     def_category_name = parent_category->m_name;
                     def_subcategory_name = def_category->m_name;
                 }
@@ -526,8 +526,8 @@ int64 mmWebApp::MMEX_InsertNewTransaction(webtran_holder& WebAppTrans)
         }
         else if (categoryID != -1) {
             CategoryData new_subcategory_d = CategoryData();
-            new_subcategory_d.m_name      = WebAppTrans.SubCategory;
-            new_subcategory_d.m_parent_id = categoryID;
+            new_subcategory_d.m_name        = WebAppTrans.SubCategory;
+            new_subcategory_d.m_parent_id_n = categoryID;
             CategoryModel::instance().add_data_n(new_subcategory_d);
             categoryID = new_subcategory_d.id();
         }

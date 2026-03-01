@@ -580,7 +580,7 @@ void mmPayeeSelectionDialog::AddCategoryToChoice(wxChoice* choice, long long cat
 
     for (const auto& child : catMap)
     {
-        if (child.second.m_parent_id.GetValue() == categId)
+        if (child.second.m_parent_id_n.GetValue() == categId)
             AddCategoryToChoice(choice, child.first, catMap, level + 1);
     }
 }
@@ -727,7 +727,7 @@ mmPayeeSelectionDialog::mmPayeeSelectionDialog(wxWindow* parent, const wxString&
     }
     for (const auto& cat : categories)
     {
-        if (cat.m_parent_id.GetValue() == -1)
+        if (cat.m_parent_id_n.GetValue() == -1)
             AddCategoryToChoice(categoryChoice_, cat.m_id.GetValue(), categoryMap, 0);
     }
     categoryChoice_->SetSelection(0);

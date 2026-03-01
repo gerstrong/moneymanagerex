@@ -1739,8 +1739,8 @@ void mmQIFImportDialog::getOrCreateCategories()
             if (temp.Index(categStr + wxString::Format(":%lld", parentID)) == wxNOT_FOUND) {
                 if (!category_n) {
                     CategoryData new_category_d = CategoryData();
-                    new_category_d.m_name      = categStr;
-                    new_category_d.m_parent_id = parentID;
+                    new_category_d.m_name        = categStr;
+                    new_category_d.m_parent_id_n = parentID;
                     CategoryModel::instance().add_data_n(new_category_d);
                     category_n = CategoryModel::instance().get_id_data_n(new_category_d.id());
                 }

@@ -42,8 +42,8 @@ public:
 
 public:
     // TODO: add to virtual methods in TableFactory
-    int find_id_owns_cnt(int64 payee_id);
-    int find_id_used_cnt(int64 payee_id);
+    int find_id_aux_cnt(int64 payee_id);
+    int find_id_dep_cnt(int64 payee_id);
 
     // override
     bool purge_id(int64 payee_id) override;

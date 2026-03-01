@@ -71,7 +71,7 @@ struct AccountData
     bool operator< (const AccountData* other) const { return id() < other->id(); }
 
     bool is_open() const { return m_status.id() == AccountStatus::e_open; }
-    bool is_closed() const { return m_status.id() == AccountStatus::e_closed; }
+    bool is_closed() const { return !is_open(); }
     bool is_favorite() const { return m_favorite.id() == AccountFavorite::e_true; }
     bool is_locked_for(const mmDate& date) const {
         // the statement date is inclusive for lock, i.e., new transactions

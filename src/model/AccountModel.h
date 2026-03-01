@@ -52,7 +52,7 @@ public:
     static AccountCol::STATUS STATUS(OP op, AccountStatus status);
 
 public:
-    // override methods
+    // override
     bool purge_id(int64 account_id) override;
 
     // lookup for given Data
@@ -69,14 +69,14 @@ public:
     // lookup for given field
     auto get_name_data_n(const wxString& name) -> const Data*;
     auto find_name_data_a(const wxString& name) -> const DataA;
-    auto find_pattern_data_a(const wxString& pattern, bool skip_closed = false) -> const DataA;
+    auto find_pattern_data_a(const wxString& pattern, bool only_open = false) -> const DataA;
     auto get_num_data_n(const wxString& num) -> const Data*;
 
     // lookup for all Data
-    auto find_all_name_a(bool skip_closed = false) -> const wxArrayString;
-    auto find_all_name_id_m(bool skip_closed = false) -> const std::map<wxString, int64>;
-    auto find_all_type_a(bool skip_closed = true) -> const wxArrayString;
-    int  cnt_money_type();
+    auto find_all_name_a(bool only_open = false) -> const wxArrayString;
+    auto find_all_name_id_m(bool only_open = false) -> const std::map<wxString, int64>;
+    auto find_all_type_a(bool only_open = false) -> const wxArrayString;
+    int  find_money_type_cnt();
 
     // wrapper for value format
     auto value_number(const Data& account_d, double value, int precision = 2) -> const wxString;

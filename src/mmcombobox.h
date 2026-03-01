@@ -56,7 +56,7 @@ public:
         m_is_payee(payee)
     {
         if (m_is_payee)
-            this->AutoComplete(PayeeModel::instance().find_name_a());
+            this->AutoComplete(PayeeModel::instance().find_all_name_a());
         else
             this->AutoComplete(AccountModel::instance().find_all_name_a());
 
@@ -91,7 +91,7 @@ public:
     {
         int64 id = -1;
         if (m_is_payee) {
-            const PayeeData* payee_n = PayeeModel::instance().get_key_data_n(this->GetValue());
+            const PayeeData* payee_n = PayeeModel::instance().get_name_data_n(this->GetValue());
             if (payee_n) {
                 id = payee_n->m_id;
             }

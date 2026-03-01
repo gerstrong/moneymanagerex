@@ -376,7 +376,7 @@ wxArrayString NavigatorTypes::getAccountSelectionNames(wxString filter)
 wxArrayString NavigatorTypes::getUsedAccountTypeNames()
 {
     wxArrayString names;
-    wxArrayString usedtypes = AccountModel::instance().find_all_type_a();
+    wxArrayString usedtypes = AccountModel::instance().find_all_type_a(true);
     for (NavigatorTypesInfo* entry : m_navigator_entries) {
         if (entry->navTyp > NAV_TYP_PANEL && entry->active) {
             if (usedtypes.Index(entry->dbaccid) != wxNOT_FOUND) {

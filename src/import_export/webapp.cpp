@@ -534,7 +534,7 @@ int64 mmWebApp::MMEX_InsertNewTransaction(webtran_holder& WebAppTrans)
     }
 
     // Search or insert Payee
-    const PayeeData* payee_n = PayeeModel::instance().get_key_data_n(WebAppTrans.Payee);
+    const PayeeData* payee_n = PayeeModel::instance().get_name_data_n(WebAppTrans.Payee);
     if (payee_n) {
         payeeID = payee_n->m_id;
     }

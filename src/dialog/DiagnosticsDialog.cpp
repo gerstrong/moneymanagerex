@@ -124,8 +124,8 @@ void DiagnosticsDialog::RefreshView()
     html << "<tr><td><b>Transactions</b></td><td>" << all_transactions.size() 
          << "</td></tr>";
     // Payee info
-    auto all_payees = PayeeModel::instance().find_name_id(false);
-    auto all_payees_nothidden = PayeeModel::instance().find_name_id(true);
+    auto all_payees = PayeeModel::instance().find_all_name_id_m(false);
+    auto all_payees_nothidden = PayeeModel::instance().find_all_name_id_m(true);
     html << "<tr><td><b>Payees</b></td><td>total: " << all_payees.size() 
          << " (visible: " << all_payees_nothidden.size() 
          << ", hidden: " << all_payees.size() - all_payees_nothidden.size() << ")"

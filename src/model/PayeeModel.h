@@ -33,30 +33,30 @@ public:
     static const wxString refTypeName;
 
 public:
-    // Initialize the global PayeeModel table on initial call.
-    // Resets the global table on subsequent calls.
-    // Return the static instance address for PayeeModel table
-    // Note: Assigning the address to a local variable can destroy the instance.
-    static PayeeModel& instance(wxSQLite3Database* db);
-
-    // Return the static instance address for PayeeModel table
-    // Note: Assigning the address to a local variable can destroy the instance.
-    static PayeeModel& instance();
-
-    static bool is_used(int64 id);
-
-public:
     PayeeModel();
     ~PayeeModel();
 
 public:
-    bool purge_id(int64 id) override;
+    static PayeeModel& instance(wxSQLite3Database* db);
+    static PayeeModel& instance();
 
-    const Data* get_key_data_n(const wxString& name);
-    const wxString get_id_name(int64 payee_id);
+public:
+    // TODO: add to virtual methods in TableFactory
+    int find_id_owns_cnt(int64 payee_id);
+    int find_id_used_cnt(int64 payee_id);
 
-    const wxArrayString find_name_a();
-    const std::map<wxString, int64> find_name_id(bool excludeHidden = false);
-    const std::map<wxString, int64> find_name_id_used();
-    const DataA filter_name(const wxString& name_pattern, bool includeInActive = true);
+    // override
+    bool purge_id(int64 payee_id) override;
+
+    // lookup for given id
+    auto get_id_name(int64 payee_id) -> const wxString;
+
+    // lookup for given field
+    auto get_name_data_n(const wxString& name) -> const Data*;
+
+    // lookup for all Data
+    auto find_all_name_a() -> const wxArrayString;
+    auto find_all_name_id_m(bool only_active = false) -> const std::map<wxString, int64>;
+    auto find_used_id_s() -> const std::set<int64>;
+    auto find_pattern_data_a(const wxString& pattern, bool only_active = false) -> const DataA;
 };

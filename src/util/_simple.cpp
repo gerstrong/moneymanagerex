@@ -461,7 +461,7 @@ mmComboBoxAccount::mmComboBoxAccount(wxWindow* parent, wxWindowID id
 
 void mmComboBoxPayee::init()
 {
-    all_elements_ = PayeeModel::instance().find_name_id(excludeHidden_);
+    all_elements_ = PayeeModel::instance().find_all_name_id_m(excludeHidden_);
     if (payeeID_ > -1)
         all_elements_[PayeeModel::instance().get_id_name(payeeID_)] = payeeID_;
 }
@@ -486,7 +486,12 @@ mmComboBoxPayee::mmComboBoxPayee(wxWindow* parent, wxWindowID id
 
 void mmComboBoxUsedPayee::init()
 {
-    all_elements_ = PayeeModel::instance().find_name_id_used();
+    std::set<int64> used_id_s = PayeeModel::instance().find_used_id_s();
+    all_elements_.clear();
+    for (int64 id : used_id_s) {
+        wxString name = PayeeModel::instance().get_id_name(id);
+        all_elements_[name] = id;
+    }
 }
 
 mmComboBoxUsedPayee::mmComboBoxUsedPayee(wxWindow* parent, wxWindowID id, wxSize size)

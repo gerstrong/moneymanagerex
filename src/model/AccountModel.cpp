@@ -208,13 +208,13 @@ const AccountModel::DataA AccountModel::find_name_data_a(const wxString& name)
 
 const AccountModel::DataA AccountModel::find_pattern_data_a(
     const wxString& name_pattern,
-    bool skip_closed
+    bool only_open
 ) {
     DataA account_a;
     for (auto &account_d : find_all(
         AccountCol::COL_ID_ACCOUNTNAME
     )) {
-        if (skip_closed && account_d.is_closed())
+        if (only_open && !account_d.is_open())
             continue;
         if (type_id(account_d) == NavigatorTypes::TYPE_ID_INVESTMENT)
             continue;
@@ -237,11 +237,11 @@ const AccountData* AccountModel::get_num_data_n(const wxString& num)
     return account_n;
 }
 
-const wxArrayString AccountModel::find_all_name_a(bool skip_closed)
+const wxArrayString AccountModel::find_all_name_a(bool only_open)
 {
     wxArrayString name_a;
     for (const auto& account_d : find_all(Col::COL_ID_ACCOUNTNAME)) {
-        if (skip_closed && account_d.is_closed())
+        if (only_open && !account_d.is_open())
             continue;
         if (type_id(account_d) == NavigatorTypes::TYPE_ID_SHARES)
             continue;
@@ -252,11 +252,11 @@ const wxArrayString AccountModel::find_all_name_a(bool skip_closed)
     return name_a;
 }
 
-const std::map<wxString, int64> AccountModel::find_all_name_id_m(bool skip_closed)
+const std::map<wxString, int64> AccountModel::find_all_name_id_m(bool only_open)
 {
     std::map<wxString, int64> name_id_m;
     for (const auto& account_d : find_all(Col::COL_ID_ACCOUNTNAME)) {
-        if (skip_closed && account_d.is_closed())
+        if (only_open && !account_d.is_open())
             continue;
         if (type_id(account_d) == NavigatorTypes::TYPE_ID_SHARES)
             continue;
@@ -267,13 +267,13 @@ const std::map<wxString, int64> AccountModel::find_all_name_id_m(bool skip_close
     return name_id_m;
 }
 
-const wxArrayString AccountModel::find_all_type_a(bool skip_closed)
+const wxArrayString AccountModel::find_all_type_a(bool only_open)
 {
     wxArrayString usedTypes;
     for (auto& account_d : find_all(
         AccountCol::COL_ID_ACCOUNTTYPE
     )) {
-        if (skip_closed && account_d.is_closed())
+        if (only_open && !account_d.is_open())
             continue;
         if (type_id(account_d) == NavigatorTypes::TYPE_ID_INVESTMENT)
             continue;
@@ -284,7 +284,7 @@ const wxArrayString AccountModel::find_all_type_a(bool skip_closed)
     return usedTypes;
 }
 
-int AccountModel::cnt_money_type()
+int AccountModel::find_money_type_cnt()
 {
     return
         find(

@@ -1072,7 +1072,7 @@ void mmQIFImportDialog::validatePayees() {
             }
         }
         if (!payee_found) {
-            const PayeeData* payee_n = PayeeModel::instance().get_key_data_n(payee_name);
+            const PayeeData* payee_n = PayeeModel::instance().get_name_data_n(payee_name);
             if (payee_n) {
                 m_QIFpayeeNames[payee_name] = std::make_tuple(payee_n->m_id, payee_n->m_name, "");
             }

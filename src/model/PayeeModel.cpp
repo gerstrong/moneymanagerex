@@ -19,7 +19,8 @@
  ********************************************************/
 
 #include "PayeeModel.h"
-#include "TrxModel.h" // detect whether the payee is used or not
+#include "AttachmentModel.h"
+#include "TrxModel.h"
 #include "SchedModel.h"
 
 PayeeModel::PayeeModel() :
@@ -31,10 +32,8 @@ PayeeModel::~PayeeModel()
 {
 }
 
-/**
-* Initialize the global PayeeModel table.
-* Reset the PayeeModel table or create the table if it does not exist.
-*/
+// Initialize the global PayeeModel table.
+// Reset the PayeeModel table or create the table if it does not exist.
 PayeeModel& PayeeModel::instance(wxSQLite3Database* db)
 {
     PayeeModel& ins = Singleton<PayeeModel>::instance();
@@ -46,52 +45,40 @@ PayeeModel& PayeeModel::instance(wxSQLite3Database* db)
     return ins;
 }
 
-/** Return the static instance of PayeeModel table */
+// Return the static instance of PayeeModel table
 PayeeModel& PayeeModel::instance()
 {
     return Singleton<PayeeModel>::instance();
 }
 
-bool PayeeModel::is_used(int64 id)
+int PayeeModel::find_id_owns_cnt(int64 payee_id)
 {
-    const auto& trx_a = TrxModel::instance().find(
-        TrxCol::PAYEEID(id)
-    );
-    // FIXME: do not exclude deleted transactions; the payee is still used.
-    // deleted transactions are shown in a panel and must have a valid payee id.
-    for (const auto& trx_d : trx_a)
-        if (trx_d.DELETEDTIME.IsEmpty())
-            return true;
-
-    const auto& sched_a = SchedModel::instance().find(
-        SchedCol::PAYEEID(id)
-    );
-    if (!sched_a.empty())
-        return true;
-
-    return false;
+    return AttachmentModel::NrAttachments(PayeeModel::refTypeName, payee_id);
 }
 
-bool PayeeModel::purge_id(int64 id)
+int PayeeModel::find_id_used_cnt(int64 payee_id)
 {
-    if (PayeeModel::is_used(id))
+    // FIX (2026-03-01): Do not exclude deleted transactions. Deleted transactions
+    // are shown in a panel and they can be restored; they must have a valid payee id.
+    int cnt_trx = TrxModel::instance().find(
+        TrxCol::PAYEEID(payee_id)
+    ).size();
+
+    int cnt_sched = SchedModel::instance().find(
+        SchedCol::PAYEEID(payee_id)
+    ).size();
+
+    return cnt_trx + cnt_sched;
+}
+
+bool PayeeModel::purge_id(int64 payee_id)
+{
+    if (PayeeModel::find_id_used_cnt(payee_id) > 0)
         return false;
 
-    // FIXME: remove AttachmentData owned by id
+    // FIXME: remove AttachmentData owned by payee_id
 
-    return unsafe_remove_id(id);
-}
-
-const PayeeData* PayeeModel::get_key_data_n(const wxString& name)
-{
-    const Data* payee_n = search_cache_n(PayeeCol::PAYEENAME(name));
-    if (payee_n)
-        return payee_n;
-
-    DataA payee_a = this->find(PayeeCol::PAYEENAME(name));
-    if (!payee_a.empty())
-        payee_n = get_id_data_n(payee_a[0].m_id);
-    return payee_n;
+    return unsafe_remove_id(payee_id);
 }
 
 const wxString PayeeModel::get_id_name(int64 payee_id)
@@ -103,52 +90,60 @@ const wxString PayeeModel::get_id_name(int64 payee_id)
         return _t("Payee Error");
 }
 
-const wxArrayString PayeeModel::find_name_a()
+const PayeeData* PayeeModel::get_name_data_n(const wxString& name)
 {
-    wxArrayString payee_name_a;
-    for (const auto& payee_d: find_all(Col::COL_ID_PAYEENAME)) {
-        payee_name_a.Add(payee_d.m_name);
-    }
-    return payee_name_a;
+    const Data* payee_n = search_cache_n(PayeeCol::PAYEENAME(name));
+    if (payee_n)
+        return payee_n;
+
+    DataA payee_a = find(PayeeCol::PAYEENAME(name));
+    if (!payee_a.empty())
+        payee_n = get_id_data_n(payee_a[0].m_id);
+    return payee_n;
 }
 
-const std::map<wxString, int64> PayeeModel::find_name_id(bool excludeHidden)
+const wxArrayString PayeeModel::find_all_name_a()
 {
-    std::map<wxString, int64> payee_name_id;
+    wxArrayString name_a;
+    for (const auto& payee_d : find_all(Col::COL_ID_PAYEENAME)) {
+        name_a.Add(payee_d.m_name);
+    }
+    return name_a;
+}
+
+const std::map<wxString, int64> PayeeModel::find_all_name_id_m(bool only_active)
+{
+    std::map<wxString, int64> name_id_m;
     for (const auto& payee_d : find_all()) {
-        if (!excludeHidden || payee_d.m_active)
-            payee_name_id[payee_d.m_name] = payee_d.m_id;
+        if (only_active && !payee_d.m_active)
+            continue;
+        name_id_m[payee_d.m_name] = payee_d.m_id;
     }
-    return payee_name_id;
+    return name_id_m;
 }
 
-const std::map<wxString, int64> PayeeModel::find_name_id_used()
+const std::set<int64> PayeeModel::find_used_id_s()
 {
-    std::map<int64, wxString> cache;
-    for (const auto& payee_d : find_all())
-        cache[payee_d.m_id] = payee_d.m_name;
-
-    std::map<wxString, int64> payees;
+    std::set<int64> used_id_s;
     for (const auto& trx_d : TrxModel::instance().find_all()) {
-        if (cache.count(trx_d.PAYEEID) > 0)
-            payees[cache[trx_d.PAYEEID]] = trx_d.PAYEEID;
+        used_id_s.insert(trx_d.PAYEEID);
     }
     for (const auto& sched_d : SchedModel::instance().find_all()) {
-        if (cache.count(sched_d.PAYEEID) > 0)
-            payees[cache[sched_d.PAYEEID]] = sched_d.PAYEEID;
+        used_id_s.insert(sched_d.PAYEEID);
     }
-    return payees;
+    return used_id_s;
 }
 
-const PayeeModel::DataA PayeeModel::filter_name(
-    const wxString& name_pattern,
-    bool includeInActive
+const PayeeModel::DataA PayeeModel::find_pattern_data_a(
+    const wxString& pattern,
+    bool only_active
 ) {
+    const wxString pattern_lower = pattern.Lower().Append("*");
     DataA payee_a;
-    for (auto& payee_d : find_all(PayeeCol::COL_ID_PAYEENAME)) {
-        if (payee_d.m_name.Lower().Matches(name_pattern.Lower().Append("*")) &&
-            (includeInActive || payee_d.m_active)
-        ) {
+    for (const Data& payee_d : find_all(PayeeCol::COL_ID_PAYEENAME)) {
+        if (only_active && !payee_d.m_active)
+            continue;
+        if (payee_d.m_name.Lower().Matches(pattern_lower)) {
             payee_a.push_back(payee_d);
         }
     }

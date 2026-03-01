@@ -28,7 +28,8 @@
 #include "ScheduledModel.h"
 #include "TransactionModel.h"
 
-CategoryModel::CategoryModel(): Model<CategoryTable>()
+CategoryModel::CategoryModel() :
+    Model<CategoryTable, CategoryData>()
 {
 }
 
@@ -43,10 +44,10 @@ CategoryModel::~CategoryModel()
 CategoryModel& CategoryModel::instance(wxSQLite3Database* db)
 {
     CategoryModel& ins = Singleton<CategoryModel>::instance();
+    ins.reset_cache();
     ins.m_db = db;
     ins.ensure_table();
-    ins.destroy_cache();
-    ins.preload();
+    ins.preload_cache();
 
     return ins;
 }
@@ -60,7 +61,7 @@ CategoryModel& CategoryModel::instance()
 const wxArrayString CategoryModel::FilterCategory(const wxString& category_pattern)
 {
     wxArrayString categories;
-    for (auto &category : CategoryModel::instance().get_all())
+    for (auto &category : CategoryModel::instance().find_all())
     {
         if (category.CATEGNAME.Lower().Matches(category_pattern.Lower().Append("*")))
             categories.push_back(category.CATEGNAME);
@@ -68,36 +69,41 @@ const wxArrayString CategoryModel::FilterCategory(const wxString& category_patte
     return categories;
 }
 
-CategoryModel::Data* CategoryModel::cache_name(const wxString& name, const wxString& parentname)
+const CategoryData* CategoryModel::get_name(const wxString& name, const wxString& parentname)
 {
-    Data* category = nullptr;
-    Data_Set items = this->find(CATEGNAME(name));
+    const Data* category_n = nullptr;
+    DataA items = this->find(CategoryCol::CATEGNAME(name));
     for (const auto& item : items) {
         if (item.PARENTID != -1) {
-            if (instance().get_id(item.PARENTID)->CATEGNAME.Lower() == parentname.Lower()) {
-                category = this->get_id(item.CATEGID);
+            if (instance().get_data_n(item.PARENTID)->CATEGNAME.Lower() == parentname.Lower()) {
+                category_n = get_data_n(item.CATEGID);
                 break;
             }
         }
     }
 
-    return category;
+    return category_n;
 }
 
-CategoryModel::Data* CategoryModel::get_key(const wxString& name, const int64 parentid)
+const CategoryData* CategoryModel::get_key(const wxString& name, const int64 parentid)
 {
-    Data* category = this->search_cache(CATEGNAME(name), PARENTID(parentid));
-    if (category) return category;
+    const Data* category_n = search_cache_n(
+        CategoryCol::CATEGNAME(name),
+        CategoryCol::PARENTID(parentid)
+    );
+    if (category_n)
+        return category_n;
 
-    Data_Set items = this->find(CATEGNAME(name), PARENTID(parentid));
-    if (!items.empty()) category = this->get_id(items[0].CATEGID);
-    return category;
+    DataA items = this->find(CategoryCol::CATEGNAME(name), CategoryCol::PARENTID(parentid));
+    if (!items.empty())
+        category_n = get_data_n(items[0].CATEGID);
+    return category_n;
 }
 
 const std::map<wxString, int64> CategoryModel::all_categories(bool excludeHidden)
 {
     std::map<wxString, int64> full_categs;
-    for (const auto& c : instance().get_all(Col::COL_ID_CATEGID))
+    for (const auto& c : instance().find_all(Col::COL_ID_CATEGID))
     {
         if (excludeHidden && (c.ACTIVE == 0))
             continue;
@@ -107,24 +113,24 @@ const std::map<wxString, int64> CategoryModel::all_categories(bool excludeHidden
     return full_categs;
 }
 
-CategoryModel::Data_Set CategoryModel::sub_category(const Data* r)
+CategoryModel::DataA CategoryModel::sub_category(const Data* r)
 {
-    return instance().find(PARENTID(r->CATEGID));
+    return instance().find(CategoryCol::PARENTID(r->CATEGID));
 }
 
-CategoryModel::Data_Set CategoryModel::sub_category(const Data& r)
+CategoryModel::DataA CategoryModel::sub_category(const Data& r)
 {
-    return instance().find(PARENTID(r.CATEGID));
+    return instance().find(CategoryCol::PARENTID(r.CATEGID));
 }
 
-CategoryModel::Data_Set CategoryModel::sub_tree(const Data* r)
+CategoryModel::DataA CategoryModel::sub_tree(const Data* r)
 {
-    Data_Set subtree;
-    Data_Set subcategories = instance().find(PARENTID(r->CATEGID));
-    std::stable_sort(subcategories.begin(), subcategories.end(), CategoryRow::SorterByCATEGNAME());
+    DataA subtree;
+    DataA subcategories = instance().find(CategoryCol::PARENTID(r->CATEGID));
+    std::stable_sort(subcategories.begin(), subcategories.end(), CategoryData::SorterByCATEGNAME());
     for (const auto& subcategory : subcategories) {
         subtree.push_back(subcategory);
-        Data_Set subtreecats = sub_tree(subcategory);
+        DataA subtreecats = sub_tree(subcategory);
         for (const auto& cat : subtreecats) {
             subtree.push_back(cat);
         }
@@ -132,7 +138,7 @@ CategoryModel::Data_Set CategoryModel::sub_tree(const Data* r)
     return subtree;
 }
 
-CategoryModel::Data_Set CategoryModel::sub_tree(const Data& r)
+CategoryModel::DataA CategoryModel::sub_tree(const Data& r)
 {
     return sub_tree(&r);
 }
@@ -148,10 +154,10 @@ const wxString CategoryModel::full_name(const Data* category)
         return category->CATEGNAME;
     else {
         wxString name = category->CATEGNAME;
-        Data* parentCategory = instance().get_id(category->PARENTID);
+        const Data* parentCategory = instance().get_data_n(category->PARENTID);
         while (parentCategory) {
             name = name.Prepend(delimiter).Prepend(parentCategory->CATEGNAME);
-            parentCategory = instance().get_id(parentCategory->PARENTID);
+            parentCategory = instance().get_data_n(parentCategory->PARENTID);
         }
         return name;
     }
@@ -159,22 +165,23 @@ const wxString CategoryModel::full_name(const Data* category)
 
 const wxString CategoryModel::full_name(int64 category_id)
 {
-    Data* category = instance().get_id(category_id);
+    const Data* category = instance().get_data_n(category_id);
     return full_name(category);
 }
 
 const wxString CategoryModel::full_name(int64 category_id, wxString delimiter)
 {
-    Data* category = instance().get_id(category_id);
-    if (!category) return "";
+    const Data* category = instance().get_data_n(category_id);
+    if (!category)
+        return "";
     if (category->PARENTID == -1)
         return category->CATEGNAME;
     else {
         wxString name = category->CATEGNAME;
-        Data* parentCategory = instance().get_id(category->PARENTID);
+        const Data* parentCategory = instance().get_data_n(category->PARENTID);
         while (parentCategory) {
             name = name.Prepend(delimiter).Prepend(parentCategory->CATEGNAME);
-            parentCategory = instance().get_id(parentCategory->PARENTID);
+            parentCategory = instance().get_data_n(parentCategory->PARENTID);
         }
         return name;
     }
@@ -185,7 +192,7 @@ const wxString CategoryModel::full_name(int64 category_id, wxString delimiter)
 
 bool CategoryModel::is_hidden(int64 catID)
 {
-    const auto category = CategoryModel::instance().get_id(catID);
+    const auto category = CategoryModel::instance().get_data_n(catID);
     if (category && category->ACTIVE == 0)
         return true;
 
@@ -195,25 +202,25 @@ bool CategoryModel::is_hidden(int64 catID)
 bool CategoryModel::is_used(int64 id)
 {
     if (id < 0) return false;
-    const auto& trans = TransactionModel::instance().find(TransactionModel::CATEGID(id));
+    const auto& trans = TransactionModel::instance().find(TransactionCol::CATEGID(id));
     if (!trans.empty())
     {
         for (const auto& txn : trans)
             if (txn.DELETEDTIME.IsEmpty())
                 return true;
     }
-    const auto& split = TransactionSplitModel::instance().find(TransactionModel::CATEGID(id));
+    const auto& split = TransactionSplitModel::instance().find(TransactionCol::CATEGID(id));
     if (!split.empty())
     {
         for (const auto& txn : split)
-            if (TransactionModel::instance().get_id(txn.TRANSID)->DELETEDTIME.IsEmpty())
+            if (TransactionModel::instance().get_data_n(txn.TRANSID)->DELETEDTIME.IsEmpty())
                 return true;
     }
-    const auto& deposits = ScheduledModel::instance().find(ScheduledModel::CATEGID(id));
+    const auto& deposits = ScheduledModel::instance().find(ScheduledCol::CATEGID(id));
     if (!deposits.empty()) return true;
-    const auto& deposit_split = ScheduledSplitModel::instance().find(ScheduledModel::CATEGID(id));
+    const auto& deposit_split = ScheduledSplitModel::instance().find(ScheduledCol::CATEGID(id));
     if (!deposit_split.empty()) return true;
-    Data_Set children = instance().find(PARENTID(id));
+    DataA children = instance().find(CategoryCol::PARENTID(id));
     if (!children.empty()){
         bool used = false;
         for(const auto& child : children){
@@ -223,11 +230,12 @@ bool CategoryModel::is_used(int64 id)
     }
     return false;
 }
+
 bool CategoryModel::has_income(int64 id)
 {
     double sum = 0.0;
     auto splits = TransactionSplitModel::instance().get_all_id();
-    for (const auto& tran: TransactionModel::instance().find(TransactionModel::CATEGID(id)))
+    for (const auto& tran: TransactionModel::instance().find(TransactionCol::CATEGID(id)))
     {
         if (!tran.DELETEDTIME.IsEmpty()) continue;
 
@@ -273,7 +281,7 @@ void CategoryModel::getCategoryStats(
 {
     //Initialization
     //Set std::map with zerros
-    const auto& allcategories = instance().get_all();
+    const auto& allcategories = instance().find_all();
     double value = 0;
     int columns = group_by_month ? 12 : 1;
     const wxDateTime start_date(date_range->start_date());
@@ -299,20 +307,22 @@ void CategoryModel::getCategoryStats(
     for (const auto& transaction : TransactionModel::instance().find(
         TransactionModel::STATUS(OP_NE, TransactionModel::STATUS_ID_VOID),
         TransactionModel::TRANSDATE(OP_GE, date_range->start_date()),
-        TransactionModel::TRANSDATE(OP_LE, date_range->end_date().FormatISOCombined())
+        TransactionCol::TRANSDATE(OP_LE, date_range->end_date().FormatISOCombined())
     )) {
         if (!transaction.DELETEDTIME.IsEmpty()) continue;
 
         if (accountArray)
         {
-            const auto account = AccountModel::instance().get_id(transaction.ACCOUNTID);
+            const auto account = AccountModel::instance().get_data_n(transaction.ACCOUNTID);
             if (wxNOT_FOUND == accountArray->Index(account->ACCOUNTNAME)) {
                 continue;
             }
         }
 
         const double convRate = CurrencyHistoryModel::getDayRate(
-            AccountModel::instance().get_id(transaction.ACCOUNTID)->CURRENCYID, transaction.TRANSDATE);
+            AccountModel::instance().get_data_n(transaction.ACCOUNTID)->CURRENCYID,
+            transaction.TRANSDATE
+        );
         wxDateTime d = TransactionModel::getTransDateTime(transaction);
 
         int month = 0;

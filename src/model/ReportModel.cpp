@@ -49,7 +49,8 @@ public:
     }
 };
 
-ReportModel::ReportModel(): Model<ReportTable>()
+ReportModel::ReportModel() :
+    Model<ReportTable, ReportData>()
 {
 }
 
@@ -70,8 +71,8 @@ ReportModel& ReportModel::instance()
 ReportModel& ReportModel::instance(wxSQLite3Database* db)
 {
     ReportModel& ins = Singleton<ReportModel>::instance();
+    ins.reset_cache();
     ins.m_db = db;
-    ins.destroy_cache();
     ins.ensure_table();
 
     return ins;
@@ -179,7 +180,7 @@ wxArrayString ReportModel::allGroupNames()
 {
     wxArrayString groups;
     wxString PreviousGroup;
-    for (const auto &report : this->get_all(Col::COL_ID_GROUPNAME))
+    for (const auto &report : this->find_all(Col::COL_ID_GROUPNAME))
     {
         if (report.GROUPNAME != PreviousGroup)
         {
@@ -274,7 +275,7 @@ int ReportModel::get_html(const Data* r, wxString& out)
     std::map <std::wstring, int> colHeaders;
 
     mm_html_template report(templatecontent);
-    r->to_template(report);
+    r->to_html_template(report);
     loop_t contents;
     loop_t errors;
     row_t error;
@@ -420,14 +421,14 @@ int ReportModel::get_html(const Data* r, wxString& out)
     return 0;
 }
 
-ReportModel::Data* ReportModel::get_key(const wxString& name)
+const ReportData* ReportModel::get_key(const wxString& name)
 {
-    Data* report = this->search_cache(REPORTNAME(name));
-    if (report)
-        return report;
+    const Data* report_n = search_cache_n(ReportCol::REPORTNAME(name));
+    if (report_n)
+        return report_n;
 
-    Data_Set items = this->find(REPORTNAME(name));
+    DataA items = this->find(ReportCol::REPORTNAME(name));
     if (!items.empty())
-        report = this->get_id(items[0].id());
-    return report;
+        report_n = get_data_n(items[0].id());
+    return report_n;
 }

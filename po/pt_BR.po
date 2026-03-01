@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: moneymanagerex\n"
 "Report-Msgid-Bugs-To: developer@moneymanagerex.org\n"
 "POT-Creation-Date: 2026-02-18 14:44+0000\n"
-"PO-Revision-Date: 2026-02-27 01:16\n"
+"PO-Revision-Date: 2026-02-20 01:18\n"
 "Last-Translator: \n"
 "Language-Team: Portuguese, Brazilian\n"
 "Language: pt_BR\n"
@@ -8671,203 +8671,203 @@ msgstr "Mesclar"
 
 #: table/CurrencyTable.cpp:250
 msgid "US dollar"
-msgstr "Dólar americano"
+msgstr ""
 
 #: table/CurrencyTable.cpp:251
 msgid "Euro"
-msgstr "Euro"
+msgstr ""
 
 #: table/CurrencyTable.cpp:252
 msgid "British pound"
-msgstr "Libra esterlina"
+msgstr ""
 
 #: table/CurrencyTable.cpp:253
 msgid "Russian ruble"
-msgstr "Rublo russo"
+msgstr ""
 
 #: table/CurrencyTable.cpp:254
 msgid "Ukrainian hryvnia"
-msgstr "Hryvnia ucraniana"
+msgstr ""
 
 #: table/CurrencyTable.cpp:255
 msgid "Afghan afghani"
-msgstr "Afegâni afegão"
+msgstr ""
 
 #: table/CurrencyTable.cpp:256
 msgid "Albanian lek"
-msgstr "Lek albanês"
+msgstr ""
 
 #: table/CurrencyTable.cpp:257
 msgid "Algerian dinar"
-msgstr "Dinar argelino"
+msgstr ""
 
 #: table/CurrencyTable.cpp:258
 msgid "Angolan kwanza"
-msgstr "Kwanza angolano"
+msgstr ""
 
 #: table/CurrencyTable.cpp:259
 msgid "East Caribbean dollar"
-msgstr "Dólar do leste caribenho"
+msgstr ""
 
 #: table/CurrencyTable.cpp:260
 msgid "Argentine peso"
-msgstr "Peso argentino"
+msgstr ""
 
 #: table/CurrencyTable.cpp:261
 msgid "Armenian dram"
-msgstr "Dram armênio"
+msgstr ""
 
 #: table/CurrencyTable.cpp:262
 msgid "Aruban florin"
-msgstr "Florim de Aruba"
+msgstr ""
 
 #: table/CurrencyTable.cpp:263
 msgid "Australian dollar"
-msgstr "Dólar australiano"
+msgstr ""
 
 #: table/CurrencyTable.cpp:264
 msgid "Azerbaijani manat"
-msgstr "Manat do Azerbaijão"
+msgstr ""
 
 #: table/CurrencyTable.cpp:265
 msgid "Bahamian dollar"
-msgstr "Dólar das Bahamas"
+msgstr ""
 
 #: table/CurrencyTable.cpp:266
 msgid "Bahraini dinar"
-msgstr "Dinar de Bahrein"
+msgstr ""
 
 #: table/CurrencyTable.cpp:267
 msgid "Bangladeshi taka"
-msgstr "Taka de Bangladesh"
+msgstr ""
 
 #: table/CurrencyTable.cpp:268
 msgid "Barbadian dollar"
-msgstr "Dólar de Barbados"
+msgstr ""
 
 #: table/CurrencyTable.cpp:269
 msgid "Belarusian ruble (2000-2016)"
-msgstr "Rublo bielorrusso (2000-2016)"
+msgstr ""
 
 #: table/CurrencyTable.cpp:270
 msgid "Belize dollar"
-msgstr "Dólar de Belize"
+msgstr ""
 
 #: table/CurrencyTable.cpp:271
 msgid "West African CFA franc"
-msgstr "Franco CFA da África Ocidental"
+msgstr ""
 
 #: table/CurrencyTable.cpp:272
 msgid "Bermudan dollar"
-msgstr "Dólar de Bermuda"
+msgstr ""
 
 #: table/CurrencyTable.cpp:273
 msgid "Bhutanese ngultrum"
-msgstr "Ngultrum butanês"
+msgstr ""
 
 #: table/CurrencyTable.cpp:274
 msgid "Bolivian boliviano"
-msgstr "Bolivian boliviano"
+msgstr ""
 
 #: table/CurrencyTable.cpp:275
 msgid "Bosnia-Herzegovina convertible mark"
-msgstr "Marco conversível bósnio"
+msgstr ""
 
 #: table/CurrencyTable.cpp:276
 msgid "Botswanan pula"
-msgstr "Pula botsuanesa"
+msgstr ""
 
 #: table/CurrencyTable.cpp:277
 msgid "Brazilian real"
-msgstr "Real brasileiro"
+msgstr ""
 
 #: table/CurrencyTable.cpp:278
 msgid "Brunei dollar"
-msgstr "Dólar de Brunei"
+msgstr ""
 
 #: table/CurrencyTable.cpp:279
 msgid "Bulgarian lev"
-msgstr "Lev búlgaro"
+msgstr ""
 
 #: table/CurrencyTable.cpp:280
 msgid "Burundian franc"
-msgstr "Franco do Burundi"
+msgstr ""
 
 #: table/CurrencyTable.cpp:281
 msgid "Cambodian riel"
-msgstr "Riel cambojano"
+msgstr ""
 
 #: table/CurrencyTable.cpp:282
 msgid "Central African CFA franc"
-msgstr "Franco CFA da África Central"
+msgstr ""
 
 #: table/CurrencyTable.cpp:283
 msgid "Canadian dollar"
-msgstr "Dólar canadense"
+msgstr ""
 
 #: table/CurrencyTable.cpp:284
 msgid "Cape Verdean escudo"
-msgstr "Escudo de Cabo Verde"
+msgstr ""
 
 #: table/CurrencyTable.cpp:285
 msgid "Cayman Islands dollar"
-msgstr "Dólar das Ilhas Cayman"
+msgstr ""
 
 #: table/CurrencyTable.cpp:286
 msgid "Chilean peso"
-msgstr "Peso chileno"
+msgstr ""
 
 #: table/CurrencyTable.cpp:287
 msgid "Chinese yuan"
-msgstr "Yuan chinês"
+msgstr ""
 
 #: table/CurrencyTable.cpp:288
 msgid "Colombian peso"
-msgstr "Peso colombiano"
+msgstr ""
 
 #: table/CurrencyTable.cpp:289
 msgid "Comorian franc"
-msgstr "Franco comorano"
+msgstr ""
 
 #: table/CurrencyTable.cpp:290
 msgid "Congolese franc"
-msgstr "Franco congolês"
+msgstr ""
 
 #: table/CurrencyTable.cpp:292
 msgid "Croatian kuna"
-msgstr "Kuna croata"
+msgstr ""
 
 #: table/CurrencyTable.cpp:293
 msgid "Czech koruna"
-msgstr "Coroa tcheca"
+msgstr ""
 
 #: table/CurrencyTable.cpp:294
 msgid "Danish krone"
-msgstr "Coroa dinamarquesa"
+msgstr ""
 
 #: table/CurrencyTable.cpp:295
 msgid "Djiboutian franc"
-msgstr "Franco do Djibouti"
+msgstr ""
 
 #: table/CurrencyTable.cpp:296
 msgid "Dominican peso"
-msgstr "Peso (República Dominicana)"
+msgstr ""
 
 #: table/CurrencyTable.cpp:297
 msgid "Egyptian pound"
-msgstr "Libra egípcia"
+msgstr ""
 
 #: table/CurrencyTable.cpp:298
 msgid "Eritrean nakfa"
-msgstr "Nakfa eritreia"
+msgstr ""
 
 #: table/CurrencyTable.cpp:299
 msgid "Ethiopian birr"
-msgstr "Birr etíope"
+msgstr ""
 
 #: table/CurrencyTable.cpp:300
 msgid "Falkland Islands pound"
-msgstr "Libra das Ilhas Malvinas"
+msgstr ""
 
 #: table/CurrencyTable.cpp:301
 msgid "Fijian dollar"
@@ -9071,203 +9071,203 @@ msgstr ""
 
 #: table/CurrencyTable.cpp:352
 msgid "Netherlands Antillean guilder"
-msgstr "Florim das Antilhas Holandesas"
+msgstr ""
 
 #: table/CurrencyTable.cpp:353
 msgid "New Zealand dollar"
-msgstr "Dólar neozelandês"
+msgstr ""
 
 #: table/CurrencyTable.cpp:355
 msgid "Nigerian naira"
-msgstr "Naira nigeriana"
+msgstr ""
 
 #: table/CurrencyTable.cpp:356
 msgid "Norwegian krone"
-msgstr "Coroa norueguesa"
+msgstr ""
 
 #: table/CurrencyTable.cpp:357
 msgid "Omani rial"
-msgstr "Rial de Omã"
+msgstr ""
 
 #: table/CurrencyTable.cpp:358
 msgid "Pakistani rupee"
-msgstr "Rúpia paquistanesa"
+msgstr ""
 
 #: table/CurrencyTable.cpp:359
 msgid "Panamanian balboa"
-msgstr "Balboa panamenho"
+msgstr ""
 
 #: table/CurrencyTable.cpp:360
 msgid "Papua New Guinean kina"
-msgstr "Kina de Papua Nova Guiné"
+msgstr ""
 
 #: table/CurrencyTable.cpp:361
 msgid "Paraguayan guarani"
-msgstr "Guarani paraguaio"
+msgstr ""
 
 #: table/CurrencyTable.cpp:362
 msgid "Peruvian sol"
-msgstr "Sol peruano"
+msgstr ""
 
 #: table/CurrencyTable.cpp:363
 msgid "Philippine peso"
-msgstr "Peso filipino"
+msgstr ""
 
 #: table/CurrencyTable.cpp:364
 msgid "Polish zloty"
-msgstr "Zloty polonês"
+msgstr ""
 
 #: table/CurrencyTable.cpp:365
 msgid "Qatari riyal"
-msgstr "Rial do Catar"
+msgstr ""
 
 #: table/CurrencyTable.cpp:366
 msgid "Romanian leu"
-msgstr "Leu romeno"
+msgstr ""
 
 #: table/CurrencyTable.cpp:367
 msgid "Rwandan franc"
-msgstr "Franco de Ruanda"
+msgstr ""
 
 #: table/CurrencyTable.cpp:369
 msgid "Saudi riyal"
-msgstr "Rial saudita"
+msgstr ""
 
 #: table/CurrencyTable.cpp:370
 msgid "Serbian dinar"
-msgstr "Dinar sérvio"
+msgstr ""
 
 #: table/CurrencyTable.cpp:371
 msgid "Seychellois rupee"
-msgstr "Rúpia das Seychelles"
+msgstr ""
 
 #: table/CurrencyTable.cpp:372
 msgid "Sierra Leonean leone (1964-2022)"
-msgstr "Leone de Sierra Leoa (1964-2022)"
+msgstr ""
 
 #: table/CurrencyTable.cpp:373
 msgid "Singapore dollar"
-msgstr "Dólar de Singapura"
+msgstr ""
 
 #: table/CurrencyTable.cpp:374
 msgid "Solomon Islands dollar"
-msgstr "Dólar das Ilhas Salomão"
+msgstr ""
 
 #: table/CurrencyTable.cpp:375
 msgid "Somali shilling"
-msgstr "Xelim somaliano"
+msgstr ""
 
 #: table/CurrencyTable.cpp:376
 msgid "South African rand"
-msgstr "Rand sul-africano"
+msgstr ""
 
 #: table/CurrencyTable.cpp:377
 msgid "Sri Lankan rupee"
-msgstr "Rúpia do Sri Lanka"
+msgstr ""
 
 #: table/CurrencyTable.cpp:378
 msgid "St. Helena pound"
-msgstr "Libra de Santa Helena"
+msgstr ""
 
 #: table/CurrencyTable.cpp:379
 msgid "Sudanese pound"
-msgstr "Libra sudanesa"
+msgstr ""
 
 #: table/CurrencyTable.cpp:380
 msgid "Surinamese dollar"
-msgstr "Dólar do Suriname"
+msgstr ""
 
 #: table/CurrencyTable.cpp:381
 msgid "Swazi lilangeni"
-msgstr "Lilangeni suazilandês"
+msgstr ""
 
 #: table/CurrencyTable.cpp:382
 msgid "Swedish krona"
-msgstr "Coroa sueca"
+msgstr ""
 
 #: table/CurrencyTable.cpp:383
 msgid "Swiss franc"
-msgstr "Franco suíço"
+msgstr ""
 
 #: table/CurrencyTable.cpp:384
 msgid "Syrian pound"
-msgstr "Libra síria"
+msgstr ""
 
 #: table/CurrencyTable.cpp:385
 msgid "New Taiwan dollar"
-msgstr "Novo dólar taiwanês"
+msgstr ""
 
 #: table/CurrencyTable.cpp:386
 msgid "Tajikistani somoni"
-msgstr "Somoni tajiquistanês"
+msgstr ""
 
 #: table/CurrencyTable.cpp:387
 msgid "Tanzanian shilling"
-msgstr "Xelim da Tanzânia"
+msgstr ""
 
 #: table/CurrencyTable.cpp:388
 msgid "Thai baht"
-msgstr "Baht tailandês"
+msgstr ""
 
 #: table/CurrencyTable.cpp:389
 msgid "Trinidad & Tobago dollar"
-msgstr "Dólar de Trinidad e Tobago"
+msgstr ""
 
 #: table/CurrencyTable.cpp:390
 msgid "Tunisian dinar"
-msgstr "Dinar tunisiano"
+msgstr ""
 
 #: table/CurrencyTable.cpp:391
 msgid "Turkish lira"
-msgstr "Lira turca"
+msgstr ""
 
 #: table/CurrencyTable.cpp:392
 msgid "Turkmenistani manat"
-msgstr "Manat turcomano"
+msgstr ""
 
 #: table/CurrencyTable.cpp:393
 msgid "Ugandan shilling"
-msgstr "Xelim de Uganda"
+msgstr ""
 
 #: table/CurrencyTable.cpp:394
 msgid "UAE dirham"
-msgstr "Dirham dos EAU"
+msgstr ""
 
 #: table/CurrencyTable.cpp:395
 msgid "Uruguayan peso"
-msgstr "Peso uruguaio"
+msgstr ""
 
 #: table/CurrencyTable.cpp:396
 msgid "Uzbekistani som"
-msgstr "Som de Uzbequistão"
+msgstr ""
 
 #: table/CurrencyTable.cpp:397
 msgid "Vanuatu vatu"
-msgstr "Vatu de Vanuatu"
+msgstr ""
 
 #: table/CurrencyTable.cpp:398
 msgid "Vietnamese dong"
-msgstr "Dong vietnamita"
+msgstr ""
 
 #: table/CurrencyTable.cpp:399
 msgid "Samoan tala"
-msgstr "Tala samoana"
+msgstr ""
 
 #: table/CurrencyTable.cpp:400
 msgid "Yemeni rial"
-msgstr "Rial do Iémen"
+msgstr ""
 
 #: table/CurrencyTable.cpp:402
 msgid "Bitcoin"
-msgstr "Bitcoin"
+msgstr ""
 
 #: table/CurrencyTable.cpp:403
 msgid "Belarusian ruble"
-msgstr "Rublo bielorrusso"
+msgstr ""
 
 #: table/CurrencyTable.cpp:404
 msgid "Cuban convertible peso"
-msgstr "Peso conversível cubano"
+msgstr ""
 
 #: table/CurrencyTable.cpp:405
 msgid "Cuban peso"

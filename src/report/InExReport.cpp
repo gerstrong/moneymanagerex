@@ -47,14 +47,14 @@ wxString InExReport::getHTMLText()
     for (const auto& transaction : TransactionModel::instance().find(
         TransactionModel::TRANSDATE(OP_GE, mmDateDay(m_date_range->start_date())),
         TransactionModel::TRANSDATE(OP_LE, mmDateDay(m_date_range->end_date())),
-        TransactionModel::DELETEDTIME(OP_EQ, wxEmptyString),
+        TransactionCol::DELETEDTIME(OP_EQ, wxEmptyString),
         TransactionModel::STATUS(OP_NE, TransactionModel::STATUS_ID_VOID)
     )) {
         // Do not include asset or stock transfers
         if (TransactionModel::foreignTransactionAsTransfer(transaction))
             continue;
 
-        AccountModel::Data *account = AccountModel::instance().get_id(transaction.ACCOUNTID);
+        const AccountData *account = AccountModel::instance().get_data_n(transaction.ACCOUNTID);
         if (m_account_a) {
             if (!account || wxNOT_FOUND == m_account_a->Index(account->ACCOUNTNAME))
                 continue;
@@ -151,14 +151,14 @@ wxString mmReportIncomeExpensesMonthly::getHTMLText()
     for (const auto& transaction : TransactionModel::instance().find(
         TransactionModel::TRANSDATE(OP_GE, mmDateDay(start_date)),
         TransactionModel::TRANSDATE(OP_LE, mmDateDay(m_date_range->end_date())),
-        TransactionModel::DELETEDTIME(OP_EQ, wxEmptyString),
+        TransactionCol::DELETEDTIME(OP_EQ, wxEmptyString),
         TransactionModel::STATUS(OP_NE, TransactionModel::STATUS_ID_VOID)
     )) {
         // Do not include asset or stock transfers
         if (TransactionModel::foreignTransactionAsTransfer(transaction))
             continue;
 
-        AccountModel::Data *account = AccountModel::instance().get_id(transaction.ACCOUNTID);
+        const AccountData *account = AccountModel::instance().get_data_n(transaction.ACCOUNTID);
         if (m_account_a) {
             if (!account || wxNOT_FOUND == m_account_a->Index(account->ACCOUNTNAME))
                 continue;

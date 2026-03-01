@@ -21,15 +21,14 @@
 #pragma once
 
 #include "base/defs.h"
-#include "_ModelBase.h"
+
 #include "table/PayeeTable.h"
+#include "data/PayeeData.h"
 
-class PayeeModel : public Model<PayeeTable>
+#include "_ModelBase.h"
+
+class PayeeModel : public Model<PayeeTable, PayeeData>
 {
-public:
-    using Model<PayeeTable>::remove;
-    using Model<PayeeTable>::get_id;
-
 public:
     PayeeModel();
     ~PayeeModel();
@@ -50,16 +49,16 @@ public:
     static PayeeModel& instance();
 
 public:
-    const Data_Set FilterPayees(const wxString& payee_pattern, bool includeInActive = true);
+    const DataA FilterPayees(const wxString& payee_pattern, bool includeInActive = true);
 
     /**
     * Return the Data record pointer for the given payee name
     * Returns 0 when payee not found.
     */
-    Data* get_key(const wxString& name);
+    const Data* get_key(const wxString& name);
     static wxString get_payee_name(int64 payee_id);
 
-    bool remove(int64 id);
+    bool remove_depen(int64 id) override;
 
     const std::map<wxString, int64> all_payees(bool excludeHidden = false);
     const wxArrayString all_payee_names();

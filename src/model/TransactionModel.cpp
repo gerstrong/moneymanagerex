@@ -68,7 +68,8 @@ const wxString TransactionModel::STATUS_NAME_VOID       = status_name(STATUS_ID_
 const wxString TransactionModel::STATUS_NAME_FOLLOWUP   = status_name(STATUS_ID_FOLLOWUP);
 const wxString TransactionModel::STATUS_NAME_DUPLICATE  = status_name(STATUS_ID_DUPLICATE);
 
-TransactionModel::TransactionModel() : Model<TransactionTable>()
+TransactionModel::TransactionModel() :
+    Model<TransactionTable, TransactionData>()
 {
 }
 
@@ -83,8 +84,8 @@ TransactionModel::~TransactionModel()
 TransactionModel& TransactionModel::instance(wxSQLite3Database* db)
 {
     TransactionModel& ins = Singleton<TransactionModel>::instance();
+    ins.reset_cache();
     ins.m_db = db;
-    ins.destroy_cache();
     ins.ensure_table();
 
     return ins;
@@ -96,13 +97,17 @@ TransactionModel& TransactionModel::instance()
     return Singleton<TransactionModel>::instance();
 }
 
-bool TransactionModel::remove(int64 id)
+bool TransactionModel::remove_depen(int64 id)
 {
-    //TODO: remove all split at once
-    //TransactionSplitModel::instance().remove(TransactionSplitModel::instance().find(TransactionSplitModel::TRANSID(id)));
-    for (const auto& r : TransactionSplitModel::instance().find(TransactionSplitModel::TRANSID(id)))
-        TransactionSplitModel::instance().remove(r.SPLITTRANSID);
-    if(foreignTransaction(*instance().get_id(id))) TransactionLinkModel::RemoveTranslinkEntry(id);
+    // TODO: remove all split at once
+    // TransactionSplitModel::instance().remove_depen(TransactionSplitModel::instance().find(TransactionSplitCol::TRANSID(id)));
+    for (const auto& ts_d : TransactionSplitModel::instance().find(
+        TransactionSplitCol::TRANSID(id)
+    )) {
+        TransactionSplitModel::instance().remove_depen(ts_d.SPLITTRANSID);
+    }
+    if (foreignTransaction(*instance().get_data_n(id)))
+        TransactionLinkModel::RemoveTranslinkEntry(id);
 
     const wxString& RefType = TransactionModel::refTypeName;
     // remove all attachments
@@ -110,73 +115,79 @@ bool TransactionModel::remove(int64 id)
     // remove all custom fields for the transaction
     FieldValueModel::DeleteAllData(RefType, id);
     TagLinkModel::instance().DeleteAllTags(RefType, id);
-    return this->remove(id);
+    return remove_data(id);
 }
 
-int64 TransactionModel::save_trx(Data* r)
+void TransactionModel::update_timestamp(Data& trx_d)
 {
-    wxSharedPtr<Data> oldData(instance().get_record(r->TRANSID));
-    if (!oldData || (!oldData->equals(r) && oldData->DELETEDTIME.IsEmpty() && r->DELETEDTIME.IsEmpty()))
-        r->LASTUPDATEDTIME = wxDateTime::Now().ToUTC().FormatISOCombined();
-    this->save(r);
-    return r->TRANSID;
-}
-
-int TransactionModel::save_trx(std::vector<Data>& rows)
-{
-    this->Savepoint();
-    for (auto& r : rows)
-    {
-        if (r.id() < 0)
-            wxLogDebug("Incorrect function call to save %s", r.to_json().utf8_str());
-        save_trx(&r);
+    // get record from database bypassing the cache
+    TransactionModel::DataA trx_a = TransactionModel::instance().find(
+        TransactionCol::TRANSID(trx_d.TRANSID)
+    );
+    if (trx_a.size() == 0 || (!trx_a[0].equals(&trx_d)
+        && trx_a[0].DELETEDTIME.IsEmpty() && trx_d.DELETEDTIME.IsEmpty()
+    )) {
+        trx_d.LASTUPDATEDTIME = wxDateTime::Now().ToUTC().FormatISOCombined();
     }
-    this->ReleaseSavepoint();
-
-    return rows.size();
 }
 
-int TransactionModel::save_trx(std::vector<Data*>& rows)
+const TransactionData* TransactionModel::unsafe_save_trx(Data* trx_n)
 {
-    this->Savepoint();
-    for (auto& r : rows)
-    {
-        if (r->id() < 0)
-            wxLogDebug("Incorrect function call to save %s", r->to_json().utf8_str());
-        save_trx(r);
+    update_timestamp(*trx_n);
+    return unsafe_save_data_n(trx_n);
+}
+
+const TransactionData* TransactionModel::save_trx(Data& trx_d)
+{
+    update_timestamp(trx_d);
+    return save_data_n(trx_d);
+}
+
+bool TransactionModel::save_trx_a(DataA& trx_a)
+{
+    bool ok = true;
+
+    Savepoint();
+    for (auto& trx_d : trx_a) {
+        if (trx_d.id() < 0)
+            wxLogDebug("Incorrect function call to save %s", trx_d.to_json().utf8_str());
+        if (!save_trx(trx_d)) {
+            ok = false;
+            break;
+        }
     }
-    this->ReleaseSavepoint();
+    ReleaseSavepoint();
 
-    return rows.size();
+    return ok;
 }
 
-const TransactionModel::Data_Set TransactionModel::allByDateTimeId()
+const TransactionModel::DataA TransactionModel::allByDateTimeId()
 {
-    auto trans = TransactionModel::instance().get_all();
+    auto trans = TransactionModel::instance().find_all();
     std::sort(trans.begin(), trans.end());
     if (PreferencesModel::instance().UseTransDateTime())
-        std::stable_sort(trans.begin(), trans.end(), TransactionRow::SorterByTRANSDATE());
+        std::stable_sort(trans.begin(), trans.end(), TransactionData::SorterByTRANSDATE());
     else
         std::stable_sort(trans.begin(), trans.end(), TransactionModel::SorterByTRANSDATE_DATE());
     return trans;
 }
 
-const TransactionSplitModel::Data_Set TransactionModel::split(const Data* r)
+const TransactionSplitModel::DataA TransactionModel::split(const Data* r)
 {
-    return TransactionSplitModel::instance().find(TransactionSplitModel::TRANSID(r->TRANSID));
+    return TransactionSplitModel::instance().find(TransactionSplitCol::TRANSID(r->TRANSID));
 }
 
-const TransactionSplitModel::Data_Set TransactionModel::split(const Data& r)
+const TransactionSplitModel::DataA TransactionModel::split(const Data& r)
 {
-    return TransactionSplitModel::instance().find(TransactionSplitModel::TRANSID(r.TRANSID));
+    return TransactionSplitModel::instance().find(TransactionSplitCol::TRANSID(r.TRANSID));
 }
 
-TransactionTable::TRANSDATE TransactionModel::TRANSDATE(OP op, const wxString& date_iso_str)
+TransactionCol::TRANSDATE TransactionModel::TRANSDATE(OP op, const wxString& date_iso_str)
 {
-    return TransactionTable::TRANSDATE(op, date_iso_str);
+    return TransactionCol::TRANSDATE(op, date_iso_str);
 }
 
-TransactionTable::TRANSDATE TransactionModel::TRANSDATE(OP op, const mmDateDay& date)
+TransactionCol::TRANSDATE TransactionModel::TRANSDATE(OP op, const mmDateDay& date)
 {
     // OP_EQ and OP_NE should not be used for date comparisons.
     // if needed, create an equivalent AND/OR combination of two other operators.
@@ -184,33 +195,33 @@ TransactionTable::TRANSDATE TransactionModel::TRANSDATE(OP op, const mmDateDay& 
         (op == OP_GE || op == OP_LT) ? date.isoStart()
         : (op == OP_LE || op == OP_GT) ? date.isoEnd()
         : date.isoDate();
-    return TransactionTable::TRANSDATE(op, bound);
+    return TransactionCol::TRANSDATE(op, bound);
 }
 
-TransactionTable::TRANSDATE TransactionModel::TRANSDATE(OP op, const wxDateTime& date)
+TransactionCol::TRANSDATE TransactionModel::TRANSDATE(OP op, const wxDateTime& date)
 {
     // the boundary has granularity of a day
-    return TRANSDATE(op, mmDateDay(date));
+    return TransactionModel::TRANSDATE(op, mmDateDay(date));
 }
 
-TransactionTable::DELETEDTIME TransactionModel::DELETEDTIME(OP op, const wxString& date)
+TransactionCol::DELETEDTIME TransactionModel::DELETEDTIME(OP op, const wxString& date)
 {
-    return TransactionTable::DELETEDTIME(op, date);
+    return TransactionCol::DELETEDTIME(op, date);
 }
 
-TransactionTable::STATUS TransactionModel::STATUS(OP op, STATUS_ID status)
+TransactionCol::STATUS TransactionModel::STATUS(OP op, STATUS_ID status)
 {
-    return TransactionTable::STATUS(op, status_key(status));
+    return TransactionCol::STATUS(op, status_key(status));
 }
 
-TransactionTable::TRANSCODE TransactionModel::TRANSCODE(OP op, TYPE_ID type)
+TransactionCol::TRANSCODE TransactionModel::TRANSCODE(OP op, TYPE_ID type)
 {
-    return TransactionTable::TRANSCODE(op, type_name(type));
+    return TransactionCol::TRANSCODE(op, type_name(type));
 }
 
-TransactionTable::TRANSACTIONNUMBER TransactionModel::TRANSACTIONNUMBER(OP op, const wxString& num)
+TransactionCol::TRANSACTIONNUMBER TransactionModel::TRANSACTIONNUMBER(OP op, const wxString& num)
 {
-    return TransactionTable::TRANSACTIONNUMBER(op, num);
+    return TransactionCol::TRANSACTIONNUMBER(op, num);
 }
 
 wxDateTime TransactionModel::getTransDateTime(const Data* r)
@@ -281,15 +292,12 @@ double TransactionModel::account_recflow(const Data& r, int64 account_id)
 bool TransactionModel::is_locked(const Data* r)
 {
     bool val = false;
-    AccountModel::Data* acc = AccountModel::instance().get_id(r->ACCOUNTID);
+    const AccountData* account_n = AccountModel::instance().get_data_n(r->ACCOUNTID);
 
-    if (AccountModel::BoolOf(acc->STATEMENTLOCKED))
-    {
+    if (AccountModel::BoolOf(account_n->STATEMENTLOCKED)) {
         wxDateTime transaction_date;
-        if (transaction_date.ParseDate(r->TRANSDATE))
-        {
-            if (transaction_date <= parseDateTime(acc->STATEMENTDATE))
-            {
+        if (transaction_date.ParseDate(r->TRANSDATE)) {
+            if (transaction_date <= parseDateTime(account_n->STATEMENTDATE)) {
                 val = true;
             }
         }
@@ -340,10 +348,10 @@ TransactionModel::Full_Data::Full_Data() :
 TransactionModel::Full_Data::Full_Data(const Data& r) :
     Data(r),
     m_splits(TransactionSplitModel::instance().find(
-        TransactionSplitModel::TRANSID(r.TRANSID))),
+        TransactionSplitCol::TRANSID(r.TRANSID))),
     m_tags(TagLinkModel::instance().find(
-        TagLinkModel::REFTYPE(TransactionModel::refTypeName),
-        TagLinkModel::REFID(r.TRANSID))),
+        TagLinkCol::REFTYPE(TransactionModel::refTypeName),
+        TagLinkCol::REFID(r.TRANSID))),
     ACCOUNTID_W(-1), ACCOUNTID_D(-1), TRANSAMOUNT_W(0), TRANSAMOUNT_D(0),
     SN(0), ACCOUNT_FLOW(0), ACCOUNT_BALANCE(0)
 {
@@ -352,8 +360,8 @@ TransactionModel::Full_Data::Full_Data(const Data& r) :
 
 TransactionModel::Full_Data::Full_Data(
     const Data& r,
-    const std::map<int64 /* TRANSID */, TransactionSplitModel::Data_Set>& splits,
-    const std::map<int64 /* TRANSID */, TagLinkModel::Data_Set>& tags
+    const std::map<int64 /* TRANSID */, TransactionSplitModel::DataA>& splits,
+    const std::map<int64 /* TRANSID */, TagLinkModel::DataA>& tags
 ) :
     Data(r),
     ACCOUNTID_W(-1), ACCOUNTID_D(-1), TRANSAMOUNT_W(0), TRANSAMOUNT_D(0),
@@ -369,10 +377,10 @@ TransactionModel::Full_Data::Full_Data(
 void TransactionModel::Full_Data::fill_data()
 {
     displayID = wxString::Format("%lld", TRANSID);
-    ACCOUNTNAME = AccountModel::cache_id_name(ACCOUNTID);
+    ACCOUNTNAME = AccountModel::get_id_name(ACCOUNTID);
 
     if (TransactionModel::type_id(TRANSCODE) == TransactionModel::TYPE_ID_TRANSFER) {
-        TOACCOUNTNAME = AccountModel::cache_id_name(TOACCOUNTID);
+        TOACCOUNTNAME = AccountModel::get_id_name(TOACCOUNTID);
         PAYEENAME = TOACCOUNTNAME;
     }
     else {
@@ -391,7 +399,7 @@ void TransactionModel::Full_Data::fill_data()
     if (!m_tags.empty()) {
         wxArrayString tagnames;
         for (const auto& entry : m_tags)
-            tagnames.Add(TagModel::instance().get_id(entry.TAGID)->TAGNAME);
+            tagnames.Add(TagModel::instance().get_data_n(entry.TAGID)->TAGNAME);
         // Sort TAGNAMES
         tagnames.Sort(CaseInsensitiveCmp);
         for (const auto& name : tagnames)
@@ -436,23 +444,22 @@ const wxString TransactionModel::Full_Data::get_currency_code(int64 account_id) 
         else
             account_id = this->TOACCOUNTID;
     }
-    AccountModel::Data* acc = AccountModel::instance().get_id(account_id);
-    int64 currency_id = acc ? acc->CURRENCYID: -1;
-    CurrencyModel::Data* curr = CurrencyModel::instance().get_id(currency_id);
+    const AccountData* account_n = AccountModel::instance().get_data_n(account_id);
+    int64 currency_id = account_n ? account_n->CURRENCYID: -1;
+    const CurrencyData* curr = CurrencyModel::instance().get_data_n(currency_id);
 
     return curr ? curr->CURRENCY_SYMBOL : "";
 }
 
-const wxString TransactionModel::Full_Data::cache_id_name(int64 account_id) const
+const wxString TransactionModel::Full_Data::get_account_name(int64 account_id) const
 {
-    if (TYPE_ID_TRANSFER == type_id(this->TRANSCODE))
-    {
+    if (TYPE_ID_TRANSFER == type_id(this->TRANSCODE)) {
         if (this->ACCOUNTID == account_id || account_id == -1) {
             return this->ACCOUNTNAME;
         }
         else {
-            AccountModel::Data* acc = AccountModel::instance().get_id(TOACCOUNTID);
-            return acc ? acc->ACCOUNTNAME : "";
+            const AccountData* account_n = AccountModel::instance().get_data_n(TOACCOUNTID);
+            return account_n ? account_n->ACCOUNTNAME : "";
         }
     }
 
@@ -496,14 +503,13 @@ void TransactionModel::getFrequentUsedNotes(std::vector<wxString> &frequentNotes
     size_t max = 20;
 
     const auto notes = instance().find(
-        NOTES(OP_NE, ""),
-        accountID > 0 ? ACCOUNTID(accountID) : ACCOUNTID(OP_NE, -1)
+        TransactionCol::NOTES(OP_NE, ""),
+        accountID > 0 ? TransactionCol::ACCOUNTID(accountID) : TransactionCol::ACCOUNTID(OP_NE, -1)
     );
 
     // Count frequency
     std::map <wxString, std::pair<int, wxString> > counterMap;
-    for (const auto& entry : notes)
-    {
+    for (const auto& entry : notes) {
         auto& counter = counterMap[entry.NOTES];
         counter.first--;
         if (entry.TRANSDATE > counter.second)
@@ -527,15 +533,17 @@ void TransactionModel::getFrequentUsedNotes(std::vector<wxString> &frequentNotes
     }
 }
 
-void TransactionModel::getEmptyData(Data &data, int64 accountID)
+void TransactionModel::setEmptyData(Data &data, int64 accountID)
 {
     data.TRANSID = -1;
     data.PAYEEID = -1;
     const wxString today_date = wxDate::Now().FormatISOCombined();
     wxString max_trx_date;
-    if (PreferencesModel::instance().getTransDateDefault() != PreferencesModel::NONE)
-    {
-        auto trans = instance().find_or(ACCOUNTID(accountID), TOACCOUNTID(accountID));
+    if (PreferencesModel::instance().getTransDateDefault() != PreferencesModel::NONE) {
+        auto trans = instance().find_or(
+            TransactionCol::ACCOUNTID(accountID),
+            TransactionCol::TOACCOUNTID(accountID)
+        );
 
         for (const auto& t: trans) {
             if (t.DELETEDTIME.IsNull() && max_trx_date < t.TRANSDATE && today_date >= t.TRANSDATE) {
@@ -606,7 +614,7 @@ const wxString TransactionModel::Full_Data::to_json()
     PrettyWriter<StringBuffer> json_writer(json_buffer);
     json_writer.StartObject();
 
-    TransactionModel::Data::as_json(json_writer);
+    TransactionData::as_json(json_writer);
 
     json_writer.Key("ACCOUNTNAME");
     json_writer.String(this->ACCOUNTNAME.utf8_str());
@@ -673,9 +681,9 @@ bool TransactionModel::foreignTransactionAsTransfer(const Data& data)
 
 void TransactionModel::updateTimestamp(int64 id)
 {
-    Data* r = instance().get_id(id);
-    if (r && r->TRANSID == id) {
-        r->LASTUPDATEDTIME = wxDateTime::Now().ToUTC().FormatISOCombined();
-        this->save(r);
+    Data* trx_n = instance().unsafe_get_data_n(id);
+    if (trx_n && trx_n->TRANSID == id) {
+        trx_n->LASTUPDATEDTIME = wxDateTime::Now().ToUTC().FormatISOCombined();
+        unsafe_update_data_n(trx_n);
     }
 }

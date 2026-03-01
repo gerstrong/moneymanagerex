@@ -38,24 +38,32 @@ BudgetEntryDialog::BudgetEntryDialog()
 {
 }
 
-BudgetEntryDialog::BudgetEntryDialog(wxWindow* parent
-    , BudgetModel::Data* entry
-    , const wxString& categoryEstimate
-    , const wxString& CategoryActual)
-    : catEstimateAmountStr_(categoryEstimate)
-    , catActualAmountStr_(CategoryActual)
-{
-    budgetEntry_ = entry;
+BudgetEntryDialog::BudgetEntryDialog(
+    wxWindow* parent,
+    BudgetData* budget_n,
+    const wxString& categoryEstimate,
+    const wxString& CategoryActual
+) :
+    catEstimateAmountStr_(categoryEstimate),
+    catActualAmountStr_(CategoryActual
+) {
+    m_budget_n = budget_n;
     long style = wxCAPTION | wxSYSTEM_MENU | wxCLOSE_BOX;
-    Create(parent, wxID_ANY, _t("Budget Year Entry"), wxDefaultPosition, wxSize(500, 300), style);
+    Create(
+        parent, wxID_ANY, _t("Budget Year Entry"),
+        wxDefaultPosition, wxSize(500, 300), style
+    );
     mmThemeAutoColour(this);
 }
 
-bool BudgetEntryDialog::Create(wxWindow* parent
-    , wxWindowID id
-    , const wxString& caption, const wxPoint& pos
-    , const wxSize& size, long style)
-{
+bool BudgetEntryDialog::Create(
+    wxWindow* parent,
+    wxWindowID id,
+    const wxString& caption,
+    const wxPoint& pos,
+    const wxSize& size,
+    long style
+) {
     SetExtraStyle(GetExtraStyle()|wxWS_EX_BLOCK_EVENTS);
     wxDialog::Create( parent, id, caption, pos, size, style );
 
@@ -71,8 +79,8 @@ bool BudgetEntryDialog::Create(wxWindow* parent
 
 void BudgetEntryDialog::fillControls()
 {
-    double amt = budgetEntry_->AMOUNT;
-    int period = BudgetModel::period_id(budgetEntry_);
+    double amt = m_budget_n->AMOUNT;
+    int period = BudgetModel::period_id(*m_budget_n);
     m_choiceItem->SetSelection(period);
     if (period == BudgetModel::PERIOD_ID_NONE && amt == 0.0)
         m_choiceItem->SetSelection(DEF_FREQ_MONTHLY);
@@ -83,7 +91,7 @@ void BudgetEntryDialog::fillControls()
         m_choiceType->SetSelection(DEF_TYPE_INCOME);
 
     m_textAmount->SetValue(std::fabs(amt));
-    m_Notes->SetValue(budgetEntry_->NOTES);
+    m_Notes->SetValue(m_budget_n->NOTES);
 }
 
 void BudgetEntryDialog::CreateControls()
@@ -101,7 +109,7 @@ void BudgetEntryDialog::CreateControls()
     wxFlexGridSizer* itemGridSizer2 = new wxFlexGridSizer(0, 2, 0, 0);
     itemPanel7->SetSizer(itemGridSizer2);
     
-    const CategoryModel::Data* category = CategoryModel::instance().get_id(budgetEntry_->CATEGID);
+    const CategoryData* category = CategoryModel::instance().get_data_n(m_budget_n->CATEGID);
     wxASSERT(category);
     
     wxStaticText* itemTextEstCatAmt = new wxStaticText(itemPanel7, wxID_STATIC, catEstimateAmountStr_);
@@ -191,10 +199,10 @@ void BudgetEntryDialog::OnOk(wxCommandEvent& event)
     if (typeSelection == DEF_TYPE_EXPENSE)
         amt = -amt;
 
-    budgetEntry_->PERIOD = BudgetModel::period_name(period);
-    budgetEntry_->AMOUNT = amt;
-    budgetEntry_->NOTES = m_Notes->GetValue();
-    BudgetModel::instance().save(budgetEntry_);
+    m_budget_n->PERIOD = BudgetModel::period_name(period);
+    m_budget_n->AMOUNT = amt;
+    m_budget_n->NOTES  = m_Notes->GetValue();
+    BudgetModel::instance().unsafe_save_data_n(m_budget_n);
 
     EndModal(wxID_OK);
 }
@@ -202,13 +210,11 @@ void BudgetEntryDialog::OnOk(wxCommandEvent& event)
 void BudgetEntryDialog::onChoiceChar(wxKeyEvent& event) {
 
     int i = m_choiceItem->GetSelection();
-    if (event.GetKeyCode()==WXK_DOWN) 
-    {
+    if (event.GetKeyCode()==WXK_DOWN) {
         if (i < DEF_FREQ_DAILY ) 
             m_choiceItem->SetSelection(++i);
     } 
-    else if (event.GetKeyCode()==WXK_UP)
-    {
+    else if (event.GetKeyCode()==WXK_UP) {
         if (i > DEF_FREQ_NONE)
             m_choiceItem->SetSelection(--i);
     } 

@@ -56,13 +56,14 @@ void mmTextCtrl::SetValueNoEvent(double value, int precision)
     this->ChangeValue(CurrencyModel::toString(value, m_currency, precision));
 }
 
-void mmTextCtrl::SetValue(double value, const AccountModel::Data* account, int precision)
+void mmTextCtrl::SetValue(double value, const AccountData* account, int precision)
 {
-    if (account) m_currency = CurrencyModel::instance().get_id(account->CURRENCYID);
+    if (account)
+        m_currency = CurrencyModel::instance().get_data_n(account->CURRENCYID);
     this->SetValue(value, precision > -1 ? precision : log10(m_currency->SCALE.GetValue()));
 }
 
-void mmTextCtrl::SetValue(double value, const CurrencyModel::Data* currency, int precision)
+void mmTextCtrl::SetValue(double value, const CurrencyData* currency, int precision)
 {
     m_currency = (currency ? currency : CurrencyModel::GetBaseCurrency());
     this->SetValue(value, precision > -1 ? precision : log10(m_currency->SCALE.GetValue()));

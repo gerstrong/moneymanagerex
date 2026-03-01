@@ -25,6 +25,7 @@
 #include "util/mmDateDay.h"
 
 #include "table/AccountTable.h"
+#include "data/AccountData.h"
 
 #include "_ModelBase.h"
 #include "CurrencyModel.h"
@@ -33,12 +34,9 @@
 
 #include "uicontrols/navigatortypes.h"  // remove later
 
-class AccountModel : public Model<AccountTable>
+class AccountModel : public Model<AccountTable, AccountData>
 {
 public:
-    using Model<AccountTable>::remove;
-    using Model<AccountTable>::get_id;
-
     enum STATUS_ID
     {
         STATUS_ID_OPEN = 0,
@@ -72,28 +70,28 @@ public:
 
 public:
     /** Return the Data record for the given account name */
-    Data* get_key(const wxString& name);
+    const Data* get_key(const wxString& name);
 
     /** Return the Data record for the given account num */
-    Data* cache_num(const wxString& num);
+    const Data* get_num(const wxString& num);
 
-    static wxString cache_id_name(int64 account_id);
+    static wxString get_id_name(int64 account_id);
 
     /** Remove the Data record from memory and the database. */
-    bool remove(int64 id);
+    bool remove_depen(int64 id) override;
 
 public:
     wxArrayString all_checking_account_names(bool skip_closed = false);
     const std::map<wxString, int64> all_accounts(bool skip_closed = false);
 
-    static CurrencyModel::Data* currency(const Data* r);
-    static CurrencyModel::Data* currency(const Data& r);
+    static const CurrencyData* currency(const Data* r);
+    static const CurrencyData* currency(const Data& r);
 
-    static const TransactionModel::Data_Set transactionsByDateTimeId(const Data* r);
-    static const TransactionModel::Data_Set transactionsByDateTimeId(const Data& r);
+    static const TransactionModel::DataA transactionsByDateTimeId(const Data* r);
+    static const TransactionModel::DataA transactionsByDateTimeId(const Data& r);
 
-    static const ScheduledModel::Data_Set billsdeposits(const Data* r);
-    static const ScheduledModel::Data_Set billsdeposits(const Data& r);
+    static const ScheduledModel::DataA billsdeposits(const Data* r);
+    static const ScheduledModel::DataA billsdeposits(const Data& r);
 
     static double balance(const Data* r);
     static double balance(const Data& r);
@@ -112,13 +110,13 @@ public:
     static int status_id(const wxString& name, int default_id = STATUS_ID_CLOSED);
     static STATUS_ID status_id(const Data* account);
     static STATUS_ID status_id(const Data& account);
-    static AccountTable::STATUS STATUS(OP op, STATUS_ID status);
+    static AccountCol::STATUS STATUS(OP op, STATUS_ID status);
 
     static bool FAVORITEACCT(const Data* r);
     static bool FAVORITEACCT(const Data& r);
 
-    static bool is_used(const CurrencyModel::Data* c);
-    static bool is_used(const CurrencyModel::Data& c);
+    static bool is_used(const CurrencyData* c);
+    static bool is_used(const CurrencyData& c);
 
     static int money_accounts_num();
 
@@ -127,7 +125,7 @@ public:
     static bool BoolOf(int64 value);
     static bool is_positive(int value);
 
-    const Data_Set FilterAccounts(const wxString& account_pattern, bool skip_closed = false);
+    const DataA FilterAccounts(const wxString& account_pattern, bool skip_closed = false);
 
 
 public:

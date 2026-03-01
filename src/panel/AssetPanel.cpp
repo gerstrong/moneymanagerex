@@ -174,10 +174,9 @@ void AssetList::OnListKeyDown(wxListEvent& event)
 
 void AssetList::OnNewAsset(wxCommandEvent& /*event*/)
 {
-    AssetDialog dlg(this, static_cast<AssetModel::Data*>(nullptr));
-    if (dlg.ShowModal() == wxID_OK)
-    {
-        doRefreshItems(dlg.m_asset->ASSETID);
+    AssetDialog dlg(this, static_cast<AssetData*>(nullptr));
+    if (dlg.ShowModal() == wxID_OK) {
+        doRefreshItems(dlg.asset_id());
         m_panel->m_frame->RefreshNavigationTree();
     }
 }
@@ -196,8 +195,7 @@ void AssetList::doRefreshItems(int64 trx_id)
     else
         selectedIndex = -1;
 
-    if (selectedIndex >= 0 && cnt>0)
-    {
+    if (selectedIndex >= 0 && cnt>0) {
         SetItemState(selectedIndex, wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
         SetItemState(selectedIndex, wxLIST_STATE_FOCUSED, wxLIST_STATE_FOCUSED);
         EnsureVisible(selectedIndex);
@@ -207,17 +205,17 @@ void AssetList::doRefreshItems(int64 trx_id)
 
 void AssetList::OnDeleteAsset(wxCommandEvent& /*event*/)
 {
-    if (m_selected_row < 0)    return;
+    if (m_selected_row < 0)
+        return;
 
     wxMessageDialog msgDlg(this
         , _t("Do you want to delete the asset?")
         , _t("Confirm Asset Deletion")
         , wxYES_NO | wxNO_DEFAULT | wxICON_ERROR);
 
-    if (msgDlg.ShowModal() == wxID_YES)
-    {
-        const AssetModel::Data& asset = m_panel->m_assets[m_selected_row];
-        AssetModel::instance().remove(asset.ASSETID);
+    if (msgDlg.ShowModal() == wxID_YES) {
+        const AssetData& asset = m_panel->m_assets[m_selected_row];
+        AssetModel::instance().remove_depen(asset.ASSETID);
         mmAttachmentManage::DeleteAllAttachments(AssetModel::refTypeName, asset.ASSETID);
         TransactionLinkModel::RemoveTransLinkRecords<AssetModel>(asset.ASSETID);
 
@@ -229,7 +227,8 @@ void AssetList::OnDeleteAsset(wxCommandEvent& /*event*/)
 
 void AssetList::OnEditAsset(wxCommandEvent& /*event*/)
 {
-    if (m_selected_row < 0)     return;
+    if (m_selected_row < 0)
+        return;
 
     wxListEvent evt(wxEVT_COMMAND_LIST_ITEM_ACTIVATED, wxID_ANY);
     AddPendingEvent(evt);
@@ -237,21 +236,23 @@ void AssetList::OnEditAsset(wxCommandEvent& /*event*/)
 
 void AssetList::OnDuplicateAsset(wxCommandEvent& /*event*/)
 {
-    if (m_selected_row < 0)     return;
+    if (m_selected_row < 0)
+        return;
 
-    const AssetModel::Data& asset = m_panel->m_assets[m_selected_row];
-    AssetModel::Data* duplicate_asset = AssetModel::instance().clone(&asset);
+    const AssetData& asset = m_panel->m_assets[m_selected_row];
+    AssetData duplicate_asset;
+    duplicate_asset.clone_from(asset);
 
-    if (EditAsset(duplicate_asset))
-    {
+    if (EditAsset(&duplicate_asset)) {
         m_panel->initVirtualListControl();
-        doRefreshItems(duplicate_asset->ASSETID);
+        doRefreshItems(duplicate_asset.ASSETID);
     }
 }
 
 void AssetList::OnAddAssetTrans(wxCommandEvent& WXUNUSED(event))
 {
-    if (m_selected_row < 0) return;
+    if (m_selected_row < 0)
+        return;
 
     m_panel->AddAssetTrans(m_selected_row);
 }
@@ -296,20 +297,18 @@ void AssetList::OnOpenAttachment(wxCommandEvent& /*event*/)
 
 void AssetList::OnListItemActivated(wxListEvent& event)
 {
-    if (m_selected_row < 0)
-    {
+    if (m_selected_row < 0) {
         m_selected_row = event.GetIndex();
     }
     EditAsset(&(m_panel->m_assets[m_selected_row]));
 }
 
-bool AssetList::EditAsset(AssetModel::Data* pEntry)
+bool AssetList::EditAsset(AssetData* pEntry)
 {
     AssetDialog dlg(this, pEntry);
     bool edit = true;
-    if (dlg.ShowModal() == wxID_OK)
-    {
-        doRefreshItems(dlg.m_asset->ASSETID);
+    if (dlg.ShowModal() == wxID_OK) {
+        doRefreshItems(dlg.asset_id());
         m_panel->updateExtraAssetData(m_selected_row);
     }
     else edit = false;
@@ -341,10 +340,11 @@ void AssetList::OnColClick(wxListEvent& event)
 
 void AssetList::OnEndLabelEdit(wxListEvent& event)
 {
-    if (event.IsEditCancelled()) return;
-    AssetModel::Data* asset = &m_panel->m_assets[event.GetIndex()];
-    asset->ASSETNAME = event.m_item.m_text;
-    AssetModel::instance().save(asset);
+    if (event.IsEditCancelled())
+        return;
+    AssetData* asset_n = &m_panel->m_assets[event.GetIndex()];
+    asset_n->ASSETNAME = event.m_item.m_text;
+    AssetModel::instance().unsafe_save_data_n(asset_n);
     RefreshItems(event.GetIndex(), event.GetIndex());
 }
 
@@ -522,28 +522,28 @@ void AssetPanel::CreateControls()
 void AssetPanel::sortList()
 {
     std::sort(this->m_assets.begin(), this->m_assets.end());
-    std::stable_sort(this->m_assets.begin(), this->m_assets.end(), AssetRow::SorterBySTARTDATE());
+    std::stable_sort(this->m_assets.begin(), this->m_assets.end(), AssetData::SorterBySTARTDATE());
     switch (this->m_lc->getSortColId())
     {
     case AssetList::LIST_ID_ID:
-        std::stable_sort(this->m_assets.begin(), this->m_assets.end(), AssetRow::SorterByASSETID());
+        std::stable_sort(this->m_assets.begin(), this->m_assets.end(), AssetData::SorterByASSETID());
         break;
     case AssetList::LIST_ID_NAME:
-        std::stable_sort(this->m_assets.begin(), this->m_assets.end(), AssetRow::SorterByASSETNAME());
+        std::stable_sort(this->m_assets.begin(), this->m_assets.end(), AssetData::SorterByASSETNAME());
         break;
     case AssetList::LIST_ID_TYPE:
-        std::stable_sort(this->m_assets.begin(), this->m_assets.end(), AssetRow::SorterByASSETTYPE());
+        std::stable_sort(this->m_assets.begin(), this->m_assets.end(), AssetData::SorterByASSETTYPE());
         break;
     case AssetList::LIST_ID_VALUE_INITIAL:
         std::stable_sort(this->m_assets.begin(), this->m_assets.end()
-            , [](const AssetModel::Data& x, const AssetModel::Data& y)
+            , [](const AssetData& x, const AssetData& y)
             {
                 return AssetModel::value(x).first < AssetModel::value(y).first;
             });
         break;
     case AssetList::LIST_ID_VALUE_CURRENT:
         std::stable_sort(this->m_assets.begin(), this->m_assets.end()
-            , [](const AssetModel::Data& x, const AssetModel::Data& y)
+            , [](const AssetData& x, const AssetData& y)
             {
                 return AssetModel::value(x).second < AssetModel::value(y).second;
             });
@@ -551,7 +551,7 @@ void AssetPanel::sortList()
     case AssetList::LIST_ID_DATE:
         break;
     case AssetList::LIST_ID_NOTES:
-        std::stable_sort(this->m_assets.begin(), this->m_assets.end(), AssetRow::SorterByNOTES());
+        std::stable_sort(this->m_assets.begin(), this->m_assets.end(), AssetData::SorterByNOTES());
     default:
         break;
     }
@@ -565,7 +565,7 @@ int AssetPanel::initVirtualListControl(int64 id)
     m_lc->DeleteAllItems();
 
     if (this->m_filter_type == AssetModel::TYPE_ID(-1)) // ALL
-        this->m_assets = AssetModel::instance().get_all();
+        this->m_assets = AssetModel::instance().find_all();
     else
         this->m_assets = AssetModel::instance().find(
             AssetModel::ASSETTYPE(OP_EQ, m_filter_type)
@@ -624,7 +624,7 @@ void AssetPanel::OnOpenAttachment(wxCommandEvent& event)
 
 wxString AssetPanel::getItem(long item, int col_id)
 {
-    const AssetModel::Data& asset = this->m_assets[item];
+    const AssetData& asset = this->m_assets[item];
     switch (col_id) {
     case AssetList::LIST_ID_ICON:
         return "";
@@ -658,7 +658,7 @@ void AssetPanel::updateExtraAssetData(int selIndex)
     wxStaticText* stm = static_cast<wxStaticText*>(FindWindow(IDC_PANEL_ASSET_STATIC_DETAILS_MINI));
     if (selIndex > -1)
     {
-        const AssetModel::Data& asset = this->m_assets[selIndex];
+        const AssetData& asset = this->m_assets[selIndex];
         enableEditDeleteButtons(true);
         const auto& change_rate = (AssetModel::change_id(asset) != AssetModel::CHANGE_ID_NONE)
             ? wxString::Format("%.2f %%", asset.VALUECHANGERATE) : "";
@@ -775,19 +775,16 @@ void AssetPanel::OnSearchTxtEntered(wxCommandEvent& event)
 
 void AssetPanel::AddAssetTrans(const int selected_index)
 {
-    AssetModel::Data* asset = &m_assets[selected_index];
+    AssetData* asset = &m_assets[selected_index];
     AssetDialog asset_dialog(this, asset, true);
-    AccountModel::Data* account = AccountModel::instance().get_key(asset->ASSETNAME);
-    AccountModel::Data* account2 = AccountModel::instance().get_key(asset->ASSETTYPE);
-    if (account || account2)
-    {
+    const AccountData* account = AccountModel::instance().get_key(asset->ASSETNAME);
+    const AccountData* account2 = AccountModel::instance().get_key(asset->ASSETTYPE);
+    if (account || account2) {
         asset_dialog.SetTransactionAccountName(account ? asset->ASSETNAME : asset->ASSETTYPE);
     }
-    else
-    {
-        TransactionLinkModel::Data_Set translist = TransactionLinkModel::TranslinkList<AssetModel>(asset->ASSETID);
-        if (translist.empty())
-        {
+    else {
+        TransactionLinkModel::DataA translist = TransactionLinkModel::TranslinkList<AssetModel>(asset->ASSETID);
+        if (translist.empty()) {
             wxMessageBox(_t(
                 "This asset does not have its own account\n\n"
                 "Multiple transactions for this asset are not recommended.")
@@ -797,8 +794,7 @@ void AssetPanel::AddAssetTrans(const int selected_index)
         }
     }
 
-    if (asset_dialog.ShowModal() == wxID_OK)
-    {
+    if (asset_dialog.ShowModal() == wxID_OK) {
         m_lc->doRefreshItems(selected_index);
         updateExtraAssetData(selected_index);
     }
@@ -806,7 +802,7 @@ void AssetPanel::AddAssetTrans(const int selected_index)
 
 void AssetPanel::ViewAssetTrans(int selectedIndex)
 {
-    AssetModel::Data* asset = &m_assets[selectedIndex];
+    AssetData* asset = &m_assets[selectedIndex];
 
     wxDialog dlg(this, wxID_ANY,
                  _t("View Asset Transactions") + ": " + asset->ASSETNAME,
@@ -856,23 +852,23 @@ wxListCtrl* AssetPanel::InitAssetTxnListCtrl(wxWindow* parent)
 // Load asset transactions into the list control
 void AssetPanel::LoadAssetTransactions(wxListCtrl* listCtrl, int64 assetId)
 {
-    TransactionLinkModel::Data_Set assetList = TransactionLinkModel::TranslinkList<AssetModel>(assetId);
+    TransactionLinkModel::DataA asset_a = TransactionLinkModel::TranslinkList<AssetModel>(assetId);
 
     int row = 0;
-    for (const auto& assetEntry : assetList)
-    {
-        auto* assetTrans = TransactionModel::instance().get_id(assetEntry.CHECKINGACCOUNTID);
-        if (!assetTrans) continue;
+    for (const auto& asset_d : asset_a) {
+        const TransactionData* trx_n = TransactionModel::instance().get_data_n(asset_d.CHECKINGACCOUNTID);
+        if (!trx_n)
+            continue;
 
         long index = listCtrl->InsertItem(row++, "");
-        listCtrl->SetItemData(index, assetTrans->TRANSID.GetValue());
-        FillAssetListRow(listCtrl, index, *assetTrans);
+        listCtrl->SetItemData(index, trx_n->TRANSID.GetValue());
+        FillAssetListRow(listCtrl, index, *trx_n);
     }
 }
 
-void AssetPanel::FillAssetListRow(wxListCtrl* listCtrl, long index, const TransactionModel::Data& txn)
+void AssetPanel::FillAssetListRow(wxListCtrl* listCtrl, long index, const TransactionData& txn)
 {
-    listCtrl->SetItem(index, 0, AccountModel::cache_id_name(txn.ACCOUNTID));
+    listCtrl->SetItem(index, 0, AccountModel::get_id_name(txn.ACCOUNTID));
     listCtrl->SetItem(index, 1, mmGetDateTimeForDisplay(txn.TRANSDATE));
     listCtrl->SetItem(index, 2, TransactionModel::trade_type_name(TransactionModel::type_id(txn.TRANSCODE)));
     listCtrl->SetItem(index, 3, CurrencyModel::toString(txn.TRANSAMOUNT));
@@ -883,18 +879,19 @@ void AssetPanel::BindAssetListEvents(wxListCtrl* listCtrl)
 {
     listCtrl->Bind(wxEVT_LIST_ITEM_ACTIVATED, [listCtrl, this](wxListEvent& event) {
         long index = event.GetIndex();
-        auto* txn = TransactionModel::instance().get_id(event.GetData());
-        if (!txn) return;
+        TransactionData* trx_n = TransactionModel::instance().unsafe_get_data_n(event.GetData());
+        if (!trx_n)
+            return;
 
-        auto link = TransactionLinkModel::TranslinkRecord(txn->TRANSID);
-        AssetDialog dlg(listCtrl, &link, txn);
+        auto link = TransactionLinkModel::TranslinkRecord(trx_n->TRANSID);
+        AssetDialog dlg(listCtrl, &link, trx_n);
         dlg.ShowModal();
 
-        this->FillAssetListRow(listCtrl, index, *txn);
+        this->FillAssetListRow(listCtrl, index, *trx_n);
 
         listCtrl->SortItems([](wxIntPtr item1, wxIntPtr item2, wxIntPtr) -> int {
-            auto date1 = TransactionModel::getTransDateTime(TransactionModel::instance().get_id(item1));
-            auto date2 = TransactionModel::getTransDateTime(TransactionModel::instance().get_id(item2));
+            auto date1 = TransactionModel::getTransDateTime(TransactionModel::instance().get_data_n(item1));
+            auto date2 = TransactionModel::getTransDateTime(TransactionModel::instance().get_data_n(item2));
             return date1.IsEarlierThan(date2) ? -1 : (date1.IsLaterThan(date2) ? 1 : 0);
         }, 0);
     });
@@ -934,28 +931,24 @@ void AssetPanel::CopySelectedRowsToClipboard(wxListCtrl* listCtrl)
 
 void AssetPanel::GotoAssetAccount(const int selected_index)
 {
-    AssetModel::Data* asset = &m_assets[selected_index];
-    const AccountModel::Data* account = AccountModel::instance().get_key(asset->ASSETNAME);
-    if (account)
-    {
-        SetAccountParameters(account);
+    AssetData* asset = &m_assets[selected_index];
+    const AccountData* account_n = AccountModel::instance().get_key(asset->ASSETNAME);
+    if (account_n) {
+        SetAccountParameters(account_n);
     }
-    else
-    {
-        TransactionLinkModel::Data_Set asset_list = TransactionLinkModel::TranslinkList<AssetModel>(asset->ASSETID);
-        for (const auto &asset_entry : asset_list)
-        {
-            TransactionModel::Data* asset_trans = TransactionModel::instance().get_id(asset_entry.CHECKINGACCOUNTID);
-            if (asset_trans)
-            {
-                account = AccountModel::instance().get_id(asset_trans->ACCOUNTID);
-                SetAccountParameters(account);
+    else {
+        TransactionLinkModel::DataA asset_a = TransactionLinkModel::TranslinkList<AssetModel>(asset->ASSETID);
+        for (const auto &asset_d : asset_a) {
+            const TransactionData* trx_n = TransactionModel::instance().get_data_n(asset_d.CHECKINGACCOUNTID);
+            if (trx_n) {
+                account_n = AccountModel::instance().get_data_n(trx_n->ACCOUNTID);
+                SetAccountParameters(account_n);
             }
         }
     }
 }
 
-void AssetPanel::SetAccountParameters(const AccountModel::Data* account)
+void AssetPanel::SetAccountParameters(const AccountData* account)
 {
     m_frame->selectNavTreeItem(account->ACCOUNTNAME);
     m_frame->setGotoAccountID(account->ACCOUNTID);

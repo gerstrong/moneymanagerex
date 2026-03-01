@@ -33,8 +33,15 @@ class TransactionShareDialog : public wxDialog
 
 public:
     TransactionShareDialog();
-    TransactionShareDialog(wxWindow* parent, StockModel::Data* stock);
-    TransactionShareDialog(wxWindow* parent, TransactionLinkModel::Data* transfer_entry, TransactionModel::Data* checking_entry);
+    TransactionShareDialog(
+        wxWindow* parent,
+        StockData* stock_n
+    );
+    TransactionShareDialog(
+        wxWindow* parent,
+        const TransactionLinkData* transfer_entry,
+        TransactionData* checking_entry
+    );
 
     int64 m_stock_id = -1;
 
@@ -57,7 +64,7 @@ private:
     void OnDeductibleSplit(wxCommandEvent& event);
 
 private:
-    StockModel::Data* m_stock = nullptr;
+    StockData* m_stock_n = nullptr;
     wxTextCtrl* m_stock_name_ctrl = nullptr;
     mmTextCtrl* m_share_num_ctrl = nullptr;
     wxTextCtrl* m_stock_symbol_ctrl = nullptr;
@@ -72,9 +79,9 @@ private:
     TransactionLinkDialog* m_transaction_panel = nullptr;
     wxString m_dialog_heading;
 
-    TransactionModel::Data* m_checking_entry = nullptr;
-    TransactionLinkModel::Data* m_translink_entry = nullptr;
-    TransactionShareModel::Data* m_share_entry = nullptr;
+    TransactionData* m_checking_entry = nullptr;
+    const TransactionLinkData* m_translink_entry = nullptr;
+    TransactionShareData* m_share_entry = nullptr;
 
     std::vector<Split> m_local_deductible_splits, m_local_non_deductible_splits;
 

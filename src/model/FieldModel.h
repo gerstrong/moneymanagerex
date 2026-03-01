@@ -20,14 +20,15 @@
 
 #include "base/defs.h"
 #include "util/_choices.h"
-#include "_ModelBase.h"
-#include "table/FieldTable.h"
 
-class FieldModel : public Model<FieldTable>
+#include "table/FieldTable.h"
+#include "data/FieldData.h"
+
+#include "_ModelBase.h"
+
+class FieldModel : public Model<FieldTable, FieldData>
 {
 public:
-    using Model<FieldTable>::get_id;
-
     enum TYPE_ID
     {
         TYPE_ID_UNKNOWN = -1,
@@ -76,7 +77,7 @@ public:
     static bool getAutocomplete(const wxString& properties);
     static const wxString getDefault(const wxString& properties);
     static const wxArrayString getChoices(const wxString& properties);
-    static const wxArrayString getUDFCList(Data* r);
+    static const wxArrayString getUDFCList(const Data* r);
     static const wxString getUDFC(const wxString& properties);
     static const wxString getUDFCName(const wxString& ref_type, const wxString& name);
     static TYPE_ID getUDFCType(const wxString& ref_type, const wxString& name);

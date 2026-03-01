@@ -95,7 +95,8 @@ private:
     void OnSwitch(wxCommandEvent& event);
     void OnToday(wxCommandEvent& event);
     void SetTooltips();
-    void SetCategoryForPayee(const PayeeModel::Data *payee = nullptr);
+    void SetCategoryForPayee(const PayeeData *payee = nullptr);
+
 private:
     wxTextCtrl* textNumber_ = nullptr;
     mmTextCtrl* m_textAmount = nullptr;

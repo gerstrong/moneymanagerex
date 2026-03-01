@@ -45,10 +45,15 @@ wxEND_EVENT_TABLE()
 mmEditSplitOther::mmEditSplitOther()
 {
 }
-mmEditSplitOther::mmEditSplitOther(wxWindow *parent, CurrencyModel::Data* currency
-                        , Split* split, const wxString &name)
-: m_split(split)
-, m_currency(currency)
+
+mmEditSplitOther::mmEditSplitOther(
+    wxWindow *parent,
+    const CurrencyData* currency,
+    Split* split,
+    const wxString &name
+) :
+    m_split(split),
+    m_currency(currency)
 {
     long style = wxCAPTION | wxCLOSE_BOX | wxRESIZE_BORDER;
     if (!wxDialog::Create(parent, wxID_ANY, _t("Edit Split Detail")
@@ -164,8 +169,10 @@ SplitDialog::SplitDialog(wxWindow* parent
     , row_num_(static_cast<int>(split.size()))
     , is_view_only_(is_view_only)
 {
-    AccountModel::Data* account = AccountModel::instance().get_id(accountID);
-    m_currency = account ? AccountModel::currency(account) : CurrencyModel::GetBaseCurrency();
+    const AccountData* account_n = AccountModel::instance().get_data_n(accountID);
+    m_currency = account_n
+        ? AccountModel::currency(account_n)
+        : CurrencyModel::GetBaseCurrency();
     m_splits = m_orig_splits;
     this->SetFont(parent->GetFont());
     Create(parent);

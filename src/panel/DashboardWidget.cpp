@@ -83,12 +83,12 @@ const wxString htmlWidgetStocks::getHTMLText()
     const wxDate today = wxDate::Today();
 
     wxString output = "";
-    AccountModel::Data_Set accounts = AccountModel::instance().find(
-        AccountModel::ACCOUNTTYPE(OP_EQ, NavigatorTypes::instance().getInvestmentAccountStr())
+    AccountModel::DataA accounts = AccountModel::instance().find(
+        AccountCol::ACCOUNTTYPE(OP_EQ, NavigatorTypes::instance().getInvestmentAccountStr())
     );
     if (!accounts.empty())
     {
-        std::stable_sort(accounts.begin(), accounts.end(), AccountRow::SorterByACCOUNTNAME());
+        std::stable_sort(accounts.begin(), accounts.end(), AccountData::SorterByACCOUNTNAME());
 
         output = R"(<div class="shadow">)";
         output += "<table class ='sortable table'><col style='width: 50%'><col style='width: 12.5%'><col style='width: 12.5%'><col style='width: 12.5%'><col style='width: 12.5%'><thead><tr class='active'><th>\n";
@@ -206,32 +206,31 @@ void htmlWidgetTop7Categories::getTopCategoryStats(
     const auto split = TransactionSplitModel::instance().get_all_id();
     const auto &transactions = TransactionModel::instance().find(
         TransactionModel::TRANSDATE(OP_GE, date_range->start_date()),
-        TransactionModel::TRANSDATE(OP_LE, date_range->end_date().FormatISOCombined()),
+        TransactionCol::TRANSDATE(OP_LE, date_range->end_date().FormatISOCombined()),
         TransactionModel::STATUS(OP_NE, TransactionModel::STATUS_ID_VOID),
         TransactionModel::TRANSCODE(OP_NE, TransactionModel::TYPE_ID_TRANSFER)
     );
 
-    for (const auto &trx : transactions)
-    {
+    for (const auto &trx : transactions) {
         // Do not include asset or stock transfers or deleted transactions in income expense calculations.
         if (TransactionModel::foreignTransactionAsTransfer(trx) || !trx.DELETEDTIME.IsEmpty())
             continue;
 
         bool withdrawal = TransactionModel::type_id(trx) == TransactionModel::TYPE_ID_WITHDRAWAL;
-        double convRate = CurrencyHistoryModel::getDayRate(AccountModel::instance().get_id(trx.ACCOUNTID)->CURRENCYID, trx.TRANSDATE);
+        double convRate = CurrencyHistoryModel::getDayRate(
+            AccountModel::instance().get_data_n(trx.ACCOUNTID)->CURRENCYID,
+            trx.TRANSDATE
+        );
 
-        if (const auto it = split.find(trx.TRANSID); it == split.end())
-        {
+        if (const auto it = split.find(trx.TRANSID); it == split.end()) {
             int64 category = trx.CATEGID;
             if (withdrawal)
                 stat[category] -= trx.TRANSAMOUNT * convRate;
             else
                 stat[category] += trx.TRANSAMOUNT * convRate;
         }
-        else
-        {
-            for (const auto& entry : it->second)
-            {
+        else {
+            for (const auto& entry : it->second) {
                 int64 category = entry.CATEGID;
                 double val = entry.SPLITTRANSAMOUNT
                     * convRate
@@ -289,8 +288,8 @@ const wxString htmlWidgetBillsAndDeposits::getHTMLText()
     wxDate today = wxDate::Today();
 
     //                    days, payee, description, amount, account, notes
-    std::vector< std::tuple<int, wxString, wxString, double, const AccountModel::Data*, wxString> > bd_days;
-    for (const auto& entry : ScheduledModel::instance().get_all(ScheduledCol::COL_ID_TRANSDATE))
+    std::vector< std::tuple<int, wxString, wxString, double, const AccountData*, wxString> > bd_days;
+    for (const auto& entry : ScheduledModel::instance().find_all(ScheduledCol::COL_ID_TRANSDATE))
     {
         int daysPayment = ScheduledModel::getTransDateTime(&entry)
             .Subtract(today).GetDays();
@@ -312,19 +311,19 @@ const wxString htmlWidgetBillsAndDeposits::getHTMLText()
             daysRemainingStr = "*" + wxString::Format(wxPLURAL("%d day overdue", "%d days overdue", std::abs(daysOverdue)), std::abs(daysOverdue));
 
         wxString accountStr = "";
-        const auto *account = AccountModel::instance().get_id(entry.ACCOUNTID);
+        const auto *account = AccountModel::instance().get_data_n(entry.ACCOUNTID);
         if (account) accountStr = account->ACCOUNTNAME;
 
         wxString payeeStr = "";
         if (ScheduledModel::type_id(entry) == TransactionModel::TYPE_ID_TRANSFER)
         {
-            const AccountModel::Data *to_account = AccountModel::instance().get_id(entry.TOACCOUNTID);
+            const AccountData *to_account = AccountModel::instance().get_data_n(entry.TOACCOUNTID);
             if (to_account) payeeStr = to_account->ACCOUNTNAME;
             payeeStr += " &larr; " + accountStr;
         }
         else
         {
-            const PayeeModel::Data* payee = PayeeModel::instance().get_id(entry.PAYEEID);
+            const PayeeData* payee = PayeeModel::instance().get_data_n(entry.PAYEEID);
             payeeStr = accountStr;
             payeeStr += (ScheduledModel::type_id(entry) == TransactionModel::TYPE_ID_WITHDRAWAL ? " &rarr; " : " &larr; ");
             if (payee) payeeStr += payee->PAYEENAME;
@@ -388,7 +387,7 @@ const wxString htmlWidgetIncomeVsExpenses::getHTMLText()
     //Calculations
     const auto &transactions = TransactionModel::instance().find(
         TransactionModel::TRANSDATE(OP_GE, date_range.get()->start_date()),
-        TransactionModel::TRANSDATE(OP_LE, date_range.get()->end_date().FormatISOCombined()),
+        TransactionCol::TRANSDATE(OP_LE, date_range.get()->end_date().FormatISOCombined()),
         TransactionModel::STATUS(OP_NE, TransactionModel::STATUS_ID_VOID),
         TransactionModel::TRANSCODE(OP_NE, TransactionModel::TYPE_ID_TRANSFER)
     );
@@ -400,7 +399,10 @@ const wxString htmlWidgetIncomeVsExpenses::getHTMLText()
         if (TransactionModel::foreignTransactionAsTransfer(pBankTransaction) || !pBankTransaction.DELETEDTIME.IsEmpty())
             continue;
 
-        double convRate = CurrencyHistoryModel::getDayRate(AccountModel::instance().get_id(pBankTransaction.ACCOUNTID)->CURRENCYID, pBankTransaction.TRANSDATE);
+        double convRate = CurrencyHistoryModel::getDayRate(
+            AccountModel::instance().get_data_n(pBankTransaction.ACCOUNTID)->CURRENCYID,
+            pBankTransaction.TRANSDATE
+        );
 
         int64 idx = pBankTransaction.ACCOUNTID;
         if (TransactionModel::type_id(pBankTransaction) == TransactionModel::TYPE_ID_DEPOSIT)
@@ -409,7 +411,7 @@ const wxString htmlWidgetIncomeVsExpenses::getHTMLText()
             incomeExpensesStats[idx].second += pBankTransaction.TRANSAMOUNT * convRate;
     }
 
-    for (const auto& account : AccountModel::instance().get_all())
+    for (const auto& account : AccountModel::instance().find_all())
     {
         int64 idx = account.ACCOUNTID;
         tIncome += incomeExpensesStats[idx].first;
@@ -471,7 +473,7 @@ const wxString htmlWidgetStatistics::getHTMLText()
     else
         date_range = new mmCurrentMonth;*/
 
-    TransactionModel::Data_Set all_trans;
+    TransactionModel::DataA all_trans;
     if (PreferencesModel::instance().getIgnoreFutureTransactionsHomePage()) {
         date_range = new mmCurrentMonthToDate;
         all_trans = TransactionModel::instance().find(
@@ -479,7 +481,7 @@ const wxString htmlWidgetStatistics::getHTMLText()
     }
     else {
         date_range = new mmCurrentMonth;
-        all_trans = TransactionModel::instance().get_all();
+        all_trans = TransactionModel::instance().find_all();
     }
     int countFollowUp = 0;
     int total_transactions = 0;
@@ -575,11 +577,13 @@ htmlWidgetGrandTotals::~htmlWidgetGrandTotals()
 
 const wxString htmlWidgetAssets::getHTMLText()
 {
-    AccountModel::Data_Set asset_accounts = AccountModel::instance().find(AccountModel::ACCOUNTTYPE(NavigatorTypes::instance().getAssetAccountStr()));
+    AccountModel::DataA asset_accounts = AccountModel::instance().find(
+        AccountCol::ACCOUNTTYPE(NavigatorTypes::instance().getAssetAccountStr())
+    );
     if (asset_accounts.empty())
         return wxEmptyString;
 
-    std::stable_sort(asset_accounts.begin(), asset_accounts.end(), AccountRow::SorterByACCOUNTNAME());
+    std::stable_sort(asset_accounts.begin(), asset_accounts.end(), AccountData::SorterByACCOUNTNAME());
 
     static const int MAX_ASSETS = 10;
     wxString output;
@@ -674,16 +678,19 @@ void htmlWidgetAccounts::get_account_stats()
     else
         date_range = new mmCurrentMonth;*/
 
-    TransactionModel::Data_Set all_trans;
+    TransactionModel::DataA all_trans;
     if (PreferencesModel::instance().getIgnoreFutureTransactionsHomePage()) {
         date_range = new mmCurrentMonthToDate;
-        all_trans = TransactionModel::instance().find(TransactionModel::TRANSDATE(OP_LE,
-            PreferencesModel::instance().UseTransDateTime() ? wxDateTime::Now() : wxDateTime(23, 59, 59, 999)
-        ));
+        all_trans = TransactionModel::instance().find(
+            TransactionModel::TRANSDATE(OP_LE, PreferencesModel::instance().UseTransDateTime()
+                ? wxDateTime::Now()
+                : wxDateTime(23, 59, 59, 999)
+            )
+        );
     }
     else {
         date_range = new mmCurrentMonth;
-        all_trans = TransactionModel::instance().get_all();
+        all_trans = TransactionModel::instance().find_all();
     }
 
     for (const auto& trx : all_trans)
@@ -722,13 +729,13 @@ const wxString htmlWidgetAccounts::displayAccounts(double& tBalance, double& tRe
     double tabBalance = 0.0, tabReconciled = 0.0;
     wxString vAccts = SettingModel::instance().getViewAccounts();
     auto accounts = AccountModel::instance().find(
-        AccountModel::ACCOUNTTYPE(NavigatorTypes::instance().type_name(type)),
+        AccountCol::ACCOUNTTYPE(NavigatorTypes::instance().type_name(type)),
         AccountModel::STATUS(OP_NE, AccountModel::STATUS_ID_CLOSED)
     );
-    std::stable_sort(accounts.begin(), accounts.end(), AccountRow::SorterByACCOUNTNAME());
+    std::stable_sort(accounts.begin(), accounts.end(), AccountData::SorterByACCOUNTNAME());
     for (const auto& account : accounts)
     {
-        CurrencyModel::Data* currency = AccountModel::currency(account);
+        const CurrencyData* currency = AccountModel::currency(account);
 
         double currency_rate = CurrencyHistoryModel::getDayRate(account.CURRENCYID, today);
         double bal = account.INITIALBAL + accountStats_[account.ACCOUNTID].second; //AccountModel::balance(account);
@@ -803,7 +810,7 @@ const wxString htmlWidgetCurrency::getHtmlText()
 
     const wxString today = wxDate::Today().FormatISODate();
     std::map<wxString, double> usedRates;
-    const auto currencies = CurrencyModel::instance().get_all();
+    const auto currencies = CurrencyModel::instance().find_all();
 
     for (const auto &currency : currencies)
     {

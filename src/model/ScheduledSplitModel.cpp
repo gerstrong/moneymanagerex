@@ -21,8 +21,8 @@
 #include "AttachmentModel.h"
 #include "TagLinkModel.h"
 
-ScheduledSplitModel::ScheduledSplitModel()
-: Model<ScheduledSplitTable>()
+ScheduledSplitModel::ScheduledSplitModel() :
+    Model<ScheduledSplitTable, ScheduledSplitData>()
 {
 }
 
@@ -37,8 +37,8 @@ ScheduledSplitModel::~ScheduledSplitModel()
 ScheduledSplitModel& ScheduledSplitModel::instance(wxSQLite3Database* db)
 {
     ScheduledSplitModel& ins = Singleton<ScheduledSplitModel>::instance();
+    ins.reset_cache();
     ins.m_db = db;
-    ins.destroy_cache();
     ins.ensure_table();
 
     return ins;
@@ -50,7 +50,7 @@ ScheduledSplitModel& ScheduledSplitModel::instance()
     return Singleton<ScheduledSplitModel>::instance();
 }
 
-double ScheduledSplitModel::get_total(const Data_Set& rows)
+double ScheduledSplitModel::get_total(const DataA& rows)
 {
     double total = 0.0;
     for (auto& r : rows) total += r.SPLITTRANSAMOUNT;
@@ -58,17 +58,17 @@ double ScheduledSplitModel::get_total(const Data_Set& rows)
     return total;
 }
 
-bool ScheduledSplitModel::remove(int64 id)
+bool ScheduledSplitModel::remove_depen(int64 id)
 {
     // Delete all tags for the split before removing it
     TagLinkModel::instance().DeleteAllTags(ScheduledSplitModel::refTypeName, id);
-    return this->remove(id);
+    return remove_data(id);
 }
 
-std::map<int64, ScheduledSplitModel::Data_Set> ScheduledSplitModel::get_all_id()
+std::map<int64, ScheduledSplitModel::DataA> ScheduledSplitModel::get_all_id()
 {
-    std::map<int64, ScheduledSplitModel::Data_Set> data;
-    for (const auto & split : instance().get_all())
+    std::map<int64, ScheduledSplitModel::DataA> data;
+    for (const auto & split : instance().find_all())
     {
         data[split.TRANSID].push_back(split);
     }
@@ -76,32 +76,29 @@ std::map<int64, ScheduledSplitModel::Data_Set> ScheduledSplitModel::get_all_id()
     return data;
 }
 
-int ScheduledSplitModel::update(Data_Set& rows, int64 transactionID)
+int ScheduledSplitModel::update(DataA& rows, int64 transactionID)
 {
 
-    Data_Set split = instance().find(TRANSID(transactionID));
-    for (const auto& split_item : split)
-    {
-        instance().remove(split_item.SPLITTRANSID);
+    DataA split_a = instance().find(ScheduledSplitCol::TRANSID(transactionID));
+    for (const auto& split_d : split_a) {
+        instance().remove_depen(split_d.id());
     }
 
-    if (!rows.empty())
-    {
-        Data_Set split_items;
-        for (const auto &item : rows)
-        {
-            Data *split_item = instance().create();
-            split_item->TRANSID = transactionID;
-            split_item->SPLITTRANSAMOUNT = item.SPLITTRANSAMOUNT;
-            split_item->CATEGID = item.CATEGID;
-            split_item->NOTES = item.NOTES;
-            split_items.push_back(*split_item);
+    if (!rows.empty()) {
+        DataA new_split_a;
+        for (const auto &item : rows) {
+            Data new_split_d = Data();
+            new_split_d.TRANSID          = transactionID;
+            new_split_d.SPLITTRANSAMOUNT = item.SPLITTRANSAMOUNT;
+            new_split_d.CATEGID          = item.CATEGID;
+            new_split_d.NOTES            = item.NOTES;
+            new_split_a.push_back(new_split_d);
         }
-        instance().save(split_items);
+        instance().save_data_a(new_split_a);
 
         // Send back the new SPLITTRANSID which is needed to update taglinks
         for (int i = 0; i < static_cast<int>(rows.size()); i++)
-            rows.at(i).SPLITTRANSID = split_items.at(i).SPLITTRANSID;
+            rows.at(i).SPLITTRANSID = new_split_a.at(i).SPLITTRANSID;
     }
     return rows.size();
 }

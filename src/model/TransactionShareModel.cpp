@@ -20,8 +20,8 @@
 #include "TransactionModel.h"
 #include "TransactionShareModel.h"
 
-TransactionShareModel::TransactionShareModel()
-: Model<TransactionShareTable>()
+TransactionShareModel::TransactionShareModel() :
+    Model<TransactionShareTable, TransactionShareData>()
 {
 }
 
@@ -36,8 +36,8 @@ TransactionShareModel::~TransactionShareModel()
 TransactionShareModel& TransactionShareModel::instance(wxSQLite3Database* db)
 {
     TransactionShareModel& ins = Singleton<TransactionShareModel>::instance();
+    ins.reset_cache();
     ins.m_db = db;
-    ins.destroy_cache();
     ins.ensure_table();
 
     return ins;
@@ -49,67 +49,67 @@ TransactionShareModel& TransactionShareModel::instance()
     return Singleton<TransactionShareModel>::instance();
 }
 
-TransactionShareModel::Data_Set TransactionShareModel::ShareList(const int64 checking_id)
+TransactionShareModel::DataA TransactionShareModel::ShareList(const int64 checking_id)
 {
     // SQL equivalent statement:
     // select * from TransactionShareModel where CHECKINGACCOUNTID = checking_account_id;
-    TransactionShareModel::Data_Set trans_list = TransactionShareModel::instance()
-        .find(TransactionShareModel::CHECKINGACCOUNTID(checking_id));
+    TransactionShareModel::DataA trans_list = TransactionShareModel::instance().find(
+        TransactionShareCol::CHECKINGACCOUNTID(checking_id)
+    );
 
     return trans_list;
 }
 
-TransactionShareModel::Data* TransactionShareModel::ShareEntry(const int64 checking_id)
+TransactionShareData* TransactionShareModel::ShareEntry(const int64 checking_id)
 {
-    Data_Set list = TransactionShareModel::ShareList(checking_id);
-    if (!list.empty())
-    {
-        return TransactionShareModel::instance().get_id(list.at(0).SHAREINFOID);
+    DataA list = TransactionShareModel::ShareList(checking_id);
+    if (!list.empty()) {
+        return TransactionShareModel::instance().unsafe_get_data_n(list.at(0).SHAREINFOID);
     }
     return nullptr;
 }
 
-void TransactionShareModel::ShareEntry(int64 checking_id
-    , double share_number
-    , double share_price
-    , double share_commission
-    , const std::vector<Split>& commission_splits
-    , const wxString& share_lot)
-{
+void TransactionShareModel::ShareEntry(
+    int64 trx_id,
+    double share_number,
+    double share_price,
+    double share_commission,
+    const std::vector<Split>& commission_splits,
+    const wxString& share_lot
+) {
     bool updateTimestamp = false;
     Data old_entry;
-    Data* share_entry = nullptr;
-    Data_Set share_list = ShareList(checking_id);
+    Data ts_d;
+    DataA share_list = ShareList(trx_id);
 
-    if (share_list.empty())
-    {
-        share_entry = TransactionShareModel::instance().create();
-        share_entry->CHECKINGACCOUNTID = checking_id;
+    if (share_list.empty()) {
+        ts_d = Data();
+        ts_d.CHECKINGACCOUNTID = trx_id;
         updateTimestamp = true;
     }
-    else
-    {
+    else {
         old_entry = share_list[0];
-        share_entry = &share_list[0];
+        ts_d = share_list[0];
     }
 
-    share_entry->SHARENUMBER = share_number;
-    share_entry->SHAREPRICE = share_price;
-    share_entry->SHARECOMMISSION = share_commission;
-    share_entry->SHARELOT = share_lot;
-    auto id = TransactionShareModel::instance().save(share_entry);
+    ts_d.SHARENUMBER     = share_number;
+    ts_d.SHAREPRICE      = share_price;
+    ts_d.SHARECOMMISSION = share_commission;
+    ts_d.SHARELOT        = share_lot;
+    TransactionShareModel::instance().save_data_n(ts_d);
+    int64 id = ts_d.id();
 
     TransactionSplitModel::instance().update(commission_splits, id);
 
-    if(updateTimestamp || !share_entry->equals(&old_entry))
-        TransactionModel::instance().updateTimestamp(checking_id);
+    if (updateTimestamp || !ts_d.equals(&old_entry))
+        TransactionModel::instance().updateTimestamp(trx_id);
 }
 
 void TransactionShareModel::RemoveShareEntry(const int64 checking_id)
 {
-    Data_Set list = ShareList(checking_id);
+    DataA list = ShareList(checking_id);
     if (!list.empty())
     {
-        TransactionShareModel::instance().remove(list.at(0).SHAREINFOID);
+        TransactionShareModel::instance().remove_depen(list.at(0).SHAREINFOID);
     }
 }

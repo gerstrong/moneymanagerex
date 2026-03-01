@@ -13,14 +13,14 @@
  *      @author [sqlite2cpp.py]
  *
  *      Revision History:
- *          AUTO GENERATED at 2026-02-16 15:07:22.405413.
+ *          AUTO GENERATED at 2026-02-23 02:42:42.918296.
  *          DO NOT EDIT!
  */
 //=============================================================================
 
 #pragma once
 
-#include "_TableFactory.h"
+#include "_TableBase.h"
 
 // Columns in database table SHAREINFO_V1
 struct TransactionShareCol
@@ -95,7 +95,6 @@ struct TransactionShareCol
 struct TransactionShareRow
 {
     using Col = TransactionShareCol;
-    using COL_ID = Col::COL_ID;
 
     int64 SHAREINFOID; // primary key
     int64 CHECKINGACCOUNTID;
@@ -110,17 +109,18 @@ struct TransactionShareRow
 
     int64 id() const { return SHAREINFOID; }
     void id(const int64 id) { SHAREINFOID = id; }
-    void destroy() { delete this; }
-
-    bool equals(const TransactionShareRow* r) const;
     void to_insert_stmt(wxSQLite3Statement& stmt, int64 id) const;
-    void from_select_result(wxSQLite3ResultSet& q);
+    void to_update_stmt(wxSQLite3Statement& stmt) const;
+    TransactionShareRow& from_select_result(wxSQLite3ResultSet& q);
     wxString to_json() const;
     void as_json(PrettyWriter<StringBuffer>& json_writer) const;
-    row_t to_row_t() const;
-    void to_template(html_template& t) const;
+    row_t to_html_row() const;
+    void to_html_template(html_template& t) const;
+    void destroy() { delete this; }
 
-    TransactionShareRow& operator=(const TransactionShareRow& other);
+    TransactionShareRow& operator= (const TransactionShareRow& other);
+    TransactionShareRow& clone_from(const TransactionShareRow& other);
+    bool equals(const TransactionShareRow* other) const;
     bool operator< (const TransactionShareRow& other) const { return id() < other.id(); }
     bool operator< (const TransactionShareRow* other) const { return id() < other->id(); }
 
@@ -218,18 +218,28 @@ struct TransactionShareRow
 };
 
 // Interface to database table SHAREINFO_V1
-struct TransactionShareTable : public TableFactory<TransactionShareRow>
+struct TransactionShareTable : public TableBase
 {
-    // Use Col::(COLUMN_NAME) until model provides similar functionality based on Data.
-    using SHAREINFOID = Col::SHAREINFOID;
-    using CHECKINGACCOUNTID = Col::CHECKINGACCOUNTID;
-    using SHARENUMBER = Col::SHARENUMBER;
-    using SHAREPRICE = Col::SHAREPRICE;
-    using SHARECOMMISSION = Col::SHARECOMMISSION;
-    using SHARELOT = Col::SHARELOT;
+    using Row = TransactionShareRow;
+    using Col = typename Row::Col;
 
     TransactionShareTable();
-    ~TransactionShareTable();
-
-    void ensure_data() override;
+    ~TransactionShareTable() {}
 };
+
+inline TransactionShareRow::TransactionShareRow(wxSQLite3ResultSet& q)
+{
+    from_select_result(q);
+}
+
+inline void TransactionShareRow::to_update_stmt(wxSQLite3Statement& stmt) const
+{
+    to_insert_stmt(stmt, id());
+}
+
+inline TransactionShareRow& TransactionShareRow::clone_from(const TransactionShareRow& other)
+{
+    *this = other;
+    id(-1);
+    return *this;
+}

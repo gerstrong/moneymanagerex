@@ -13,14 +13,14 @@
  *      @author [sqlite2cpp.py]
  *
  *      Revision History:
- *          AUTO GENERATED at 2026-02-16 15:07:22.405413.
+ *          AUTO GENERATED at 2026-02-23 02:42:42.918296.
  *          DO NOT EDIT!
  */
 //=============================================================================
 
 #pragma once
 
-#include "_TableFactory.h"
+#include "_TableBase.h"
 
 // Columns in database table SPLITTRANSACTIONS_V1
 struct TransactionSplitCol
@@ -86,7 +86,6 @@ struct TransactionSplitCol
 struct TransactionSplitRow
 {
     using Col = TransactionSplitCol;
-    using COL_ID = Col::COL_ID;
 
     int64 SPLITTRANSID; // primary key
     int64 TRANSID;
@@ -100,17 +99,18 @@ struct TransactionSplitRow
 
     int64 id() const { return SPLITTRANSID; }
     void id(const int64 id) { SPLITTRANSID = id; }
-    void destroy() { delete this; }
-
-    bool equals(const TransactionSplitRow* r) const;
     void to_insert_stmt(wxSQLite3Statement& stmt, int64 id) const;
-    void from_select_result(wxSQLite3ResultSet& q);
+    void to_update_stmt(wxSQLite3Statement& stmt) const;
+    TransactionSplitRow& from_select_result(wxSQLite3ResultSet& q);
     wxString to_json() const;
     void as_json(PrettyWriter<StringBuffer>& json_writer) const;
-    row_t to_row_t() const;
-    void to_template(html_template& t) const;
+    row_t to_html_row() const;
+    void to_html_template(html_template& t) const;
+    void destroy() { delete this; }
 
-    TransactionSplitRow& operator=(const TransactionSplitRow& other);
+    TransactionSplitRow& operator= (const TransactionSplitRow& other);
+    TransactionSplitRow& clone_from(const TransactionSplitRow& other);
+    bool equals(const TransactionSplitRow* other) const;
     bool operator< (const TransactionSplitRow& other) const { return id() < other.id(); }
     bool operator< (const TransactionSplitRow* other) const { return id() < other->id(); }
 
@@ -195,17 +195,28 @@ struct TransactionSplitRow
 };
 
 // Interface to database table SPLITTRANSACTIONS_V1
-struct TransactionSplitTable : public TableFactory<TransactionSplitRow>
+struct TransactionSplitTable : public TableBase
 {
-    // Use Col::(COLUMN_NAME) until model provides similar functionality based on Data.
-    using SPLITTRANSID = Col::SPLITTRANSID;
-    using TRANSID = Col::TRANSID;
-    using CATEGID = Col::CATEGID;
-    using SPLITTRANSAMOUNT = Col::SPLITTRANSAMOUNT;
-    using NOTES = Col::NOTES;
+    using Row = TransactionSplitRow;
+    using Col = typename Row::Col;
 
     TransactionSplitTable();
-    ~TransactionSplitTable();
-
-    void ensure_data() override;
+    ~TransactionSplitTable() {}
 };
+
+inline TransactionSplitRow::TransactionSplitRow(wxSQLite3ResultSet& q)
+{
+    from_select_result(q);
+}
+
+inline void TransactionSplitRow::to_update_stmt(wxSQLite3Statement& stmt) const
+{
+    to_insert_stmt(stmt, id());
+}
+
+inline TransactionSplitRow& TransactionSplitRow::clone_from(const TransactionSplitRow& other)
+{
+    *this = other;
+    id(-1);
+    return *this;
+}

@@ -460,7 +460,7 @@ void ReportPanel::CreateControls()
 
             int64 sel_id = m_rb->getDateSelection();
             wxString sel_name;
-            for (const auto& e : BudgetPeriodModel::instance().get_all(
+            for (const auto& e : BudgetPeriodModel::instance().find_all(
                 BudgetPeriodCol::COL_ID_BUDGETYEARNAME
             )) {
                 const wxString& name = e.BUDGETYEARNAME;
@@ -596,7 +596,7 @@ void ReportPanel::onNewWindow(wxWebViewEvent& evt)
             // include all sub categories
             if (-2 == subCatID) {
                 for (const auto& subCategory :
-                    CategoryModel::sub_tree(CategoryModel::instance().get_id(catID))
+                    CategoryModel::sub_tree(CategoryModel::instance().get_data_n(catID))
                 ) {
                     cats.push_back(subCategory.CATEGID);
                 }
@@ -618,9 +618,9 @@ void ReportPanel::onNewWindow(wxWebViewEvent& evt)
     else if (uri.StartsWith("trxid:", &sData)) {
         long long transID = -1;
         if (sData.ToLongLong(&transID)) {
-            const TransactionModel::Data* transaction = TransactionModel::instance().get_id(transID);
+            const TransactionData* transaction = TransactionModel::instance().get_data_n(transID);
             if (transaction && transaction->TRANSID > -1) {
-                const AccountModel::Data* account = AccountModel::instance().get_id(transaction->ACCOUNTID);
+                const AccountData* account = AccountModel::instance().get_data_n(transaction->ACCOUNTID);
                 if (account) {
                     w_frame->selectNavTreeItem(account->ACCOUNTNAME);
                     w_frame->setGotoAccountID(transaction->ACCOUNTID, { transID, 0 });
@@ -633,10 +633,10 @@ void ReportPanel::onNewWindow(wxWebViewEvent& evt)
     else if (uri.StartsWith("trx:", &sData)) {
         long long transId = -1;
         if (sData.ToLongLong(&transId)) {
-            TransactionModel::Data* transaction = TransactionModel::instance().get_id(transId);
+            TransactionData* transaction = TransactionModel::instance().unsafe_get_data_n(transId);
             if (transaction && transaction->TRANSID > -1) {
                 if (TransactionModel::foreignTransaction(*transaction)) {
-                    TransactionLinkModel::Data translink = TransactionLinkModel::TranslinkRecord(transId);
+                    TransactionLinkData translink = TransactionLinkModel::TranslinkRecord(transId);
                     if (translink.LINKTYPE == StockModel::refTypeName) {
                         TransactionShareDialog dlg(w_frame, &translink, transaction);
                         if (dlg.ShowModal() == wxID_OK) {
@@ -669,7 +669,7 @@ void ReportPanel::onNewWindow(wxWebViewEvent& evt)
         long long refId;
         sData.AfterFirst('|').ToLongLong(&refId);
 
-        if (AttachmentModel::reftype_id(RefType) != -1 && refId > 0) {
+        if (ModelBase::reftype_id(RefType) != -1 && refId > 0) {
             mmAttachmentManage::OpenAttachmentFromPanelIcon(w_frame, RefType, refId);
             const auto name = getVFname4print("rep", getReportBase()->getHTMLText());
             w_browser->LoadURL(name);
@@ -700,20 +700,23 @@ void ReportPanel::onNewWindow(wxWebViewEvent& evt)
         }
 
         //get model budget for yearID and catID
-        BudgetModel::Data_Set budget = BudgetModel::instance().find(BudgetModel::BUDGETYEARID(budgetYearID), BudgetModel::CATEGID(std::stoll(parms[2])));
+        BudgetModel::DataA budget = BudgetModel::instance().find(
+            BudgetCol::BUDGETYEARID(budgetYearID),
+            BudgetCol::CATEGID(std::stoll(parms[2]))
+        );
 
-        BudgetModel::Data* entry = 0;
+        BudgetData budget_d;
         if (budget.empty()) {
-            entry = BudgetModel::instance().create();
-            entry->BUDGETYEARID = budgetYearID;
-            entry->CATEGID = std::stoll(parms[2]);
-            entry->PERIOD = "";
-            entry->AMOUNT = 0.0;
-            entry->ACTIVE = 1;
-            BudgetModel::instance().save(entry);
+            budget_d = BudgetData();
+            budget_d.BUDGETYEARID = budgetYearID;
+            budget_d.CATEGID      = std::stoll(parms[2]);
+            budget_d.PERIOD       = "";
+            budget_d.AMOUNT       = 0.0;
+            budget_d.ACTIVE       = 1;
+            BudgetModel::instance().add_data_n(budget_d);
         }
         else
-            entry = &budget[0];
+            budget_d = budget[0];
 
         double estimated;
         CurrencyModel::fromString(parms[0], estimated, CurrencyModel::GetBaseCurrency());
@@ -721,12 +724,14 @@ void ReportPanel::onNewWindow(wxWebViewEvent& evt)
         CurrencyModel::fromString(parms[1], actual, CurrencyModel::GetBaseCurrency());
 
         //open budgetEntry dialog
-        BudgetEntryDialog dlg(w_frame, entry, CurrencyModel::toCurrency(estimated), CurrencyModel::toCurrency(actual));
+        BudgetEntryDialog dlg(w_frame, &budget_d,
+            CurrencyModel::toCurrency(estimated),
+            CurrencyModel::toCurrency(actual)
+        );
         if (dlg.ShowModal() == wxID_OK) {
             //refresh report
             saveReportText();
             m_rb ->saveReportSettings();
-
         }
     }
 

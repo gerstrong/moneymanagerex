@@ -1,0 +1,70 @@
+/*******************************************************
+ Copyright (C) 2026 George Ef (george.a.ef@gmail.com)
+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ ********************************************************/
+
+// PLEASE EDIT!
+// This is only sample code re-used from "table/TagTable.cpp".
+
+#include "TagData.h"
+
+TagData::TagData()
+{
+    TAGID = -1;
+    ACTIVE = -1;
+}
+
+// Convert TagData to TagRow
+TagRow TagData::to_row() const
+{
+    TagRow row;
+
+    row.TAGID = TAGID;
+    row.TAGNAME = TAGNAME;
+    row.ACTIVE = ACTIVE;
+
+    return row;
+}
+
+// Convert TagRow to TagData
+TagData& TagData::from_row(const TagRow& row)
+{
+    TAGID = row.TAGID; // int64
+    TAGNAME = row.TAGNAME; // wxString
+    ACTIVE = row.ACTIVE; // int64
+
+    return *this;
+}
+
+TagData& TagData::operator= (const TagData& other)
+{
+    if (this == &other) return *this;
+
+    TAGID = other.TAGID;
+    TAGNAME = other.TAGNAME;
+    ACTIVE = other.ACTIVE;
+
+    return *this;
+}
+
+bool TagData::equals(const TagData* other) const
+{
+    if ( TAGID != other->TAGID) return false;
+    if (!TAGNAME.IsSameAs(other->TAGNAME)) return false;
+    if ( ACTIVE != other->ACTIVE) return false;
+
+    return true;
+}

@@ -477,7 +477,7 @@ void JournalList::sortTransactions(int col_id, bool ascend)
         sortBy(TransactionModel::SorterByPAYEENAME(), ascend);
         break;
     case JournalList::LIST_ID_STATUS:
-        sortBy(TransactionRow::SorterBySTATUS(), ascend);
+        sortBy(TransactionData::SorterBySTATUS(), ascend);
         break;
     case JournalList::LIST_ID_CATEGORY:
         sortBy(TransactionModel::SorterByCATEGNAME(), ascend);
@@ -498,7 +498,7 @@ void JournalList::sortTransactions(int col_id, bool ascend)
         sortBy(TransactionModel::SorterByBALANCE(), ascend);
         break;
     case JournalList::LIST_ID_NOTES:
-        sortBy(TransactionRow::SorterByNOTES(), ascend);
+        sortBy(TransactionData::SorterByNOTES(), ascend);
         break;
     case JournalList::LIST_ID_DATE:
         if (PreferencesModel::instance().TreatDateAsSN())
@@ -510,7 +510,7 @@ void JournalList::sortTransactions(int col_id, bool ascend)
         sortBy(TransactionModel::SorterByTRANSDATE_TIME(), ascend);
         break;
     case JournalList::LIST_ID_DELETEDTIME:
-        sortBy(TransactionRow::SorterByDELETEDTIME(), ascend);
+        sortBy(TransactionData::SorterByDELETEDTIME(), ascend);
         break;
     case JournalList::LIST_ID_UDFC01:
         type = FieldModel::getUDFCType(ref_type, "UDFC01");
@@ -548,7 +548,7 @@ void JournalList::sortTransactions(int col_id, bool ascend)
             sortBy(SorterByUDFC05, ascend);
         break;
     case JournalList::LIST_ID_UPDATEDTIME:
-        sortBy(TransactionRow::SorterByLASTUPDATEDTIME(), ascend);
+        sortBy(TransactionData::SorterByLASTUPDATEDTIME(), ascend);
         break;
     default:
         break;
@@ -715,9 +715,9 @@ void JournalList::onMouseRightClick(wxMouseEvent& event)
     bool is_foreign = false;
     if (selected == 1) {
         Journal::IdRepeat id = m_selected_id[0];
-        Journal::Full_Data tran = !id.second ?
-            Journal::Full_Data(*TransactionModel::instance().get_id(id.first)) :
-            Journal::Full_Data(*ScheduledModel::instance().get_id(id.first));
+        Journal::Full_Data tran = !id.second
+            ? Journal::Full_Data(*TransactionModel::instance().get_data_n(id.first))
+            : Journal::Full_Data(*ScheduledModel::instance().get_data_n(id.first));
 
         if (TransactionModel::type_id(tran.TRANSCODE) == TransactionModel::TYPE_ID_TRANSFER)
             type_transfer = true;
@@ -861,8 +861,8 @@ void JournalList::onMouseRightClick(wxMouseEvent& event)
             break;
         case LIST_ID_WITHDRAWAL: {
             columnIsAmount = true;
-            AccountModel::Data* account = AccountModel::instance().get_id(m_trans[row].ACCOUNTID_W);
-            CurrencyModel::Data* currency = account ? CurrencyModel::instance().get_id(account->CURRENCYID) : nullptr;
+            const AccountData* account = AccountModel::instance().get_data_n(m_trans[row].ACCOUNTID_W);
+            const CurrencyData* currency = account ? CurrencyModel::instance().get_data_n(account->CURRENCYID) : nullptr;
             if (currency) {
                 copyText_ = CurrencyModel::toString(m_trans[row].TRANSAMOUNT_W, currency);
                 menuItemText = wxString::Format("%.2f", m_trans[row].TRANSAMOUNT_W);
@@ -872,8 +872,8 @@ void JournalList::onMouseRightClick(wxMouseEvent& event)
         }
         case LIST_ID_DEPOSIT: {
             columnIsAmount = true;
-            AccountModel::Data* account = AccountModel::instance().get_id(m_trans[row].ACCOUNTID_D);
-            CurrencyModel::Data* currency = account ? CurrencyModel::instance().get_id(account->CURRENCYID) : nullptr;
+            const AccountData* account = AccountModel::instance().get_data_n(m_trans[row].ACCOUNTID_D);
+            const CurrencyData* currency = account ? CurrencyModel::instance().get_data_n(account->CURRENCYID) : nullptr;
             if (currency) {
                 copyText_ = CurrencyModel::toString(m_trans[row].TRANSAMOUNT_D, currency);
                 menuItemText = wxString::Format("%.2f", m_trans[row].TRANSAMOUNT_D);
@@ -1166,26 +1166,30 @@ void JournalList::onDeleteTransaction(wxCommandEvent& WXUNUSED(event))
         FieldValueModel::instance().Savepoint();
         for (const auto& id : m_selected_id) {
             if (id.second) continue;
-            TransactionModel::Data* trx = TransactionModel::instance().get_id(id.first);
+            TransactionData* trx_n = TransactionModel::instance().unsafe_get_data_n(id.first);
 
-            if (checkTransactionLocked(trx->ACCOUNTID, trx->TRANSDATE)) {
+            if (checkTransactionLocked(trx_n->ACCOUNTID, trx_n->TRANSDATE)) {
                 continue;
             }
 
             if (m_cp->isDeletedTrans() || retainDays == 0) {
-                // remove also removes split transactions, translink entries, attachments, and custom field data
-                TransactionModel::instance().remove(id.first);
+                // remove_depen() also removes split transactions, translink entries, attachments, and custom field data
+                TransactionModel::instance().remove_depen(id.first);
             }
             else {
-                trx->DELETEDTIME = deletionTime;
-                TransactionModel::instance().save_trx(trx);
-                TransactionLinkModel::Data_Set translink = TransactionLinkModel::instance().find(TransactionLinkModel::CHECKINGACCOUNTID(trx->TRANSID));
-                if (!translink.empty()) {
-                    assetStockAccts.emplace(translink.at(0).LINKTYPE, translink.at(0).LINKRECORDID);
+                trx_n->DELETEDTIME = deletionTime;
+                TransactionModel::instance().unsafe_save_trx(trx_n);
+                TransactionLinkModel::DataA tl_a = TransactionLinkModel::instance().find(
+                    TransactionLinkCol::CHECKINGACCOUNTID(trx_n->TRANSID)
+                );
+                if (!tl_a.empty()) {
+                    assetStockAccts.emplace(tl_a.at(0).LINKTYPE, tl_a.at(0).LINKRECORDID);
                 }
             }
-            m_selectedForCopy.erase(std::remove(m_selectedForCopy.begin(), m_selectedForCopy.end(), id)
-              , m_selectedForCopy.end());
+            m_selectedForCopy.erase(
+                std::remove(m_selectedForCopy.begin(), m_selectedForCopy.end(), id),
+                m_selectedForCopy.end()
+            );
         }
         m_selected_id.clear();
         FieldValueModel::instance().ReleaseSavepoint();
@@ -1195,8 +1199,14 @@ void JournalList::onDeleteTransaction(wxCommandEvent& WXUNUSED(event))
 
         if (!assetStockAccts.empty()) {
             for (const auto& i : assetStockAccts) {
-                if (i.first == "Asset") TransactionLinkModel::UpdateAssetValue(AssetModel::instance().get_id(i.second));
-                else if (i.first == "Stock") StockModel::UpdatePosition(StockModel::instance().get_id(i.second));
+                if (i.first == "Asset")
+                    TransactionLinkModel::UpdateAssetValue(
+                        AssetModel::instance().unsafe_get_data_n(i.second)
+                    );
+                else if (i.first == "Stock")
+                    StockModel::UpdatePosition(
+                        StockModel::instance().unsafe_get_data_n(i.second)
+                    );
             }
         }
     }
@@ -1232,14 +1242,14 @@ void JournalList::onRestoreTransaction(wxCommandEvent& WXUNUSED(event))
         std::set<std::pair<wxString, int64>> assetStockAccts;
         for (const auto& id : m_selected_id) {
             if (!id.second) {
-                TransactionModel::Data* trx = TransactionModel::instance().get_id(id.first);
-                trx->DELETEDTIME.Clear();
-                TransactionModel::instance().save_trx(trx);
-                TransactionLinkModel::Data_Set translink = TransactionLinkModel::instance().find(
-                    TransactionLinkModel::CHECKINGACCOUNTID(trx->TRANSID)
+                TransactionData* trx_n = TransactionModel::instance().unsafe_get_data_n(id.first);
+                trx_n->DELETEDTIME.Clear();
+                TransactionModel::instance().unsafe_save_trx(trx_n);
+                TransactionLinkModel::DataA tl_a = TransactionLinkModel::instance().find(
+                    TransactionLinkCol::CHECKINGACCOUNTID(trx_n->TRANSID)
                 );
-                if (!translink.empty()) {
-                    assetStockAccts.emplace(translink.at(0).LINKTYPE, translink.at(0).LINKRECORDID);
+                if (!tl_a.empty()) {
+                    assetStockAccts.emplace(tl_a.at(0).LINKTYPE, tl_a.at(0).LINKRECORDID);
                 }
             }
         }
@@ -1247,9 +1257,13 @@ void JournalList::onRestoreTransaction(wxCommandEvent& WXUNUSED(event))
         if (!assetStockAccts.empty()) {
             for (const auto& i : assetStockAccts) {
                 if (i.first == "Asset")
-                    TransactionLinkModel::UpdateAssetValue(AssetModel::instance().get_id(i.second));
+                    TransactionLinkModel::UpdateAssetValue(
+                        AssetModel::instance().unsafe_get_data_n(i.second)
+                    );
                 else if (i.first == "Stock")
-                    StockModel::UpdatePosition(StockModel::instance().get_id(i.second));
+                    StockModel::UpdatePosition(
+                        StockModel::instance().unsafe_get_data_n(i.second)
+                    );
             }
         }
     }
@@ -1270,22 +1284,26 @@ void JournalList::onRestoreViewedTransaction(wxCommandEvent&)
         std::set<std::pair<wxString, int64>> assetStockAccts;
         for (const auto& tran : this->m_trans) {
             if (tran.m_repeat_num) continue;
-            TransactionModel::Data* trx = TransactionModel::instance().get_id(tran.TRANSID);
-            trx->DELETEDTIME.Clear();
-            TransactionModel::instance().save_trx(trx);
-            TransactionLinkModel::Data_Set translink = TransactionLinkModel::instance().find(
-                TransactionLinkModel::CHECKINGACCOUNTID(trx->TRANSID)
+            TransactionData* trx_n = TransactionModel::instance().unsafe_get_data_n(tran.TRANSID);
+            trx_n->DELETEDTIME.Clear();
+            TransactionModel::instance().unsafe_save_trx(trx_n);
+            TransactionLinkModel::DataA tl_a = TransactionLinkModel::instance().find(
+                TransactionLinkCol::CHECKINGACCOUNTID(trx_n->TRANSID)
             );
-            if (!translink.empty()) {
-                assetStockAccts.emplace(translink.at(0).LINKTYPE, translink.at(0).LINKRECORDID);
+            if (!tl_a.empty()) {
+                assetStockAccts.emplace(tl_a.at(0).LINKTYPE, tl_a.at(0).LINKRECORDID);
             }
         }
         if (!assetStockAccts.empty()) {
             for (const auto& i : assetStockAccts) {
                 if (i.first == "Asset")
-                    TransactionLinkModel::UpdateAssetValue(AssetModel::instance().get_id(i.second));
+                    TransactionLinkModel::UpdateAssetValue(
+                        AssetModel::instance().unsafe_get_data_n(i.second)
+                    );
                 else if (i.first == "Stock")
-                    StockModel::UpdatePosition(StockModel::instance().get_id(i.second));
+                    StockModel::UpdatePosition(
+                        StockModel::instance().unsafe_get_data_n(i.second)
+                    );
             }
         }
     }
@@ -1317,12 +1335,14 @@ void JournalList::onEditTransaction(wxCommandEvent& /*event*/)
     // edit single transaction
     Journal::IdRepeat id = m_selected_id[0];
     if (!id.second) {
-        TransactionModel::Data* checking_entry = TransactionModel::instance().get_id(id.first);
+        TransactionData* checking_entry = TransactionModel::instance().unsafe_get_data_n(id.first);
         if (checkTransactionLocked(checking_entry->ACCOUNTID, checking_entry->TRANSDATE))
             return;
 
-        if (!TransactionLinkModel::instance().find(TransactionLinkModel::CHECKINGACCOUNTID(id.first)).empty()) {
-            TransactionLinkModel::Data translink = TransactionLinkModel::TranslinkRecord(id.first);
+        if (!TransactionLinkModel::instance().find(
+            TransactionLinkCol::CHECKINGACCOUNTID(id.first)
+        ).empty()) {
+            TransactionLinkData translink = TransactionLinkModel::TranslinkRecord(id.first);
             if (translink.LINKTYPE == StockModel::refTypeName) {
                 TransactionShareDialog dlg(this, &translink, checking_entry);
                 if (dlg.ShowModal() == wxID_OK)
@@ -1377,7 +1397,7 @@ void JournalList::onMoveTransaction(wxCommandEvent& /*event*/)
         if (scd.ShowModal() == wxID_OK) {
             int64 dest_account_id = -1;
             wxString dest_account_name = scd.GetStringSelection();
-            AccountModel::Data* dest_account = AccountModel::instance().get_key(dest_account_name);
+            const AccountData* dest_account = AccountModel::instance().get_key(dest_account_name);
             if (dest_account)
                 dest_account_id = dest_account->ACCOUNTID;
             else
@@ -1386,16 +1406,16 @@ void JournalList::onMoveTransaction(wxCommandEvent& /*event*/)
             TransactionModel::instance().Savepoint();
             for (const auto& id : m_selected_id) {
                 if (!id.second) {
-                    TransactionModel::Data* trx = TransactionModel::instance().get_id(id.first);
-                    if (checkTransactionLocked(trx->ACCOUNTID, trx->TRANSDATE)
-                            || TransactionModel::foreignTransaction(*trx)
-                            || TransactionModel::type_id(trx->TRANSCODE) == TransactionModel::TYPE_ID_TRANSFER
-                            || trx->TRANSDATE < dest_account->INITIALDATE
+                    TransactionData* trx_n = TransactionModel::instance().unsafe_get_data_n(id.first);
+                    if (checkTransactionLocked(trx_n->ACCOUNTID, trx_n->TRANSDATE)
+                            || TransactionModel::foreignTransaction(*trx_n)
+                            || TransactionModel::type_id(trx_n->TRANSCODE) == TransactionModel::TYPE_ID_TRANSFER
+                            || trx_n->TRANSDATE < dest_account->INITIALDATE
                     ) {
-                        skip_trx.push_back(trx->TRANSID);
+                        skip_trx.push_back(trx_n->TRANSID);
                     } else {
-                        trx->ACCOUNTID = dest_account_id;
-                        TransactionModel::instance().save_trx(trx);
+                        trx_n->ACCOUNTID = dest_account_id;
+                        TransactionModel::instance().unsafe_save_trx(trx_n);
                     }
                 }
             }
@@ -1421,9 +1441,9 @@ void JournalList::onViewOtherAccount(wxCommandEvent& /*event*/)
     findSelectedTransactions();
     Journal::IdRepeat id = m_selected_id[0];
 
-    Journal::Full_Data tran = !id.second ?
-        Journal::Full_Data(*TransactionModel::instance().get_id(id.first)) :
-        Journal::Full_Data(*ScheduledModel::instance().get_id(id.first));
+    Journal::Full_Data tran = !id.second
+        ? Journal::Full_Data(*TransactionModel::instance().get_data_n(id.first))
+        : Journal::Full_Data(*ScheduledModel::instance().get_data_n(id.first));
 
     int64 gotoAccountID = (m_cp->m_account_id == tran.ACCOUNTID) ? tran.TOACCOUNTID : tran.ACCOUNTID;
     wxString gotoAccountName = (m_cp->m_account_id == tran.ACCOUNTID) ? tran.TOACCOUNTNAME : tran.ACCOUNTNAME;
@@ -1525,7 +1545,7 @@ void JournalList::onMarkTransaction(wxCommandEvent& event)
 
     for (int row = 0; row < GetItemCount(); row++) {
         if (GetItemState(row, wxLIST_STATE_SELECTED) == wxLIST_STATE_SELECTED) {
-            AccountModel::Data* account = AccountModel::instance().get_id(m_trans[row].ACCOUNTID);
+            const AccountData* account = AccountModel::instance().get_data_n(m_trans[row].ACCOUNTID);
             const auto statement_date = parseDateTime(account->STATEMENTDATE).FormatISODate();
             wxString strDate = TransactionModel::getTransDateTime(m_trans[row]).FormatISODate();
             if (!AccountModel::BoolOf(account->STATEMENTLOCKED)
@@ -1534,7 +1554,7 @@ void JournalList::onMarkTransaction(wxCommandEvent& event)
                 //bRefreshRequired |= (status == TransactionModel::STATUS_KEY_VOID) || (m_trans[row].STATUS == TransactionModel::STATUS_KEY_VOID);
                 if (!m_trans[row].m_repeat_num) {
                     m_trans[row].STATUS = status;
-                    TransactionModel::instance().save_trx(&m_trans[row]);
+                    TransactionModel::instance().save_trx(m_trans[row]);
                 }
             }
         }
@@ -1650,7 +1670,7 @@ void JournalList::onPaste(wxCommandEvent& WXUNUSED(event))
     m_pasted_id.clear();    // make sure the list is empty before we paste
     for (const auto& id : m_selectedForCopy) {
         if (!id.second) {
-            TransactionModel::Data* tran = TransactionModel::instance().get_id(id.first);
+            const TransactionData* tran = TransactionModel::instance().get_data_n(id.first);
             if (TransactionModel::foreignTransaction(*tran)) continue;
             onPaste(tran);
         }
@@ -1659,7 +1679,7 @@ void JournalList::onPaste(wxCommandEvent& WXUNUSED(event))
     refreshVisualList();
 }
 
-int64 JournalList::onPaste(TransactionModel::Data* tran)
+int64 JournalList::onPaste(const TransactionData* tran)
 {
     wxASSERT(m_cp->isAccount());
 
@@ -1667,58 +1687,70 @@ int64 JournalList::onPaste(TransactionModel::Data* tran)
     bool useOriginalState = SettingModel::instance().getBool(INIDB_USE_ORG_STATE_DUPLICATE_PASTE, false);
 
     //TODO: the clone function can't clone split transactions, or custom data
-    TransactionModel::Data* copy = TransactionModel::instance().clone(tran);
-    if (!useOriginalDate) copy->TRANSDATE = wxDateTime::Now().FormatISOCombined();
+    TransactionData new_trx;
+    new_trx.clone_from(*tran);
+    if (!useOriginalDate)
+        new_trx.TRANSDATE = wxDateTime::Now().FormatISOCombined();
     if (!useOriginalState) {
-        copy->STATUS = TransactionModel::status_key(PreferencesModel::instance().getTransStatusReconciled()); // Use default status on copy insert
+        // Use default status on copy insert
+        new_trx.STATUS = TransactionModel::status_key(
+            PreferencesModel::instance().getTransStatusReconciled()
+        );
     }
-    if (TransactionModel::type_id(copy->TRANSCODE) != TransactionModel::TYPE_ID_TRANSFER ||
-        (m_cp->m_account_id != copy->ACCOUNTID && m_cp->m_account_id != copy->TOACCOUNTID)
+    if (TransactionModel::type_id(new_trx.TRANSCODE) != TransactionModel::TYPE_ID_TRANSFER ||
+        (m_cp->m_account_id != new_trx.ACCOUNTID && m_cp->m_account_id != new_trx.TOACCOUNTID)
     )
-    copy->ACCOUNTID = m_cp->m_account_id;
-    int64 transactionID = TransactionModel::instance().save_trx(copy);
+    new_trx.ACCOUNTID = m_cp->m_account_id;
+    TransactionModel::instance().save_trx(new_trx);
+    int64 transactionID = new_trx.id();
     m_pasted_id.push_back({transactionID, 0});   // add the newly pasted transaction
 
     // Clone transaction tags
-    TagLinkModel::Cache copy_taglinks;
+    TagLinkModel::DataA new_gl_a;
     wxString reftype = TransactionModel::refTypeName;
-    for (const auto& link : TagLinkModel::instance().find(TagLinkModel::REFTYPE(reftype), TagLinkModel::REFID(tran->TRANSID))) {
-        TagLinkModel::Data* taglink = TagLinkModel::instance().clone(&link);
-        taglink->REFID = transactionID;
-        copy_taglinks.push_back(taglink);
+    for (const auto& tl_d : TagLinkModel::instance().find(
+        TagLinkCol::REFTYPE(reftype),
+        TagLinkCol::REFID(tran->TRANSID)
+    )) {
+        TagLinkData new_gl_d;
+        new_gl_d.clone_from(tl_d);
+        new_gl_d.REFID = transactionID;
+        new_gl_a.push_back(new_gl_d);
     }
 
     // Clone split transactions
     reftype = TransactionSplitModel::refTypeName;
     for (const auto& split_item : TransactionModel::split(tran)) {
-        TransactionSplitModel::Data *copy_split_item = TransactionSplitModel::instance().clone(&split_item);
-        copy_split_item->TRANSID = transactionID;
-        int64 splittransID = TransactionSplitModel::instance().save(copy_split_item);
+        TransactionSplitData new_split_d;
+        new_split_d.clone_from(split_item);
+        new_split_d.TRANSID = transactionID;
+        TransactionSplitModel::instance().add_data_n(new_split_d);
 
         // Clone split tags
-        for (const auto& link : TagLinkModel::instance().find(
-            TagLinkModel::REFTYPE(reftype),
-            TagLinkModel::REFID(split_item.SPLITTRANSID)
+        for (const auto& tl_d : TagLinkModel::instance().find(
+            TagLinkCol::REFTYPE(reftype),
+            TagLinkCol::REFID(split_item.SPLITTRANSID)
         )) {
-            TagLinkModel::Data* taglink = TagLinkModel::instance().clone(&link);
-            taglink->REFID = splittransID;
-            copy_taglinks.push_back(taglink);
+            TagLinkData new_gl_d;
+            new_gl_d.clone_from(tl_d);
+            new_gl_d.REFID = new_split_d.id();
+            new_gl_a.push_back(new_gl_d);
         }
     }
-    TagLinkModel::instance().save(copy_taglinks);
+    TagLinkModel::instance().save_data_a(new_gl_a);
 
     // Clone duplicate custom fields
-    const auto& data_set = FieldValueModel::instance().find(
-        FieldValueModel::REFID(tran->TRANSID)
+    const auto& fv_a = FieldValueModel::instance().find(
+        FieldValueCol::REFID(tran->TRANSID)
     );
-    if (data_set.size() > 0) {
+    if (fv_a.size() > 0) {
         FieldValueModel::instance().Savepoint();
-        for (const auto& item : data_set) {
-            FieldValueModel::Data* fieldData = FieldValueModel::instance().create();
-            fieldData->FIELDID = item.FIELDID;
-            fieldData->REFID = transactionID;
-            fieldData->CONTENT = item.CONTENT;
-            FieldValueModel::instance().save(fieldData);
+        for (const auto& fv_d : fv_a) {
+            FieldValueData new_fv_d = FieldValueData();
+            new_fv_d.FIELDID = fv_d.FIELDID;
+            new_fv_d.REFID   = transactionID;
+            new_fv_d.CONTENT = fv_d.CONTENT;
+            FieldValueModel::instance().add_data_n(new_fv_d);
         }
         FieldValueModel::instance().ReleaseSavepoint();
     }
@@ -1794,17 +1826,18 @@ void JournalList::onSetUserColour(wxCommandEvent& event)
     ScheduledModel::instance().Savepoint();
     for (const auto& id : m_selected_id) {
         if (!id.second) {
-            TransactionModel::Data* tran = TransactionModel::instance().get_id(id.first);
+            const TransactionData* tran = TransactionModel::instance().get_data_n(id.first);
             if (tran) {
-                tran->COLOR = user_color_id;
-                TransactionModel::instance().save_trx(tran);
+                TransactionData tran_d = *tran;
+                tran_d.COLOR = user_color_id;
+                TransactionModel::instance().save_trx(tran_d);
             }
         }
         else {
-            ScheduledModel::Data* bill = ScheduledModel::instance().get_id(id.first);
-            if (bill) {
-                bill->COLOR = user_color_id;
-                ScheduledModel::instance().save(bill);
+            ScheduledData* sched_n = ScheduledModel::instance().unsafe_get_data_n(id.first);
+            if (sched_n) {
+                sched_n->COLOR = user_color_id;
+                ScheduledModel::instance().unsafe_update_data_n(sched_n);
             }
         }
     }
@@ -1901,7 +1934,7 @@ const wxString JournalList::getItem(long item, int col_id) const
             const wxString splitRefType = TransactionSplitModel::refTypeName;
             for (const auto& split : journal.m_splits) {
                 wxString tagnames;
-                std::map<wxString, int64> tags = TagLinkModel::instance().cache_ref(splitRefType, split.SPLITTRANSID);
+                std::map<wxString, int64> tags = TagLinkModel::instance().get_ref(splitRefType, split.SPLITTRANSID);
                 std::map<wxString, int64, caseInsensitiveComparator> sortedTags(tags.begin(), tags.end());
                 for (const auto& tag : sortedTags)
                     tagnames.Append(tag.first + " ");
@@ -1935,9 +1968,9 @@ const wxString JournalList::getItem(long item, int col_id) const
     switch (col_id) {
     case LIST_ID_WITHDRAWAL:
         if (!m_cp->isAccount()) {
-            AccountModel::Data* account = AccountModel::instance().get_id(journal.ACCOUNTID_W);
-            CurrencyModel::Data* currency = account ?
-                CurrencyModel::instance().get_id(account->CURRENCYID) : nullptr;
+            const AccountData* account = AccountModel::instance().get_data_n(journal.ACCOUNTID_W);
+            const CurrencyData* currency = account ?
+                CurrencyModel::instance().get_data_n(account->CURRENCYID) : nullptr;
             if (currency)
                 value = CurrencyModel::toCurrency(journal.TRANSAMOUNT_W, currency);
         }
@@ -1949,9 +1982,9 @@ const wxString JournalList::getItem(long item, int col_id) const
         return value;
     case LIST_ID_DEPOSIT:
         if (!m_cp->isAccount()) {
-            AccountModel::Data* account = AccountModel::instance().get_id(journal.ACCOUNTID_D);
-            CurrencyModel::Data* currency = account ?
-                CurrencyModel::instance().get_id(account->CURRENCYID) : nullptr;
+            const AccountData* account = AccountModel::instance().get_data_n(journal.ACCOUNTID_D);
+            const CurrencyData* currency = account ?
+                CurrencyModel::instance().get_data_n(account->CURRENCYID) : nullptr;
             if (currency)
                 value = CurrencyModel::toCurrency(journal.TRANSAMOUNT_D, currency);
         }
@@ -1981,9 +2014,9 @@ void JournalList::setExtraTransactionData(const bool single)
     bool isForeign = false;
     if (single) {
         Journal::IdRepeat id = m_selected_id[0];
-        Journal::Data tran = !id.second ?
-            Journal::Data(*TransactionModel::instance().get_id(id.first)) :
-            Journal::Data(*ScheduledModel::instance().get_id(id.first));
+        Journal::Data tran = !id.second
+            ? Journal::Data(*TransactionModel::instance().get_data_n(id.first))
+            : Journal::Data(*ScheduledModel::instance().get_data_n(id.first));
         if (TransactionModel::foreignTransaction(tran))
             isForeign = true;
         repeat_num = id.second;
@@ -2165,13 +2198,15 @@ void JournalList::deleteTransactionsByStatus(const wxString& status)
         if (tran.STATUS == s || (s.empty() && status.empty())) {
             if (m_cp->isDeletedTrans() || retainDays == 0) {
                 // remove also removes any split transactions, translink entries, attachments, and custom field data
-                TransactionModel::instance().remove(tran.TRANSID);
+                TransactionModel::instance().remove_depen(tran.TRANSID);
             }
             else {
-                TransactionModel::Data* trx = TransactionModel::instance().get_id(tran.TRANSID);
-                trx->DELETEDTIME = deletionTime;
-                TransactionModel::instance().save_trx(trx);
-                TransactionLinkModel::Data_Set translink = TransactionLinkModel::instance().find(TransactionLinkModel::CHECKINGACCOUNTID(trx->TRANSID));
+                TransactionData* trx_n = TransactionModel::instance().unsafe_get_data_n(tran.TRANSID);
+                trx_n->DELETEDTIME = deletionTime;
+                TransactionModel::instance().unsafe_save_trx(trx_n);
+                TransactionLinkModel::DataA translink = TransactionLinkModel::instance().find(
+                    TransactionLinkCol::CHECKINGACCOUNTID(trx_n->TRANSID)
+                );
                 if (!translink.empty()) {
                     assetStockAccts.emplace(translink.at(0).LINKTYPE, translink.at(0).LINKRECORDID);
                 }
@@ -2181,8 +2216,14 @@ void JournalList::deleteTransactionsByStatus(const wxString& status)
 
     if (!assetStockAccts.empty()) {
         for (const auto& i : assetStockAccts) {
-            if (i.first == "Asset") TransactionLinkModel::UpdateAssetValue(AssetModel::instance().get_id(i.second));
-            else if (i.first == "Stock") StockModel::UpdatePosition(StockModel::instance().get_id(i.second));
+            if (i.first == "Asset")
+                TransactionLinkModel::UpdateAssetValue(
+                    AssetModel::instance().unsafe_get_data_n(i.second)
+                );
+            else if (i.first == "Stock")
+                StockModel::UpdatePosition(
+                    StockModel::instance().unsafe_get_data_n(i.second)
+                );
         }
     }
 
@@ -2196,15 +2237,15 @@ bool JournalList::checkForClosedAccounts()
 {
     int closedTrx = 0;
     for (const auto& id : m_selected_id) {
-        Journal::Data tran = !id.second ?
-            Journal::Data(*TransactionModel::instance().get_id(id.first)) :
-            Journal::Data(*ScheduledModel::instance().get_id(id.first));
-        AccountModel::Data* account = AccountModel::instance().get_id(tran.ACCOUNTID);
+        Journal::Data tran = !id.second
+            ? Journal::Data(*TransactionModel::instance().get_data_n(id.first))
+            : Journal::Data(*ScheduledModel::instance().get_data_n(id.first));
+        const AccountData* account = AccountModel::instance().get_data_n(tran.ACCOUNTID);
         if (account && AccountModel::STATUS_ID_CLOSED == AccountModel::status_id(account)) {
             closedTrx++;
             continue;
         }
-        AccountModel::Data* to_account = AccountModel::instance().get_id(tran.TOACCOUNTID);
+        const AccountData* to_account = AccountModel::instance().get_data_n(tran.TOACCOUNTID);
         if (to_account && AccountModel::STATUS_ID_CLOSED == AccountModel::status_id(account))
             closedTrx++;
     }
@@ -2224,7 +2265,7 @@ bool JournalList::checkForClosedAccounts()
 
 bool JournalList::checkTransactionLocked(int64 accountID, const wxString& transdate)
 {
-    AccountModel::Data* account = AccountModel::instance().get_id(accountID);
+    const AccountData* account = AccountModel::instance().get_data_n(accountID);
     if (AccountModel::BoolOf(account->STATEMENTLOCKED)) {
         wxDateTime transaction_date;
         if (transaction_date.ParseDate(transdate)) {

@@ -41,11 +41,11 @@ const wxString ModelBase::REFTYPE_NAME_BILLSDEPOSITSPLIT = reftype_name(REFTYPE_
 
 // *Model::refTypeName are initialized here because they depend on REFTYPE_NAME_,
 // which depend on REFTYPE_CHOICES.
-const wxString AccountModel::refTypeName          = REFTYPE_NAME_BANKACCOUNT;
-const wxString AssetModel::refTypeName            = REFTYPE_NAME_ASSET;
-const wxString StockModel::refTypeName            = REFTYPE_NAME_STOCK;
-const wxString PayeeModel::refTypeName            = REFTYPE_NAME_PAYEE;
-const wxString TransactionModel::refTypeName      = REFTYPE_NAME_TRANSACTION;
-const wxString TransactionSplitModel::refTypeName = REFTYPE_NAME_TRANSACTIONSPLIT;
-const wxString ScheduledModel::refTypeName        = REFTYPE_NAME_BILLSDEPOSIT;
-const wxString ScheduledSplitModel::refTypeName   = REFTYPE_NAME_BILLSDEPOSITSPLIT;
+const wxString AccountModel::refTypeName          = ModelBase::REFTYPE_NAME_BANKACCOUNT;
+const wxString AssetModel::refTypeName            = ModelBase::REFTYPE_NAME_ASSET;
+const wxString StockModel::refTypeName            = ModelBase::REFTYPE_NAME_STOCK;
+const wxString PayeeModel::refTypeName            = ModelBase::REFTYPE_NAME_PAYEE;
+const wxString TransactionModel::refTypeName      = ModelBase::REFTYPE_NAME_TRANSACTION;
+const wxString TransactionSplitModel::refTypeName = ModelBase::REFTYPE_NAME_TRANSACTIONSPLIT;
+const wxString ScheduledModel::refTypeName        = ModelBase::REFTYPE_NAME_BILLSDEPOSIT;
+const wxString ScheduledSplitModel::refTypeName   = ModelBase::REFTYPE_NAME_BILLSDEPOSITSPLIT;

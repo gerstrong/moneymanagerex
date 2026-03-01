@@ -13,14 +13,14 @@
  *      @author [sqlite2cpp.py]
  *
  *      Revision History:
- *          AUTO GENERATED at 2026-02-16 15:07:22.405413.
+ *          AUTO GENERATED at 2026-02-23 02:42:42.918296.
  *          DO NOT EDIT!
  */
 //=============================================================================
 
 #pragma once
 
-#include "_TableFactory.h"
+#include "_TableBase.h"
 
 // Columns in database table CHECKINGACCOUNT_V1
 struct TransactionCol
@@ -185,7 +185,6 @@ struct TransactionCol
 struct TransactionRow
 {
     using Col = TransactionCol;
-    using COL_ID = Col::COL_ID;
 
     int64 TRANSID; // primary key
     int64 ACCOUNTID;
@@ -210,17 +209,18 @@ struct TransactionRow
 
     int64 id() const { return TRANSID; }
     void id(const int64 id) { TRANSID = id; }
-    void destroy() { delete this; }
-
-    bool equals(const TransactionRow* r) const;
     void to_insert_stmt(wxSQLite3Statement& stmt, int64 id) const;
-    void from_select_result(wxSQLite3ResultSet& q);
+    void to_update_stmt(wxSQLite3Statement& stmt) const;
+    TransactionRow& from_select_result(wxSQLite3ResultSet& q);
     wxString to_json() const;
     void as_json(PrettyWriter<StringBuffer>& json_writer) const;
-    row_t to_row_t() const;
-    void to_template(html_template& t) const;
+    row_t to_html_row() const;
+    void to_html_template(html_template& t) const;
+    void destroy() { delete this; }
 
-    TransactionRow& operator=(const TransactionRow& other);
+    TransactionRow& operator= (const TransactionRow& other);
+    TransactionRow& clone_from(const TransactionRow& other);
+    bool equals(const TransactionRow* other) const;
     bool operator< (const TransactionRow& other) const { return id() < other.id(); }
     bool operator< (const TransactionRow* other) const { return id() < other->id(); }
 
@@ -448,28 +448,28 @@ struct TransactionRow
 };
 
 // Interface to database table CHECKINGACCOUNT_V1
-struct TransactionTable : public TableFactory<TransactionRow>
+struct TransactionTable : public TableBase
 {
-    // Use Col::(COLUMN_NAME) until model provides similar functionality based on Data.
-    using TRANSID = Col::TRANSID;
-    using ACCOUNTID = Col::ACCOUNTID;
-    using TOACCOUNTID = Col::TOACCOUNTID;
-    using PAYEEID = Col::PAYEEID;
-    using TRANSCODE = Col::TRANSCODE;
-    using TRANSAMOUNT = Col::TRANSAMOUNT;
-    using STATUS = Col::STATUS;
-    using TRANSACTIONNUMBER = Col::TRANSACTIONNUMBER;
-    using NOTES = Col::NOTES;
-    using CATEGID = Col::CATEGID;
-    using TRANSDATE = Col::TRANSDATE;
-    using LASTUPDATEDTIME = Col::LASTUPDATEDTIME;
-    using DELETEDTIME = Col::DELETEDTIME;
-    using FOLLOWUPID = Col::FOLLOWUPID;
-    using TOTRANSAMOUNT = Col::TOTRANSAMOUNT;
-    using COLOR = Col::COLOR;
+    using Row = TransactionRow;
+    using Col = typename Row::Col;
 
     TransactionTable();
-    ~TransactionTable();
-
-    void ensure_data() override;
+    ~TransactionTable() {}
 };
+
+inline TransactionRow::TransactionRow(wxSQLite3ResultSet& q)
+{
+    from_select_result(q);
+}
+
+inline void TransactionRow::to_update_stmt(wxSQLite3Statement& stmt) const
+{
+    to_insert_stmt(stmt, id());
+}
+
+inline TransactionRow& TransactionRow::clone_from(const TransactionRow& other)
+{
+    *this = other;
+    id(-1);
+    return *this;
+}

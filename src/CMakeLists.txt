@@ -78,6 +78,7 @@ add_executable(${MMEX_EXE} WIN32 MACOSX_BUNDLE
     base/paths.cpp
     base/paths.h
     base/platfdep.h
+    base/types.h
 
     util/_choices.cpp
     util/_choices.h
@@ -87,6 +88,8 @@ add_executable(${MMEX_EXE} WIN32 MACOSX_BUNDLE
     util/_simple.h
     util/_util.cpp
     util/_util.h
+    util/mmCache.h
+    util/mmCache.tpp
     util/mmDateDay.cpp
     util/mmDateDay.h
     util/mmDateRange.cpp
@@ -162,12 +165,56 @@ add_executable(${MMEX_EXE} WIN32 MACOSX_BUNDLE
     table/_TableFactory.tpp
     table/_TableUpgrade.h
 
-    db/dbcheck.cpp
-    db/dbcheck.h
-    db/dbupgrade.cpp
-    db/dbupgrade.h
-    db/dbwrapper.cpp
-    db/dbwrapper.h
+    data/AccountData.cpp
+    data/AccountData.h
+    data/AssetData.cpp
+    data/AssetData.h
+    data/AttachmentData.cpp
+    data/AttachmentData.h
+    data/BudgetData.cpp
+    data/BudgetData.h
+    data/BudgetPeriodData.cpp
+    data/BudgetPeriodData.h
+    data/CategoryData.cpp
+    data/CategoryData.h
+    data/CurrencyData.cpp
+    data/CurrencyData.h
+    data/CurrencyHistoryData.cpp
+    data/CurrencyHistoryData.h
+    data/FieldData.cpp
+    data/FieldData.h
+    data/FieldValueData.cpp
+    data/FieldValueData.h
+    data/InfoData.cpp
+    data/InfoData.h
+    data/PayeeData.cpp
+    data/PayeeData.h
+    data/ReportData.cpp
+    data/ReportData.h
+    data/ScheduledData.cpp
+    data/ScheduledData.h
+    data/ScheduledSplitData.cpp
+    data/ScheduledSplitData.h
+    data/SettingData.cpp
+    data/SettingData.h
+    data/StockData.cpp
+    data/StockData.h
+    data/StockHistoryData.cpp
+    data/StockHistoryData.h
+    data/TagData.cpp
+    data/TagData.h
+    data/TagLinkData.cpp
+    data/TagLinkData.h
+    data/TransactionData.cpp
+    data/TransactionData.h
+    data/TransactionLinkData.cpp
+    data/TransactionLinkData.h
+    data/TransactionShareData.cpp
+    data/TransactionShareData.h
+    data/TransactionSplitData.cpp
+    data/TransactionSplitData.h
+    data/UsageData.cpp
+    data/UsageData.h
 
     model/AccountModel.cpp
     model/AccountModel.h
@@ -382,6 +429,13 @@ add_executable(${MMEX_EXE} WIN32 MACOSX_BUNDLE
     uicontrols/toolbardialog.h
     uicontrols/toolbartypes.cpp
     uicontrols/toolbartypes.h
+
+    db/dbcheck.cpp
+    db/dbcheck.h
+    db/dbupgrade.cpp
+    db/dbupgrade.h
+    db/dbwrapper.cpp
+    db/dbwrapper.h
 
     import_export/export.cpp
     import_export/export.h

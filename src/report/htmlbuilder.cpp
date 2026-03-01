@@ -379,7 +379,7 @@ void mmHTMLBuilder::addTableHeaderCell(const wxString& value, const wxString& cs
     html_ += tags::TABLE_HEADER_END;
 }
 
-void mmHTMLBuilder::addCurrencyCell(double amount, const CurrencyModel::Data* currency, int precision, bool isVoid)
+void mmHTMLBuilder::addCurrencyCell(double amount, const CurrencyData* currency, int precision, bool isVoid)
 {
     if (precision == -1)
         precision = CurrencyModel::precision(currency);

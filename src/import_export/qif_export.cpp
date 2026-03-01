@@ -82,8 +82,8 @@ void mmQIFExportDialog::fillControls()
     selected_accounts_id_.clear();
     accounts_id_.clear();
 
-    AccountModel::Data_Set all_accounts = AccountModel::instance().find(
-        AccountModel::ACCOUNTTYPE(OP_NE, NavigatorTypes::instance().getInvestmentAccountStr())
+    AccountModel::DataA all_accounts = AccountModel::instance().find(
+        AccountCol::ACCOUNTTYPE(OP_NE, NavigatorTypes::instance().getInvestmentAccountStr())
     );
 
     for (const auto& a : all_accounts)
@@ -263,8 +263,8 @@ void mmQIFExportDialog::OnAccountsButton(wxCommandEvent& WXUNUSED(event))
 
     int i = 0;
     wxArrayInt s;
-    AccountModel::Data_Set all_accounts = AccountModel::instance().find(
-        AccountModel::ACCOUNTTYPE(OP_NE, NavigatorTypes::instance().getInvestmentAccountStr())
+    AccountModel::DataA all_accounts = AccountModel::instance().find(
+        AccountCol::ACCOUNTTYPE(OP_NE, NavigatorTypes::instance().getInvestmentAccountStr())
     );
 
     for (const auto& a : all_accounts)
@@ -293,18 +293,15 @@ void mmQIFExportDialog::OnAccountsButton(wxCommandEvent& WXUNUSED(event))
     }
     *log_field_ << baloon;
 
-    if (selected_accounts_id_.empty())
-    {
+    if (selected_accounts_id_.empty()) {
         fillControls();
     }
-    else if (selected_accounts_id_.size() == 1)
-    {
+    else if (selected_accounts_id_.size() == 1) {
         int64 account_id = accounts_id_[selected_items[0]];
-        const AccountModel::Data* account = AccountModel::instance().get_id(account_id);
+        const AccountData* account = AccountModel::instance().get_data_n(account_id);
         if (account) bSelectedAccounts_->SetLabelText(account->ACCOUNTNAME);
     }
-    else if (selected_accounts_id_.size() > 1)
-    {
+    else if (selected_accounts_id_.size() > 1) {
         bSelectedAccounts_->SetLabelText(wxString::FromUTF8Unchecked("…"));
         mmToolTip(bSelectedAccounts_, baloon);
     }
@@ -353,7 +350,7 @@ void mmQIFExportDialog::OnOk(wxCommandEvent& WXUNUSED(event))
 
     bool bCorrect = false;
     wxString sErrorMsg = "";
-    if (AccountModel::instance().get_all().empty() && accountsCheckBox_->IsChecked())
+    if (AccountModel::instance().find_all().empty() && accountsCheckBox_->IsChecked())
         sErrorMsg =_t("No Account available for export");
     else if (selected_accounts_id_.size() < 1 && accountsCheckBox_->IsChecked())
         sErrorMsg =_t("No Accounts selected for export");
@@ -453,14 +450,14 @@ void mmQIFExportDialog::mmExportQIF()
     if (m_type == QIF && exp_categ)
     {
         buffer << mmExportTransaction::getCategoriesQIF();
-        numCategories = CategoryModel::instance().get_all().size();
+        numCategories = CategoryModel::instance().find_all().size();
         sErrorMsg << _t("Categories exported") << "\n";
     }
     else if (m_type == JSON)
     {
         if (exp_categ) {
             mmExportTransaction::getCategoriesJSON(json_writer);
-            numCategories = CategoryModel::instance().get_all().size();
+            numCategories = CategoryModel::instance().find_all().size();
         }
         else {
             mmExportTransaction::getUsedCategoriesJSON(json_writer);
@@ -536,8 +533,9 @@ void mmQIFExportDialog::mmExportQIF()
                     allAttachments4Export.push_back(full_tran.TRANSID);
                 }
 
-                for (const auto & entry : FieldValueModel::instance().find(FieldValueModel::REFID(full_tran.id())))
-                {
+                for (const auto & entry : FieldValueModel::instance().find(
+                    FieldValueCol::REFID(full_tran.id())
+                )) {
                     if (std::find(allCustomFields4Export.begin(), allCustomFields4Export.end(), entry.FIELDATADID) == allCustomFields4Export.end()) {
                         allCustomFields4Export.push_back(entry.FIELDATADID);
                     }
@@ -552,7 +550,7 @@ void mmQIFExportDialog::mmExportQIF()
                 // store tags from the splits
                 for (const auto& split : full_tran.m_splits)
                 {
-                    for (const auto& taglink : TagLinkModel::instance().cache_ref(TransactionSplitModel::refTypeName, split.SPLITTRANSID))
+                    for (const auto& taglink : TagLinkModel::instance().get_ref(TransactionSplitModel::refTypeName, split.SPLITTRANSID))
                     {
                         if (std::find(allTags4Export.begin(), allTags4Export.end(), taglink.second) == allTags4Export.end())
                             allTags4Export.push_back(taglink.second);

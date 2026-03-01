@@ -41,7 +41,7 @@ wxString ForecastReport::getHTMLText()
 {
     // Grab the data
     std::map<wxString, std::pair<double, double> > amount_by_day;
-    TransactionModel::Data_Set all_trans;
+    TransactionModel::DataA all_trans;
     
     if (m_date_range && m_date_range->is_with_date()) {
         all_trans = TransactionModel::instance().find(
@@ -50,14 +50,14 @@ wxString ForecastReport::getHTMLText()
         );
     }
     else {
-        all_trans = TransactionModel::instance().get_all();
+        all_trans = TransactionModel::instance().find_all();
     }
 
     for (const auto & trx : all_trans) {
         if (TransactionModel::type_id(trx) == TransactionModel::TYPE_ID_TRANSFER || TransactionModel::foreignTransactionAsTransfer(trx))
             continue;
         const double convRate = CurrencyHistoryModel::getDayRate(
-            AccountModel::instance().get_id(trx.ACCOUNTID)->CURRENCYID,
+            AccountModel::instance().get_data_n(trx.ACCOUNTID)->CURRENCYID,
             trx.TRANSDATE
         );
         amount_by_day[trx.TRANSDATE].first += TransactionModel::account_outflow(trx, trx.ACCOUNTID) * convRate;

@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: moneymanagerex\n"
 "Report-Msgid-Bugs-To: developer@moneymanagerex.org\n"
 "POT-Creation-Date: 2026-02-18 14:44+0000\n"
-"PO-Revision-Date: 2026-02-27 01:16\n"
+"PO-Revision-Date: 2026-02-20 01:18\n"
 "Last-Translator: \n"
 "Language-Team: Greek\n"
 "Language: el_GR\n"
@@ -8648,111 +8648,111 @@ msgstr "Συγχώνευση"
 
 #: table/CurrencyTable.cpp:250
 msgid "US dollar"
-msgstr "Δολλάριο ΗΠΑ"
+msgstr ""
 
 #: table/CurrencyTable.cpp:251
 msgid "Euro"
-msgstr "Ευρώ"
+msgstr ""
 
 #: table/CurrencyTable.cpp:252
 msgid "British pound"
-msgstr "Βρετανική Λίρα"
+msgstr ""
 
 #: table/CurrencyTable.cpp:253
 msgid "Russian ruble"
-msgstr "Ρωσικό Ρούβλι"
+msgstr ""
 
 #: table/CurrencyTable.cpp:254
 msgid "Ukrainian hryvnia"
-msgstr "Χρίβνια Ουκρανίας"
+msgstr ""
 
 #: table/CurrencyTable.cpp:255
 msgid "Afghan afghani"
-msgstr "Αφγκάνι Αφγανιστάν"
+msgstr ""
 
 #: table/CurrencyTable.cpp:256
 msgid "Albanian lek"
-msgstr "Αλβανικό λεκ"
+msgstr ""
 
 #: table/CurrencyTable.cpp:257
 msgid "Algerian dinar"
-msgstr "Δηνάριο Αλγερίας"
+msgstr ""
 
 #: table/CurrencyTable.cpp:258
 msgid "Angolan kwanza"
-msgstr "Κουάνζα Ανγκόλας"
+msgstr ""
 
 #: table/CurrencyTable.cpp:259
 msgid "East Caribbean dollar"
-msgstr "Δολάριο Ανατολικής Καραϊβικής"
+msgstr ""
 
 #: table/CurrencyTable.cpp:260
 msgid "Argentine peso"
-msgstr "Πέσο Αργεντινής"
+msgstr ""
 
 #: table/CurrencyTable.cpp:261
 msgid "Armenian dram"
-msgstr "Ντραμ Αρμενίας"
+msgstr ""
 
 #: table/CurrencyTable.cpp:262
 msgid "Aruban florin"
-msgstr "Φλορίνι Αρούμπας"
+msgstr ""
 
 #: table/CurrencyTable.cpp:263
 msgid "Australian dollar"
-msgstr "Δολλάριο Αυστραλίας"
+msgstr ""
 
 #: table/CurrencyTable.cpp:264
 msgid "Azerbaijani manat"
-msgstr "Μανάτ Αζερμπαϊτζάν"
+msgstr ""
 
 #: table/CurrencyTable.cpp:265
 msgid "Bahamian dollar"
-msgstr "Δολάρια Μπαχάμες"
+msgstr ""
 
 #: table/CurrencyTable.cpp:266
 msgid "Bahraini dinar"
-msgstr "Δηνάριο Μπαχρέιν"
+msgstr ""
 
 #: table/CurrencyTable.cpp:267
 msgid "Bangladeshi taka"
-msgstr "Τάκα Μπαγκλαντές"
+msgstr ""
 
 #: table/CurrencyTable.cpp:268
 msgid "Barbadian dollar"
-msgstr "Δολάριο Μπαρμπέιντος"
+msgstr ""
 
 #: table/CurrencyTable.cpp:269
 msgid "Belarusian ruble (2000-2016)"
-msgstr "Ρούβλι Λευκορωσίας (2000–2016)"
+msgstr ""
 
 #: table/CurrencyTable.cpp:270
 msgid "Belize dollar"
-msgstr "Δολάριο Μπελίζ"
+msgstr ""
 
 #: table/CurrencyTable.cpp:271
 msgid "West African CFA franc"
-msgstr "Φράγκο CFA Κεντρικής Αφρικής"
+msgstr ""
 
 #: table/CurrencyTable.cpp:272
 msgid "Bermudan dollar"
-msgstr "Δολάριο Βερμούδων"
+msgstr ""
 
 #: table/CurrencyTable.cpp:273
 msgid "Bhutanese ngultrum"
-msgstr "Νγκούλτρουμ Μπουτάν"
+msgstr ""
 
 #: table/CurrencyTable.cpp:274
 msgid "Bolivian boliviano"
-msgstr "Μπολιβιάνο Βολιβίας"
+msgstr ""
 
 #: table/CurrencyTable.cpp:275
 msgid "Bosnia-Herzegovina convertible mark"
-msgstr "Μετατρέψιμο Μάρκο Βοσνίας-Ερζεγοβίνης"
+msgstr ""
 
 #: table/CurrencyTable.cpp:276
 msgid "Botswanan pula"
-msgstr "Πούλα Μποτσουάνας"
+msgstr ""
 
 #: table/CurrencyTable.cpp:277
 msgid "Brazilian real"
@@ -8780,7 +8780,7 @@ msgstr ""
 
 #: table/CurrencyTable.cpp:283
 msgid "Canadian dollar"
-msgstr "Δολλάριο Καναδά"
+msgstr ""
 
 #: table/CurrencyTable.cpp:284
 msgid "Cape Verdean escudo"
@@ -8812,15 +8812,15 @@ msgstr ""
 
 #: table/CurrencyTable.cpp:292
 msgid "Croatian kuna"
-msgstr "Κούνα Κροατίας"
+msgstr ""
 
 #: table/CurrencyTable.cpp:293
 msgid "Czech koruna"
-msgstr "Κορώνα Τσεχίας"
+msgstr ""
 
 #: table/CurrencyTable.cpp:294
 msgid "Danish krone"
-msgstr "Κορόνα Δανίας"
+msgstr ""
 
 #: table/CurrencyTable.cpp:295
 msgid "Djiboutian franc"
@@ -8832,7 +8832,7 @@ msgstr ""
 
 #: table/CurrencyTable.cpp:297
 msgid "Egyptian pound"
-msgstr "Λίρα Αιγύπτου"
+msgstr ""
 
 #: table/CurrencyTable.cpp:298
 msgid "Eritrean nakfa"

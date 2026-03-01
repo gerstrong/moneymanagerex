@@ -33,85 +33,7 @@ class TransactionLinkDialog : public wxPanel
 {
     wxDECLARE_EVENT_TABLE();
 
-public:
-    TransactionLinkDialog();
-
-    TransactionLinkDialog(wxWindow *parent
-        , TransactionModel::Data* checking_entry
-        , bool enable_revalue = false
-        , wxWindowID win_id = wxID_ANY
-        , const wxPoint &pos = wxDefaultPosition
-        , const wxSize &size = wxDefaultSize
-        , long style = wxTAB_TRAVERSAL
-        , const wxString &name = _t("Transaction Link Dialog"));
-
-    ~TransactionLinkDialog();
-
-    int64 SaveChecking();
-    bool ValidCheckingAccountEntry();
-    wxDateTime TransactionDate();
-    void TransactionDate(const wxDateTime& trans_date);
-
-    void SetTransactionValue(const double& trans_value, bool fixed_value = false);
-    void SetTransactionNumber(const wxString& trans_number);
-    void SetTransactionAccount(const wxString& trans_account);
-    void SetTransactionStatus(const int trans_status_enum);
-    void SetTransactionPayee(const int64 payeeid);
-    void SetTransactionCategory(const int64 categid);
-
-    int TransactionType();
-    TransactionLinkModel::CHECKING_TYPE CheckingType();
-    void CheckingType(TransactionLinkModel::CHECKING_TYPE ct);
-
 private:
-    TransactionModel::Data* m_checking_entry = nullptr;
-    bool m_enable_revalue = false;
-    int64 m_transaction_id = -1;
-
-    int64 m_account_id = -1;
-    int64 m_payee_id = -1;
-    int64 m_category_id = -1;
-    int64 m_subcategory_id = -1;
-
-private:
-    bool Create(wxWindow* parent
-    , wxWindowID id = wxID_ANY
-    , const wxPoint &pos = wxDefaultPosition
-    , const wxSize &size = wxDefaultSize
-    , long style = wxTAB_TRAVERSAL
-    , const wxString &name = _t("Transaction Link Dialog"));
-
-    void DataToControls();
-    void BindEventsAndTrigger();
-    void SetLastPayeeAndCategory(const int64 account_id);
-
-    void OnTransAccountButton(wxCommandEvent& WXUNUSED(event));
-    void OnTransPayeeButton(wxCommandEvent& WXUNUSED(event));
-    void OnTransCategoryCombobox(wxCommandEvent& WXUNUSED(event));
-    void OnCategs(wxCommandEvent& event);
-
-    void OnFrequentNotes(wxCommandEvent& event);
-    void OnAttachments(wxCommandEvent& WXUNUSED(event));
-
-private:
-    mmDatePickerCtrl* m_date_selector = nullptr;
-
-    wxButton* m_account = nullptr;
-    wxChoice* m_status_selector = nullptr;
-    wxChoice* m_type_selector = nullptr;
-    mmTextCtrl* m_entered_amount = nullptr;
-    wxCheckBox* m_transfer = nullptr;
-    wxButton* m_trans_currency = nullptr;
-    wxStaticText* m_payee_text = nullptr;
-    wxButton* m_payee = nullptr;
-    mmComboBoxCategory* m_category = nullptr;
-    wxTextCtrl* m_entered_number = nullptr;
-    wxTextCtrl* m_entered_notes = nullptr;
-    wxBitmapButton* m_attachment = nullptr;
-    wxButton* m_frequent_notes = nullptr;
-
-    std::vector<Split> m_local_splits;
-
     enum
     {
         ID_TRANS_DATE_SELECTOR = wxID_HIGHEST + 10,
@@ -131,4 +53,82 @@ private:
         ID_TRANS_TYPE,
         mmID_CATEGORY_SPLIT,
     };
+
+private:
+    TransactionData* m_transaction_n = nullptr;
+    TransactionData m_transaction_d;
+    bool m_enable_revalue = false;
+    int64 m_transaction_id = -1;
+    int64 m_account_id = -1;
+    int64 m_payee_id = -1;
+    int64 m_category_id = -1;
+    int64 m_subcategory_id = -1;
+    std::vector<Split> m_local_splits;
+
+    mmDatePickerCtrl*   m_date_selector   = nullptr;
+    wxButton*           m_account         = nullptr;
+    wxChoice*           m_status_selector = nullptr;
+    wxChoice*           m_type_selector   = nullptr;
+    mmTextCtrl*         m_entered_amount  = nullptr;
+    wxCheckBox*         m_transfer        = nullptr;
+    wxButton*           m_trans_currency  = nullptr;
+    wxStaticText*       m_payee_text      = nullptr;
+    wxButton*           m_payee           = nullptr;
+    mmComboBoxCategory* m_category        = nullptr;
+    wxTextCtrl*         m_entered_number  = nullptr;
+    wxTextCtrl*         m_entered_notes   = nullptr;
+    wxBitmapButton*     m_attachment      = nullptr;
+    wxButton*           m_frequent_notes  = nullptr;
+
+public:
+    TransactionLinkDialog();
+    TransactionLinkDialog(
+        wxWindow *parent,
+        TransactionData* transaction_n,
+        bool enable_revalue = false,
+        wxWindowID win_id = wxID_ANY,
+        const wxPoint &pos = wxDefaultPosition,
+        const wxSize &size = wxDefaultSize,
+        long style = wxTAB_TRAVERSAL,
+        const wxString &name = _t("Transaction Link Dialog")
+    );
+    ~TransactionLinkDialog();
+
+    int64 SaveChecking();
+    bool ValidCheckingAccountEntry();
+    wxDateTime TransactionDate();
+    void TransactionDate(const wxDateTime& trans_date);
+
+    void SetTransactionValue(const double& trans_value, bool fixed_value = false);
+    void SetTransactionNumber(const wxString& trans_number);
+    void SetTransactionAccount(const wxString& trans_account);
+    void SetTransactionStatus(const int trans_status_enum);
+    void SetTransactionPayee(const int64 payeeid);
+    void SetTransactionCategory(const int64 categid);
+
+    int TransactionType();
+    TransactionLinkModel::CHECKING_TYPE CheckingType();
+    void CheckingType(TransactionLinkModel::CHECKING_TYPE ct);
+
+private:
+    bool Create(
+        wxWindow* parent,
+        wxWindowID id = wxID_ANY,
+        const wxPoint &pos = wxDefaultPosition,
+        const wxSize &size = wxDefaultSize,
+        long style = wxTAB_TRAVERSAL,
+        const wxString &name = _t("Transaction Link Dialog")
+    );
+
+    void DataToControls();
+    void BindEventsAndTrigger();
+    void SetLastPayeeAndCategory(const int64 account_id);
+
+    void OnTransAccountButton(wxCommandEvent& WXUNUSED(event));
+    void OnTransPayeeButton(wxCommandEvent& WXUNUSED(event));
+    void OnTransCategoryCombobox(wxCommandEvent& WXUNUSED(event));
+    void OnCategs(wxCommandEvent& event);
+
+    void OnFrequentNotes(wxCommandEvent& event);
+    void OnAttachments(wxCommandEvent& WXUNUSED(event));
 };

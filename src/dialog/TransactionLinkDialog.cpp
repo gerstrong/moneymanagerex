@@ -48,23 +48,29 @@ TransactionLinkDialog::TransactionLinkDialog()
 {
 }
 
-TransactionLinkDialog::TransactionLinkDialog(wxWindow *parent
-    , TransactionModel::Data* checking_entry
-    , bool enable_revalue
-    , wxWindowID win_id
-    , const wxPoint &pos
-    , const wxSize &size
-    , long style, const wxString &name)
-    : m_checking_entry(checking_entry)
-    , m_enable_revalue(enable_revalue)
+TransactionLinkDialog::TransactionLinkDialog(
+    wxWindow *parent,
+    TransactionData* transaction_n,
+    bool enable_revalue,
+    wxWindowID win_id,
+    const wxPoint &pos,
+    const wxSize &size,
+    long style, const wxString &name
+) :
+    m_transaction_n(transaction_n),
+    m_enable_revalue(enable_revalue)
 {
-    if (m_checking_entry)
-    {
-        for (const auto& split: TransactionSplitModel::instance().find(TransactionSplitModel::TRANSID(m_checking_entry->TRANSID)))
-        {
+    if (m_transaction_n) {
+        for (const auto& split: TransactionSplitModel::instance().find(
+            TransactionSplitCol::TRANSID(m_transaction_n->TRANSID)
+        )) {
             wxArrayInt64 tags;
-            for (const auto& tag : TagLinkModel::instance().find(TagLinkModel::REFTYPE(TransactionSplitModel::refTypeName), TagLinkModel::REFID(split.SPLITTRANSID)))
+            for (const auto& tag : TagLinkModel::instance().find(
+                TagLinkCol::REFTYPE(TransactionSplitModel::refTypeName),
+                TagLinkCol::REFID(split.SPLITTRANSID)
+            )) {
                 tags.push_back(tag.TAGID);
+            }
             m_local_splits.push_back({split.CATEGID, split.SPLITTRANSAMOUNT, tags, split.NOTES});
         }
     }
@@ -79,13 +85,14 @@ TransactionLinkDialog::~TransactionLinkDialog()
 {
 }
 
-bool TransactionLinkDialog::Create(wxWindow* parent
-    , wxWindowID win_id
-    , const wxPoint &pos
-    , const wxSize &size
-    , long style
-    , const wxString &name)
-{
+bool TransactionLinkDialog::Create(
+    wxWindow* parent,
+    wxWindowID win_id,
+    const wxPoint &pos,
+    const wxSize &size,
+    long style,
+    const wxString &name
+) {
     wxPanel::Create(parent, win_id, pos, size, style, name);
 
     const wxSize std_size(230, -1);
@@ -148,10 +155,9 @@ bool TransactionLinkDialog::Create(wxWindow* parent
         , mmCalcValidator());
     mmToolTip(m_entered_amount, _t("Specify the amount for this transaction"));
 
-    CurrencyModel::Data* currency = CurrencyModel::GetBaseCurrency();
-    if (m_account_id > 0)
-    {
-        currency = AccountModel::currency(AccountModel::instance().get_id(m_account_id));
+    const CurrencyData* currency = CurrencyModel::GetBaseCurrency();
+    if (m_account_id > 0) {
+        currency = AccountModel::currency(AccountModel::instance().get_data_n(m_account_id));
     }
     m_trans_currency = new wxButton(this, ID_TRANS_CURRENCY_BUTTON, currency->CURRENCY_SYMBOL
         , wxDefaultPosition, std_half_size);
@@ -239,47 +245,46 @@ bool TransactionLinkDialog::Create(wxWindow* parent
 
 void TransactionLinkDialog::DataToControls()
 {
-    if (!m_checking_entry) return;
+    if (!m_transaction_n)
+        return;
 
     wxDateTime trans_date;
-    trans_date.ParseDateTime(m_checking_entry->TRANSDATE) || trans_date.ParseDate(m_checking_entry->TRANSDATE);
+    trans_date.ParseDateTime(m_transaction_n->TRANSDATE)
+        || trans_date.ParseDate(m_transaction_n->TRANSDATE);
     TransactionDate(trans_date);
 
-    m_transaction_id = m_checking_entry->TRANSID;
-    m_account_id = m_checking_entry->ACCOUNTID;
-    m_account->SetLabelText(AccountModel::cache_id_name(m_account_id));
-    m_type_selector->SetSelection(TransactionModel::type_id(m_checking_entry->TRANSCODE));
+    m_transaction_id = m_transaction_n->TRANSID;
+    m_account_id = m_transaction_n->ACCOUNTID;
+    m_account->SetLabelText(AccountModel::get_id_name(m_account_id));
+    m_type_selector->SetSelection(TransactionModel::type_id(m_transaction_n->TRANSCODE));
 
-    if (m_account_id > 0)
-    {
-        CurrencyModel::Data* currency = AccountModel::currency(AccountModel::instance().get_id(m_account_id));
+    if (m_account_id > 0) {
+        const CurrencyData* currency = AccountModel::currency(AccountModel::instance().get_data_n(m_account_id));
         m_trans_currency->SetLabelText(currency->CURRENCY_SYMBOL);
         m_entered_amount->SetCurrency(currency);
     }
 
-    SetTransactionValue(m_checking_entry->TRANSAMOUNT);
-    m_status_selector->SetSelection(TransactionModel::status_id(m_checking_entry->STATUS));
+    SetTransactionValue(m_transaction_n->TRANSAMOUNT);
+    m_status_selector->SetSelection(TransactionModel::status_id(m_transaction_n->STATUS));
 
-    m_payee_id = m_checking_entry->PAYEEID;
+    m_payee_id = m_transaction_n->PAYEEID;
     m_payee->SetLabelText(PayeeModel::get_payee_name(m_payee_id));
 
-    m_category_id = m_checking_entry->CATEGID;
+    m_category_id = m_transaction_n->CATEGID;
     m_category->SetValue(CategoryModel::full_name(m_category_id));
 
-    m_entered_number->SetValue(m_checking_entry->TRANSACTIONNUMBER);
-    m_entered_notes->SetValue(m_checking_entry->NOTES);
+    m_entered_number->SetValue(m_transaction_n->TRANSACTIONNUMBER);
+    m_entered_notes->SetValue(m_transaction_n->NOTES);
 
     bool has_split = !(m_local_splits.size() <= 1);
-    if (has_split)
-    {
+    if (has_split) {
         m_category->Enable(!has_split);
         m_category->SetLabelText(_t("Split Transaction"));
 
         SetTransactionValue(TransactionSplitModel::get_total(m_local_splits));
     }
 
-    if (!m_checking_entry->DELETEDTIME.IsEmpty())
-    {
+    if (!m_transaction_n->DELETEDTIME.IsEmpty()) {
         m_date_selector->Enable(false);
         m_account->Enable(false);
         m_type_selector->Enable(false);
@@ -314,26 +319,25 @@ void TransactionLinkDialog::BindEventsAndTrigger()
 
 void TransactionLinkDialog::SetLastPayeeAndCategory(const int64 account_id)
 {
-    if (PreferencesModel::instance().getTransPayeeNone() == PreferencesModel::LASTUSED)
-    {
-        TransactionModel::Data_Set trans_list = TransactionModel::instance().find(
-            TransactionModel::ACCOUNTID(account_id),
+    if (PreferencesModel::instance().getTransPayeeNone() == PreferencesModel::LASTUSED) {
+        TransactionModel::DataA trans_list = TransactionModel::instance().find(
+            TransactionCol::ACCOUNTID(account_id),
             TransactionModel::TRANSCODE(OP_NE, TransactionModel::TYPE_ID_TRANSFER)
         );
-        if (!trans_list.empty())
-        {
+        if (!trans_list.empty()) {
             int last_trans_pos = trans_list.size() - 1;
 
-            PayeeModel::Data* last_payee = PayeeModel::instance().get_id(trans_list.at(last_trans_pos).PAYEEID);
-            if (last_payee)
-            {
-                m_payee->SetLabelText(last_payee->PAYEENAME);
-                m_payee_id = last_payee->PAYEEID;
+            const PayeeData* last_payee_n = PayeeModel::instance().get_data_n(
+                trans_list.at(last_trans_pos).PAYEEID
+            );
+            if (last_payee_n) {
+                m_payee->SetLabelText(last_payee_n->PAYEENAME);
+                m_payee_id = last_payee_n->PAYEEID;
                 if ((PreferencesModel::instance().getTransCategoryNone() == PreferencesModel::LASTUSED)
-                    && (!CategoryModel::is_hidden(last_payee->CATEGID)))
-                {
-                    m_category_id = last_payee->CATEGID;
-                    m_category->SetLabelText(CategoryModel::full_name(last_payee->CATEGID));
+                    && !CategoryModel::is_hidden(last_payee_n->CATEGID)
+                ) {
+                    m_category_id = last_payee_n->CATEGID;
+                    m_category->SetLabelText(CategoryModel::full_name(last_payee_n->CATEGID));
                 }
             }
         }
@@ -360,18 +364,19 @@ void TransactionLinkDialog::OnTransPayeeButton(wxCommandEvent& WXUNUSED(event))
     if (dlg.ShowModal() == wxID_OK)
     {
         m_payee_id = dlg.getPayeeId();
-        PayeeModel::Data* payee = PayeeModel::instance().get_id(m_payee_id);
-        if (payee)
-        {
-            m_payee->SetLabelText(payee->PAYEENAME);
+        const PayeeData* payee_n = PayeeModel::instance().get_data_n(m_payee_id);
+        if (payee_n) {
+            m_payee->SetLabelText(payee_n->PAYEENAME);
 
             // Only for new transactions: if user want to autofill last category used for payee and category has not been set.
-            if ((PreferencesModel::instance().getTransCategoryNone() == PreferencesModel::LASTUSED) && (m_category_id < 0) && (m_subcategory_id < 0)
-                        && (!CategoryModel::is_hidden(payee->CATEGID)))
-            {
-                if (payee->CATEGID > 0)
+            if (PreferencesModel::instance().getTransCategoryNone() == PreferencesModel::LASTUSED
+                && m_category_id < 0
+                && m_subcategory_id < 0
+                && !CategoryModel::is_hidden(payee_n->CATEGID)
+            ) {
+                if (payee_n->CATEGID > 0)
                 {
-                    m_category_id = payee->CATEGID;
+                    m_category_id = payee_n->CATEGID;
                     m_category->SetLabelText(CategoryModel::full_name(m_category_id));
                 }
             }
@@ -465,9 +470,9 @@ void TransactionLinkDialog::SetTransactionStatus(const int trans_status_enum)
 void TransactionLinkDialog::SetTransactionPayee(const int64 payeeid)
 {
     m_payee_id = payeeid;
-    PayeeModel::Data* payee = PayeeModel::instance().get_id(m_payee_id);
-    if (payee)
-        m_payee->SetLabelText(payee->PAYEENAME);
+    const PayeeData* payee_n = PayeeModel::instance().get_data_n(m_payee_id);
+    if (payee_n)
+        m_payee->SetLabelText(payee_n->PAYEENAME);
 }
 
 void TransactionLinkDialog::SetTransactionCategory(const int64 categid)
@@ -478,13 +483,13 @@ void TransactionLinkDialog::SetTransactionCategory(const int64 categid)
 
 void TransactionLinkDialog::SetTransactionAccount(const wxString& trans_account)
 {
-    AccountModel::Data* account = AccountModel::instance().get_key(trans_account);
+    const AccountData* account = AccountModel::instance().get_key(trans_account);
     if (account)
     {
         m_account->SetLabelText(account->ACCOUNTNAME);
         m_account_id = account->ACCOUNTID;
         SetLastPayeeAndCategory(m_account_id);
-        CurrencyModel::Data* currency = CurrencyModel::instance().get_id(account->CURRENCYID);
+        const CurrencyData* currency = CurrencyModel::instance().get_data_n(account->CURRENCYID);
         m_entered_amount->SetCurrency(currency);
         m_trans_currency->SetLabelText(currency->CURRENCY_SYMBOL);
     }
@@ -511,34 +516,38 @@ int64 TransactionLinkDialog::SaveChecking()
     double initial_amount = 0;
     m_entered_amount->checkValue(initial_amount);
 
-    const AccountModel::Data* account = AccountModel::instance().get_id(m_account_id);
+    const AccountData* account = AccountModel::instance().get_data_n(m_account_id);
     wxDateTime trxDate = m_date_selector->GetValue();
-    if (trxDate.FormatISODate() < account->INITIALDATE)
-    {
+    if (trxDate.FormatISODate() < account->INITIALDATE) {
         mmErrorDialogs::ToolTip4Object(m_account, _t("The opening date for the account is later than the date of this transaction"), _t("Invalid Date"));
         return -1;
     }
 
-    if (!m_checking_entry) {
-        m_checking_entry = TransactionModel::instance().create();
-        m_checking_entry->COLOR = 0;  // only set if new transaction, otherwise retain old value!
-        m_checking_entry->FOLLOWUPID = 0;
+    if (!m_transaction_n) {
+        m_transaction_d = TransactionData();
+        // only set if new transaction, otherwise retain old value!
+        m_transaction_d.COLOR = 0;
+        m_transaction_d.FOLLOWUPID = 0;
+        m_transaction_n = &m_transaction_d;
     }
 
-    m_checking_entry->ACCOUNTID = m_account_id;
-    m_checking_entry->TOACCOUNTID = (TransactionType() == TransactionModel::TYPE_ID_TRANSFER || CheckingType() == TransactionLinkModel::AS_TRANSFER)? m_account_id : -1; // Self Transfer as Revaluation
+    m_transaction_n->ACCOUNTID = m_account_id;
+    m_transaction_n->TOACCOUNTID = (
+            TransactionType() == TransactionModel::TYPE_ID_TRANSFER ||
+            CheckingType() == TransactionLinkModel::AS_TRANSFER
+        ) ? m_account_id : -1; // Self Transfer as Revaluation
 
-    m_checking_entry->PAYEEID = m_payee_id;
-    m_checking_entry->TRANSCODE = TransactionModel::type_name(TransactionType());
-    m_checking_entry->TRANSAMOUNT = initial_amount;
-    m_checking_entry->STATUS = m_status_selector->GetStringSelection().Mid(0, 1);
-    m_checking_entry->TRANSACTIONNUMBER = m_entered_number->GetValue();
-    m_checking_entry->NOTES = m_entered_notes->GetValue();
-    m_checking_entry->CATEGID = m_category_id;
-    m_checking_entry->TRANSDATE = trxDate.FormatISOCombined();
-    m_checking_entry->TOTRANSAMOUNT = m_checking_entry->TRANSAMOUNT;
-
-    return TransactionModel::instance().save_trx(m_checking_entry);
+    m_transaction_n->PAYEEID           = m_payee_id;
+    m_transaction_n->TRANSCODE         = TransactionModel::type_name(TransactionType());
+    m_transaction_n->TRANSAMOUNT       = initial_amount;
+    m_transaction_n->STATUS            = m_status_selector->GetStringSelection().Mid(0, 1);
+    m_transaction_n->TRANSACTIONNUMBER = m_entered_number->GetValue();
+    m_transaction_n->NOTES             = m_entered_notes->GetValue();
+    m_transaction_n->CATEGID           = m_category_id;
+    m_transaction_n->TRANSDATE         = trxDate.FormatISOCombined();
+    m_transaction_n->TOTRANSAMOUNT     = m_transaction_n->TRANSAMOUNT;
+    TransactionModel::instance().unsafe_save_trx(m_transaction_n);
+    return m_transaction_n->id();
 }
 
 int TransactionLinkDialog::TransactionType()

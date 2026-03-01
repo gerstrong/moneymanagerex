@@ -13,15 +13,17 @@
  *      @author [sqlite2cpp.py]
  *
  *      Revision History:
- *          AUTO GENERATED at 2026-02-16 15:07:22.405413.
+ *          AUTO GENERATED at 2026-02-23 02:42:42.918296.
  *          DO NOT EDIT!
  */
 //=============================================================================
 
 #include "_TableFactory.tpp"
 #include "TransactionShareTable.h"
+#include "data/TransactionShareData.h"
 
-template class TableFactory<TransactionShareRow>;
+template class TableFactory<TransactionShareTable, TransactionShareData>;
+template class mmCache<int64, TransactionShareData>;
 
 // List of column names in database table SHAREINFO_V1,
 // in the order of TransactionShareCol::COL_ID.
@@ -46,25 +48,7 @@ TransactionShareRow::TransactionShareRow()
     SHARECOMMISSION = 0.0;
 }
 
-TransactionShareRow::TransactionShareRow(wxSQLite3ResultSet& q)
-{
-    from_select_result(q);
-}
-
-bool TransactionShareRow::equals(const TransactionShareRow* r) const
-{
-    if ( SHAREINFOID != r->SHAREINFOID) return false;
-    if ( CHECKINGACCOUNTID != r->CHECKINGACCOUNTID) return false;
-    if ( SHARENUMBER != r->SHARENUMBER) return false;
-    if ( SHAREPRICE != r->SHAREPRICE) return false;
-    if ( SHARECOMMISSION != r->SHARECOMMISSION) return false;
-    if (!SHARELOT.IsSameAs(r->SHARELOT)) return false;
-
-    return true;
-}
-
-// Bind a Row record to database statement.
-// Use the id argument instead of the row id.
+// Bind a Row record to database insert statement.
 void TransactionShareRow::to_insert_stmt(wxSQLite3Statement& stmt, int64 id) const
 {
     stmt.Bind(1, CHECKINGACCOUNTID);
@@ -75,7 +59,7 @@ void TransactionShareRow::to_insert_stmt(wxSQLite3Statement& stmt, int64 id) con
     stmt.Bind(6, id);
 }
 
-void TransactionShareRow::from_select_result(wxSQLite3ResultSet& q)
+TransactionShareRow& TransactionShareRow::from_select_result(wxSQLite3ResultSet& q)
 {
     SHAREINFOID = q.GetInt64(0);
     CHECKINGACCOUNTID = q.GetInt64(1);
@@ -83,6 +67,8 @@ void TransactionShareRow::from_select_result(wxSQLite3ResultSet& q)
     SHAREPRICE = q.GetDouble(3);
     SHARECOMMISSION = q.GetDouble(4);
     SHARELOT = q.GetString(5);
+
+    return *this;
 }
 
 // Return the data record as a json string
@@ -120,7 +106,7 @@ void TransactionShareRow::as_json(PrettyWriter<StringBuffer>& json_writer) const
     json_writer.String(SHARELOT.utf8_str());
 }
 
-row_t TransactionShareRow::to_row_t() const
+row_t TransactionShareRow::to_html_row() const
 {
     row_t row;
 
@@ -134,7 +120,7 @@ row_t TransactionShareRow::to_row_t() const
     return row;
 }
 
-void TransactionShareRow::to_template(html_template& t) const
+void TransactionShareRow::to_html_template(html_template& t) const
 {
     t(L"SHAREINFOID") = SHAREINFOID.GetValue();
     t(L"CHECKINGACCOUNTID") = CHECKINGACCOUNTID.GetValue();
@@ -144,7 +130,7 @@ void TransactionShareRow::to_template(html_template& t) const
     t(L"SHARELOT") = SHARELOT;
 }
 
-TransactionShareRow& TransactionShareRow::operator=(const TransactionShareRow& other)
+TransactionShareRow& TransactionShareRow::operator= (const TransactionShareRow& other)
 {
     if (this == &other) return *this;
 
@@ -156,6 +142,18 @@ TransactionShareRow& TransactionShareRow::operator=(const TransactionShareRow& o
     SHARELOT = other.SHARELOT;
 
     return *this;
+}
+
+bool TransactionShareRow::equals(const TransactionShareRow* other) const
+{
+    if ( SHAREINFOID != other->SHAREINFOID) return false;
+    if ( CHECKINGACCOUNTID != other->CHECKINGACCOUNTID) return false;
+    if ( SHARENUMBER != other->SHARENUMBER) return false;
+    if ( SHAREPRICE != other->SHAREPRICE) return false;
+    if ( SHARECOMMISSION != other->SHARECOMMISSION) return false;
+    if (!SHARELOT.IsSameAs(other->SHARELOT)) return false;
+
+    return true;
 }
 
 TransactionShareTable::TransactionShareTable()
@@ -177,17 +175,4 @@ TransactionShareTable::TransactionShareTable()
     m_delete_query = "DELETE FROM SHAREINFO_V1 WHERE SHAREINFOID = ?";
 
     m_select_query = "SELECT SHAREINFOID, CHECKINGACCOUNTID, SHARENUMBER, SHAREPRICE, SHARECOMMISSION, SHARELOT FROM SHAREINFO_V1";
-}
-
-// Destructor: clears any data records stored in memory
-TransactionShareTable::~TransactionShareTable()
-{
-    delete fake_;
-    destroy_cache();
-}
-
-void TransactionShareTable::ensure_data()
-{
-    m_db->Begin();
-    m_db->Commit();
 }

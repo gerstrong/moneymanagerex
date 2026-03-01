@@ -20,14 +20,14 @@
 
 #include "base/defs.h"
 #include "util/_choices.h"
+
 #include "table/AttachmentTable.h"
+#include "data/AttachmentData.h"
+
 #include "_ModelBase.h"
 
-class AttachmentModel : public Model<AttachmentTable>
+class AttachmentModel : public Model<AttachmentTable, AttachmentData>
 {
-public:
-    using Model<AttachmentTable>::get_id;
-
 public:
     AttachmentModel();
     ~AttachmentModel();
@@ -49,7 +49,7 @@ public:
 
 public:
     /** Return a dataset with attachments linked to a specific object */
-    const Data_Set FilterAttachments(const wxString& RefType, const int64 RefId);
+    const DataA FilterAttachments(const wxString& RefType, const int64 RefId);
 
     /** Return the number of attachments linked to a specific object */
     static int NrAttachments(const wxString& RefType, const int64 RefId);
@@ -58,7 +58,7 @@ public:
     static int LastAttachmentNumber(const wxString& RefType, const int64 RefId);
 
     /** Return a dataset with attachments linked to a specific type*/
-    std::map<int64, Data_Set> get_reftype(const wxString& reftype);
+    std::map<int64, DataA> get_reftype(const wxString& reftype);
 
     /** Return all attachments descriptions*/
     wxArrayString allDescriptions();

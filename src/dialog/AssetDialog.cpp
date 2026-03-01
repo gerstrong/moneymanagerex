@@ -119,7 +119,7 @@ void AssetDialog::dataToControls()
     if (AccountModel::instance().get_name_data_n(m_asset_n->m_type.name()))
         w_assetType->Enable(false);
 
-    auto bal = AssetModel::instance().value(*m_asset_n);
+    auto bal = AssetModel::instance().get_data_value(*m_asset_n);
     w_value->SetValue(bal.first);
     w_curr_val->SetValue(bal.second);
 

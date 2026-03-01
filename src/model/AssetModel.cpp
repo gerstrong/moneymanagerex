@@ -64,7 +64,7 @@ AssetCol::STARTDATE AssetModel::STARTDATE(OP op, const mmDate& date)
     );
 }
 
-wxString AssetModel::get_id_name(int64 asset_id)
+const wxString AssetModel::get_id_name(int64 asset_id)
 {
     const Data* asset_n = get_id_data_n(asset_id);
     if (asset_n)
@@ -73,7 +73,8 @@ wxString AssetModel::get_id_name(int64 asset_id)
         return _t("Asset Error");
 }
 
-std::pair<double, double> AssetModel::valueAtDate(const Data& asset_d, const mmDate& date)
+// Return the value of an asset at a given date
+const std::pair<double, double> AssetModel::get_data_value_date(const Data& asset_d, const mmDate& date)
 {
     std::pair<double /*initial*/, double /*market*/> balance;
 
@@ -168,16 +169,18 @@ std::pair<double, double> AssetModel::valueAtDate(const Data& asset_d, const mmD
     return balance;
 }
 
-std::pair<double, double> AssetModel::value(const Data& asset_d)
+// Return the current value of an asset
+const std::pair<double, double> AssetModel::get_data_value(const Data& asset_d)
 {
-    return valueAtDate(asset_d, mmDate::today());
+    return get_data_value_date(asset_d, mmDate::today());
 }
 
-double AssetModel::balance()
+// Return the current value of all assets
+double AssetModel::find_all_balance()
 {
     double balance = 0.0;
-    for (const auto& asset_d: this->find_all()) {
-        balance += value(asset_d).second;
+    for (const auto& asset_d : find_all()) {
+        balance += get_data_value(asset_d).second;
     }
     return balance;
 }

@@ -191,7 +191,7 @@ void DashboardPanel::insertDataIntoTemplate()
 
             htmlWidgetAssets assets;
             m_frames[AccountsInfo] = assets.getHTMLText();
-            tBalance += AssetModel::instance().balance();
+            tBalance += AssetModel::instance().find_all_balance();
             account_stats.displayAccounts(tBalance, tReconciled, NavigatorTypes::TYPE_ID_ASSET);
         }
         navinfo = NavigatorTypes::instance().getNextActiveEntry(navinfo);
@@ -203,7 +203,7 @@ void DashboardPanel::insertDataIntoTemplate()
     htmlWidgetGrandTotals grand_totals;
     m_frames["GRAND_TOTAL"] = grand_totals.getHTMLText(
         tBalance, tReconciled,
-        AssetModel::instance().balance(),
+        AssetModel::instance().find_all_balance(),
         stocks_widget.get_total()
     );
 

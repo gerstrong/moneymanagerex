@@ -46,13 +46,13 @@ public:
 public:
     // FIXME: add purge_id() to remove AttachmentData owned by AssetData
 
-    // Return the asset name of a given id
-    wxString get_id_name(int64 asset_id);
+    // lookup for given Data
+    auto get_data_value_date(const Data& asset_d, const mmDate& date) -> const std::pair<double, double>;
+    auto get_data_value(const Data& asset_d) -> const std::pair<double, double>;
 
-    // Return the value of an asset at a given date
-    std::pair<double, double> valueAtDate(const Data& asset_d, const mmDate& date);
-    // Return the current value of an asset
-    std::pair<double, double> value(const Data& asset_d);
-    // Return the current value of all assets
-    double balance();
+    // lookup for given id
+    auto get_id_name(int64 asset_id) -> const wxString;
+
+    // lookup for all Data
+    auto find_all_balance() -> double;
 };

@@ -134,7 +134,7 @@ std::pair<double, double> AccountModel::get_data_investment_balance(const Data& 
         AssetCol::ASSETNAME(account_d.m_name),
         AssetCol::ASSETTYPE(account_d.m_name)
     )) {
-        auto asset_bal = AssetModel::instance().value(asset_d);
+        auto asset_bal = AssetModel::instance().get_data_value(asset_d);
         sum.first  += asset_bal.second;
         sum.second += asset_bal.first;
     }

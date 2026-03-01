@@ -538,17 +538,20 @@ void AssetPanel::sortList()
         std::stable_sort(this->m_assets.begin(), this->m_assets.end(), AssetData::SorterByASSETTYPE());
         break;
     case AssetList::LIST_ID_VALUE_INITIAL:
-        std::stable_sort(this->m_assets.begin(), this->m_assets.end()
-            , [](const AssetData& x, const AssetData& y)
-            {
-                return AssetModel::instance().value(x).first < AssetModel::instance().value(y).first;
-            });
+        std::stable_sort(this->m_assets.begin(), this->m_assets.end(),
+            [](const AssetData& x, const AssetData& y) {
+                double x_value = AssetModel::instance().get_data_value(x).first;
+                double y_value = AssetModel::instance().get_data_value(y).first;
+                return x_value < y_value;
+            }
+        );
         break;
     case AssetList::LIST_ID_VALUE_CURRENT:
-        std::stable_sort(this->m_assets.begin(), this->m_assets.end()
-            , [](const AssetData& x, const AssetData& y)
-            {
-                return AssetModel::instance().value(x).second < AssetModel::instance().value(y).second;
+        std::stable_sort(this->m_assets.begin(), this->m_assets.end(),
+            [](const AssetData& x, const AssetData& y) {
+                double x_value = AssetModel::instance().get_data_value(x).second;
+                double y_value = AssetModel::instance().get_data_value(y).second;
+                return x_value < y_value;
             });
         break;
     case AssetList::LIST_ID_DATE:
@@ -579,7 +582,7 @@ int AssetPanel::initVirtualListControl(int64 id)
     double initial = 0.0, balance = 0.0;
     for (const auto& asset: this->m_assets)
     {
-        auto bal = AssetModel::instance().value(asset);
+        auto bal = AssetModel::instance().get_data_value(asset);
         initial += bal.first;
         balance += bal.second;
     }
@@ -637,9 +640,9 @@ wxString AssetPanel::getItem(long item, int col_id)
     case AssetList::LIST_ID_TYPE:
         return wxGetTranslation(asset.m_type.name());
     case AssetList::LIST_ID_VALUE_INITIAL:
-        return CurrencyModel::toCurrency(AssetModel::instance().value(asset).first);
+        return CurrencyModel::toCurrency(AssetModel::instance().get_data_value(asset).first);
     case AssetList::LIST_ID_VALUE_CURRENT:
-        return CurrencyModel::toCurrency(AssetModel::instance().value(asset).second);
+        return CurrencyModel::toCurrency(AssetModel::instance().get_data_value(asset).second);
     case AssetList::LIST_ID_DATE:
         return mmGetDateTimeForDisplay(asset.m_start_date.isoDate());
     case AssetList::LIST_ID_NOTES: {

@@ -72,7 +72,6 @@ double StockModel::InvestmentValue(const Data& stock_d)
 
 double StockModel::CurrentValue(const Data& stock_d)
 {
-    return CurrentValue(stock_d);
     return stock_d.m_num_shares * stock_d.m_current_price;
 }
 

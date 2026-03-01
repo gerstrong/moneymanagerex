@@ -28,10 +28,8 @@ BudgetPeriodModel::~BudgetPeriodModel()
 {
 }
 
-/**
-* Initialize the global BudgetPeriodModel table.
-* Reset the BudgetPeriodModel table or create the table if it does not exist.
-*/
+// Initialize the global BudgetPeriodModel table.
+// Reset the BudgetPeriodModel table or create the table if it does not exist.
 BudgetPeriodModel& BudgetPeriodModel::instance(wxSQLite3Database* db)
 {
     BudgetPeriodModel& ins = Singleton<BudgetPeriodModel>::instance();
@@ -42,7 +40,7 @@ BudgetPeriodModel& BudgetPeriodModel::instance(wxSQLite3Database* db)
     return ins;
 }
 
-/** Return the static instance of BudgetPeriodModel table */
+// Return the static instance of BudgetPeriodModel table
 BudgetPeriodModel& BudgetPeriodModel::instance()
 {
     return Singleton<BudgetPeriodModel>::instance();
@@ -57,30 +55,30 @@ bool BudgetPeriodModel::purge_id(int64 id)
     return unsafe_remove_id(id);
 }
 
-// Getter
-wxString BudgetPeriodModel::get_id_name(int64 year_id)
+const wxString BudgetPeriodModel::get_id_name(int64 period_id)
 {
-    const Data* bp_n = get_id_data_n(year_id);
+    const Data* bp_n = get_id_data_n(period_id);
     return bp_n ? bp_n->m_name : "";
 }
 
-int64 BudgetPeriodModel::get_name_id(const wxString& year_name)
+int64 BudgetPeriodModel::get_name_id(const wxString& period_name)
 {
-    for (const auto& bp_d: this->find_all()) {
-        if (bp_d.m_name == year_name)
+    // TODO: lookup period_name in cache
+    for (const auto& bp_d : find_all()) {
+        if (bp_d.m_name == period_name)
             return bp_d.m_id;
     }
     return -1;
 }
 
-int64 BudgetPeriodModel::ensure_name(const wxString& year_name)
+int64 BudgetPeriodModel::ensure_name(const wxString& period_name)
 {
-    int64 year_id = get_name_id(year_name);
-    if (year_id < 0) {
+    int64 period_id = get_name_id(period_name);
+    if (period_id < 0) {
         Data new_bp_d = Data();
-        new_bp_d.m_name = year_name;
+        new_bp_d.m_name = period_name;
         add_data_n(new_bp_d);
-        year_id = new_bp_d.id();
+        period_id = new_bp_d.id();
     }
-    return year_id;
+    return period_id;
 }

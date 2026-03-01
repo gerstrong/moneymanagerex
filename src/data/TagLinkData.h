@@ -99,7 +99,8 @@ struct TagLinkData
     };
 };
 
-inline TagLinkData::TagLinkData(wxSQLite3ResultSet& q)
+inline TagLinkData::TagLinkData(wxSQLite3ResultSet& q) :
+    TagLinkData()
 {
     from_select_result(q);
 }

@@ -108,7 +108,8 @@ struct TrxSplitData
     };
 };
 
-inline TrxSplitData::TrxSplitData(wxSQLite3ResultSet& q)
+inline TrxSplitData::TrxSplitData(wxSQLite3ResultSet& q) :
+    TrxSplitData()
 {
     from_select_result(q);
 }

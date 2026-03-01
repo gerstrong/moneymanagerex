@@ -75,7 +75,8 @@ struct UsageData
     };
 };
 
-inline UsageData::UsageData(wxSQLite3ResultSet& q)
+inline UsageData::UsageData(wxSQLite3ResultSet& q) :
+    UsageData()
 {
     from_select_result(q);
 }

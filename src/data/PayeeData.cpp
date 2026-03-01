@@ -18,11 +18,11 @@
 
 #include "PayeeData.h"
 
-PayeeData::PayeeData()
+PayeeData::PayeeData() :
+    m_id(-1),
+    m_category_id_n(-1),
+    m_active(true)
 {
-    m_id          = -1;
-    m_category_id = -1;
-    m_active      = true;
 }
 
 // Convert PayeeData to PayeeRow
@@ -32,7 +32,7 @@ PayeeRow PayeeData::to_row() const
 
     row.PAYEEID   = m_id;
     row.PAYEENAME = m_name;
-    row.CATEGID   = m_category_id;
+    row.CATEGID   = m_category_id_n;
     row.NUMBER    = m_number;
     row.WEBSITE   = m_website;
     row.NOTES     = m_notes;
@@ -45,28 +45,28 @@ PayeeRow PayeeData::to_row() const
 // Convert PayeeRow to PayeeData
 PayeeData& PayeeData::from_row(const PayeeRow& row)
 {
-    m_id          = row.PAYEEID;       // int64
-    m_name        = row.PAYEENAME;     // wxString
-    m_category_id = row.CATEGID;       // int64
-    m_number      = row.NUMBER;        // wxString
-    m_website     = row.WEBSITE;       // wxString
-    m_notes       = row.NOTES;         // wxString
-    m_active      = (row.ACTIVE != 0); // int64
-    m_pattern     = row.PATTERN;       // wxString
+    m_id            = row.PAYEEID;       // int64
+    m_name          = row.PAYEENAME;     // wxString
+    m_category_id_n = row.CATEGID;       // int64
+    m_number        = row.NUMBER;        // wxString
+    m_website       = row.WEBSITE;       // wxString
+    m_notes         = row.NOTES;         // wxString
+    m_active        = (row.ACTIVE != 0); // int64
+    m_pattern       = row.PATTERN;       // wxString
 
     return *this;
 }
 
 bool PayeeData::equals(const PayeeData* other) const
 {
-    if ( m_id != other->m_id) return false;
-    if (!m_name.IsSameAs(other->m_name)) return false;
-    if ( m_category_id != other->m_category_id) return false;
-    if (!m_number.IsSameAs(other->m_number)) return false;
-    if (!m_website.IsSameAs(other->m_website)) return false;
-    if (!m_notes.IsSameAs(other->m_notes)) return false;
-    if ( m_active != other->m_active) return false;
-    if (!m_pattern.IsSameAs(other->m_pattern)) return false;
+    if ( m_id             != other->m_id)            return false;
+    if (!m_name.IsSameAs(    other->m_name))         return false;
+    if ( m_category_id_n  != other->m_category_id_n) return false;
+    if (!m_number.IsSameAs(  other->m_number))       return false;
+    if (!m_website.IsSameAs( other->m_website))      return false;
+    if (!m_notes.IsSameAs(   other->m_notes))        return false;
+    if ( m_active         != other->m_active)        return false;
+    if (!m_pattern.IsSameAs( other->m_pattern))      return false;
 
     return true;
 }

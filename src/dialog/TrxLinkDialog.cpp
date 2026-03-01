@@ -334,10 +334,10 @@ void TrxLinkDialog::SetLastPayeeAndCategory(const int64 account_id)
                 m_payee->SetLabelText(last_payee_n->m_name);
                 m_payee_id = last_payee_n->m_id;
                 if ((PrefModel::instance().getTransCategoryNone() == PrefModel::LASTUSED)
-                    && !CategoryModel::is_hidden(last_payee_n->m_category_id)
+                    && !CategoryModel::is_hidden(last_payee_n->m_category_id_n)
                 ) {
-                    m_category_id = last_payee_n->m_category_id;
-                    m_category->SetLabelText(CategoryModel::full_name(last_payee_n->m_category_id));
+                    m_category_id = last_payee_n->m_category_id_n;
+                    m_category->SetLabelText(CategoryModel::full_name(last_payee_n->m_category_id_n));
                 }
             }
         }
@@ -372,11 +372,10 @@ void TrxLinkDialog::OnTransPayeeButton(wxCommandEvent& WXUNUSED(event))
             if (PrefModel::instance().getTransCategoryNone() == PrefModel::LASTUSED
                 && m_category_id < 0
                 && m_subcategory_id < 0
-                && !CategoryModel::is_hidden(payee_n->m_category_id)
+                && !CategoryModel::is_hidden(payee_n->m_category_id_n)
             ) {
-                if (payee_n->m_category_id > 0)
-                {
-                    m_category_id = payee_n->m_category_id;
+                if (payee_n->m_category_id_n > 0) {
+                    m_category_id = payee_n->m_category_id_n;
                     m_category->SetLabelText(CategoryModel::full_name(m_category_id));
                 }
             }

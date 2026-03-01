@@ -117,7 +117,8 @@ struct TrxShareData
     };
 };
 
-inline TrxShareData::TrxShareData(wxSQLite3ResultSet& q)
+inline TrxShareData::TrxShareData(wxSQLite3ResultSet& q) :
+    TrxShareData()
 {
     from_select_result(q);
 }

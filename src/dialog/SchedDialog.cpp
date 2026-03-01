@@ -717,9 +717,9 @@ void SchedDialog::OnPayee(wxCommandEvent& WXUNUSED(event))
     if (m_sched_d.local_splits.empty()
         && (PrefModel::instance().getTransCategoryNone() == PrefModel::LASTUSED ||
             PrefModel::instance().getTransCategoryNone() == PrefModel::DEFAULT)
-        && (!CategoryModel::is_hidden(payee_n->m_category_id) && !CategoryModel::is_hidden(payee_n->m_category_id)))
+        && (!CategoryModel::is_hidden(payee_n->m_category_id_n) && !CategoryModel::is_hidden(payee_n->m_category_id_n)))
     {
-        m_sched_d.CATEGID = payee_n->m_category_id;
+        m_sched_d.CATEGID = payee_n->m_category_id_n;
 
         cbCategory_->ChangeValue(CategoryModel::full_name(m_sched_d.CATEGID));
     }

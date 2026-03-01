@@ -228,7 +228,7 @@ bool mmWebApp::WebApp_UpdatePayee()
 
     wxString def_category_name, def_subcategory_name;
     for (const auto& payee_d : PayeeModel::instance().find_all(PayeeCol::COL_ID_PAYEENAME)) {
-        const CategoryData* def_category = CategoryModel::instance().get_id_data_n(payee_d.m_category_id);
+        const CategoryData* def_category = CategoryModel::instance().get_id_data_n(payee_d.m_category_id_n);
         if (def_category) {
             if (def_category->m_parent_id == -1) {
                 def_category_name = def_category->m_name;
@@ -540,8 +540,8 @@ int64 mmWebApp::MMEX_InsertNewTransaction(webtran_holder& WebAppTrans)
     }
     else {
         PayeeData new_payee_d = PayeeData();
-        new_payee_d.m_name        = WebAppTrans.Payee;
-        new_payee_d.m_category_id = categoryID;
+        new_payee_d.m_name          = WebAppTrans.Payee;
+        new_payee_d.m_category_id_n = categoryID;
         PayeeModel::instance().add_data_n(new_payee_d);
         payeeID = new_payee_d.id();
     }

@@ -157,7 +157,8 @@ struct CurrencyData
     };
 };
 
-inline CurrencyData::CurrencyData(wxSQLite3ResultSet& q)
+inline CurrencyData::CurrencyData(wxSQLite3ResultSet& q) :
+    CurrencyData()
 {
     from_select_result(q);
 }

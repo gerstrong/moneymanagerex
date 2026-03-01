@@ -1368,7 +1368,7 @@ bool mmUnivCSVDialog::validateData(tran_holder & holder, wxString& message)
     }
     else {
         if (holder.CategoryID < 0) {
-            holder.CategoryID = payee_n->m_category_id;
+            holder.CategoryID = payee_n->m_category_id_n;
         }
     }
 

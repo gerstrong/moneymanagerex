@@ -108,7 +108,8 @@ struct SchedSplitData
     };
 };
 
-inline SchedSplitData::SchedSplitData(wxSQLite3ResultSet& q)
+inline SchedSplitData::SchedSplitData(wxSQLite3ResultSet& q) :
+    SchedSplitData()
 {
     from_select_result(q);
 }

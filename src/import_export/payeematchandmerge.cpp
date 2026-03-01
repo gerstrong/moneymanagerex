@@ -71,7 +71,7 @@ void PayeeMatchAndMerge::ExactMatch(const wxString& payeeName, std::vector<Payee
             PayeeMatchResult result;
             result.PayeeID            = payee_d.m_id.GetValue();
             result.Name               = payee_d.m_name;
-            result.LastUsedCategoryID = payee_d.m_category_id.GetValue();
+            result.LastUsedCategoryID = payee_d.m_category_id_n.GetValue();
             result.MatchConfidence    = 100.0;
             result.matchMethod        = "Exact";
             results.push_back(result);
@@ -101,7 +101,7 @@ void PayeeMatchAndMerge::RegexMatch(const wxString& payeeName, std::vector<Payee
                 PayeeMatchResult result;
                 result.PayeeID            = payee_d.m_id.GetValue();
                 result.Name               = payee_d.m_name;
-                result.LastUsedCategoryID = payee_d.m_category_id.GetValue();
+                result.LastUsedCategoryID = payee_d.m_category_id_n.GetValue();
                 result.MatchConfidence    = 90.0;
                 result.matchMethod        = "Regex"; // Set match method
                 result.regexPattern       = pattern;
@@ -129,7 +129,7 @@ void PayeeMatchAndMerge::FuzzyMatch(const wxString& payeeName, std::vector<Payee
         PayeeMatchResult result;
         result.PayeeID            = payee_d.m_id.GetValue();
         result.Name               = payee_d.m_name;
-        result.LastUsedCategoryID = payee_d.m_category_id.GetValue();
+        result.LastUsedCategoryID = payee_d.m_category_id_n.GetValue();
         result.MatchConfidence    = confidence;
         result.matchMethod        = "Fuzzy";
         results.push_back(result);

@@ -99,7 +99,8 @@ struct TrxLinkData
     };
 };
 
-inline TrxLinkData::TrxLinkData(wxSQLite3ResultSet& q)
+inline TrxLinkData::TrxLinkData(wxSQLite3ResultSet& q) :
+    TrxLinkData()
 {
     from_select_result(q);
 }

@@ -344,7 +344,7 @@ void mmExportTransaction::getPayeesJSON(PrettyWriter<StringBuffer>& json_writer,
                 json_writer.Key("NAME");
                 json_writer.String(payee_n->m_name.utf8_str());
                 json_writer.Key("CATEGORY_ID");
-                json_writer.Int64(payee_n->m_category_id.GetValue());
+                json_writer.Int64(payee_n->m_category_id_n.GetValue());
                 json_writer.EndObject();
             }
         }

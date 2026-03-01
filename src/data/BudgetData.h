@@ -117,7 +117,8 @@ struct BudgetData
     };
 };
 
-inline BudgetData::BudgetData(wxSQLite3ResultSet& q)
+inline BudgetData::BudgetData(wxSQLite3ResultSet& q) :
+    BudgetData()
 {
     from_select_result(q);
 }

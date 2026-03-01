@@ -216,7 +216,8 @@ struct SchedData
     };
 };
 
-inline SchedData::SchedData(wxSQLite3ResultSet& q)
+inline SchedData::SchedData(wxSQLite3ResultSet& q) :
+    SchedData()
 {
     from_select_result(q);
 }

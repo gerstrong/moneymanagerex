@@ -108,7 +108,8 @@ struct FieldData
     };
 };
 
-inline FieldData::FieldData(wxSQLite3ResultSet& q)
+inline FieldData::FieldData(wxSQLite3ResultSet& q) :
+    FieldData()
 {
     from_select_result(q);
 }

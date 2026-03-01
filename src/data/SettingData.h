@@ -75,7 +75,8 @@ struct SettingData
     };
 };
 
-inline SettingData::SettingData(wxSQLite3ResultSet& q)
+inline SettingData::SettingData(wxSQLite3ResultSet& q) :
+    SettingData()
 {
     from_select_result(q);
 }

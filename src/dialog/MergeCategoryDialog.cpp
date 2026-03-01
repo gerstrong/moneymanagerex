@@ -194,7 +194,7 @@ void MergeCategoryDialog::OnOk(wxCommandEvent& WXUNUSED(event))
         m_changedRecords += split_a.size();
 
         for (auto& payee_d : payee_a) {
-            payee_d.m_category_id = m_destCatID;
+            payee_d.m_category_id_n = m_destCatID;
         }
         PayeeModel::instance().save_data_a(payee_a);
         m_changedRecords += payee_a.size();

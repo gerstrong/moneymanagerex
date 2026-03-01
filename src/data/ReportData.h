@@ -120,7 +120,8 @@ struct ReportData
     };
 };
 
-inline ReportData::ReportData(wxSQLite3ResultSet& q)
+inline ReportData::ReportData(wxSQLite3ResultSet& q) :
+    ReportData()
 {
     from_select_result(q);
 }

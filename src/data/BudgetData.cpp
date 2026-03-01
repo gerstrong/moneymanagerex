@@ -65,7 +65,7 @@ bool BudgetData::equals(const BudgetData* other) const
     if ( m_category_id    != other->m_category_id)    return false;
     if ( m_frequency.id() != other->m_frequency.id()) return false;
     if ( m_amount         != other->m_amount)         return false;
-    if (!m_notes.IsSameAs(other->m_notes))            return false;
+    if (!m_notes.IsSameAs(   other->m_notes))         return false;
     if ( m_active         != other->m_active)         return false;
 
     return true;

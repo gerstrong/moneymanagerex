@@ -363,8 +363,8 @@ void mmPayeeSelectionDialog::OnOK(wxCommandEvent& WXUNUSED(event))
         && shouldUpdateCategory
         && payee_n && categoryManuallyChanged_
     ) {
-        if (selectedCategoryId != payee_n->m_category_id.GetValue()) {
-            payee_n->m_category_id = selectedCategoryId;
+        if (selectedCategoryId != payee_n->m_category_id_n.GetValue()) {
+            payee_n->m_category_id_n = selectedCategoryId;
             PayeeModel::instance().unsafe_update_data_n(payee_n);
             wxLogDebug("Updated payee '%s' category to ID=%lld",
                 selectedPayee_, selectedCategoryId
@@ -413,9 +413,9 @@ void mmPayeeSelectionDialog::OnOK(wxCommandEvent& WXUNUSED(event))
 
             if (!payee_n && createNewRadio_->GetValue()) {
                 PayeeData new_payee_d = PayeeData();
-                new_payee_d.m_name        = selectedPayee_;
-                new_payee_d.m_category_id = selectedCategoryId;
-                new_payee_d.m_pattern     = regexPattern_;
+                new_payee_d.m_name          = selectedPayee_;
+                new_payee_d.m_category_id_n = selectedCategoryId;
+                new_payee_d.m_pattern       = regexPattern_;
                 PayeeModel::instance().add_data_n(new_payee_d);
                 payee_n = PayeeModel::instance().unsafe_get_id_data_n(new_payee_d.id());
                 wxLogDebug("Saved regex pattern for payee '%s'", selectedPayee_);
@@ -436,8 +436,8 @@ void mmPayeeSelectionDialog::OnOK(wxCommandEvent& WXUNUSED(event))
     }
     else if (createNewRadio_->GetValue() && !payee_n) {
         PayeeData new_payee_d = PayeeData();
-        new_payee_d.m_name        = selectedPayee_;
-        new_payee_d.m_category_id = selectedCategoryId;
+        new_payee_d.m_name          = selectedPayee_;
+        new_payee_d.m_category_id_n = selectedCategoryId;
         PayeeModel::instance().add_data_n(new_payee_d);
         payee_n = PayeeModel::instance().unsafe_get_id_data_n(new_payee_d.id());
         wxLogDebug("Created new payee '%s' with category ID=%lld", selectedPayee_, selectedCategoryId);
@@ -829,7 +829,7 @@ void mmPayeeSelectionDialog::OnPayeeChoice(wxCommandEvent& event)
     const PayeeData* payee_n = PayeeModel::instance().get_id_data_n(payeeId);
     if (payee_n) {
         // Always update the category to the payee's default, regardless of manual changes
-        long long payeeCategoryId = payee_n->m_category_id.GetValue();
+        long long payeeCategoryId = payee_n->m_category_id_n.GetValue();
         for (unsigned int i = 0; i < categoryChoice_->GetCount(); ++i) {
             wxStringClientData* data = dynamic_cast<wxStringClientData*>(categoryChoice_->GetClientObject(i));
             if (data) {
@@ -1679,8 +1679,8 @@ bool mmOFXImportDialog::ImportTransactions(wxXmlNode* banktranlist, wxLongLong a
                     );
                     if (payeeDlg.IsCreateNewPayee() && !payee_n) {
                         PayeeData new_payee_d = PayeeData();
-                        new_payee_d.m_name        = payeeName;
-                        new_payee_d.m_category_id = payeeDlg.GetSelectedCategoryID();
+                        new_payee_d.m_name          = payeeName;
+                        new_payee_d.m_category_id_n = payeeDlg.GetSelectedCategoryID();
                         PayeeModel::instance().add_data_n(new_payee_d);
                         transaction.PAYEEID = new_payee_d.m_id;
                         stats.newPayeesCreated++;
@@ -1688,7 +1688,7 @@ bool mmOFXImportDialog::ImportTransactions(wxXmlNode* banktranlist, wxLongLong a
                     else if (payee_n) {
                         transaction.PAYEEID = payee_n->m_id;
                         if (payeeDlg.ShouldUpdatePayeeCategory()) {
-                            payee_n->m_category_id = payeeDlg.GetSelectedCategoryID();
+                            payee_n->m_category_id_n = payeeDlg.GetSelectedCategoryID();
                             PayeeModel::instance().unsafe_update_data_n(payee_n);
                         }
                     }
@@ -1721,7 +1721,7 @@ bool mmOFXImportDialog::ImportTransactions(wxXmlNode* banktranlist, wxLongLong a
             ) {
                 if (payee_n) {
                     transaction.PAYEEID = payee_n->m_id;
-                    transaction.CATEGID = payee_n->m_category_id;
+                    transaction.CATEGID = payee_n->m_category_id_n;
                     transaction.STATUS = (matchMethod == "Fuzzy" && markFuzzyFollowUp) ? "F" : "";
                     const CategoryData* category = CategoryModel::instance().get_id_data_n(transaction.CATEGID);
                     result.category = category ? category->m_name : "Uncategorized";

@@ -147,7 +147,8 @@ struct StockData
     };
 };
 
-inline StockData::StockData(wxSQLite3ResultSet& q)
+inline StockData::StockData(wxSQLite3ResultSet& q) :
+    StockData()
 {
     from_select_result(q);
 }

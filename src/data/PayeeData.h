@@ -26,7 +26,7 @@ struct PayeeData
 {
     int64    m_id;
     wxString m_name;
-    int64    m_category_id;
+    int64    m_category_id_n; // optional (can be null)
     wxString m_number;
     wxString m_website;
     wxString m_notes;
@@ -76,7 +76,10 @@ struct PayeeData
     {
         bool operator()(const PayeeData& x, const PayeeData& y)
         {
-            return x.m_category_id < y.m_category_id;
+            return x.m_category_id_n > 0 && (
+                y.m_category_id_n <= 0 ||
+                x.m_category_id_n < y.m_category_id_n
+            );
         }
     };
 
@@ -121,7 +124,8 @@ struct PayeeData
     };
 };
 
-inline PayeeData::PayeeData(wxSQLite3ResultSet& q)
+inline PayeeData::PayeeData(wxSQLite3ResultSet& q) :
+    PayeeData()
 {
     from_select_result(q);
 }

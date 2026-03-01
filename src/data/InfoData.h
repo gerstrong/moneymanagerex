@@ -75,7 +75,8 @@ struct InfoData
     };
 };
 
-inline InfoData::InfoData(wxSQLite3ResultSet& q)
+inline InfoData::InfoData(wxSQLite3ResultSet& q) :
+    InfoData()
 {
     from_select_result(q);
 }

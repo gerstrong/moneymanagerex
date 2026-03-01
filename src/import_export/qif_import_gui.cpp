@@ -1555,7 +1555,7 @@ bool mmQIFImportDialog::completeTransaction(
         if (categStr.empty()) {
             const PayeeData* payee_n = PayeeModel::instance().get_id_data_n(trx->PAYEEID);
             if (payee_n) {
-                trx->CATEGID = payee_n->m_category_id;
+                trx->CATEGID = payee_n->m_category_id_n;
             }
             categStr = CategoryModel::full_name(trx->CATEGID, ":");
 

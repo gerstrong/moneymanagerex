@@ -66,7 +66,8 @@ struct BudgetPeriodData
     };
 };
 
-inline BudgetPeriodData::BudgetPeriodData(wxSQLite3ResultSet& q)
+inline BudgetPeriodData::BudgetPeriodData(wxSQLite3ResultSet& q) :
+    BudgetPeriodData()
 {
     from_select_result(q);
 }

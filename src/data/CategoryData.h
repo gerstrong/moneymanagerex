@@ -85,7 +85,8 @@ struct CategoryData
     };
 };
 
-inline CategoryData::CategoryData(wxSQLite3ResultSet& q)
+inline CategoryData::CategoryData(wxSQLite3ResultSet& q) :
+    CategoryData()
 {
     from_select_result(q);
 }

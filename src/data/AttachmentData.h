@@ -108,7 +108,8 @@ struct AttachmentData
     };
 };
 
-inline AttachmentData::AttachmentData(wxSQLite3ResultSet& q)
+inline AttachmentData::AttachmentData(wxSQLite3ResultSet& q) :
+    AttachmentData()
 {
     from_select_result(q);
 }

@@ -93,7 +93,8 @@ struct CurrencyHistoryData
     };
 };
 
-inline CurrencyHistoryData::CurrencyHistoryData(wxSQLite3ResultSet& q)
+inline CurrencyHistoryData::CurrencyHistoryData(wxSQLite3ResultSet& q) :
+    CurrencyHistoryData()
 {
     from_select_result(q);
 }

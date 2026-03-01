@@ -93,7 +93,8 @@ struct StockHistoryData
     };
 };
 
-inline StockHistoryData::StockHistoryData(wxSQLite3ResultSet& q)
+inline StockHistoryData::StockHistoryData(wxSQLite3ResultSet& q) :
+    StockHistoryData()
 {
     from_select_result(q);
 }

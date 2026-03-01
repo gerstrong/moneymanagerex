@@ -163,7 +163,7 @@ void TrxShareDialog::DataToControls()
         m_share_price_ctrl->SetValue(m_stock_n->m_purchase_price, PrefModel::instance().getSharePrecision());
         m_share_commission_ctrl->SetValue(m_stock_n->m_commission, PrefModel::instance().getSharePrecision());
         m_share_lot_ctrl->SetValue(m_stock_n->m_id.ToString());
-        m_transaction_panel->TransactionDate(StockModel::PURCHASEDATE(m_stock_n));
+        m_transaction_panel->TransactionDate(StockModel::PURCHASEDATE(*m_stock_n));
         m_transaction_panel->SetTransactionValue(GetAmount(m_stock_n->m_num_shares, m_stock_n->m_purchase_price
                 , m_stock_n->m_commission), true);
     }
@@ -352,7 +352,7 @@ void TrxShareDialog::CreateControls()
     }
     else
     {
-        wxString acc_held = AccountModel::instance().get_id_name(m_stock_n->m_account_id);
+        wxString acc_held = AccountModel::instance().get_id_name(m_stock_n->m_account_id_n);
         m_transaction_panel->SetTransactionNumber(m_stock_n->m_name + "_" + m_stock_n->m_symbol);
         m_transaction_panel->SetTransactionAccount(acc_held);
     }
@@ -516,7 +516,7 @@ void TrxShareDialog::OnDeductibleSplit(wxCommandEvent&)
         m_local_deductible_splits.push_back({category_n->m_id, commission, wxArrayInt64(), ""});
     }
 
-    SplitDialog dlg(this, m_local_deductible_splits, m_stock_n->m_account_id);
+    SplitDialog dlg(this, m_local_deductible_splits, m_stock_n->m_account_id_n);
 
     if (dlg.ShowModal() == wxID_OK)
     {

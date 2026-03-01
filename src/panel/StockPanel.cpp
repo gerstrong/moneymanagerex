@@ -224,11 +224,13 @@ void StockPanel::ViewStockTransactions(int selectedIndex)
     StockData* stock = &m_lc->m_stocks[selectedIndex];
 
     wxDialog dlg(this, wxID_ANY,
-                 _t("View Stock Transactions") + ": "
-                 + (m_account_id > -1 ? (AccountModel::instance().get_id_name(stock->m_account_id) + " - ") : "")
-                 + stock->m_symbol,
-                 wxDefaultPosition, wxSize(800, 400),
-                 wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER);
+        _t("View Stock Transactions") + ": " + (m_account_id > -1
+            ? (AccountModel::instance().get_id_name(stock->m_account_id_n) + " - ")
+            : ""
+        ) + stock->m_symbol,
+        wxDefaultPosition, wxSize(800, 400),
+        wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER
+    );
 
     dlg.SetIcon(mmex::getProgramIcon());
     wxWindow* parent = dlg.GetMainWindowOfCompositeControl();
@@ -239,7 +241,11 @@ void StockPanel::ViewStockTransactions(int selectedIndex)
     topsizer->Add(stockTxnListCtrl, wxSizerFlags(g_flagsExpand).TripleBorder());
 
     // Load stock transactions
-    LoadStockTransactions(stockTxnListCtrl, m_account_id == -1 ? stock->m_symbol : "", stock->m_id);
+    LoadStockTransactions(
+        stockTxnListCtrl,
+        m_account_id == -1 ? stock->m_symbol : "",
+        stock->m_id
+    );
 
     // Bind list events
     BindListEvents(stockTxnListCtrl);
@@ -247,7 +253,10 @@ void StockPanel::ViewStockTransactions(int selectedIndex)
     // Add buttons
     wxSizer* buttonSizer = dlg.CreateSeparatedButtonSizer(wxOK);
     if (buttonSizer) {
-        topsizer->Add(buttonSizer, wxSizerFlags().Expand().DoubleBorder(wxLEFT | wxRIGHT | wxBOTTOM));
+        topsizer->Add(
+            buttonSizer,
+            wxSizerFlags().Expand().DoubleBorder(wxLEFT | wxRIGHT | wxBOTTOM)
+        );
     }
 
     dlg.SetSizerAndFit(topsizer);

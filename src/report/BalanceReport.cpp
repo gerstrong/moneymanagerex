@@ -82,7 +82,7 @@ std::pair<double, double> BalanceReport::getBalance(
         return bal;
     bal.first = getCheckingBalance(account, date);
     if (AccountModel::type_id(*account) == NavigatorTypes::TYPE_ID_INVESTMENT) {
-        bal.second = StockModel::instance().getDailyBalanceAt(account, date);
+        bal.second = StockModel::instance().getDailyBalanceAt(*account, date);
     }
     return bal;
 }
@@ -148,7 +148,7 @@ wxString BalanceReport::getHTMLText()
             histItem.stockId         = stock.m_id;
             histItem.purchasePrice   = stock.m_purchase_price;
             histItem.purchaseDate    = StockModel::PURCHASEDATE(stock);
-            histItem.purchaseDateStr = stock.m_purchase_date;
+            histItem.purchaseDateStr = stock.m_purchase_date_;
             histItem.numShares       = stock.m_num_shares;
             histItem.stockHist       = StockHistoryModel::instance().find(
                 StockHistoryCol::SYMBOL(stock.m_symbol)

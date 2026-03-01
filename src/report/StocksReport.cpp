@@ -85,7 +85,7 @@ void  StocksReport::refreshData()
 
             line.name       = stock_d.m_name;
             line.symbol     = stock_d.m_symbol;
-            line.date       = stock_d.m_purchase_date;
+            line.date       = stock_d.m_purchase_date_;
             line.qty        = stock_d.m_num_shares;
             line.purchase   = StockModel::InvestmentValue(stock_d);
             line.current    = stock_d.m_current_price;
@@ -273,7 +273,9 @@ wxString mmReportChartStocks::getHTMLText()
     for (const auto& stock_d : StockModel::instance().find_all(
         StockCol::COL_ID_SYMBOL
     )) {
-        const AccountData* account = AccountModel::instance().get_id_data_n(stock_d.m_account_id);
+        const AccountData* account = AccountModel::instance().get_id_data_n(
+            stock_d.m_account_id_n
+        );
         if (!account->is_open())
             continue;
         if (symbols.Index(stock_d.m_symbol) != wxNOT_FOUND)

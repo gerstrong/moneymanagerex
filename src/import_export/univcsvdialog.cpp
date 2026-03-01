@@ -1867,7 +1867,7 @@ void mmUnivCSVDialog::OnExport(wxCommandEvent& WXUNUSED(event))
                         entry = mmGetDateTimeForDisplay(StockModel::PURCHASEDATE(stock_d).FormatISODate(), date_format_);
                         break;
                     case UNIV_CSV_COMPANY_NAME:
-                        entry = StockModel::get_stock_name(stock_d.m_id);
+                        entry = StockModel::get_id_name(stock_d.m_id);
                         break;
                     case UNIV_CSV_SYMBOL:
                         entry = stock_d.m_symbol;
@@ -2292,7 +2292,7 @@ void mmUnivCSVDialog::update_preview()
                                 text << inQuotes(mmGetDateTimeForDisplay(StockModel::PURCHASEDATE(stock_d).FormatISODate(), date_format_), delimit);
                                 break;
                             case UNIV_CSV_COMPANY_NAME:
-                                text << inQuotes(StockModel::get_stock_name(stock_d.m_id), delimit);
+                                text << inQuotes(StockModel::get_id_name(stock_d.m_id), delimit);
                                 break;
                             case UNIV_CSV_SYMBOL:
                                 text << inQuotes(stock_d.m_symbol, delimit);

@@ -26,7 +26,7 @@ struct StockHistoryData
 {
     int64    m_id;
     wxString m_symbol;
-    wxString m_date;
+    wxString m_date_;
     double   m_price;
     int64    m_update_type_;
 
@@ -72,7 +72,7 @@ struct StockHistoryData
     {
         bool operator()(const StockHistoryData& x, const StockHistoryData& y)
         {
-            return x.m_date < y.m_date;
+            return x.m_date_ < y.m_date_;
         }
     };
 

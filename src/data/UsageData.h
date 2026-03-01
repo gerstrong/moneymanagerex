@@ -24,7 +24,7 @@
 // User-friendly representation of a record in table USAGE_V1.
 struct UsageData
 {
-    int64 m_id; // primary key
+    int64    m_id;
     wxString m_date;
     wxString m_json_content;
 

@@ -180,7 +180,7 @@ wxString StockList::OnGetItemText(long item, long col_nr) const
     case LIST_ID_ID:
         return wxString::Format("%lld", m_stocks[item].m_id).Trim();
     case LIST_ID_DATE:
-        return mmGetDateTimeForDisplay(m_stocks[item].m_purchase_date);
+        return mmGetDateTimeForDisplay(m_stocks[item].m_purchase_date_);
     case LIST_ID_NAME:
         return m_stocks[item].m_name;
     case LIST_ID_SYMBOL:
@@ -202,7 +202,7 @@ wxString StockList::OnGetItemText(long item, long col_nr) const
     case LIST_ID_CURRVALUE:
         return CurrencyModel::toString(StockModel::CurrentValue(m_stocks[item]), m_stock_panel->m_currency);
     case LIST_ID_PRICEDATE:
-        return mmGetDateTimeForDisplay(StockModel::instance().lastPriceDate(&m_stocks[item]));
+        return mmGetDateTimeForDisplay(StockModel::instance().lastPriceDate(m_stocks[item]));
     case LIST_ID_COMMISSION:
         return CurrencyModel::toString(m_stocks[item].m_commission, m_stock_panel->m_currency);
     case LIST_ID_NOTES: {
@@ -342,7 +342,7 @@ void StockList::OnMoveStocks(wxCommandEvent& /*event*/)
 
     if ( toAccountID != -1 ) {
         StockData* stock_n = StockModel::instance().unsafe_get_id_data_n(m_stocks[m_selected_row].m_id);
-        stock_n->m_account_id = toAccountID;
+        stock_n->m_account_id_n = toAccountID;
         StockModel::instance().unsafe_update_data_n(stock_n);
 
         DeleteItem(m_selected_row);

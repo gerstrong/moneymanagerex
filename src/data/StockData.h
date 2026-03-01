@@ -25,11 +25,11 @@
 struct StockData
 {
     int64    m_id;
-    int64    m_account_id;
+    int64    m_account_id_n;   // optional (can be null)
     wxString m_name;
     wxString m_symbol;
     double   m_num_shares;
-    wxString m_purchase_date;
+    wxString m_purchase_date_; // TODO: mmDate
     double   m_purchase_price;
     double   m_current_price;
     double   m_purchase_value;
@@ -70,7 +70,7 @@ struct StockData
     {
         bool operator()(const StockData& x, const StockData& y)
         {
-            return x.m_account_id < y.m_account_id;
+            return x.m_account_id_n < y.m_account_id_n;
         }
     };
 
@@ -78,7 +78,7 @@ struct StockData
     {
         bool operator()(const StockData& x, const StockData& y)
         {
-            return x.m_purchase_date < y.m_purchase_date;
+            return x.m_purchase_date_ < y.m_purchase_date_;
         }
     };
 

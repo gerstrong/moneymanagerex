@@ -31,7 +31,7 @@ TagRow TagData::to_row() const
 
     row.TAGID   = m_id;
     row.TAGNAME = m_name;
-    row.ACTIVE  = m_active ? 1 : 0;
+    row.ACTIVE  = (m_active ? 1 : 0);
 
     return row;
 }

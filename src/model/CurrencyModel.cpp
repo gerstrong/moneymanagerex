@@ -156,7 +156,7 @@ std::map<wxDateTime, int> CurrencyModel::DateUsed(int64 CurrencyID)
             for (const auto& stock_d : StockModel::instance().find(
                 StockCol::HELDAT(account_d.m_id)
             )) {
-                dt.ParseDate(stock_d.m_purchase_date);
+                dt.ParseDate(stock_d.m_purchase_date_);
                 datesList[dt] = 1;
             }
         }

@@ -61,7 +61,7 @@ bool dbCheck::checkAccounts()
     // Stocks
     const auto& stock_a = StockModel::instance().find_all();
     for (const auto& stock_d : stock_a) {
-        const auto& account_n = AccountModel::instance().get_id_data_n(stock_d.m_account_id);
+        const auto& account_n = AccountModel::instance().get_id_data_n(stock_d.m_account_id_n);
         if (!account_n ||
             AccountModel::type_id(*account_n) != NavigatorTypes::TYPE_ID_INVESTMENT
         ) {

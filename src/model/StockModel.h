@@ -30,67 +30,34 @@
 class StockModel : public TableFactory<StockTable, StockData>
 {
 public:
+    static const wxString refTypeName;
+
+public:
     StockModel();
     ~StockModel();
 
 public:
-    /**
-    Initialize the global StockModel table on initial call.
-    Resets the global table on subsequent calls.
-    * Return the static instance address for StockModel table
-    * Note: Assigning the address to a local variable can destroy the instance.
-    */
     static StockModel& instance(wxSQLite3Database* db);
-
-    /**
-    * Return the static instance address for StockModel table
-    * Note: Assigning the address to a local variable can destroy the instance.
-    */
     static StockModel& instance();
 
 public:
-    static wxString get_stock_name(int64 stock_id);
-
-    static wxDate PURCHASEDATE(const Data* stock);
-    static wxDate PURCHASEDATE(const Data& stock);
-
-    /** Original value of Stocks */
-    static double InvestmentValue(const Data* r);
-    /** Original value of Stocks */
-    static double InvestmentValue(const Data& r);
-
-    static double CurrentValue(const Data* r);
-    static double CurrentValue(const Data& r);
-
-    /** Realized gain/loss from sales, optionally converted to base currency */
-    static double RealGainLoss(const Data* r, bool base_curr = false);
-    /** Realized gain/loss from sales, optionally converted to base currency */
-    static double RealGainLoss(const Data& r, bool base_curr = false);
-
-    /** The current unrealized gain/loss, optionally converted to base currency */
-    static double UnrealGainLoss(const Data* r, bool base_curr = false);
-    /** The current unrealized gain/loss, optionally converted to base currency */
-    static double UnrealGainLoss(const Data& r, bool base_curr = false);
-
-    /** Update current price across accounts */
-    static void UpdateCurrentPrice(const wxString& symbol, const double price = -1);
-
-public:
-    /**
-    * Remove the Data record from memory and the database.
-    * Delete also all stock history
-    */
+    // override
     bool purge_id(int64 id) override;
 
-    /**
-    Returns the last price date of a given stock
-    */
-    wxString lastPriceDate(const Data* entity);
+    static wxString get_id_name(int64 stock_id);
 
-    /**
-    Returns the total stock balance at a given date
-    */
-    double getDailyBalanceAt(const AccountData *account, const wxDate& date);
+    static wxDate PURCHASEDATE(const Data& stock_d);
+
+    static double InvestmentValue(const Data& stock_d);
+    static double CurrentValue(const Data& stock_d);
+
+    static double RealGainLoss(const Data& stock_d, bool base_curr = false);
+    static double UnrealGainLoss(const Data& stock_d, bool base_curr = false);
+
+    static void UpdateCurrentPrice(const wxString& symbol, const double price = -1);
+
+    wxString lastPriceDate(const Data& stock_d);
+    double getDailyBalanceAt(const AccountData& account_d, const wxDate& date);
 
     /*
     stock_entry.m_purchase_price = avg price of shares purchased.
@@ -98,9 +65,6 @@ public:
     stock_entry.VALUE     = value of shares based on:
     ... share_entry.SHARENUMBER * share_entry.SHAREPRICE
     */
-    static void UpdatePosition(StockData* stock_entry);
-
-public:
-    static const wxString refTypeName;
+    static void UpdatePosition(Data* stock_n);
 };
 

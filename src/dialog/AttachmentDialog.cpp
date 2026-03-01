@@ -95,7 +95,7 @@ void AttachmentDialog::Create(wxWindow* parent, const wxString& name)
         switch (refEnum)
         {
         case ModelBase::REFTYPE_ID_STOCK:
-            RefName = StockModel::get_stock_name(m_RefId);
+            RefName = StockModel::get_id_name(m_RefId);
             break;
         case ModelBase::REFTYPE_ID_ASSET:
             RefName = AssetModel::instance().get_id_name(m_RefId);

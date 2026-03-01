@@ -277,7 +277,7 @@ mmGeneralReport::mmGeneralReport(const ReportData* report) :
 wxString mmGeneralReport::getHTMLText()
 {
     wxString out;
-    int error = ReportModel::instance().get_html(this->m_report, out);
+    int error = ReportModel::instance().generate_html(*m_report, out);
     if (error != 0) {
         const char* error_template = R"(
 <!DOCTYPE html>

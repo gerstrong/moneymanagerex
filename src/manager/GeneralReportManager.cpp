@@ -669,7 +669,7 @@ void GeneralReportManager::importReport()
     openZipFile(reportFileName, htt, sql, lua, txt);
 
     reportName = fn.FileName(reportFileName).GetName();
-    const ReportData* report_n = ReportModel::instance().get_key_data_n(reportName);
+    const ReportData* report_n = ReportModel::instance().get_name_data_n(reportName);
     ReportData report_d = report_n ? *report_n : ReportData();
     report_d.m_group_name       = m_selectedGroup;
     report_d.m_name             = reportName;
@@ -1052,7 +1052,7 @@ bool GeneralReportManager::changeReportGroup(int64 id, bool ungroup)
                 _t("Enter or choose name for the new report group"),
                 _t("Change report group"),
                 report_n->m_group_name,
-                ReportModel::instance().find_group_name_a()
+                ReportModel::instance().find_all_group_name_a()
             );
 
             if (dlg.ShowModal() == wxID_OK) {
@@ -1069,7 +1069,7 @@ bool GeneralReportManager::changeReportGroup(int64 id, bool ungroup)
 bool GeneralReportManager::renameReportGroup(const wxString& GroupName)
 {
     mmDialogComboBoxAutocomplete dlg(this, _t("Enter or choose name for the new group"),
-        _t("Rename Group"), GroupName, ReportModel::instance().find_group_name_a());
+        _t("Rename Group"), GroupName, ReportModel::instance().find_all_group_name_a());
 
     if (dlg.ShowModal() == wxID_OK) {
         const wxString groupName = dlg.getText();
@@ -1142,7 +1142,7 @@ void GeneralReportManager::newReport(int sample)
     if (m_selectedItemID == m_rootItem)
     {
         mmDialogComboBoxAutocomplete dlg(this, _t("Enter or choose name for the new report group")
-            , _t("Add Report Group"), "", ReportModel::instance().find_group_name_a());
+            , _t("Add Report Group"), "", ReportModel::instance().find_all_group_name_a());
         if (dlg.ShowModal() == wxID_OK)
             group_name = dlg.getText();
         else
@@ -1335,7 +1335,7 @@ bool GeneralReportManager::getSqlQuery(/*in*/ wxString& sql
     try
     {
         std::map <wxString, wxString> rep_params;
-        ReportModel::prepare_sql(sql, rep_params);
+        ReportParam::prepare_sql(sql, rep_params);
         wxSQLite3Statement stmt = this->m_db->PrepareStatement(sql);
         if (!stmt.IsReadOnly())
             return false;
@@ -1365,12 +1365,10 @@ const wxString GeneralReportManager::getTemplate(wxString& sql)
     wxString body, header, SqlError;
 
     std::map <wxString, wxString> rep_params;
-    try
-    {
-        ReportModel::prepare_sql(sql, rep_params);
+    try {
+        ReportParam::prepare_sql(sql, rep_params);
     }
-    catch (const wxSQLite3Exception& e)
-    {
+    catch (const wxSQLite3Exception& e) {
         SqlError = e.GetMessage();
         SqlError.Replace(" or missing database[1]:", "");
         return SqlError;
@@ -1379,8 +1377,7 @@ const wxString GeneralReportManager::getTemplate(wxString& sql)
     std::vector<std::pair<wxString, int> > colHeaders;
 
     this->getColumns(sql, colHeaders);
-    for (const auto& col : colHeaders)
-    {
+    for (const auto& col : colHeaders) {
         if (col.second == WXSQLITE_FLOAT) {
             header += wxString::Format("        <th class=\"sorttable_numeric\">%s</th>\n", col.first);
             body += wxString::Format("        <td class=\"money\"><TMPL_VAR \"%s\"></td>\n", col.first);
@@ -1396,9 +1393,8 @@ const wxString GeneralReportManager::getTemplate(wxString& sql)
     }
 
     wxString params = rep_params.empty() ? "" : _t("Parameters:");
-    for (const auto& entry : rep_params)
-    {
-        for (const auto & item : ReportModel::getParamNames()) {
+    for (const auto& entry : rep_params) {
+        for (const auto & item : ReportParam::get_label_name_a()) {
             if (entry.first == item.first.Mid(1)) {
                 params += wxString::Format("<BR> %s <TMPL_VAR %s>", item.second, entry.first);
             }

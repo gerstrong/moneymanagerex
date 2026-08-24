@@ -633,6 +633,8 @@ void JournalPanel::filterList()
     bool ignore_future = PrefModel::instance().getIgnoreFutureTransactions();
     mmDate range_start = m_date_range.rangeStartN().value();
     mmDate range_end = m_date_range.rangeEndN().value();
+    // Maxiumum future range is 30 days for scheduled transactions
+    mmDate scheduled_range_end = mmDate::today().plusDateSpan(wxDateSpan::Days(30));
 
     int sn = 0; // sequence number
     m_flow = 0.0;
@@ -817,6 +819,10 @@ void JournalPanel::filterList()
         if (ignore_future && is_future)
             break;
 
+        if (trx_dateTime.date() < range_start || 
+            trx_dateTime.date() > ((repeat_id < 0) ? range_end : scheduled_range_end))
+            continue;
+
         // update m_balance even if transaction is filtered out
         double account_flow = 0.0;
         if (isAccount()) {
@@ -831,9 +837,6 @@ void JournalPanel::filterList()
             else
                 m_show_reconciled = true;
         }
-
-        if (trx_dateTime.date() < range_start || trx_dateTime.date() > range_end)
-            continue;
 
         Journal::DataExt journal_dx = (repeat_id < 0)
             ? Journal::DataExt(*trx_n, trxId_tpA_m, trxId_glA_m)
@@ -1077,7 +1080,7 @@ void JournalPanel::updateFilter()
         ));
         // TODO: calculate default start/end dates from model
         m_date_range.setDefStartDateN(mmDate::min());
-        m_date_range.setDefEndDateN(mmDate::today().plusDateSpan(wxDateSpan::Days(30)));
+        m_date_range.setDefEndDateN(mmDate::max());
         // copy from date range to start/end pickers
         w_start_date->SetValue(
             m_date_range.rangeStartN().value().dateTime()

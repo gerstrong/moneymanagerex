@@ -1209,15 +1209,33 @@ bool JournalList::checkTransactionLocked(int64 account_id, mmDate date)
     return true;
 }
 
+void JournalList::showTrxDialog(JournalKey journal_key, bool duplicate, TrxType type)
+{
+    int rc;
+    TrxDialog dlg(this, journal_key, duplicate, w_panel->m_account_id, type);
+    do {
+        dlg.SetReturnCode(0);  // necessary for wxWidgets >= 3.3.4 to show dialog again
+        rc = dlg.ShowModal();
+        if (rc != wxID_CANCEL) {
+            m_select_key_a.clear();
+            m_paste_key_a.push_back(JournalKey(-1, dlg.trx_id()));
+            w_panel->mmPlayTransactionSound();
+            refreshVisualList();
+        }
+        m_top_item_n = GetTopItem() + GetCountPerPage() - 1;
+    } while (rc == wxID_NEW);
+}
+
+
 // -- event handlers
 
 // If any of these keys are encountered, the search for the event handler
 // should continue as these keys may be processed by the operating system.
 void JournalList::onChar(wxKeyEvent& event)
 {
-
     int key = event.GetKeyCode();
-    if (key == WXK_ALT ||
+    if (event.HasAnyModifiers() ||
+        key == WXK_ALT ||
         key == WXK_COMMAND ||
         key == WXK_UP ||
         key == WXK_DOWN ||
@@ -1246,12 +1264,6 @@ void JournalList::onChar(wxKeyEvent& event)
         event.Skip();
     }
 }
-
-/*void JournalList::onListLeftClick(wxMouseEvent& event)
-{
-    //wxLogDebug("onListLeftClick: %i selected", GetSelectedItemCount());
-    event.Skip();
-}*/
 
 void JournalList::onMouseRightClick(wxMouseEvent& event)
 {
@@ -1626,25 +1638,39 @@ void JournalList::onListItemActivated(wxListEvent& /*event*/)
     AddPendingEvent(evt);
 }
 
-void JournalList::onListItemSelected(wxListEvent&)
+void JournalList::updateSelectionSummary()
 {
-    //wxLogDebug("onListItemSelected: %i selected", GetSelectedItemCount());
+#ifdef __WXMAC__
+    // The generic virtual list sends FOCUSED before updating a Shift selection,
+    // without a subsequent SELECTED event. Coalesce notifications until it finishes.
+    if (m_selection_update_pending)
+        return;
+    m_selection_update_pending = true;
+    // Queue on this control so destruction also discards the pending callback.
+    CallAfter([this]() {
+        m_selection_update_pending = false;
+        setSelectKeyA();
+        setExtraTransactionData(GetSelectedItemCount() == 1);
+    });
+#else
     setSelectKeyA();
     setExtraTransactionData(GetSelectedItemCount() == 1);
+#endif
+}
+
+void JournalList::onListItemSelected(wxListEvent&)
+{
+    updateSelectionSummary();
 }
 
 void JournalList::onListItemDeSelected(wxListEvent&)
 {
-    //wxLogDebug("onListItemDeSelected: %i selected", GetSelectedItemCount());
-    setSelectKeyA();
-    setExtraTransactionData(GetSelectedItemCount() == 1);
+    updateSelectionSummary();
 }
 
 void JournalList::onListItemFocused(wxListEvent& WXUNUSED(event))
 {
-    //wxLogDebug("onListItemFocused: %i selected", GetSelectedItemCount());
-    setSelectKeyA();
-    setExtraTransactionData(GetSelectedItemCount() == 1);
+    updateSelectionSummary();
 }
 
 void JournalList::onListKeyDown(wxListEvent& event)
@@ -1709,37 +1735,18 @@ void JournalList::onListKeyDown(wxListEvent& event)
 
 void JournalList::onNewTrx(wxCommandEvent& event)
 {
-    int id = event.GetId();
-    TrxType type = TrxType();
-
-    switch (id) {
-    case MENU_TREEPOPUP_WITHDRAWAL:
-        type = TrxType(TrxType::e_withdrawal);
-        break;
-    case MENU_TREEPOPUP_DEPOSIT:
-        type = TrxType(TrxType::e_deposit);
-        break;
-    case MENU_TREEPOPUP_TRANSFER:
-        type = TrxType(TrxType::e_transfer);
-        break;
-    default:
-        type = TrxType(TrxType::e_withdrawal);
-        break;
+    TrxType type;
+    switch (event.GetId()) {
+        case MENU_TREEPOPUP_DEPOSIT:
+            type = TrxType(TrxType::e_deposit);
+            break;
+        case MENU_TREEPOPUP_TRANSFER:
+            type = TrxType(TrxType::e_transfer);
+            break;
+        default:
+            type = TrxType(TrxType::e_withdrawal);
     }
-
-    TrxDialog dlg(this, JournalKey(), false, w_panel->m_account_id, type);
-    int i = dlg.ShowModal();
-    if (i == wxID_CANCEL)
-        return;
-
-    m_select_key_a.clear();
-    m_paste_key_a.push_back(JournalKey(-1, dlg.trx_id()));
-    w_panel->mmPlayTransactionSound();
-    refreshVisualList();
-
-    if (i == wxID_NEW) {
-        onNewTrx(event);
-    }
+    showTrxDialog(JournalKey(), false, type);
 }
 
 void JournalList::onDeleteTrx(wxCommandEvent& WXUNUSED(event))
@@ -2338,19 +2345,7 @@ void JournalList::onDuplicateTrx(wxCommandEvent& WXUNUSED(event))
     if (GetSelectedItemCount() != 1)
         return;
     setSelectKeyA();
-    TrxDialog dlg(this, m_select_key_a[0], true, w_panel->m_account_id);
-
-    int i = wxID_CANCEL;
-    do {
-        i = dlg.ShowModal();
-        if (i != wxID_CANCEL) {
-            m_select_key_a.clear();
-            m_paste_key_a.push_back({-1, dlg.trx_id()});
-            w_panel->mmPlayTransactionSound();
-            refreshVisualList();
-        }
-        m_top_item_n = GetTopItem() + GetCountPerPage() - 1;
-    } while (i == wxID_NEW);
+    showTrxDialog(m_select_key_a[0], true, TrxType(TrxType::e_withdrawal));
 }
 
 void JournalList::onEnterSched(wxCommandEvent& WXUNUSED(event))

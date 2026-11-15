@@ -130,6 +130,9 @@ private:
     std::vector<JournalKey> m_select_key_a; // selected transactions
     std::vector<JournalKey> m_copy_key_a;   // copied transactions
     std::vector<JournalKey> m_paste_key_a;  // last pasted transactions
+#ifdef __WXMAC__
+    bool m_selection_update_pending = false;
+#endif
 
     JournalPanel* w_panel = nullptr;
     wxSharedPtr<wxListItemAttr> w_attr1;  // style 1
@@ -192,6 +195,7 @@ private:
     void markItem(long selectedItem);
     void setSelectedId(JournalKey journal_key);
     void setSelectKeyA();
+    void updateSelectionSummary();
     int  getColNr_X(int xPos);
     void doSearchText(const wxString& value);
     void setVisibleItemIndex(long item) { m_top_item_n = item; }
@@ -199,6 +203,7 @@ private:
     void deleteTransactionsByStatus(std::optional<TrxStatus> status_n);
     bool checkForClosedAccounts();
     bool checkTransactionLocked(int64 account_id, mmDate date);
+    void showTrxDialog(JournalKey journal_key, bool duplicate, TrxType type);
 
 // -- event handlers
 
